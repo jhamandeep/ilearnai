@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(defaults read *)",
+      "Bash(aws ec2 describe-*)",
+      "Bash(aws cloudformation describe-*)",
+      "Bash(aws ssm get-command-invocation *)",
+      "Bash(aws s3 ls *)"
+    ]
+  }
+}

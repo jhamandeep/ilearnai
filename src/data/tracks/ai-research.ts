@@ -39,6 +39,17 @@ Every large language model today uses attention as its core operation. The cost 
 
 A recurrent neural network (RNN) reads a sequence one token at a time. A token is one unit of text, often part of a word. At each step, the RNN updates one hidden vector $h_t$. The hidden vector must hold everything the model knows about the past. Information about token 3 must survive hundreds of updates before it can influence token 400. In practice, the gradient through that long chain either shrinks to zero or grows without bound. The model forgets.
 
+The diagram shows the single chain that carries information from token 1 to token 400 in an RNN.
+
+:::flow
+title: Information path in an RNN, one chain of hidden states
+Token 1 -> h1: write
+h1 -> h2: carry
+h2 -> h3: carry
+h3 -> h400: 397 more updates
+h400 -> Token 400: read
+:::
+
 Attention removes the chain. Each position looks at every other position in a single step. Consider a sequence of 3 tokens with 2-dimensional vectors. Suppose the query of token 3 is $q_3 = [1, 0]$. Suppose the keys are $k_1 = [1, 0]$, $k_2 = [0, 1]$, and $k_3 = [1, 1]$. The dot products are:
 
 | Key | Score $q_3 \\cdot k_i$ |
@@ -48,6 +59,22 @@ Attention removes the chain. Each position looks at every other position in a si
 | $k_3$ | 1 |
 
 Divide each score by $\\sqrt{d_k} = \\sqrt{2} \\approx 1.41$. The scaled scores are $[0.71, 0, 0.71]$. Apply softmax, the function that turns scores into positive weights that sum to one. The weights are about $[0.40, 0.20, 0.40]$. The output for token 3 is the weighted sum of the three value vectors with these weights. Token 3 now reads mostly from tokens 1 and 3, and a little from token 2. No information passed through a chain of hidden states.
+
+Press Next to follow the attention step for token 3.
+
+:::scenario
+title: One attention step for token 3
+state: q3=[1 0], k1=[1 0], k2=[0 1], k3=[1 1]
+step: Compute the dot product of the query with each key.
+state: scores=[1 0 1]
+step: Divide each score by the square root of 2, which is about 1.41.
+state: scaled=[0.71 0 0.71]
+step: Apply softmax so the weights are positive and sum to one.
+state: weights=[0.40 0.20 0.40]
+step: Multiply each value vector by its weight and add the results.
+state: output=0.40 v1 + 0.20 v2 + 0.40 v3
+step: Token 3 reads mostly from tokens 1 and 3 and a little from token 2.
+:::
 
 ## How it works
 
@@ -65,11 +92,46 @@ To compute attention for a sequence of $T$ tokens by hand:
 4. Apply softmax to each row.
 5. Multiply the weight matrix by $V$.
 
+The diagram shows the path of the queries, keys, and values through one head.
+
+:::flow
+title: Scaled dot-product attention, one head
+Input X -> Q: multiply by WQ
+Input X -> K: multiply by WK
+Input X -> V: multiply by WV
+Q -> Scores: dot with K
+K -> Scores: dot with Q
+Scores -> Softmax: divide by sqrt dk
+Softmax -> Output: weights times V
+V -> Output: weighted sum
+:::
+
 The scale factor matters. Dot products grow with $d_k$. Without the division, large scores push softmax to put all weight on one token. In that regime the gradients are close to zero and training stalls.
 
 The cost is quadratic. Step 2 compares every token with every token, so the work grows with $T^2$. For a sequence of 4,000 tokens, that is 16 million scores per head per layer. The benefit is a path of length one between any two tokens. That short path is the reason that scale works.
 
+The bars compare the score count for three sequence lengths.
+
+:::bars
+title: Scores per head per layer as the sequence grows
+unit: million
+1,000 tokens: 1
+4,000 tokens: 16
+16,000 tokens: 256
+:::
+
 Note: in a decoder model, each token can only look at earlier tokens. The model sets the scores for later tokens to minus infinity before softmax. This is the causal mask.
+
+The grid shows causal attention weights for the 4-token sentence "the cat sat down", where each row sums to one and the cells above the diagonal are zero.
+
+:::matrix
+title: Causal attention weights for the cat sat down
+cols: the, cat, sat, down
+the: 1.0, 0, 0, 0
+cat: 0.6, 0.4, 0, 0
+sat: 0.2, 0.5, 0.3, 0
+down: 0.1, 0.4, 0.2, 0.3
+:::
 
 ## Common mistakes
 
@@ -120,7 +182,46 @@ Heads are the unit that inference engineers prune, share, and cache. Grouped-que
 
 Take a model with width $d_{\\text{model}} = 8$ and $h = 2$ heads. Each head gets width $d_k = 8 / 2 = 4$. The model projects the 8-dimensional input into two 4-dimensional query vectors, two 4-dimensional key vectors, and two 4-dimensional value vectors.
 
+The diagram shows how the width splits into two heads and joins again.
+
+:::flow
+title: Two heads split the width 8 and mix back
+Input x (8) -> Head 1 (4): project Q K V
+Input x (8) -> Head 2 (4): project Q K V
+Head 1 (4) -> Concat (8): 4 numbers
+Head 2 (4) -> Concat (8): 4 numbers
+Concat (8) -> Output WO: multiply
+:::
+
 Consider the 4-token sentence "the cat sat down". Head 1 might learn to look at the previous token. At the token "sat", head 1 puts weight 0.9 on "cat" and 0.1 elsewhere. Head 2 might learn to look at the subject of the sentence. At the token "down", head 2 puts weight 0.8 on "cat". Each head produces a 4-dimensional output. The model concatenates the two outputs into one 8-dimensional vector and multiplies by an output matrix.
+
+Press Next to follow the token "sat" through both heads.
+
+:::scenario
+title: The token sat passes through two heads
+state: input=8 numbers, head 1=idle, head 2=idle
+step: The model projects the 8-number input into two 4-number queries, keys, and values.
+state: head 1=4-number q k v, head 2=4-number q k v
+step: Head 1 looks at the previous token and puts weight 0.9 on cat.
+state: head 1=weight 0.9 on cat
+step: Head 2 looks for the subject of the sentence and puts weight 0.8 on cat.
+state: head 2=weight 0.8 on cat
+step: Each head outputs 4 numbers. The model concatenates them into 8 numbers.
+state: concat=8 numbers
+step: The output matrix mixes the 8 numbers and returns the result to the stream.
+state: output=8 numbers
+:::
+
+The grid shows the weights of head 1, the previous-token head, for all four tokens.
+
+:::matrix
+title: Head 1, a previous-token head, on the cat sat down
+cols: the, cat, sat, down
+the: 1.0, 0, 0, 0
+cat: 0.9, 0.1, 0, 0
+sat: 0.05, 0.9, 0.05, 0
+down: 0.03, 0.07, 0.9, 0
+:::
 
 Compare the cost with one head of width 8. One head computes scores from 8-dimensional dot products. Two heads compute scores from two 4-dimensional dot products. The total number of multiplications is the same. The difference is capacity. One wide head learns one weighting of the sequence. Two narrow heads learn two different weightings.
 
@@ -143,7 +244,25 @@ Probing studies find heads with clear jobs. Some heads attend to the previous to
 
 Many heads can be removed with a small loss in quality. That observation led to multi-query attention and grouped-query attention. In grouped-query attention, several query heads share one key head and one value head. The KV cache shrinks by the same factor.
 
+The bars compare the number of key-value heads the cache stores per layer under each scheme for a model with 32 query heads.
+
+:::bars
+title: Key-value heads stored per layer with 32 query heads
+unit: heads
+Multi-head attention: 32
+Grouped-query attention: 8 (4 query heads per group)
+Multi-query attention: 1
+:::
+
 Note: the number of heads is a design choice. Llama 3 8B uses 32 query heads and 8 key-value heads.
+
+The table lists the head sizes of three public models.
+
+| Model | Width | Query heads | Head width | Key-value heads |
+| --- | --- | --- | --- | --- |
+| GPT-2 small | 768 | 12 | 64 | 12 |
+| Llama 3 8B | 4,096 | 32 | 128 | 8 |
+| Llama 3 70B | 8,192 | 64 | 128 | 8 |
 
 ## Common mistakes
 
@@ -204,7 +323,34 @@ The simplest fix adds a position vector to each token embedding. Take a width of
 
 The first pair changes fast. The second pair changes slowly. Together they form a unique code for each position, like the hands of a clock.
 
+The grid shows the four entries for positions 0 to 3, with the fast pair on the left and the slow pair on the right.
+
+:::matrix
+title: Sinusoidal position codes, width 4, positions 0 to 3
+cols: sin fast, cos fast, sin slow, cos slow
+pos 0: 0, 1, 0, 1
+pos 1: 0.84, 0.54, 0.01, 1.00
+pos 2: 0.91, -0.42, 0.02, 1.00
+pos 3: 0.14, -0.99, 0.03, 1.00
+:::
+
 RoPE takes a different route. Instead of adding a vector, it rotates the query and key vectors by an angle that grows with position. Pair up the dimensions. Rotate the pair at position $m$ by the angle $m\\theta$. Take a query at position 5 and a key at position 2. Rotate one by $5\\theta$ and the other by $2\\theta$. Their dot product depends only on the difference, $3\\theta$. The score depends on relative offset, not on absolute position.
+
+Press Next to follow the two rotations and see that only the difference survives.
+
+:::scenario
+title: RoPE with a query at position 5 and a key at position 2
+state: query position=5, key position=2, theta=0.1 rad
+step: Pair up the dimensions of the query and the key.
+step: Rotate the query pair by 5 times theta.
+state: query angle=0.5 rad
+step: Rotate the key pair by 2 times theta.
+state: key angle=0.2 rad
+step: Take the dot product. Only the difference of the angles survives.
+state: effective angle=0.3 rad
+step: Move both tokens 10 positions later. The angles change but the difference stays 0.3 radians.
+state: query position=15, key position=12, query angle=1.5 rad, key angle=1.2 rad
+:::
 
 ## How it works
 
@@ -222,7 +368,33 @@ To apply RoPE to one head:
 4. Rotate the pair of the key at position $n$ by the angle $n\\theta_i$.
 5. Compute the dot product as usual.
 
+The diagram shows where the rotation acts inside one head.
+
+:::flow
+title: Where RoPE acts inside one head
+Input x -> Query q: multiply by WQ
+Input x -> Key k: multiply by WK
+Input x -> Value v: multiply by WV
+Query q -> Rotate by m theta: position m
+Key k -> Rotate by n theta: position n
+Rotate by m theta -> Dot product: rotated q
+Rotate by n theta -> Dot product: rotated k
+Value v -> Output: no rotation
+Dot product -> Output: softmax weights
+:::
+
 ALiBi uses no position vectors at all. It subtracts a penalty from each score. The penalty grows with the distance between the query and the key. Close tokens get a small penalty and far tokens get a large one.
+
+The bars compare the ALiBi penalty at four distances for a head with slope 0.5.
+
+:::bars
+title: ALiBi penalty with slope 0.5 by distance
+unit: score units
+distance 1: 0.5
+distance 4: 2
+distance 16: 8
+distance 64: 32
+:::
 
 Models fail past their training length because they never saw the large angles. Position interpolation scales every position down so the largest angle stays inside the trained range. NTK-aware scaling and YaRN change the base frequency instead, so high frequencies stay sharp and low frequencies stretch. Both methods need a short fine-tune on long sequences.
 
@@ -277,9 +449,41 @@ The block is the repeated unit of every language model. A 32-layer model is 32 c
 
 Take a model with width $d = 4$ and a single token. The token enters as the vector $x = [1, 2, 0, 1]$. This vector is the residual stream. The block updates it in two steps.
 
+The diagram shows the data path through one pre-norm block, with the two skip paths that carry the stream around each sub-layer.
+
+:::flow
+title: Data path through one pre-norm block
+Stream x -> LayerNorm 1: normalise
+LayerNorm 1 -> Attention: mean 0 variance 1
+Attention -> Add 1: update a
+Stream x -> Add 1: skip path
+Add 1 -> LayerNorm 2: x prime
+LayerNorm 2 -> FFN: normalised
+FFN -> Add 2: update f
+Add 1 -> Add 2: skip path
+Add 2 -> Next block: x double prime
+:::
+
 Step one is attention. The block normalises $x$ to have mean 0 and variance 1. Then attention produces an update, say $a = [0.5, 0, 0.5, 0]$. The block adds the update to the stream: $x' = x + a = [1.5, 2, 0.5, 1]$.
 
 Step two is the feed-forward network. The block normalises $x'$ again. It multiplies by an up-projection of shape $4 \\times 16$, applies a nonlinearity, and multiplies by a down-projection of shape $16 \\times 4$. Suppose the result is $f = [0, -1, 0, 1]$. The block adds it: $x'' = x' + f = [1.5, 1, 0.5, 2]$. That vector goes to the next block.
+
+Press Next to follow the vector through the block.
+
+:::scenario
+title: One token vector through the block
+state: x=[1 2 0 1]
+step: Normalise x to mean 0 and variance 1. The copy on the skip path stays unchanged.
+state: normalised=[0 1.41 -1.41 0]
+step: Attention reads the normalised vector and produces the update a.
+state: a=[0.5 0 0.5 0]
+step: Add a to the stream.
+state: x=[1.5 2 0.5 1]
+step: Normalise the new stream and run the feed-forward network. It produces the update f.
+state: f=[0 -1 0 1]
+step: Add f to the stream. The result goes to the next block.
+state: x=[1.5 1 0.5 2]
+:::
 
 The important point is that each part only adds to the stream. The original $x$ survives unchanged inside $x''$. A block that learns nothing adds zero and passes the input through. That property lets a 100-layer model train.
 
@@ -305,6 +509,25 @@ To count the weights in one block:
 4. Total: about $12d^2$.
 
 For $d = 4096$, one block has about 200 million weights. The feed-forward part is 8 of the 12 parts. Attention moves information between tokens. The feed-forward network processes each token on its own and stores most of the learned facts.
+
+The table lists the weights of each part for a width of 4,096.
+
+| Part | Shape | Weights at width 4,096 |
+| --- | --- | --- |
+| Attention, four matrices | 4 times d by d | 67 million |
+| Feed-forward up-projection | d by 4d | 67 million |
+| Feed-forward down-projection | 4d by d | 67 million |
+| Normalisation gains | 2d | 8,192 |
+
+The bars compare the three parts.
+
+:::bars
+title: Weights in one block at width 4,096
+unit: million
+Attention: 67
+Feed-forward network: 134
+Normalisation: 0.008
+:::
 
 Note: the original Transformer applied normalisation after the residual add. Modern models apply it before, which is more stable at depth.
 
@@ -375,7 +598,34 @@ Suppose loss depends on weight count $N$ as $L = 2.0 + 400 / N^{0.34}$. Compute 
 
 Each 10 times increase in size removes about 55 percent of the excess loss above 2.0. The 2.0 is the floor. No model size reaches below it, because natural text has irreducible randomness.
 
+The bars compare the loss of the three sizes.
+
+:::bars
+title: Loss by weight count with L = 2.0 + 400 / N to the power 0.34
+unit: loss
+100 million weights: 2.75
+1 billion weights: 2.34
+10 billion weights: 2.16
+:::
+
 Now add data. The Chinchilla paper found that a fixed compute budget has one best split. Take a budget large enough to train a 1 billion weight model on 20 billion tokens. The same budget trains a 2 billion weight model on 10 billion tokens, or a 500 million weight model on 40 billion tokens. Chinchilla found that the balanced option, about 20 tokens per weight, gives the lowest loss.
+
+Press Next to plan a run for a budget of 10 to the power 21 FLOPs.
+
+:::scenario
+title: Plan a run for a budget of 10 to the power 21 FLOPs
+state: budget=1e21 FLOPs, N=unknown, D=unknown
+step: Set the token count to 20 times the weight count.
+state: D=20 N
+step: Write the compute rule. C equals 6 times N times D, so C equals 120 N squared.
+state: equation=120 N squared = 1e21
+step: Divide the budget by 120 and take the square root.
+state: N=2.9 billion
+step: Multiply N by 20 to get the token count.
+state: D=58 billion
+step: Check the data supply. The run needs 58 billion tokens of good text.
+state: check=58 billion tokens needed
+:::
 
 ## How it works
 
@@ -398,6 +648,20 @@ To plan a compute-optimal run:
 For $C = 10^{21}$ FLOPs, step 3 gives $N \\approx 2.9$ billion weights and $D \\approx 58$ billion tokens.
 
 The Kaplan paper reached a different conclusion. It found that weights should grow much faster than data. The cause was the learning rate schedule. Kaplan reused one long schedule for every run, and short runs ended before their learning rate decayed. Chinchilla tuned the schedule to each run length. With the fair comparison, the balanced split won.
+
+The timing diagram shows the two schedules for a run of 4,000 steps: the Kaplan decay sits after the run has ended, and the Chinchilla decay finishes inside the run.
+
+:::timeline
+title: Learning rate schedules for a 4,000-step run
+unit: steps
+lane Kaplan schedule
+lane Chinchilla schedule
+Kaplan schedule: warmup @0-200
+Kaplan schedule: constant high rate, run stops at 4000 @200-4000
+Kaplan schedule: decay planned for a 10000-step run @4000-10000
+Chinchilla schedule: warmup @0-200
+Chinchilla schedule: cosine decay to zero at step 4000 @200-4000
+:::
 
 Note: the exact ratio depends on the data and the tokeniser. Treat 20 as a starting point, not a constant.
 
@@ -469,6 +733,29 @@ Plan B costs twice as much to train. Now add serving. Each generated token costs
 
 At 1 trillion served tokens the plans are close. At 10 trillion served tokens, Plan A costs $21.2 \\times 10^{22}$ and Plan B costs $12.4 \\times 10^{22}$. Plan B wins by a wide margin. The more you serve, the more the small model pays back its extra training.
 
+Press Next to add the serving cost step by step.
+
+:::scenario
+title: Lifetime cost of Plan A and Plan B
+state: served tokens=0, Plan A cost=1.2e22, Plan B cost=2.4e22
+step: Count the training cost first. Plan B costs twice as much to train.
+step: Serve 1 trillion tokens. Each token costs 2 N FLOPs, so Plan A pays 2e22 and Plan B pays 1e22.
+state: served tokens=1 trillion, Plan A cost=3.2e22, Plan B cost=3.4e22
+step: Plan A is still ahead by a small margin.
+step: Serve 10 trillion tokens in total. Plan A pays 20e22 for serving and Plan B pays 10e22.
+state: served tokens=10 trillion, Plan A cost=21.2e22, Plan B cost=12.4e22
+step: Plan B now costs about 40 percent less over the life of the product.
+:::
+
+The bars compare the two totals at 10 trillion served tokens.
+
+:::bars
+title: Total cost at 10 trillion served tokens
+unit: x 10^22 FLOPs
+Plan A, 10 billion weights: 21.2
+Plan B, 5 billion weights: 12.4
+:::
+
 ## How it works
 
 The combined cost is:
@@ -476,6 +763,15 @@ The combined cost is:
 $$C_{\\text{total}} = 6ND_{\\text{train}} + 2ND_{\\text{infer}}$$
 
 $N$ is the weight count. $D_{\\text{train}}$ is the number of training tokens. $D_{\\text{infer}}$ is the expected number of tokens served over the life of the model. The first term is training. The second term is serving.
+
+The grid shows the total cost of each plan at three serving volumes, in units of 10 to the power 22 FLOPs.
+
+:::matrix
+title: Total FLOPs in units of 10 to the power 22
+cols: 1 T served, 3 T served, 10 T served
+Plan A 10B: 3.2, 7.2, 21.2
+Plan B 5B: 3.4, 5.4, 12.4
+:::
 
 To choose a plan:
 
@@ -546,6 +842,23 @@ An epoch is one full pass over the training data. Suppose you have 100 billion t
 
 The Muennighoff study measured the first option. Tokens seen for the second time are worth almost as much as new tokens. Tokens seen for the fourth time are worth about as much as new tokens too. Past 4 epochs the value falls fast. By 16 epochs, extra passes add almost nothing, and loss can rise. So 4 epochs of good data is a safe plan.
 
+The timing diagram shows the four epochs and the value of each token as the run repeats the data.
+
+:::timeline
+title: Four epochs over 100 billion unique tokens
+unit: B tokens
+lane Run
+lane Token value
+Run: epoch 1 @0-100
+Run: epoch 2 @100-200
+Run: epoch 3 @200-300
+Run: epoch 4 @300-400
+Token value: 1.0 @0-100
+Token value: 0.97 @100-200
+Token value: 0.93 @200-300
+Token value: 0.9 @300-400
+:::
+
 Here is the pattern from the study in rough numbers:
 
 | Epochs | Value of each repeated token |
@@ -556,6 +869,17 @@ Here is the pattern from the study in rough numbers:
 | 16 | about 0.2 |
 
 Option three depends on the quality gap. If the extra text is close in quality, mix it in. If it is far worse, repeat the good data instead.
+
+The bars compare the value of a repeated token at four epoch counts.
+
+:::bars
+title: Value of a token seen again, by epoch count
+unit: relative
+Epoch 1: 1.0
+Epoch 4: 0.9
+Epoch 8: 0.6
+Epoch 16: 0.2
+:::
 
 ## How it works
 
@@ -572,6 +896,21 @@ To plan a data-constrained run:
 3. If $D \\le 4U$, train for $D / U$ epochs.
 4. If $D > 4U$, compute $D_{\\text{eff}}$ and check whether more weights still help.
 5. If weights no longer help, spend the budget on data filtering or synthetic data instead.
+
+Press Next to plan the run from the example with 100 billion good tokens.
+
+:::scenario
+title: Plan a run with 100 billion good tokens
+state: unique tokens U=100 billion, planned N=20 billion weights, D=unknown
+step: Compute the Chinchilla target. D equals 20 times N.
+state: D=400 billion
+step: Compare D with 4 U. 400 billion equals 4 times 100 billion, so 4 epochs is safe.
+state: epochs=4
+step: Compute the effective data with 3 repeats and R star equal to 15.
+state: D eff=100 billion x (1 + 15 x (1 - e^-0.2)) = 372 billion
+step: The 400 billion tokens seen are worth about 372 billion fresh tokens. Train for 4 epochs.
+state: decision=train 4 epochs
+:::
 
 Synthetic data changes the budget. A model generates text that matches a target style, and a filter keeps the best outputs. The Phi series of models trains on textbook-style synthetic text and matches larger models on reasoning tasks. The cost moves from collection to generation and filtering.
 
@@ -633,9 +972,48 @@ A base model predicts the next token of web text. Ask it a question and it may c
 
 Take the prompt "Explain photosynthesis to a child". The base model produces a random continuation. The pipeline fixes this in three steps.
 
+The diagram shows the three stages and the data that moves between them.
+
+:::flow
+title: The three RLHF stages
+Base model -> SFT model: train on written answers
+SFT model -> Reward model: copy, add scalar head
+SFT model -> Labelers: two answers per prompt
+Labelers -> Reward model: chosen and rejected pairs
+SFT model -> Policy: initial weights
+Reward model -> Policy: scores during PPO
+Policy -> Assistant: final weights
+:::
+
 Stage one is supervised fine-tuning (SFT). A labeler writes a good answer. The model trains to reproduce that answer token by token, with the same loss as pretraining. After a few thousand examples, the model answers questions in the right format.
 
 Stage two is reward modelling. The SFT model produces two answers to the prompt. A labeler picks the better one. Call the chosen answer $y_w$ and the rejected one $y_l$. A reward model, a copy of the SFT model with a scalar output head, learns to give $y_w$ a higher score. Suppose it currently scores $y_w$ at 1.0 and $y_l$ at 0.5. The difference is 0.5. The loss is $-\\log \\sigma(0.5) \\approx 0.47$. If the scores were swapped, the loss would be $-\\log \\sigma(-0.5) \\approx 0.97$. The loss pushes the gap in the right direction.
+
+Press Next to compute the reward model loss for the pair.
+
+:::scenario
+title: Reward model loss for one preference pair
+state: score chosen=1.0, score rejected=0.5, gap=0.5
+step: Subtract the rejected score from the chosen score.
+step: Apply the sigmoid to the gap. The sigmoid of 0.5 is 0.62.
+state: sigmoid=0.62
+step: Take the negative logarithm. The loss is 0.47.
+state: loss=0.47
+step: Now swap the scores so the rejected answer scores higher.
+state: score chosen=0.5, score rejected=1.0, gap=-0.5, sigmoid=0.38
+step: The loss rises to 0.97. The gradient pushes the chosen score up and the rejected score down.
+state: loss=0.97
+:::
+
+The bars compare the loss for three values of the gap.
+
+:::bars
+title: Reward model loss by score gap
+unit: nats
+Gap +0.5, chosen scores higher: 0.47
+Gap 0, both answers score the same: 0.69
+Gap -0.5, rejected scores higher: 0.97
+:::
 
 Stage three is reinforcement learning (RL). The policy, the model under training, generates answers. The reward model scores them. The policy updates its weights to raise the score. A penalty keeps the policy close to the SFT model so it does not find scoring tricks.
 
@@ -653,6 +1031,26 @@ $$\\max_\\pi \\; \\mathbb{E}_{y \\sim \\pi}[r(x, y)] - \\beta\\, \\mathrm{KL}\\b
 
 $\\pi$ is the policy. $\\mathbb{E}_{y \\sim \\pi}$ is the average over answers the policy generates. $\\mathrm{KL}$ is the Kullback-Leibler divergence, a measure of how far the policy has moved from the SFT model. $\\beta$ sets the strength of the penalty. Proximal policy optimisation (PPO) is the algorithm that performs the update.
 
+The timing diagram shows one PPO iteration, from sampling to the weight update.
+
+:::timeline
+title: One PPO iteration
+unit: s
+lane Policy
+lane Reward model
+lane Reference
+lane Optimiser
+Policy: generate 256 answers @0-30
+Policy -> Reward model: answers @30-31
+Policy -> Reference: answers @30-31
+Reward model: score answers @31-36
+Reference: log probabilities for KL @31-36
+Reward model -> Optimiser: rewards @36-37
+Reference -> Optimiser: KL penalty @36-37
+Optimiser: 4 gradient epochs on the batch @37-55
+Optimiser -> Policy: new weights @55-56
+:::
+
 To run the pipeline:
 
 1. Collect 10,000 to 100,000 prompt and answer pairs. Train the SFT model.
@@ -660,6 +1058,14 @@ To run the pipeline:
 3. Train the reward model with the Bradley-Terry loss.
 4. Run PPO with the reward model and the KL penalty.
 5. Evaluate with fresh labelers, not the reward model.
+
+The table lists the data each stage needs.
+
+| Stage | Input data | Typical size | Output |
+| --- | --- | --- | --- |
+| Supervised fine-tuning | prompts with written answers | 10,000 to 100,000 pairs | SFT model |
+| Reward modelling | two answers per prompt with a labeler choice | 50,000 to 1 million pairs | reward model |
+| Reinforcement learning | prompts only | 10,000 to 100,000 prompts | policy |
 
 Caution: the reward model is a proxy. Optimise it too hard and the policy finds answers that score high but read badly. This is reward hacking.
 
@@ -716,6 +1122,34 @@ The RLHF objective asks for a policy that raises reward but stays close to the r
 
 Now reverse the question. Suppose you observe the optimal policy and the reference. Can you recover the reward? Yes, up to a constant. For A, $\\beta \\log(0.73 / 0.5) = 0.38$. For B, $\\beta \\log(0.27 / 0.5) = -0.62$. The difference is $1.0$, which equals the original reward gap. The constant from the partition function dropped out when you subtracted. DPO builds its loss from this difference, so it never needs the partition function.
 
+Press Next to follow the tiny world from reference to optimal policy and back to the reward.
+
+:::scenario
+title: Two answers, one reward, and the policy that follows
+state: ref A=0.5, ref B=0.5, reward A=1.0, reward B=0.0, beta=1
+step: Multiply each reference probability by e to the power of reward over beta.
+state: unnormalised A=1.36, unnormalised B=0.5
+step: Add the two numbers. The sum is the partition function Z.
+state: Z=1.86
+step: Divide each number by Z to get the optimal policy.
+state: policy A=0.73, policy B=0.27
+step: Reverse the question. Compute beta times the log ratio of policy to reference for each answer.
+state: implicit A=0.38, implicit B=-0.62
+step: Subtract. The difference is 1.0, the original reward gap. Z cancelled.
+state: difference=1.0
+:::
+
+The bars compare the probability of each answer before and after optimisation.
+
+:::bars
+title: Probability of each answer under the reference and the optimal policy
+unit: probability
+A under reference: 0.5
+A under optimal policy: 0.73
+B under reference: 0.5
+B under optimal policy: 0.27
+:::
+
 ## How it works
 
 Step one. The KL-regularised objective has the closed-form optimum:
@@ -734,6 +1168,17 @@ $$\\mathcal{L}_{\\text{DPO}} = -\\log \\sigma\\!\\left(\\beta \\log \\frac{\\pi_
 
 $\\pi_\\theta$ is the policy under training with weights $\\theta$. $y_w$ and $y_l$ are the chosen and rejected answers. $\\sigma$ is the sigmoid.
 
+The diagram shows the three steps of the derivation in order.
+
+:::flow
+title: The three steps of the DPO derivation
+RLHF objective -> Optimal policy: solve in closed form
+Optimal policy -> Reward formula: take logs and invert
+Reward formula -> Bradley-Terry loss: substitute for r
+Bradley-Terry loss -> Z cancels: subtract the pair
+Z cancels -> DPO loss: sigmoid of beta log ratios
+:::
+
 To train with DPO:
 
 1. Freeze a copy of the SFT model as $\\pi_{\\text{ref}}$.
@@ -742,6 +1187,15 @@ To train with DPO:
 4. Apply the DPO loss and take a gradient step on $\\theta$.
 
 Note: the log ratio $\\beta \\log(\\pi_\\theta / \\pi_{\\text{ref}})$ acts as an implicit reward. You can read it off a trained DPO model.
+
+The table compares the two methods.
+
+| Property | RLHF with PPO | DPO |
+| --- | --- | --- |
+| Model copies in memory | 4: policy, reference, reward, value | 2: policy, reference |
+| Sampling loop | yes | no |
+| Reward model | separate, trained first | implicit, inside the policy |
+| Main hyperparameters | beta, clip range, batch, PPO epochs | beta |
 
 ## Common mistakes
 
@@ -802,7 +1256,44 @@ Here is a simplified trace from such a run:
 
 The best model is at step 500, not at the end. The KL value is the early warning signal. The Gao study found that the true quality follows a curve that rises and then falls as the KL grows. The peak moves later with a bigger reward model and more preference data.
 
+Press Next to follow the run through the three checkpoints.
+
+:::scenario
+title: A PPO run that hacks the length bias
+state: step=0, reward=1.0, KL=0, human rating=6.0, answer length=200 words
+step: The reward model learned that long answers win. PPO starts from the SFT model.
+step: By step 500 the answers grow to 400 words with more detail. People like them more.
+state: step=500, reward=2.0, KL=5, human rating=6.8, answer length=400 words
+step: By step 1000 the answers reach 600 words and repeat themselves. The reward keeps rising.
+state: step=1000, reward=3.5, KL=20, human rating=5.1, answer length=600 words
+step: The KL passed 20 nats. The best checkpoint is step 500, not the last one.
+state: best checkpoint=step 500
+:::
+
+The bars compare the human rating at the three checkpoints.
+
+:::bars
+title: Human rating by PPO step
+unit: out of 10
+Step 0: 6.0 (reward 1.0, KL 0)
+Step 500: 6.8 (reward 2.0, KL 5)
+Step 1000: 5.1 (reward 3.5, KL 20)
+:::
+
 Constitutional AI replaces the labeler for harmlessness. The model generates an answer. The model then critiques its own answer against a written principle such as "choose the response that is least harmful". The model rewrites the answer. The pairs of original and rewritten answers train the reward model. The principles replace the labeler, and one principle applies to thousands of prompts.
+
+The diagram shows the constitutional AI loop from prompt to policy.
+
+:::flow
+title: The constitutional AI loop
+Prompt -> Model: generate answer
+Model -> Critique: apply one principle
+Critique -> Revision: rewrite the answer
+Revision -> SFT data: revised answers
+Revision -> AI preferences: compare two answers
+AI preferences -> Reward model: train
+Reward model -> RL policy: scores
+:::
 
 ## How it works
 
@@ -897,7 +1388,33 @@ BPE finds the most frequent pair of adjacent units and merges them into one unit
 
 The pair "l o" ties with "o w" at 7. Merge "l o" into "lo". Now "lo w" appears 7 times, so merge it into "low". Next, "e s" appears 6 times, so merge it into "es". After three merges the vocabulary has three new units: "lo", "low", and "es". The word "lower" now tokenises as "low", "e", "r", "_". Repeat until the vocabulary reaches a target size, often 32,000 to 128,000 units.
 
+Press Next to run the three merges and watch the token lists change.
+
+:::scenario
+title: Three BPE merges on low, lower, newest
+state: vocabulary=characters only, low=l o w _, lower=l o w e r _, newest=n e w e s t _
+step: Count every adjacent pair. The pairs l o and o w both appear 7 times.
+state: top pair=l o (7)
+step: Merge l o into lo. Rewrite every word.
+state: vocabulary=characters + lo, low=lo w _, lower=lo w e r _, top pair=lo w (7)
+step: Merge lo w into low.
+state: vocabulary=characters + lo + low, low=low _, lower=low e r _, top pair=e s (6)
+step: Merge e s into es. The word newest changes.
+state: vocabulary=characters + lo + low + es, newest=n e w es t _, top pair=es t (6)
+step: Stop after three merges. The word lower now tokenises as low, e, r, and the end marker.
+state: lower tokens=low e r _
+:::
+
 A larger vocabulary makes sequences shorter. The sentence "the newest lower" might take 7 tokens with a vocabulary of 100 and 3 tokens with a vocabulary of 50,000. Shorter sequences cost less attention. The price is a larger embedding table and a larger output layer.
+
+The bars compare the token count of the sentence for the two vocabulary sizes.
+
+:::bars
+title: Tokens for the sentence the newest lower
+unit: tokens
+Vocabulary of 100: 7
+Vocabulary of 50,000: 3
+:::
 
 ## How it works
 
@@ -910,11 +1427,33 @@ The BPE training procedure:
 
 To tokenise new text, apply the recorded merges in order. Modern tokenisers work on bytes, so any input has a tokenisation and there is no unknown token.
 
+The diagram shows the path from raw text to the embedding table.
+
+:::flow
+title: From text to token identifiers
+Raw text -> Pre-tokeniser: split on spaces
+Pre-tokeniser -> Bytes: encode each word
+Bytes -> Merge rules: apply merges in order
+Merge rules -> Tokens: low e r
+Tokens -> Vocabulary: look up each unit
+Vocabulary -> Token ids: integers
+Token ids -> Embedding table: one row per id
+:::
+
 The compression ratio is:
 
 $$\\rho = \\frac{\\text{number of bytes}}{\\text{number of tokens}}$$
 
 $\\rho$ is the average number of bytes per token. English text with a 100,000 unit vocabulary gives about 4 bytes per token. A tokeniser trained on English gives about 1.5 bytes per token on Thai, so Thai text costs almost three times as many tokens.
+
+The bars compare the bytes per token for the two languages.
+
+:::bars
+title: Bytes per token with an English-trained tokeniser
+unit: bytes per token
+English: 4.0
+Thai: 1.5
+:::
 
 Two failure modes come from the tokeniser. Numbers split in odd places, so "1234" may become "12" and "34", and the model must learn arithmetic across the split. Rare strings that appear in the vocabulary but not in training data become glitch tokens with untrained embeddings.
 
@@ -979,7 +1518,34 @@ Suppose you have four sources:
 
 The weight is the fraction of training tokens drawn from each source. Multiply the weight by the run length to get the tokens per source. Divide by the available tokens to get the epochs. The papers source repeats 2.5 times, which is safe. The web source uses only 7 percent of its supply, so you can filter it hard and keep the best part.
 
+The bars compare the epochs each source runs in the 1 trillion token run.
+
+:::bars
+title: Epochs per source in the 1 trillion token run
+unit: epochs
+Web: 0.07
+Code: 0.3
+Books: 1.0
+Papers: 2.5
+:::
+
 Now change one weight. Raise code from 0.15 to 0.30 and lower web to 0.55. The model will likely improve on code benchmarks and lose a little on general knowledge. If you raise papers to 0.30, the papers source would repeat 15 times, and the lesson on data-constrained scaling says that is past the useful limit. The available supply caps how far you can upsample a small source.
+
+Press Next to move weight between sources and watch the epoch counts.
+
+:::scenario
+title: Move weight from web to code in a 1 trillion token run
+state: web=0.70, code=0.15, books=0.10, papers=0.05, code epochs=0.3
+step: Raise the code weight to 0.30 and lower the web weight to 0.55.
+state: web=0.55, code=0.30, code epochs=0.6
+step: Code now supplies 300 billion tokens, which is 0.6 epochs of the 500 billion available.
+step: Expect better code benchmarks and a small loss on general knowledge.
+state: expected=code up and general knowledge down a little
+step: Now try papers at 0.30 instead. That is 300 billion tokens from a 20 billion token source.
+state: papers=0.30, papers epochs=15
+step: Fifteen epochs is past the useful limit. Keep papers near 0.05.
+state: papers=0.05, papers epochs=2.5
+:::
 
 ## How it works
 
@@ -996,6 +1562,18 @@ DoReMi learns the weights with a small proxy model:
 3. Average the weights over training. Use the average for the full-size run.
 
 The method finds domains that are hard but learnable and gives them more weight. The authors reported that weights found with a 280 million weight proxy transferred to an 8 billion weight model.
+
+The diagram shows how DoReMi turns two small runs into the weights for the full run.
+
+:::flow
+title: DoReMi learns domain weights with small models
+Uniform mixture -> Reference model: train small
+Reference model -> Proxy model: per-domain loss targets
+Proxy model -> Weight update: raise lagging domains
+Weight update -> Proxy model: next step
+Weight update -> Average weights: over training
+Average weights -> Full-size run: final mixture
+:::
 
 To test a mixture by hand:
 
@@ -1060,6 +1638,23 @@ Take two short documents:
 
 Split each into shingles, overlapping runs of three words. Document A has the shingles "the cat sat", "cat sat on", "sat on the", and "on the mat". Document B has "the cat sat", "cat sat on", "sat on a", and "on a mat". The two sets share 2 shingles. The union has 6 distinct shingles. The Jaccard similarity is $2 / 6 \\approx 0.33$.
 
+Press Next to compute the similarity shingle by shingle.
+
+:::scenario
+title: Jaccard similarity of two six-word documents
+state: A=the cat sat on the mat, B=the cat sat on a mat
+step: Split A into shingles of three words.
+state: shingles A=the cat sat | cat sat on | sat on the | on the mat
+step: Split B the same way.
+state: shingles B=the cat sat | cat sat on | sat on a | on a mat
+step: Count the shared shingles. Two shingles appear in both sets.
+state: shared=2
+step: Count the distinct shingles across both sets. There are six.
+state: union=6
+step: Divide. The Jaccard similarity is 2 over 6, about 0.33.
+state: Jaccard=0.33
+:::
+
 Exact matching finds only identical documents. It uses a hash of the full text and a lookup table. It misses Document B because one word differs. Near-duplicate detection needs the Jaccard measure, but comparing every pair of 1 billion documents is impossible.
 
 MinHash fixes this. Take a hash function and apply it to every shingle in a document. Keep only the minimum hash value. Two documents have the same minimum with probability equal to their Jaccard similarity. Repeat with 100 different hash functions. The fraction of matching minimums estimates the similarity. Each document now carries 100 numbers, its signature, instead of thousands of shingles.
@@ -1088,7 +1683,40 @@ The full procedure for a corpus:
 
 Step 5 is locality-sensitive hashing. It keeps the number of comparisons small. With 20 bands of 5 values each, pairs with similarity 0.8 land in a shared bucket with high probability, and pairs with similarity 0.3 almost never do.
 
+The diagram shows the full pipeline from raw documents to one kept copy.
+
+:::flow
+title: Deduplication pipeline for one corpus
+Raw documents -> Normalise: lowercase, strip
+Normalise -> Exact hash: full text
+Exact hash -> Shingles: 5-word runs
+Shingles -> MinHash: 100 values
+MinHash -> Bands: 20 bands of 5
+Bands -> Buckets: identical band
+Buckets -> Compare pairs: estimate Jaccard
+Compare pairs -> Keep one: above threshold
+:::
+
+The bars compare the chance that a pair shares a bucket at four similarity levels.
+
+:::bars
+title: Chance that a pair shares a bucket with 20 bands of 5 values
+unit: probability
+Jaccard 0.3: 0.05
+Jaccard 0.5: 0.47
+Jaccard 0.7: 0.97
+Jaccard 0.9: 1.0
+:::
+
 The threshold is a trade-off. A threshold of 0.9 removes mirrored pages and keeps paraphrases. A threshold of 0.5 removes more templated text and some useful variants. Most pipelines use 0.7 to 0.85.
+
+The table lists the effect of three thresholds.
+
+| Threshold | Removes | Keeps | Use |
+| --- | --- | --- | --- |
+| 0.9 | mirrored pages | paraphrases and templated text | conservative |
+| 0.7 to 0.85 | mirrors and most templates | most paraphrases | most pipelines |
+| 0.5 | templates and some useful variants | little near-duplicate text | aggressive |
 
 Note: the Lee study also removed repeated substrings of 50 tokens across documents with a suffix array. That catches licence text and headers that MinHash misses.
 
@@ -1148,7 +1776,43 @@ Take a 100 billion token run. Compare two plans:
 
 The curated set holds textbooks, high-quality code, and reasoning data. In the annealed plan the learning rate also decays to near zero over the final 10 billion tokens. The Llama 3 team used this pattern and reported gains of several points on reasoning benchmarks. The model is most sensitive to data during the decay, so the data it sees then leaves a strong mark.
 
+The timing diagram shows the data, the learning rate, and the context length across the annealed run.
+
+:::timeline
+title: The annealed plan over a 100 billion token run
+unit: B tokens
+lane Data
+lane Learning rate
+lane Context
+Data: web mixture @0-90
+Data: 50 percent curated @90-100
+Learning rate: warmup @0-2
+Learning rate: high and slow decay @2-90
+Learning rate: decay to near zero @90-100
+Context: 8000 tokens @0-95
+Context: 128000 tokens @95-100
+:::
+
 Quality filtering happens earlier, before the run starts. A simple filter uses rules: drop documents with fewer than 50 words, drop documents where more than 30 percent of lines end without punctuation, and drop documents with a high ratio of symbols to words. A stronger filter trains a classifier. Take 100,000 documents from a trusted source, such as reference articles, as positives. Take 100,000 random web documents as negatives. Train a fast linear model on word features. Score every document in the corpus and keep the top 20 to 40 percent.
+
+Press Next to build the classifier filter step by step.
+
+:::scenario
+title: Build a classifier filter for a web corpus
+state: positives=0, negatives=0, classifier=none, corpus kept=100 percent
+step: Collect 100,000 documents from a trusted reference source as positives.
+state: positives=100000
+step: Sample 100,000 random web documents as negatives.
+state: negatives=100000
+step: Train a fast linear model on word features.
+state: classifier=trained
+step: Score every document in the corpus and sort by score.
+state: corpus=scored
+step: Keep the top 30 percent. Check that enough tokens remain for the run.
+state: corpus kept=30 percent
+step: Train two small models, one on the filtered corpus and one on the raw corpus, and compare the losses.
+state: check=two small runs
+:::
 
 ## How it works
 
@@ -1173,6 +1837,16 @@ A curriculum changes the data distribution over time. Three curricula are common
 - Difficulty: start with simple text and add harder domains such as mathematics later.
 
 The context length schedule saves compute. Attention cost grows with the square of the sequence length. Training 95 percent of the run at 8,000 tokens and 5 percent at 128,000 tokens costs much less than the full run at 128,000 tokens, and the long-context quality is close.
+
+The bars compare the attention compute per token for three schedules, relative to a run at 8,000 tokens.
+
+:::bars
+title: Relative attention compute per token for three schedules
+unit: x
+All steps at 8,000 tokens: 1
+95 percent at 8,000 and 5 percent at 128,000: 1.75
+All steps at 128,000 tokens: 16
+:::
 
 Caution: a filter trained on one source teaches the model that source's style. Check that the filtered corpus still covers the domains you need.
 
@@ -1243,6 +1917,23 @@ With top-2 gating, the router keeps experts 2 and 4. It applies softmax to their
 
 Count the cost. The token used $2 \\times 128 = 256$ expert weights plus the 32 router weights. The layer holds 1,024 weights. The active weights are about a quarter of the total. Compute per token grew by two times compared with the dense block, but capacity grew by eight times.
 
+Press Next to follow the token through the router and the two chosen experts.
+
+:::scenario
+title: One token through a top-2 router with 8 experts
+state: token=4 numbers, scores=none, chosen=none
+step: Multiply the token by the 4 by 8 router matrix to get 8 scores.
+state: scores=0.1 2.0 0.3 1.5 0.0 0.2 0.4 0.1
+step: Keep the two highest scores. Experts 2 and 4 win.
+state: chosen=expert 2 (2.0) and expert 4 (1.5)
+step: Apply softmax to the two kept scores only.
+state: gates=0.62 and 0.38
+step: Run the token through expert 2 and expert 4. Skip the other six.
+state: active weights=256 of 1024
+step: Add the two outputs with the gate weights.
+state: output=0.62 x expert 2 + 0.38 x expert 4
+:::
+
 ## How it works
 
 The MoE layer computes:
@@ -1250,6 +1941,19 @@ The MoE layer computes:
 $$y = \\sum_{i \\in \\mathrm{TopK}(g(x))} \\frac{e^{g_i(x)}}{\\sum_{j \\in \\mathrm{TopK}} e^{g_j(x)}}\\, E_i(x)$$
 
 $x$ is the token vector. $g(x) = x W_g$ is the router output, one score per expert. $\\mathrm{TopK}$ selects the $k$ highest scores. $E_i$ is expert $i$, a feed-forward network. $y$ is the layer output.
+
+The diagram shows the path of one token through the layer.
+
+:::flow
+title: Path of one token through an MoE layer
+Token x -> Router: 4 by 8 matrix
+Router -> Top-2 select: 8 scores
+Top-2 select -> Expert 2: gate 0.62
+Top-2 select -> Expert 4: gate 0.38
+Expert 2 -> Weighted sum: output
+Expert 4 -> Weighted sum: output
+Weighted sum -> Next sublayer: y
+:::
 
 Routing creates a balance problem. If the router sends most tokens to expert 2, that expert learns and the others do not. The router then sends even more tokens to expert 2. A load-balancing loss prevents this:
 
@@ -1265,6 +1969,16 @@ To size an MoE model:
 4. Use the active weights for compute estimates and the total weights for memory.
 
 Mixtral 8x7B has 47 billion total weights and 13 billion active weights per token. It runs at the speed of a 13 billion weight model and needs the memory of a 47 billion weight model.
+
+The bars compare the total and active weights of Mixtral with a dense model of the same speed.
+
+:::bars
+title: Total and active weights
+unit: billion
+Mixtral 8x7B total: 47
+Mixtral 8x7B active per token: 13
+Dense 13B total: 13
+:::
 
 Caution: during serving, every expert must sit in GPU memory, because any token might call it. MoE cuts compute per token, not memory per token.
 
@@ -1330,6 +2044,34 @@ Set $a = 0.5$, $b = 1$, $c = 1$, and $h_0 = 0$. Feed the sequence $x = [1, 0, 0,
 
 The state remembers the input from step 1 with a weight that halves each step. The output at step 4 contains $0.125$ from step 1 plus $2$ from step 4. This is a weighted sum over the past with weights $a^{t-s}$. Because the weights only depend on the distance $t - s$, the whole output is a convolution of the input with the kernel $[1, 0.5, 0.25, 0.125]$. A convolution runs in parallel on a GPU. So the model trains as a convolution and runs as a recurrence.
 
+Press Next to run the recurrence one token at a time.
+
+:::scenario
+title: Scalar state space recurrence with a equal to 0.5
+state: h=0, x=1 0 0 2, t=0
+step: Read x1 equal to 1. Halve the state and add the input.
+state: h=1.0, y=1.0, t=1
+step: Read x2 equal to 0. Halve the state. Nothing is added.
+state: h=0.5, y=0.5, t=2
+step: Read x3 equal to 0. Halve the state again.
+state: h=0.25, y=0.25, t=3
+step: Read x4 equal to 2. Halve the state and add 2.
+state: h=2.125, y=2.125, t=4
+step: The input from step 1 survives with weight 0.125, which is 0.5 to the power 3.
+state: weight of x1=0.125
+:::
+
+The grid shows the weight of each input s in each output t, which is the convolution kernel written as a matrix.
+
+:::matrix
+title: Weight of input s in output t, the convolution kernel
+cols: s=1, s=2, s=3, s=4
+t=1: 1, 0, 0, 0
+t=2: 0.5, 1, 0, 0
+t=3: 0.25, 0.5, 1, 0
+t=4: 0.125, 0.25, 0.5, 1
+:::
+
 The constant $a$ is the weakness. The model forgets every input at the same rate. It cannot choose to remember the word "not" longer than the word "the". Mamba fixes this by letting $a$, $b$, and $c$ depend on the current input. The model now decides at each token how much to keep and how much to write. This is the selection mechanism.
 
 ## How it works
@@ -1351,6 +2093,15 @@ To compare costs for a sequence of $T$ tokens with state size $N$ and model widt
 | Compute per generated token | $O(T d)$ | $O(N d)$ |
 
 With $N = 16$ and $T = 100{,}000$, the state space model is thousands of times cheaper per generated token.
+
+The bars compare the compute per generated token per layer in multiples of the width.
+
+:::bars
+title: Compute per generated token per layer in multiples of the width d
+unit: x d
+Attention at 100,000 tokens: 100000
+State space model with N equal to 16: 16
+:::
 
 Note: fixed state size is also a limit. The model cannot recall an exact token from 50,000 steps ago unless the state kept it. Transformers do this with no effort. Hybrid models place one attention layer per several state space layers to get both.
 
@@ -1408,9 +2159,46 @@ $$2 \\times 32 \\times 8 \\times 128 \\times 2\\ \\text{bytes} = 131{,}072\\ \\t
 
 That is 128 kilobytes per token. A 128,000 token prompt needs 16 gigabytes of KV cache for one request. The weights of an 8 billion weight model in 16-bit take another 16 gigabytes. One long request fills a 40 gigabyte GPU.
 
+Press Next to size the cache for the request step by step.
+
+:::scenario
+title: Size the KV cache for one 128,000 token request
+state: layers=32, KV heads=8, head width=128, bytes per number=2
+step: Multiply the KV heads by the head width. One key per layer holds 1,024 numbers.
+state: numbers per key=1024
+step: Double it for the value. One layer stores 2,048 numbers per token.
+state: numbers per layer=2048
+step: Multiply by 32 layers. One token stores 65,536 numbers.
+state: numbers per token=65536
+step: Multiply by 2 bytes. One token costs 131,072 bytes, which is 128 kilobytes.
+state: bytes per token=131072
+step: Multiply by 128,000 tokens. The request needs about 16 gigabytes.
+state: cache for request=16 GB
+:::
+
+The bars compare the cache with the weights and the GPU capacity.
+
+:::bars
+title: Memory for one 128,000 token request on an 8 billion weight model
+unit: GB
+KV cache: 16
+Weights in 16-bit: 16
+GPU capacity: 40
+:::
+
 Now the score matrix. Naive attention writes all $T \\times T$ scores to memory before softmax. At $T = 128{,}000$, one head has 16 billion scores. Flash attention never writes this matrix. It processes keys in blocks of a few hundred, keeps a running maximum and a running sum for the softmax, and updates the output block by block. The memory for scores drops from $O(T^2)$ to $O(T)$, and the compute stays the same but runs faster because it stays on-chip.
 
 For sequences longer than one device can hold, ring attention splits the sequence across devices. Each device holds one block of queries and passes its keys and values around a ring. After a full rotation, every query has seen every key.
+
+The diagram shows the key and value blocks moving around a ring of four devices.
+
+:::flow
+title: Ring attention over four devices
+Device 1 -> Device 2: K and V block 1
+Device 2 -> Device 3: K and V block 2
+Device 3 -> Device 4: K and V block 3
+Device 4 -> Device 1: K and V block 4
+:::
 
 ## How it works
 
@@ -1424,6 +2212,22 @@ The online softmax that flash attention uses keeps three values per query row: t
 
 The result equals full softmax attention to within rounding error.
 
+The timing diagram shows how flash attention loads one key block at a time and updates the running values on-chip.
+
+:::timeline
+title: Flash attention processes keys in blocks for one query row
+unit: blocks
+lane GPU memory
+lane On-chip
+GPU memory -> On-chip: load Q and K block 1 @0-0.3
+On-chip: scores, running max, running sum @0.3-1
+GPU memory -> On-chip: load K block 2 @1-1.3
+On-chip: rescale and update @1.3-2
+GPU memory -> On-chip: load K block 3 @2-2.3
+On-chip: rescale and update @2.3-3
+On-chip -> GPU memory: write final output row @3-3.3
+:::
+
 Extension of the position encoding uses the methods from the positional encoding lesson. Scale the RoPE frequencies, then fine-tune on a small set of long documents. Llama 3 extended from 8,000 to 128,000 tokens in six stages at the end of pretraining.
 
 To evaluate long context:
@@ -1434,6 +2238,14 @@ To evaluate long context:
 4. Repeat for many depths and lengths. Plot accuracy as a grid.
 
 The needle test is necessary but weak. A model can pass it and still fail to combine two facts from different places. Stronger tests ask for multiple needles, for counting, or for reasoning over the whole input. The lost-in-the-middle study found that models use facts at the start and the end of a prompt more than facts in the middle.
+
+The table compares three long-context tests.
+
+| Test | Measures | Limit |
+| --- | --- | --- |
+| Needle in a haystack | recall of one fact at one depth and length | a model can pass with no reasoning |
+| Multiple needles | recall of several facts at once | no reasoning across the facts |
+| Whole-input reasoning | counting or combining facts across the input | expensive to build and to run |
 
 Caution: a model with a 128,000 token window and a 4,000 token training length for most of its run has seen few long examples. Check the recall grid before you trust it.
 
@@ -1498,7 +2310,32 @@ A direct prompt asks for the answer alone. A small model often outputs 29 or 3, 
 
 Each step is a short computation. Each generated token gives the model one more forward pass of compute. The chain turns one hard prediction into several easy ones.
 
+Press Next to follow the apple problem through the chain.
+
+:::scenario
+title: The apple problem with a chain of thought
+state: apples=23, stage=start
+step: The shop starts with 23 apples.
+state: stage=read the problem
+step: It uses 20 for lunch. Compute 23 minus 20.
+state: apples=3, stage=subtract
+step: It buys 6 more. Compute 3 plus 6.
+state: apples=9, stage=add
+step: Write the final answer in the fixed format. The answer is 9.
+state: answer=9, stage=done
+:::
+
 Self-consistency samples several chains with a temperature above zero. Suppose you sample five chains and get the answers 9, 9, 3, 9, and 29. The majority answer is 9 with 3 votes. A single chain is right about 60 percent of the time on this kind of problem. The vote over five chains is right more often, because errors in different chains tend to disagree with each other and the correct answer tends to repeat.
+
+The bars compare the votes for each answer.
+
+:::bars
+title: Votes over five sampled chains
+unit: votes
+Answer 9: 3
+Answer 3: 1
+Answer 29: 1
+:::
 
 ## How it works
 
@@ -1515,7 +2352,30 @@ To apply self-consistency:
 3. Extract the final answer from each chain with a regular expression.
 4. Return the answer with the most votes.
 
+The diagram shows three sampled chains and the vote.
+
+:::flow
+title: Self-consistency with sampled chains
+Prompt -> Sampler: temperature 0.7
+Sampler -> Chain 1: sample
+Sampler -> Chain 2: sample
+Sampler -> Chain 3: sample
+Chain 1 -> Extract answer: 9
+Chain 2 -> Extract answer: 9
+Chain 3 -> Extract answer: 3
+Extract answer -> Majority vote: 9 9 3
+Majority vote -> Final answer: 9
+:::
+
 The number of samples trades cost for accuracy. Gains flatten after 10 to 40 samples on most benchmarks.
+
+The table compares the three methods on the apple problem type.
+
+| Method | Generated tokens per question | Accuracy |
+| --- | --- | --- |
+| Direct answer | a few | lowest |
+| One chain | about 50 | about 60 percent |
+| Five chains with a vote | about 250 | above 60 percent |
 
 Chain of thought helps on tasks with a clear sequence of steps: arithmetic, symbolic logic, and multi-hop questions. It helps little on tasks that need a fact the model does not know, or on tasks that a single lookup solves. Small models below a few billion weights often produce chains with fluent but wrong steps, and the chain hurts.
 
@@ -1588,6 +2448,34 @@ A process reward model gives each step a probability of being correct:
 
 The model marks step 3 as the failure. To get one score for the whole solution, take the product or the minimum of the step scores. The product is $0.98 \\times 0.97 \\times 0.05 \\times 0.90 \\approx 0.04$. The minimum is 0.05. Either way, the solution scores low, and the score points at the broken step.
 
+Press Next to score the solution one step at a time.
+
+:::scenario
+title: Score the 4-step solution with a process reward model
+state: step 1=unscored, step 2=unscored, step 3=unscored, step 4=unscored, solution score=none
+step: Read the problem and step 1. The PRM gives 0.98.
+state: step 1=0.98
+step: Read up to step 2. The PRM gives 0.97.
+state: step 2=0.97
+step: Read up to step 3. The sum 24 plus 12 is written as 38. The PRM gives 0.05.
+state: step 3=0.05
+step: Read up to step 4. The addition from 38 is correct on its own. The PRM gives 0.90.
+state: step 4=0.90
+step: Multiply the four scores. The product is about 0.04. The minimum is 0.05.
+state: solution score=0.04 (product) or 0.05 (minimum)
+:::
+
+The bars compare the step scores.
+
+:::bars
+title: PRM score per step
+unit: probability
+Step 1: 0.98
+Step 2: 0.97
+Step 3: 0.05 (24 plus 12 written as 38)
+Step 4: 0.90
+:::
+
 Now sample 10 solutions and score each. Pick the one with the highest score. This is best-of-n selection. A solution with the right answer reached by a wrong step gets a low PRM score. A majority vote would accept it.
 
 ## How it works
@@ -1612,6 +2500,20 @@ To use a verifier at test time:
 3. Return the solution with the best score, or group by final answer and sum scores per answer.
 
 The second option, weighted voting, combines the verifier with the vote and often wins.
+
+The diagram shows best-of-n selection over three sampled solutions.
+
+:::flow
+title: Best-of-n selection with a verifier
+Problem -> Policy: sample n solutions
+Policy -> Solution 1: answer 45
+Policy -> Solution 2: answer 43
+Policy -> Solution 3: answer 43
+Solution 1 -> Verifier: score 0.04
+Solution 2 -> Verifier: score 0.91
+Solution 3 -> Verifier: score 0.12, wrong step
+Verifier -> Best answer: pick solution 2
+:::
 
 Caution: a verifier is a reward model and can be hacked. If you train the policy against it, watch for solutions that score high and read wrong.
 
@@ -1673,6 +2575,33 @@ Take the problem "Find the smallest prime greater than 90." The checker is a fun
 
 GRPO compares each sample with the others in its group. The group mean reward is 0.5. The standard deviation is 0.5. The advantage of each sample is its reward minus the mean, divided by the standard deviation. Samples 2 and 4 get advantage $+1$. Samples 1 and 3 get advantage $-1$.
 
+Press Next to compute the advantages by hand.
+
+:::scenario
+title: Group-relative advantage for four samples
+state: rewards=0 1 0 1, mean=unknown, std=unknown
+step: The checker grades each final answer. Only 97 scores 1.
+step: Compute the group mean. The sum is 2 and the group size is 4.
+state: mean=0.5
+step: Compute the standard deviation. Every reward is 0.5 away from the mean.
+state: std=0.5
+step: Subtract the mean from each reward and divide by the standard deviation.
+state: advantages=-1 +1 -1 +1
+step: Raise the probability of every token in samples 2 and 4. Lower it for samples 1 and 3.
+state: update=samples 2 and 4 up | samples 1 and 3 down
+:::
+
+The bars compare the advantage of each sample.
+
+:::bars
+title: Advantage per sample
+unit: standard deviations
+Sample 1, answer 91: -1
+Sample 2, answer 97: 1
+Sample 3, answer 93: -1
+Sample 4, answer 97: 1
+:::
+
 The update raises the probability of every token in samples 2 and 4. It lowers the probability of every token in samples 1 and 3. The model learns whatever those correct samples did: perhaps they listed primes, perhaps they checked divisibility by 7. Over many problems, the useful behaviours survive and the useless ones fade.
 
 Nothing in this loop needs a reward model or a human label. It needs problems with checkable answers.
@@ -1698,6 +2627,20 @@ The DeepSeek-R1 recipe in order:
 3. Run GRPO again on verifiable tasks, with a small reward for a consistent language.
 4. Sample a large set of solutions, filter by the checker, and fine-tune on them together with general data.
 5. Run a final RLHF stage for helpfulness and safety.
+
+The diagram shows the recipe from the base model to R1.
+
+:::flow
+title: The DeepSeek-R1 recipe
+Base model -> R1-Zero: GRPO with checkers
+R1-Zero -> Cold start data: a few thousand clean chains
+Cold start data -> SFT model: fine-tune the base
+SFT model -> GRPO stage 2: verifiable tasks
+GRPO stage 2 -> Filtered samples: checker keeps correct
+Filtered samples -> SFT stage 2: plus general data
+SFT stage 2 -> RLHF stage: helpfulness and safety
+RLHF stage -> R1: final model
+:::
 
 Response length grows during step 1. The model finds that more steps give more chances to check its work. The length curve is a useful signal: a sudden drop means the policy found a shortcut in the checker.
 
@@ -1753,6 +2696,32 @@ A trained model has a fixed quality per forward pass. Test-time methods raise th
 
 Suppose a model solves a hard problem on 10 percent of single samples. Sample once and the chance of at least one correct answer is 0.10. Sample 10 times and the chance is $1 - 0.9^{10} \\approx 0.65$. Sample 100 times and it is $1 - 0.9^{100} \\approx 1.0$. This quantity is coverage. Coverage says a correct answer is in the set. It does not say you can find it.
 
+Press Next to compute the coverage at each sample count.
+
+:::scenario
+title: Coverage for a problem with a 10 percent pass rate
+state: pass rate=0.10, samples=1, coverage=0.10
+step: One sample is correct with probability 0.10.
+step: Sample 10 times. The chance that all 10 fail is 0.9 to the power 10, about 0.35.
+state: samples=10, all fail=0.35
+step: Subtract from 1. Coverage is 0.65.
+state: coverage=0.65
+step: Sample 100 times. The chance that all fail is 0.9 to the power 100, about 0.00003.
+state: samples=100, all fail=0.00003
+step: Coverage is close to 1.0. A correct answer is almost surely in the set, but you still need to find it.
+state: coverage=1.0
+:::
+
+The bars compare the coverage at the three sample counts.
+
+:::bars
+title: Coverage by sample count at a 10 percent pass rate
+unit: probability
+1 sample: 0.10
+10 samples: 0.65
+100 samples: 1.0
+:::
+
 Three ways to use the samples:
 
 | Method | Finds the answer when | Cost |
@@ -1772,6 +2741,16 @@ Coverage for $n$ independent samples with pass rate $p$ is:
 $$c(n) = 1 - (1 - p)^{n}$$
 
 $c(n)$ is the probability that at least one sample is correct. $p$ is the single-sample pass rate. The Large Language Monkeys study found that measured coverage follows this curve across several orders of magnitude of $n$.
+
+The grid shows the coverage for three pass rates and four sample counts.
+
+:::matrix
+title: Coverage c(n) for pass rate p and sample count n
+cols: n=1, n=10, n=100, n=1000
+p=0.01: 0.01, 0.10, 0.63, 1.00
+p=0.1: 0.10, 0.65, 1.00, 1.00
+p=0.3: 0.30, 0.97, 1.00, 1.00
+:::
 
 To choose a test-time strategy for a given problem distribution:
 
@@ -1843,6 +2822,21 @@ The field publishes thousands of papers each month. A researcher cannot read the
 
 Take the Chinchilla paper as the example. Apply the three passes.
 
+The timing diagram shows the three passes and the decision between each pair.
+
+:::timeline
+title: Three passes over one paper
+unit: minutes
+lane Pass 1
+lane Pass 2
+lane Pass 3
+Pass 1: title, abstract, headings, figures, conclusion @0-10
+Pass 1 -> Pass 2: decide to continue @10
+Pass 2: full text, every figure, open questions @10-70
+Pass 2 -> Pass 3: paper worth building on @70
+Pass 3: re-derive and attack the argument @70-250
+:::
+
 Pass one takes 10 minutes. Read the title, the abstract, the section headings, and every figure caption. Read the conclusion. Write the claim in one sentence: "For a fixed compute budget, loss is lowest when weights and tokens grow at the same rate, so most 2022 models were too large for their data." Note the conditions: one model family, one data mix, loss measured on held-out text.
 
 Pass two takes about an hour. Read the full text but skip the proofs. Study each figure. For Chinchilla, figure 1 shows three fitting methods and their agreement. Look at the axes: are they log-scaled, and what range do they cover? Check the baselines: the paper compares with Gopher, a model from the same lab with the same data. Write down every question you cannot answer.
@@ -1850,6 +2844,25 @@ Pass two takes about an hour. Read the full text but skip the proofs. Study each
 Pass three takes several hours and is for papers you will build on. Re-derive the key result. For Chinchilla, fit the loss equation to the data in the appendix and check the exponents. Try to break the argument. The learning rate schedule difference with Kaplan is the key detail. Would the result hold with a different tokeniser? The paper does not say.
 
 The note at the end of pass two for this paper is one paragraph: the claim, the conditions, the strongest evidence, the weakest point, and what you would test next.
+
+Press Next to follow the first two passes on the Chinchilla paper.
+
+:::scenario
+title: Pass one and pass two on the Chinchilla paper
+state: minutes=0, claim=none, conditions=none, open questions=0
+step: Read the title, the abstract, the headings, every figure caption, and the conclusion.
+state: minutes=10
+step: Write the claim in one sentence. Loss is lowest when weights and tokens grow at the same rate.
+state: claim=weights and tokens grow at the same rate
+step: Note the conditions. One model family, one data mix, loss on held-out text.
+state: conditions=one family + one data mix + held-out loss
+step: Read the full text. Study figure 1 and its log axes. Find the Gopher baseline.
+state: minutes=70, baseline=Gopher from the same lab
+step: Write down what the paper does not answer, such as the effect of a different tokeniser.
+state: open questions=1
+step: Write the one-paragraph note with the claim, the conditions, the evidence, and the weakest point.
+state: note=written
+:::
 
 ## How it works
 
@@ -1859,6 +2872,16 @@ The three passes are:
 2. Pass two: full text without proofs. Note every unanswered question.
 3. Pass three: re-derive and reproduce. Attack the argument.
 
+The bars compare the time each pass takes.
+
+:::bars
+title: Time per pass
+unit: minutes
+Pass 1: 10
+Pass 2: 60
+Pass 3: 240 (several hours)
+:::
+
 For a machine learning paper, add these checks during pass two:
 
 - Find the baseline. Ask whether the baseline was tuned as hard as the new method.
@@ -1866,6 +2889,16 @@ For a machine learning paper, add these checks during pass two:
 - Find the number of runs. Ask whether the gap is larger than the variation between seeds.
 - Find the evaluation data. Ask whether the training data could contain it.
 - Find the compute. Ask whether the comparison holds compute equal.
+
+The table lists the five checks and where to look for each.
+
+| Check | What to confirm | Where to look |
+| --- | --- | --- |
+| Baseline | tuned as hard as the new method | experiments section and appendix |
+| Ablation | the component that carries the gain | ablation table |
+| Runs | the gap is larger than the seed variation | error bars and seed count |
+| Evaluation data | the training data does not contain it | data section |
+| Compute | the comparison holds compute equal | setup section or appendix |
 
 Write the claim as: "Under conditions C, method M beats baseline B on metric X by amount D." If you cannot fill every slot, the paper has not told you enough.
 
@@ -1930,6 +2963,34 @@ Step three: run the method. Use the exact few-shot examples from the paper's app
 
 Step four: write it up in one page with the configuration, the numbers, and the gap.
 
+Press Next to follow the four steps with the numbers.
+
+:::scenario
+title: Reproduce the chain-of-thought gain at small scale
+state: model=10 billion weight open model, problems=500, baseline=none, method=none
+step: Run the direct prompt. The paper reports 10 percent for a similar model.
+state: baseline=9 percent (paper 10)
+step: The gap is 1 point on 500 problems, inside the noise. Continue.
+state: baseline check=pass
+step: Run the few-shot chain-of-thought prompt from the appendix with 3 seeds.
+state: method=32 percent (paper 35)
+step: Compute the standard error. For 0.32 on 500 problems it is about 0.02.
+state: standard error=2 points
+step: The gap of 3 points is within two standard errors. The effect reproduces.
+state: verdict=reproduces
+:::
+
+The bars compare your numbers with the paper.
+
+:::bars
+title: Accuracy on 500 grade-school problems
+unit: percent
+Direct prompt, paper: 10
+Direct prompt, yours: 9
+Chain of thought, paper: 35
+Chain of thought, yours: 32
+:::
+
 ## How it works
 
 A reproduction is itself an experiment with a hypothesis: "the published number holds in my setup". Treat it with the same care.
@@ -1944,6 +3005,19 @@ The procedure:
 6. Compute the mean and standard error. Compare with the paper.
 7. Save the configuration, the logs, and the outputs with a version identifier.
 
+The diagram shows the procedure as a path from the claim to the saved record.
+
+:::flow
+title: The reproduction procedure
+Claim -> Smallest scale: from the paper's own figure
+Smallest scale -> Config file: every setting
+Config file -> Baseline run: direct prompt
+Baseline run -> Gap check: compare with paper
+Gap check -> Method runs: 3 seeds
+Method runs -> Mean and SE: compare with paper
+Mean and SE -> Saved record: configs, logs, outputs
+:::
+
 The standard error of an accuracy estimate is:
 
 $$\\mathrm{SE} = \\sqrt{\\frac{p(1 - p)}{n}}$$
@@ -1951,6 +3025,15 @@ $$\\mathrm{SE} = \\sqrt{\\frac{p(1 - p)}{n}}$$
 $p$ is the measured accuracy. $n$ is the number of test problems. For $p = 0.3$ and $n = 500$, the standard error is about 0.02. A gap smaller than two standard errors is not evidence of a difference.
 
 A gap is real when it is larger than the seed variation and the sampling error, and when it survives a check of the configuration. Common causes of a false gap are a different tokeniser, a different prompt format, a different evaluation parser, and a different data split. Check those four first.
+
+The table lists the four causes with a symptom and a check for each.
+
+| Cause | Symptom | Check |
+| --- | --- | --- |
+| Different tokeniser | token counts and prompt lengths differ | compare token counts on one example |
+| Different prompt format | baseline far from the paper | copy the appendix prompt exactly |
+| Different evaluation parser | right answers marked wrong | inspect 20 parsed outputs by hand |
+| Different data split | numbers differ in both directions | confirm the split and its size |
 
 Caution: a result that reproduces only with the authors' exact seed is not a result. Run several seeds.
 
@@ -2015,7 +3098,36 @@ Design a table with one row per removed part:
 
 Read the table. Removing the loss term costs 0.3 points, inside the seed spread. Removing the filter costs 5.9 points. Removing the warmup costs 0.6 points. The filter carries the gain. The loss term, the part you spent the most time on, does nothing you can measure.
 
+The bars compare the score of each configuration.
+
+:::bars
+title: Benchmark score by configuration, mean of 3 seeds
+unit: points
+Baseline: 65.0
+Full method: 72.1
+Without loss term: 71.8
+Without filter: 66.2
+Without long warmup: 71.5
+:::
+
 Now the honest paper says: "the gain comes from the data filter". The method shrinks to one part. That is a better result, because it is simpler and it is true.
+
+Press Next to read the table one row at a time.
+
+:::scenario
+title: Read the ablation table one row at a time
+state: full method=72.1, suspected cause=all three parts
+step: Remove the loss term. The score falls to 71.8, a drop of 0.3 points.
+state: drop without loss term=0.3, verdict loss term=inside seed spread
+step: Remove the filter. The score falls to 66.2, a drop of 5.9 points.
+state: drop without filter=5.9, verdict filter=carries the gain
+step: Remove the long warmup. The score falls to 71.5, a drop of 0.6 points.
+state: drop without warmup=0.6, verdict warmup=inside seed spread
+step: Compare each drop with two standard deviations, about 1.4 points. Only the filter passes.
+state: suspected cause=the filter alone
+step: Shrink the method to one part and say so in the write-up.
+state: method=data filter
+:::
 
 ## How it works
 
@@ -2038,6 +3150,15 @@ To run an ablation study:
 A confound is a change that rides along with the part under test. If the filter also shrinks the dataset, the ablation measures the filter and the smaller dataset together. To separate them, add a row with a random subset of the same size. If the new loss needs a different learning rate, sweep the learning rate for both the full method and the ablation, or the comparison favours the one you tuned.
 
 A full factorial design tests every combination of parts. For three parts that is 8 runs. It shows interactions: a part that helps only when another part is present. Use it when the parts could interact and the runs are cheap.
+
+The grid shows one slice of a full factorial design for the example, with the long warmup kept on.
+
+:::matrix
+title: Factorial slice with the long warmup on, mean score
+cols: no filter, filter
+no loss term: 65.6, 71.8
+loss term: 66.2, 72.1
+:::
 
 Note: an ablation that removes a part and replaces it with nothing can be unfair. Replace a new loss term with the standard term, not with zero.
 
@@ -2094,9 +3215,37 @@ The claim: "A classifier-based data filter raises fine-tuning accuracy on benchm
 
 The main figure: a bar chart with four bars, baseline, filter only, loss term only, and both, with error bars from three seeds. A reader who sees only this figure learns the whole result. Draw it on paper before you write a word of text.
 
+The bars show the main figure for the example.
+
+:::bars
+title: The main figure, accuracy by configuration
+unit: points
+Baseline: 65.0
+Filter only: 71.8
+Loss term only: 66.2
+Filter and loss term: 72.1
+:::
+
 The abstract, in four sentences: the problem, the method, the main number, and the limitation. For example: "Fine-tuning on noisy data wastes compute. We train a fast classifier to filter the data and compare it with a new loss term. The filter gives 6 points at equal compute; the loss term gives none. The result holds for one model family and one benchmark."
 
 The rest of the paper supports those four sentences.
+
+Press Next to build the write-up from the result.
+
+:::scenario
+title: Build the write-up from the ablation result
+state: claim=none, main figure=none, abstract=none
+step: Write the claim in one sentence with the condition, the method, the metric, and the size.
+state: claim=filter gives 6 points at equal compute and the loss term adds nothing
+step: Draw the main figure on paper. Four bars with error bars from three seeds.
+state: main figure=four bars + error bars
+step: Write the method and the experiments around the figure.
+state: sections=method + experiments
+step: Write the introduction, then the abstract in four sentences.
+state: abstract=problem + method + number + limitation
+step: Add related work and a plain limitations section.
+state: sections=all eight
+:::
 
 ## How it works
 
@@ -2111,7 +3260,29 @@ The standard structure, with the question each section answers:
 7. Limitations: where does the claim stop?
 8. Conclusion: what is the one thing to remember?
 
+The table lists the length of each part in a 4-page paper.
+
+| Section | Content | Length in a 4-page paper |
+| --- | --- | --- |
+| Abstract | problem, method, main number, limitation | 4 sentences |
+| Introduction | why it matters and the claim | half a page |
+| Method | what exactly you did | one page |
+| Experiments and ablations | the evidence, main figure first | one and a half pages |
+| Limitations and conclusion | where the claim stops | half a page |
+
 Write the sections in this order: main figure, method, experiments, introduction, abstract, related work, limitations. The abstract comes late because it summarises what the figures show.
+
+The diagram shows the writing order.
+
+:::flow
+title: Writing order for the sections
+Main figure -> Method: what produced it
+Method -> Experiments: the evidence
+Experiments -> Introduction: the claim
+Introduction -> Abstract: four sentences
+Abstract -> Related work: position the claim
+Related work -> Limitations: where it stops
+:::
 
 The reproducibility section lists:
 

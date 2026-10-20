@@ -23,6 +23,10 @@ npm run lint
 
 All lesson text follows ASD-STE100 Simplified Technical English: sentences of at most 20–25 words, active voice, present tense, one term per concept, abbreviations spelled out on first use, no idioms. Every lesson has the same seven sections (what it covers, why it matters, a worked example, how it works, common mistakes, check questions, go further) plus objectives, key terms and free links. `/style` documents the rules and `/labs/ste-checker` tests any text against the machine-checkable ones (`src/lib/ste.ts`).
 
+## Visual blocks in lessons
+
+Lesson bodies can embed five animated block types between paragraphs using `:::kind … :::` containers (converted to fenced code at render time so lesson text never needs backticks): `flow` (boxes and arrows with a travelling packet), `timeline` (lanes, work bars and messages over time), `scenario` (a step player with a live state panel), `bars` (animated comparison) and `matrix` (heat-map grid). Renderers live in `src/components/rich/`. The style guide page shows a live example of each. `npm run visuals` validates every block in every lesson and reports coverage per track.
+
 ## Videos
 
 `src/data/videos.ts` lists free YouTube lectures, playlists and channels per track. Video ids were checked against public listings; where only a playlist or channel could be confirmed, that is what is linked. Videos with an id play inline through youtube-nocookie.

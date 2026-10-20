@@ -61,7 +61,34 @@ Next compute the length of each vector. The length of A is $\\sqrt{0.81 + 0.01 +
 
 Divide the dot product by the product of the lengths: $0.94 / (0.99 \\times 0.96) \\approx 0.99$. A and B are almost parallel. They mean the same thing.
 
+Press Next to follow the same computation step by step.
+
+:::scenario
+title: Cosine similarity of A and B by hand
+state: dot product=0, length of A=unknown, length of B=unknown, cosine=unknown
+step: Multiply the matching entries of A and B. The products are 0.72, 0.02 and 0.20. Add them.
+state: dot product=0.94
+step: Compute the length of A. It is the square root of 0.98.
+state: length of A=0.99
+step: Compute the length of B. It is the square root of 0.93.
+state: length of B=0.96
+step: Divide the dot product by the product of the two lengths.
+state: cosine=0.99
+step: The score is close to 1, so A and B point in almost the same direction.
+:::
+
 Now compare A with C. The dot product is $0.09 + 0.09 + 0.08 = 0.26$. The length of C is about 0.93. The similarity is $0.26 / (0.99 \\times 0.93) \\approx 0.28$. A search for A returns B, not C.
+
+The matrix shows the cosine similarity between each pair of four texts, where D is "change my login password" with the vector (0.7, 0.3, 0.6).
+
+:::matrix
+title: Cosine similarity between four short texts
+cols: A, B, C, D
+A: 1.00, 0.99, 0.28, 0.94
+B: 0.99, 1.00, 0.40, 0.98
+C: 0.28, 0.40, 1.00, 0.51
+D: 0.94, 0.98, 0.51, 1.00
+:::
 
 ## How it works
 
@@ -80,6 +107,17 @@ To search a collection, follow this procedure:
 3. Compute the similarity between the query vector and every stored vector.
 4. Return the documents with the highest scores.
 
+The diagram shows the path of one query through this procedure.
+
+:::flow
+title: One query through a vector search
+Query -> Embedding model: query text
+Embedding model -> Scorer: query vector
+Vector store -> Scorer: stored document vectors
+Scorer -> Ranker: one score per document
+Ranker -> Results: top 10 documents
+:::
+
 Three facts about real models change how you use this procedure.
 
 First, a question and its answer do not look alike. A model trained only on "similar texts are close" puts questions near other questions. Retrieval models train on pairs of queries and passages instead. Many models expect a prefix such as "query:" or "passage:" to mark the side of the pair. Use the prefix the model card specifies.
@@ -87,6 +125,17 @@ First, a question and its answer do not look alike. A model trained only on "sim
 Second, the model is a bi-encoder. It embeds the query and the document separately and never sees them together. Search is fast, because document vectors are computed once. Accuracy is limited, because the model cannot compare the two texts word by word. A later lesson adds a reranker.
 
 Third, the dimension $d$ sets the storage cost. One million vectors at $d = 1024$ in 32-bit floats take $10^6 \\times 1024 \\times 4 = 4.1$ GB. Models trained with the Matryoshka method order their dimensions by importance. Keep only the first 256 dimensions and storage falls to 1.0 GB with little loss.
+
+The bars compare the storage for one million vectors at four dimensions.
+
+:::bars
+title: Storage for one million vectors in 32-bit floats
+unit: GB
+d = 256 (Matryoshka cut): 1.0
+d = 512: 2.0
+d = 1024: 4.1
+d = 4096: 16.4
+:::
 
 ## Common mistakes
 
@@ -141,6 +190,20 @@ Now suppose a key sentence sits at token 195 to token 210. The cut at token 200 
 
 Add an overlap of 50 tokens. Each chunk still has 200 tokens, but each new chunk starts 150 tokens after the previous one. Chunk 1 covers tokens 0 to 200. Chunk 2 covers tokens 150 to 350. The key sentence now sits fully inside chunk 2.
 
+Press Next to follow the key sentence through both settings.
+
+:::scenario
+title: One key sentence at tokens 195 to 210
+state: chunk size=200, overlap=0, chunks=5, key sentence=split
+step: Cut the 1000-token document at every 200 tokens. The cut at token 200 falls inside the key sentence.
+step: Chunk 1 holds tokens 0 to 200 and chunk 2 holds tokens 200 to 400. Neither chunk holds the full sentence.
+step: Set the overlap to 50 tokens. The step between chunk starts becomes 150 tokens.
+state: overlap=50, chunks=7
+step: Chunk 2 now covers tokens 150 to 350. The key sentence sits fully inside it.
+state: key sentence=whole in chunk 2
+step: The index holds 7 vectors instead of 5. The extra storage buys protection against bad cuts.
+:::
+
 The number of chunks rises. The step size is $200 - 50 = 150$ tokens. The count is:
 
 $$n = \\left\\lceil \\frac{N - s}{s - o} \\right\\rceil + 1$$
@@ -154,6 +217,17 @@ Here $N$ is the document length, $s$ is the chunk size, and $o$ is the overlap. 
 | 100 | 25 | 13 | 2.6 |
 | 500 | 100 | 3 | 0.6 |
 
+The bars compare the chunk counts from the table.
+
+:::bars
+title: Chunks from a 1000-token document
+unit: chunks
+Size 200, overlap 0: 5
+Size 200, overlap 50: 7
+Size 100, overlap 25: 13
+Size 500, overlap 100: 3
+:::
+
 ## How it works
 
 Three chunking methods cover most needs.
@@ -163,6 +237,17 @@ Fixed-size chunking cuts at a fixed token count. It is simple and fast, but it c
 Sentence-based chunking splits the text at sentence ends first. It then packs whole sentences into a chunk until the chunk reaches the size limit. No sentence is cut. This is the default choice for prose.
 
 Structure-based chunking uses the headings, paragraphs, and list items of the document. A Markdown file splits at headings. A code file splits at functions. An HTML page splits at section tags. Each chunk keeps its heading as a prefix, so the vector knows the topic.
+
+The diagram shows the path of one document from the splitter to the vector index.
+
+:::flow
+title: Chunking pipeline for one 1000-token document
+Document -> Splitter: 1000 tokens
+Splitter -> Prefixer: 7 chunks of 200 tokens
+Prefixer -> Embedding model: chunk with title and heading
+Embedding model -> Vector index: 7 vectors
+Vector index -> Metadata store: document id and position
+:::
 
 Follow this procedure to pick the settings:
 
@@ -243,6 +328,35 @@ The search runs like this:
 
 The search visited 5 points instead of 8. In a graph with a million points, it visits a few hundred. The top layers make long jumps; the bottom layer makes the final short steps.
 
+Press Next to follow the search from the top layer to the result.
+
+:::scenario
+title: HNSW search for the query at position 6.3
+state: layer=2, current point=1, distance=5.3, visited=1
+step: Start at layer 2 at point 1. Its only neighbour in this layer is point 5. Point 5 is closer, so move there.
+state: current point=5, distance=1.3, visited=2
+step: No neighbour of point 5 in layer 2 is closer. Drop to layer 1 at point 5.
+state: layer=1
+step: In layer 1 the neighbours of point 5 are 3 and 7. Point 7 is at distance 0.7, so move there.
+state: current point=7, distance=0.7, visited=4
+step: No neighbour of point 7 in layer 1 is closer. Drop to layer 0 at point 7.
+state: layer=0
+step: In layer 0 the neighbours of point 7 are 6 and 8. Point 6 is at distance 0.3, so move there.
+state: current point=6, distance=0.3, visited=5
+step: No neighbour of point 6 is closer. Return point 6 after 5 visits instead of 8.
+:::
+
+The diagram shows the same path as jumps between layers.
+
+:::flow
+title: Search path through the three layers
+Layer 2 point 1 -> Layer 2 point 5: distance 5.3 to 1.3
+Layer 2 point 5 -> Layer 1 point 5: drop one layer
+Layer 1 point 5 -> Layer 1 point 7: distance 1.3 to 0.7
+Layer 1 point 7 -> Layer 0 point 7: drop one layer
+Layer 0 point 7 -> Layer 0 point 6: distance 0.7 to 0.3
+:::
+
 ## How it works
 
 Each point joins the graph at a random top layer. The chance of a higher layer falls by a constant factor per layer, so there are about $\\log N$ layers. Search cost is about $O(\\log N)$.
@@ -264,6 +378,16 @@ A typical result on one million vectors at $d = 768$:
 | 256 | 0.99 | 2.5 ms |
 
 Recall at 10 is the fraction of the 10 true nearest neighbours that the index returns.
+
+The bars compare the latency at the three efSearch values.
+
+:::bars
+title: Latency per query on one million vectors
+unit: ms
+efSearch 16: 0.3 (recall 0.86)
+efSearch 64: 0.8 (recall 0.96)
+efSearch 256: 2.5 (recall 0.99)
+:::
 
 Note: HNSW keeps every vector and all links in memory. One million vectors at $d = 1024$ need 4.1 GB plus about 0.1 GB of links.
 
@@ -355,6 +479,32 @@ Compute the scores:
 
 The fused order is D1, D2, D3. D1 wins because both searches rank it near the top. D2 is a close second even though BM25 ranked it third. D3 drops because the vector search ranks it low. The fused list matches what a human would want.
 
+The bars compare the three fused scores.
+
+:::bars
+title: Reciprocal rank fusion scores with k = 60
+D1 (ranks 1 and 2): 0.03252
+D2 (ranks 3 and 1): 0.03226
+D3 (ranks 2 and 5): 0.03151
+:::
+
+Press Next to follow the query through the full retriever and watch the candidate counts.
+
+:::scenario
+title: One query through hybrid retrieval
+state: BM25 candidates=0, vector candidates=0, fused candidates=0, kept=0
+step: The user asks how to reset the X200 router. The program sends the query to both indexes at the same time.
+step: BM25 matches the exact strings X200 and reset. It returns its top 50 chunks.
+state: BM25 candidates=50
+step: The vector index embeds the query and returns its top 50 chunks by cosine similarity.
+state: vector candidates=50
+step: RRF merges the two lists. 17 chunks appear in both lists, so the fused list has 83 chunks.
+state: fused candidates=83
+step: The program keeps the top 5 fused chunks. D1 is first, D2 is second and D3 is third.
+state: kept=5
+step: The 5 chunks go to the generator. Recall at 5 for this question is 1, because D1 is in the top 5.
+:::
+
 ## How it works
 
 The baseline pipeline has five stages.
@@ -364,6 +514,19 @@ The baseline pipeline has five stages.
 3. At query time, run BM25 and vector search in parallel. Take the top 50 from each.
 4. Merge the two lists with RRF and keep the top k fused results.
 5. Pass the top k chunks to the generator.
+
+The diagram shows the path of one query through the five stages.
+
+:::flow
+title: Hybrid retrieval pipeline
+Query -> BM25 index: keyword search
+Query -> Vector index: embedded query
+BM25 index -> RRF merge: top 50 chunks
+Vector index -> RRF merge: top 50 chunks
+RRF merge -> Prompt builder: top k chunks
+Prompt builder -> Generator: prompt with chunks
+Generator -> User: answer
+:::
 
 Measure the retriever before you tune anything else. Build a labelled set of at least 100 questions. For each question, record the chunk IDs that contain the answer. Then compute recall at k:
 
@@ -435,9 +598,35 @@ The user asks: "What is the maximum upload size for the free plan?" The first st
 | C3 | How to upload a file from the mobile app | 2 | 0.22 |
 | C4 | Free plan storage total is 5 GB | 4 | 0.48 |
 
+The bars compare the cross-encoder scores of the four chunks.
+
+:::bars
+title: Cross-encoder scores for the upload size question
+C1 free plan 25 MB: 0.94 (first-stage rank 3)
+C2 pro plan 2 GB: 0.61 (first-stage rank 1)
+C4 free plan storage: 0.48 (first-stage rank 4)
+C3 mobile upload steps: 0.22 (first-stage rank 2)
+:::
+
 The first stage ranked C2 first because it shares many words with the query. The cross-encoder reads the query with each chunk, sees that C2 covers the wrong plan, and gives C1 the top score.
 
 Now apply a token budget. Suppose the prompt has room for 600 tokens of context. C1 is 180 tokens, C4 is 150 tokens, C2 is 200 tokens, and C3 is 170 tokens. Take chunks in score order until the budget is full: C1 (180), C2 (380), C4 (530). C3 does not fit and has a low score, so drop it.
+
+Press Next to fill the budget one chunk at a time.
+
+:::scenario
+title: Pack a 600-token budget in score order
+state: budget left=600, chunks in prompt=none, citation check=not run
+step: Take C1 first, because its score is 0.94. It uses 180 tokens.
+state: budget left=420, chunks in prompt=C1
+step: Take C2 next, with a score of 0.61. It uses 200 tokens.
+state: budget left=220, chunks in prompt=C1 C2
+step: Take C4 next, with a score of 0.48. It uses 150 tokens.
+state: budget left=70, chunks in prompt=C1 C2 C4
+step: C3 needs 170 tokens and only 70 remain. Its score is 0.22, so drop it.
+step: The model answers with citation [1]. The checker finds 25 MB in chunk 1 and marks the claim as supported.
+state: citation check=supported
+:::
 
 Number the chunks in the prompt:
 
@@ -460,6 +649,19 @@ The reranking stage follows a fixed procedure.
 5. Number each chunk and place it in the prompt.
 6. Instruct the model to cite chunk numbers after each claim.
 7. Parse the answer, extract the citations, and check each one.
+
+The diagram shows the path of one question through the reranking stage.
+
+:::flow
+title: Rerank, pack, cite and check
+Query -> First stage: question
+First stage -> Cross-encoder: 50 candidate chunks
+Cross-encoder -> Packer: one score per chunk
+Packer -> Prompt: 3 numbered chunks
+Prompt -> Model: chunks and question
+Model -> Checker: answer with [1]
+Checker -> User: verified answer
+:::
 
 The cross-encoder is a small transformer with one output. The score is:
 
@@ -543,7 +745,33 @@ Faithfulness is the fraction of claims supported by the context: $1/2 = 0.50$. T
 
 Answer relevance asks whether the answer addresses the question. If the question asked only about upload size, the storage sentence is extra. A judge gives a relevance score of about 0.7.
 
+Press Next to compute the four metrics for this one question.
+
+:::scenario
+title: Four metrics for one golden question
+state: retrieved=G1 N1 G2 N2 N3, precision=unknown, recall=unknown, faithfulness=unknown, relevance=unknown
+step: Count the relevant chunks among the 5 retrieved chunks. G1 and G2 are relevant, so precision is 2 of 5.
+state: precision=0.40
+step: Count the retrieved chunks among the 2 relevant chunks in the corpus. Both appear, so recall is 2 of 2.
+state: recall=1.00
+step: Split the answer into 2 claims. The judge supports the 25 MB claim and rejects the 10 GB claim.
+state: faithfulness=0.50
+step: The judge scores how well the answer addresses the question. The storage sentence is extra.
+state: relevance=0.7
+step: Retrieval is good and generation is weak. The fix is a stricter prompt or a reranker, not a new retriever.
+:::
+
 Across 200 golden questions you might see: context recall 0.85, context precision 0.45, faithfulness 0.78, answer relevance 0.90. Retrieval recall is good, so the fix is to improve faithfulness, for example with a stricter prompt or a reranker.
+
+The bars compare the four scores across the 200 questions.
+
+:::bars
+title: RAG scores over 200 golden questions
+Context recall: 0.85
+Context precision: 0.45
+Faithfulness: 0.78
+Answer relevance: 0.90
+:::
 
 ## How it works
 
@@ -555,6 +783,19 @@ Run the evaluation as a fixed procedure.
 4. Ask the judge whether each claim is supported by the chunks. Compute faithfulness.
 5. Ask the judge to score answer relevance from 1 to 5.
 6. Sample 50 judged items. Have a human label them and compute agreement with the judge.
+
+The diagram shows the path of one golden question through the evaluation.
+
+:::flow
+title: End-to-end RAG evaluation
+Golden set -> Retriever: question
+Retriever -> Retrieval metrics: 5 chunks and labels
+Retriever -> Generator: 5 chunks
+Generator -> Claim splitter: answer
+Claim splitter -> Judge: 2 claims
+Judge -> Generation metrics: supported or not
+Human sample -> Judge: 50 labelled items
+:::
 
 A minimal judge prompt looks like this:
 
@@ -647,6 +888,31 @@ On step 1 the model reads the question and sees that it needs a user ID. It call
 
 The whole task used three model calls and two tool calls. A step budget of 10 would have been enough.
 
+Press Next to run the loop with the step counter and the budget.
+
+:::scenario
+title: The Maria task through the loop
+state: step=0, budget=10, tool calls=0, answer=none
+step: The program sends the system prompt and the question to the model. The model calls find_user with the name Maria.
+state: step=1, tool calls=1
+step: The program runs find_user and appends user_id 4821 as a tool result.
+step: The model reads the id and calls count_issues with user_id 4821 and status open.
+state: step=2, tool calls=2
+step: The program runs count_issues and appends count 7 as a tool result.
+step: The model writes the final answer with no tool call. The loop stops with 8 steps of budget left.
+state: step=3, answer=Maria has 7 open bugs
+:::
+
+The bars compare the counts for this task.
+
+:::bars
+title: Calls in the Maria task
+unit: calls
+Model calls: 3
+Tool calls: 2
+Step budget: 10
+:::
+
 ## How it works
 
 The loop in pseudo-code:
@@ -669,6 +935,24 @@ The loop has three stages on every pass.
 1. Observe: the model reads all messages, including the latest tool results.
 2. Think: the model decides on the next tool call or on a final answer. Chain of thought, a short written plan before the action, helps here.
 3. Act: the program runs the tool calls and appends the results.
+
+The timeline shows one tool-calling turn across the program, the model and the tool.
+
+:::timeline
+title: One tool-calling turn
+unit: ms
+lane Program
+lane Model
+lane Tool
+Program -> Model: messages and tools @0-50
+Model: think and write the tool call @50-900
+Model -> Program: call find_user @900-950
+Program -> Tool: run find_user @950-1000
+Tool: look up Maria @1000-1200
+Tool -> Program: user_id 4821 @1200-1250
+Program: append tool result @1250-1300
+Program -> Model: messages with result @1300-1350
+:::
 
 This pattern is called ReAct, short for reason and act. The model alternates between a reasoning step and an action step.
 
@@ -785,6 +1069,42 @@ The model then calls update_customer_email with customer_id 311. If the email is
 
 The model reads the message and sends a corrected call. The loop never crashed.
 
+The table compares the bad tool with the two narrow tools.
+
+| Tool | Job | Arguments | On failure |
+|---|---|---|---|
+| do_database | Any database operation | One free-text query | Server throws, loop stops |
+| find_customer | Read customers by name | name_contains, limit 1 to 20 | Returns count 0 |
+| update_customer_email | Set one email | customer_id, email | Returns error object, retryable |
+
+Press Next to follow the two calls with the error and the retry.
+
+:::scenario
+title: Find Ana Lopez and update her email
+state: customer id=unknown, email=ana@old.com, loop=running, retries=0
+step: The model calls find_customer with name_contains Lopez. The tool returns one result with id 311.
+state: customer id=311
+step: The model calls update_customer_email with id 311 and the email ana-at-new.com. The email has no @ sign.
+step: The tool returns an error object with code invalid_email and retryable true. The loop keeps running.
+state: retries=1
+step: The model reads the message and calls the tool again with ana@new.com.
+state: email=ana@new.com
+step: The tool returns status ok. A second call with the same arguments would change nothing, so the tool is idempotent.
+state: loop=done
+:::
+
+The diagram shows the calls and the results between the model and the two tools.
+
+:::flow
+title: Two narrow tools in one task
+Model -> find_customer: name_contains Lopez
+find_customer -> Model: id 311, count 1
+Model -> update_email: id 311, bad email
+update_email -> Model: error invalid_email, retryable
+Model -> update_email: id 311, corrected email
+update_email -> Model: status ok
+:::
+
 ## How it works
 
 Follow these rules when you write a tool.
@@ -801,6 +1121,16 @@ Follow these rules when you write a tool.
 Idempotency means that repeating an action has no extra effect. An agent that retries a non-idempotent tool, such as send_invoice, can send two invoices. Add an idempotency key or make the tool check for an existing record.
 
 The description budget matters too. If the agent has 30 tools with 100 tokens each, the tool list costs 3,000 tokens on every call. Keep descriptions short and remove tools the task does not need.
+
+The bars compare the tool list cost per call for three tool sets.
+
+:::bars
+title: Tool list cost per model call
+unit: tokens
+8 tools at 100 tokens: 800
+30 tools at 100 tokens: 3000
+40 tools at 120 tokens: 4800
+:::
 
 Note: a tool result is an observation. The model reads it as text, so a clear message is more useful than a stack trace.
 
@@ -877,6 +1207,32 @@ $$p_{\\text{retry}} = 1 - (1 - p)^{r + 1}$$
 
 Here $p_{\\text{retry}}$ is the success rate of the step with retries. With $p = 0.95$ and $r = 2$: $1 - 0.05^3 = 1 - 0.000125 = 0.999875$. Over 20 steps: $0.999875^{20} = 0.9975$. Two retries per step move the task from 36 percent to 99.7 percent.
 
+The bars compare the task success rate at 20 steps for four settings.
+
+:::bars
+title: Task success rate at 20 steps
+p = 0.90, no retries: 0.12
+p = 0.95, no retries: 0.36
+p = 0.99, no retries: 0.82
+p = 0.95, 2 retries per step: 0.9975
+:::
+
+Press Next to follow the arithmetic for the 20-step task.
+
+:::scenario
+title: From per-step rate to task rate
+state: p=0.95, n=20, retries=0, per-step rate=0.95, task rate=unknown
+step: Raise 0.95 to the power 20. The task succeeds about 36 percent of the time.
+state: task rate=0.358
+step: Add 2 retries per step. A step now fails only if all 3 attempts fail.
+state: retries=2
+step: Compute 1 minus 0.05 cubed. The per-step rate becomes 0.999875.
+state: per-step rate=0.999875
+step: Raise 0.999875 to the power 20. The task rate is now 99.7 percent.
+state: task rate=0.9975
+step: One tool rejects a malformed date on every attempt. Retries do not help, so route that failure to a fallback.
+:::
+
 This only works when failures are random. If a step fails because the tool always rejects the input, a retry fails the same way. That is where verification and fallbacks come in.
 
 ## How it works
@@ -890,6 +1246,19 @@ Follow this procedure to design for reliability.
 5. Add a verification step after each important action. The verifier is a tool or a second model call that checks the result.
 6. Add a fallback for systematic failures: a simpler tool, a smaller plan, or a hand-off to a human.
 7. Write a checkpoint after each completed step so a resumed task skips finished work.
+
+The diagram shows how one step moves through verification, retry, fallback and checkpoint.
+
+:::flow
+title: Protection around one agent step
+Step -> Verifier: result
+Verifier -> Classifier: detected failure
+Classifier -> Retry: random failure
+Retry -> Step: run again after a delay
+Classifier -> Fallback: systematic failure
+Verifier -> Checkpoint: verified result
+Checkpoint -> Next step: saved state
+:::
 
 Verification turns a silent failure into a detected failure. A step with $p = 0.95$ and a verifier that catches 90 percent of errors leaves $0.05 \\times 0.10 = 0.005$ undetected errors. The detected ones go back for a retry or a fallback.
 
@@ -962,6 +1331,15 @@ The total tokens read over the session is the sum of all turns. That is $400 \\t
 
 Now add a rolling summary every 10 turns. The program replaces the oldest 10 turns with a 300 token summary. The context never exceeds about 4,300 tokens: one summary plus 10 recent turns. The total over 50 turns is at most $50 \\times 4{,}300 = 215{,}000$ tokens. That is a 2 to 3 times cost saving. The price is that fine details from early turns are lost unless the summary keeps them.
 
+The bars compare the total tokens read over the 50-turn session.
+
+:::bars
+title: Tokens read over a 50-turn session
+unit: tokens
+No management: 510000
+Rolling summary every 10 turns: 215000
+:::
+
 Add a structured scratchpad. The agent keeps a small JSON object with the facts that matter: the customer ID, the open ticket number, the steps completed. The scratchpad is about 200 tokens and never grows beyond a fixed schema. The model reads it on every turn.
 
 Add retrieval over history. The program embeds every past turn and stores the vectors. On each new turn it retrieves the 3 most similar past turns and adds them to the context. This brings back detail that the summary dropped, for about 1,200 extra tokens.
@@ -972,6 +1350,33 @@ Add retrieval over history. The program embeds every past turn and stores the ve
 | Rolling summary | about 4,300 tokens | Fine detail from old turns | One summary call per 10 turns |
 | Scratchpad | about 200 tokens plus recent turns | Anything not in the schema | None |
 | Retrieval | about 1,200 extra tokens | Turns that do not match the query | 20 to 50 ms |
+
+The bars compare the context size at turn 50 for three plans.
+
+:::bars
+title: Context size at turn 50
+unit: tokens
+No management: 20000
+Rolling summary and 10 recent turns: 4300
+Full plan with scratchpad and retrieval: 6500
+:::
+
+Press Next to watch the context size as the session grows.
+
+:::scenario
+title: Context size with a rolling summary
+state: turn=1, context tokens=400, summary=none, scratchpad=empty
+step: Each turn adds 400 tokens. At turn 10 the context holds 10 full turns.
+state: turn=10, context tokens=4000
+step: At turn 11 the program replaces turns 1 to 10 with a 300-token summary. The context shrinks.
+state: turn=11, context tokens=700, summary=turns 1 to 10
+step: The agent writes the customer id and the ticket number into the scratchpad. The scratchpad stays at 200 tokens.
+state: scratchpad=customer 4821 ticket 77, context tokens=900
+step: At turn 20 the context holds the summary, the scratchpad and 10 recent turns.
+state: turn=20, context tokens=4500
+step: At turn 21 the program summarises turns 11 to 20 into the same summary. The context never passes about 4500 tokens.
+state: turn=21, context tokens=900, summary=turns 1 to 20
+:::
 
 
 ## How it works
@@ -984,6 +1389,19 @@ Implement memory management with this procedure.
 4. Embed each turn as it ends and store it in a vector index keyed by session.
 5. On each new turn, retrieve the top 3 similar past turns. Add them before the recent turns.
 6. Assemble the context in this order: system prompt, scratchpad, summary, retrieved turns, recent turns.
+
+The diagram shows how the parts of the context come together before each model call.
+
+:::flow
+title: Assembly of the context for one turn
+Old turns -> Summariser: oldest 10 turns
+Summariser -> Context: 300-token summary
+Tool results -> Scratchpad: facts that matter
+Scratchpad -> Context: 200 tokens
+Vector index -> Context: 3 similar past turns
+Recent turns -> Context: last 10 turns
+Context -> Model: about 6500 tokens
+:::
 
 The context size with this plan is bounded:
 
@@ -1080,11 +1498,50 @@ The strong prompt has five parts in a fixed order:
 4. Constraints: the three rules.
 5. Output format: "only the category name in lower case".
 
+The table lists each part and the failure it removes.
+
+| Part | Text in the example | Failure it removes |
+|---|---|---|
+| Role | support triage assistant for an online shop | Wrong register or tone |
+| Task | assign exactly one category | Several labels or a question back |
+| Context | the five allowed categories | Labels that do not exist |
+| Constraints | the three rules | Ties and empty tickets |
+| Output format | only the category name in lower case | Prose instead of a label |
+
 The tags around the ticket are delimiters. A delimiter is a marker that separates data from instructions. The model then does not treat a sentence inside the ticket as an instruction. The output is now one token: "billing".
+
+Press Next to rewrite the weak prompt one part at a time.
+
+:::scenario
+title: From a weak prompt to a strong prompt
+state: role=none, task=classify this ticket, allowed labels=none, output shape=unknown, delimiters=no
+step: The weak prompt names no role and no output format. Three calls return a sentence, a label and a question.
+step: Add the role. The model now answers as a support triage assistant.
+state: role=support triage assistant
+step: Add the task and the five allowed categories. The model picks from a fixed list.
+state: task=assign exactly one category, allowed labels=5
+step: Add the three rules and the output format. The output is one word in lower case.
+state: output shape=one lower-case label
+step: Wrap the ticket in tags. The model treats the text inside as data, not as an instruction.
+state: delimiters=yes
+step: The three calls now all return the same token: billing.
+:::
 
 ## How it works
 
 A model predicts the next token from all tokens before it. The parts that come first set the frame for everything after. The role tells the model which register to use. The task tells it what to produce. The context gives the facts. The constraints remove options. The output format fixes the shape.
+
+The diagram shows how each part narrows what the model can produce.
+
+:::flow
+title: How the five parts shape the output
+Role -> Task: sets the register
+Task -> Context: says what to produce
+Context -> Constraints: gives the facts
+Constraints -> Output format: removes options
+Output format -> Model: fixes the shape
+Model -> Answer: billing
+:::
 
 Position also matters inside long prompts. Research on long contexts shows that a model attends most to the start and the end of the prompt. Facts in the middle get less weight. Use this procedure for a prompt with a long document:
 
@@ -1170,11 +1627,47 @@ Now measure accuracy on a labelled set of 500 tickets with a different number of
 
 The jump from 0 to 3 examples adds 13 points. The jump from 3 to 8 adds 2 points at almost three times the tokens. Three examples is the right choice here.
 
+The bars compare the accuracy at the three example counts.
+
+:::bars
+title: Accuracy on 500 labelled tickets
+unit: percent
+0 examples: 71 (0 extra tokens)
+3 examples: 84 (360 extra tokens)
+8 examples: 86 (960 extra tokens)
+:::
+
+Press Next to pick the example count and compute its daily cost.
+
+:::scenario
+title: Choose the number of examples
+state: examples=0, accuracy=71 percent, extra tokens per call=0, cost per day=0 dollars
+step: Add 3 labelled tickets to the prompt. Accuracy rises by 13 points.
+state: examples=3, accuracy=84 percent, extra tokens per call=360
+step: Add 5 more tickets. Accuracy rises by 2 points at almost three times the tokens.
+state: examples=8, accuracy=86 percent, extra tokens per call=960
+step: Go back to 3 examples. The gain from 3 to 8 is below the 2-point rule.
+state: examples=3, accuracy=84 percent, extra tokens per call=360
+step: Multiply 360 tokens by 10000 calls per day. The examples add 3.6 million tokens per day.
+step: At 3 dollars per million tokens the examples cost 10.80 dollars per day, or about 325 dollars per month.
+state: cost per day=10.80 dollars
+:::
+
 Now compute the cost. Each example is about 120 tokens. Three examples add 360 tokens per call. At 10,000 calls per day the examples add 3.6 million tokens per day. Assume 3 dollars per million input tokens. The examples cost 10.80 dollars per day, or about 325 dollars per month. Compare that with the cost of the errors the examples remove.
 
 ## How it works
 
 A model sees the examples as part of the sequence. It learns the pattern of input and output from them and continues the pattern. No weight changes. The model did learn the general skill during training. The examples only tell it which skill to use and in which format.
+
+The diagram shows how the examples and the real ticket reach the model.
+
+:::flow
+title: A few-shot call
+Labelled tickets -> Prompt builder: 3 balanced examples
+Real ticket -> Prompt builder: same format as the examples
+Prompt builder -> Model: examples then the real ticket
+Model -> Output: billing
+:::
 
 The content and the order of the examples both matter:
 
@@ -1274,6 +1767,16 @@ Now measure a pipeline of 1,000 invoices. The numbers are illustrative.
 
 Validation and one retry recover most failures. Constrained decoding removes the shape failures at the source.
 
+The bars compare the usable share of the 1,000 invoices for the three methods.
+
+:::bars
+title: Usable invoice records per 1000
+unit: percent
+Prompt only, no validation: 90
+Prompt plus validation and one retry: 98.7
+Constrained decoding: 99.8
+:::
+
 ## How it works
 
 There are two mechanisms.
@@ -1290,6 +1793,35 @@ Use this procedure for the validation loop:
 4. Return the object and stop.
 5. Send the error message back to the model and ask for a corrected object.
 6. Repeat from step 2 at most two times, then raise an error.
+
+The diagram shows the path of one response through the loop.
+
+:::flow
+title: Validation and retry loop
+Program -> Model: invoice and schema
+Model -> Parser: response text
+Parser -> Validator: JSON object
+Validator -> Program: valid object
+Validator -> Model: validation error, try again
+Parser -> Model: parse error, try again
+:::
+
+Press Next to follow one invoice through two retries.
+
+:::scenario
+title: One invoice through the validation loop
+state: attempt=1, parsed=no, valid=no, result=none
+step: The model returns a sentence and then the JSON object. The parser fails on the first character.
+step: The program sends the parse error back and asks for the object only.
+state: attempt=2
+step: The model returns a JSON object. It parses, but the currency field holds the value Euro.
+state: parsed=yes
+step: The validator rejects Euro, because the enum allows only EUR, USD and GBP. The program sends the error back.
+state: attempt=3
+step: The model returns the object with currency EUR. The validator accepts it.
+state: valid=yes, result=INV-2041 total 1280.5 EUR
+step: The program returns the object. A fourth attempt would have raised an error instead.
+:::
 
 Caution: a valid shape is not a correct value. The schema cannot tell that the total is 1280.5 and not 128.05. Keep a separate accuracy check on a golden set.
 
@@ -1383,7 +1915,33 @@ The model does not know what "loc" accepts. A city name, a postcode, or coordina
 
 The name says what the tool returns. The description says when to use it and when not to. Each field has a description with an example. The unit is an enum with two values, so the model cannot send "C" or "degrees". The city is required.
 
+The table compares the two definitions field by field.
+
+| Part | Weak tool | Strong tool |
+|---|---|---|
+| Name | weather | get_current_weather |
+| Description | Gets weather. | What it returns, when to use it, when not to |
+| City field | loc, no description | city, with an example value |
+| Unit field | u, free text | unit, enum of two values |
+| Required fields | none | city |
+
 Run the user message "Is it raining in Lisbon?" against both tools. The weak tool gives calls like {"loc": "Lisbon?"} or {}. The strong tool gives {"city": "Lisbon", "unit": "celsius"} almost every time.
+
+Press Next to follow one call to the strong tool.
+
+:::scenario
+title: One call for the weather in Lisbon
+state: tool chosen=none, arguments=none, validation=not run, result=none
+step: The model reads the user message and the tool definitions. It picks get_current_weather.
+state: tool chosen=get_current_weather
+step: The model writes the arguments. The description of the city field tells it to use a city name.
+state: arguments=city Lisbon and unit celsius
+step: The program checks the arguments against the input schema. The city is present and the unit is in the enum.
+state: validation=passed
+step: The program runs the function and returns the result as a tool result message.
+state: result=14 degrees and light rain
+step: The model reads the result and answers the user. The whole turn used one tool call.
+:::
 
 ## How it works
 
@@ -1394,6 +1952,19 @@ The model receives the tool definitions in the prompt, in a fixed format that it
 3. Run the function with the validated arguments.
 4. Return the result to the model as a tool result message.
 5. Call the model again with the result in the conversation.
+
+The diagram shows the path of one tool call from the user message to the answer.
+
+:::flow
+title: One tool call from request to answer
+User -> Model: Is it raining in Lisbon?
+Model -> Program: call get_current_weather
+Program -> Validator: arguments
+Validator -> Function: city Lisbon, unit celsius
+Function -> Program: 14 degrees, light rain
+Program -> Model: tool result message
+Model -> User: Yes, light rain at 14 degrees
+:::
 
 Return errors as messages, not as crashes. The model can read "city not found" and try again. It cannot recover from a stopped program.
 
@@ -1469,6 +2040,18 @@ First, stratify. Stratified sampling draws a fixed number of items from each gro
 | product | 8% | 40 |
 | other | 2% | 20 |
 
+The bars compare the share of traffic for each category with the items in the golden set.
+
+:::bars
+title: Share of traffic per category
+unit: percent
+billing: 45 (50 items)
+shipping: 30 (50 items)
+account: 15 (40 items)
+product: 8 (40 items)
+other: 2 (20 items)
+:::
+
 The sample is not proportional. The "other" category has 2 percent of traffic but 20 items, so a 10 percent accuracy change in that category is visible.
 
 Second, label with two annotators. Each person labels all 200 items without seeing the other person's labels. Now measure agreement. Take one category, billing, as a yes or no question. The 2x2 table counts the pairs.
@@ -1483,6 +2066,31 @@ Observed agreement is the diagonal divided by the total: $p_o = (46 + 144) / 200
 $$\\kappa = \\frac{p_o - p_e}{1 - p_e} = \\frac{0.95 - 0.62}{0.38} = 0.87$$
 
 Here $\\kappa$ is Cohen's kappa, $p_o$ is the observed agreement, and $p_e$ is the agreement expected by chance. A kappa of 0.87 is strong. Below 0.6, the labelling guide needs work.
+
+The matrix shows the same 2x2 agreement table as a heat map.
+
+:::matrix
+title: Agreement of annotators A and B on the billing label
+cols: B billing, B not billing
+A billing: 46, 4
+A not billing: 6, 144
+:::
+
+Press Next to compute kappa from the table.
+
+:::scenario
+title: Cohen's kappa by hand
+state: observed agreement=unknown, expected agreement=unknown, kappa=unknown
+step: Add the diagonal cells, 46 and 144, and divide by 200. The observed agreement is 0.95.
+state: observed agreement=0.95
+step: A says billing 50 times out of 200, so 0.25. B says billing 52 times, so 0.26. Their product is 0.065.
+step: A says not billing 150 times, so 0.75. B says not billing 148 times, so 0.74. Their product is 0.555.
+step: Add the two products. The agreement expected by chance is 0.62.
+state: expected agreement=0.62
+step: Subtract 0.62 from 0.95 and divide by 1 minus 0.62. Kappa is 0.87.
+state: kappa=0.87
+step: A kappa of 0.87 is strong, so the labelling guide works. Send the 10 disagreements to a third person.
+:::
 
 Third, resolve disagreements. The 10 items where A and B differ go to a third person. The final label is the resolved one.
 
@@ -1563,9 +2171,43 @@ Pointwise judging scores one answer on a scale. The judge reads the question, th
 
 Pairwise judging compares two answers to the same question and returns A, B, or tie. It is better for "which prompt is better" questions. It is worse for "is this good enough" questions.
 
+The table compares the two methods.
+
+| Method | Input | Output | Best for | Weak for |
+|---|---|---|---|---|
+| Pointwise | One answer and a rubric | Score from 1 to 5 | Is this answer good enough? | Small differences between versions |
+| Pairwise | Two answers to one question | A, B or tie | Which version is better? | Absolute quality |
+
 Now calibrate. Take 300 items that humans scored. Run the judge on the same items. Count how often the judge's score matches the human score. Assume the result is 82 percent agreement, and the judge is one point off in most other cases.
 
 What does 82 percent let you say? Run two prompts, A and B, on 300 items. The judge gives A an average of 3.9 and B an average of 4.1. The judge is wrong on about 18 percent of items, and its errors are not all in one direction. A difference of 0.2 on a 5-point scale is inside the noise of the judge. You cannot say that B is better. A difference of 0.6 with the same judge is a real signal. State the noise band with every judge score.
+
+The bars compare how the judge scores fall against the human scores on the 300 items.
+
+:::bars
+title: Judge agreement with human scores on 300 items
+unit: percent
+Same score as the human: 82
+One point off: 15 (illustrative)
+Two or more points off: 3 (illustrative)
+:::
+
+Press Next to follow the comparison of prompts A and B.
+
+:::scenario
+title: Compare prompts A and B with the judge
+state: judge agreement=82 percent, average A=unknown, average B=unknown, difference=unknown, verdict=none
+step: Run the judge on the 300 answers from prompt A. The average score is 3.9.
+state: average A=3.9
+step: Run the judge on the 300 answers from prompt B. The average score is 4.1.
+state: average B=4.1
+step: The difference is 0.2 points. The judge is wrong on about 18 percent of items.
+state: difference=0.2
+step: A difference of 0.2 is inside the noise band of this judge. You cannot say that B is better.
+state: verdict=no conclusion
+step: A later prompt C scores 4.5. A difference of 0.6 with the same judge is a real signal.
+state: difference=0.6, verdict=C is better than A
+:::
 
 ## How it works
 
@@ -1579,6 +2221,19 @@ Use this procedure to calibrate and to check for bias:
 4. For pairwise judging, run every pair twice with the order of A and B swapped.
 5. Count the pairs where the verdict changes with the order. That count measures position bias.
 6. Compare the average length of the winners and the losers. A large gap measures length bias.
+
+The diagram shows the path of one item through the judge and the calibration step.
+
+:::flow
+title: Judge call and calibration
+Item -> Judge prompt: question and answer
+Rubric -> Judge prompt: criteria per score
+Judge prompt -> Judge model: temperature 0
+Judge model -> Score log: one-line reason, then score
+Human labels -> Calibration: 300 human scores
+Score log -> Calibration: 300 judge scores
+Calibration -> Report: agreement 82 percent
+:::
 
 Position bias is the tendency of a judge to prefer the first answer, or the second, because of its position. Swap the order and keep only verdicts that agree in both orders. Length bias is the tendency to prefer longer answers. Add a line to the rubric that penalises unneeded text, and check the gap again.
 
@@ -1649,11 +2304,38 @@ The standard error is about 2 points. The standard error of the difference betwe
 
 Two rules follow. Set the failure threshold from the standard error. Grow the golden set when you need to see small changes.
 
+Press Next to decide whether the 3-point drop is real.
+
+:::scenario
+title: Test a drop from 91 to 88 percent
+state: baseline=91 percent, new prompt=88 percent, items=200, standard error=unknown, verdict=none
+step: Compute 0.91 times 0.09, divide by 200 and take the square root. The standard error is about 0.020.
+state: standard error=2.0 points
+step: Multiply by the square root of 2 for the difference of two rates. The result is about 2.8 points.
+state: standard error of difference=2.8 points
+step: The drop is 3 points, about one standard error of the difference. That is not strong evidence.
+state: verdict=not clear
+step: Grow the golden set to 800 items. The standard error of one rate halves to 1.0 point.
+state: items=800, standard error=1.0 points, standard error of difference=1.4 points
+step: The same 3-point drop is now more than two standard errors of the difference. The drop is real.
+state: verdict=real drop
+:::
+
 | Items | Standard error of one rate | Smallest clear drop |
 |---|---|---|
 | 100 | 2.9 points | about 8 points |
 | 200 | 2.0 points | about 6 points |
 | 800 | 1.0 points | about 3 points |
+
+The bars compare the standard error at the three set sizes.
+
+:::bars
+title: Standard error of a 91 percent pass rate
+unit: points
+100 items: 2.9
+200 items: 2.0
+800 items: 1.0
+:::
 
 ## How it works
 
@@ -1670,6 +2352,25 @@ Use this procedure for the regression test:
 Online metrics come from real traffic. Examples are thumbs up and down, task completion, the share of answers that a user edits, latency, and cost per request. An A/B test sends a share of traffic to the new version and compares these metrics between the two groups. Guardrail metrics are metrics that must not get worse, such as the refusal rate, the error rate, and the 99th percentile latency.
 
 A canary rollout sends the new version to a small share of traffic first, for example 5 percent. Watch the guardrail metrics for a fixed window. If no guardrail fails, raise the share in steps: 5, 25, 50, 100 percent. If a guardrail fails, roll back at once.
+
+The timeline shows a canary rollout in four steps with a guardrail check before each step.
+
+:::timeline
+title: Canary rollout over one day
+unit: hours
+lane Release
+lane Guardrails
+Release: 5 percent of traffic @0-4
+Guardrails: watch error rate and p99 @0-4
+Guardrails -> Release: no failure, raise share @4-4
+Release: 25 percent of traffic @4-10
+Guardrails: watch error rate and p99 @4-10
+Guardrails -> Release: no failure, raise share @10-10
+Release: 50 percent of traffic @10-18
+Guardrails: watch error rate and p99 @10-18
+Guardrails -> Release: no failure, raise share @18-18
+Release: 100 percent of traffic @18-24
+:::
 
 Note: online metrics are noisy and slow. A thumbs-up rate needs thousands of events to show a change of a few points.
 
@@ -1742,6 +2443,32 @@ Now fine-tune a small model on 3,000 good answers. The model learns the tone and
 
 The saving is about 8,940 dollars per month on prompt tokens alone. The small model also answers faster, because it reads fewer tokens. The training run costs a few hundred dollars, so the fine-tune pays for itself in the first week.
 
+The bars compare the monthly prompt cost of the two setups.
+
+:::bars
+title: Prompt token cost per month
+unit: dollars
+Large model, 2000-token prompt: 9000
+Small fine-tuned model, 200-token prompt: 60
+:::
+
+Press Next to follow the cost arithmetic.
+
+:::scenario
+title: Prompt cost before and after a fine-tune
+state: prompt tokens=2000, calls per day=50000, tokens per day=unknown, cost per day=unknown, cost per month=unknown
+step: Multiply 2000 prompt tokens by 50000 calls. The service reads 100 million prompt tokens per day.
+state: tokens per day=100 million
+step: At 3 dollars per million tokens the prompt costs 300 dollars per day.
+state: cost per day=300 dollars, cost per month=9000 dollars
+step: Fine-tune a small model on 3000 good answers. The tone rules and the examples move into the weights.
+state: prompt tokens=200
+step: Multiply 200 tokens by 50000 calls. The service now reads 10 million prompt tokens per day.
+state: tokens per day=10 million
+step: At 0.2 dollars per million tokens the prompt costs 2 dollars per day. The saving is about 8940 dollars per month.
+state: cost per day=2 dollars, cost per month=60 dollars
+:::
+
 Note: the arithmetic only holds if the small fine-tuned model matches the large model on your test set.
 
 ## How it works
@@ -1752,6 +2479,17 @@ Climb the ladder one step at a time. Stop at the first step that passes your eva
 2. Add few-shot examples. Put three to ten good input and output pairs in the prompt. This uses in-context learning, where the model copies the pattern of the examples.
 3. Add retrieval. If the model lacks facts, retrieve the facts from your documents and put them in the prompt. This is retrieval-augmented generation (RAG).
 4. Fine-tune. If the model still fails on format, style or consistency, train on 1,000 or more examples. Also fine-tune when the prompt is long and the volume is high.
+
+The diagram shows the ladder as a path where each step runs only if the previous one fails the evaluation.
+
+:::flow
+title: The decision ladder
+Clear prompt -> Golden set: test 50 examples
+Golden set -> Few-shot examples: evaluation fails
+Few-shot examples -> Retrieval: facts are missing
+Retrieval -> Fine-tune: format or cost still wrong
+Fine-tune -> Deploy: evaluation passes
+:::
 
 Use the table to decide what fine-tuning can do.
 
@@ -1830,6 +2568,32 @@ LoRA freezes $W$ and adds a correction $BA$. Pick a rank $r = 8$. Then $B$ has 4
 
 The adapter has 65,536 trainable weights. That is 0.4 percent of the original matrix. The product $BA$ still has the full shape of 4,096 by 4,096, so it can change every output of the layer. It can only make changes of rank 8 or less. In practice, the changes that a fine-tune needs are close to low rank.
 
+The bars compare the trainable weights of the frozen matrix and the adapter.
+
+:::bars
+title: Weights in one 4096 by 4096 matrix
+unit: weights
+Full matrix W: 16777216
+LoRA adapter at rank 8: 65536 (0.4 percent)
+:::
+
+Press Next to count the adapter weights step by step.
+
+:::scenario
+title: Count the LoRA weights for one matrix
+state: rank=8, B weights=unknown, A weights=unknown, adapter total=unknown, share of W=unknown
+step: B has 4096 rows and 8 columns. Multiply them.
+state: B weights=32768
+step: A has 8 rows and 4096 columns. Multiply them.
+state: A weights=32768
+step: Add the two counts. The adapter trains 65536 weights.
+state: adapter total=65536
+step: Divide 65536 by 16777216. The adapter is 0.4 percent of the matrix.
+state: share of W=0.4 percent
+step: Raise the rank to 16. Both matrices double, so the adapter has 131072 weights.
+state: rank=16, B weights=65536, A weights=65536, adapter total=131072, share of W=0.8 percent
+:::
+
 ## How it works
 
 The adapted weight matrix is
@@ -1839,6 +2603,19 @@ $$W' = W + \\frac{\\alpha}{r} BA$$
 $W$ is the original frozen matrix with shape $d \\times k$. $B$ is a trained matrix with shape $d \\times r$, and $A$ is a trained matrix with shape $r \\times k$. $r$ is the rank, a small integer such as 8 or 16. $\\alpha$ is a scale, and the ratio $\\alpha / r$ sets how strongly the adapter changes the output.
 
 At the start of training, $B$ is all zeros and $A$ is random. The product $BA$ is zero, so the model begins as the original model. Gradient descent then updates only $A$ and $B$.
+
+The diagram shows how the input flows through the frozen matrix and the adapter.
+
+:::flow
+title: Forward pass through a LoRA layer
+Input x -> Frozen W: full input
+Input x -> Matrix A: full input
+Matrix A -> Matrix B: 8 values
+Matrix B -> Scale: correction B A x
+Scale -> Sum: times alpha over r
+Frozen W -> Sum: W x
+Sum -> Output: W x plus scaled B A x
+:::
 
 Follow this procedure for a first run.
 
@@ -1859,6 +2636,16 @@ The memory table shows the sizes for a model with 7 billion weights. A full fine
 | QLoRA, 4-bit base | 3.5 GB | under 1 GB | 5 GB plus activations |
 
 Activations add a few GB that depend on batch size and sequence length.
+
+The bars compare the approximate memory of the three setups.
+
+:::bars
+title: GPU memory for a 7 billion weight model
+unit: GB
+Full fine-tune, 16-bit, Adam: 112
+LoRA, 16-bit base: 15
+QLoRA, 4-bit base: 5
+:::
 
 Caution: merging the adapter into a 4-bit base model loses precision. Merge into the 16-bit base weights instead.
 
@@ -1916,6 +2703,55 @@ A support team has 50,000 raw chat logs. They want 3,000 clean training examples
 2. Remove low-quality answers. Keep only conversations where the customer rated the answer 4 or 5 out of 5. Count: 31,000 drops to 9,500.
 3. Remove unsafe and private content. Drop records that contain personal data or policy violations. Count: 9,500 drops to 7,800.
 4. Remove evaluation overlap and trim length. Drop any record that matches a question in the golden set. Drop answers under 20 tokens or over 1,500 tokens. Count: 7,800 drops to 3,000.
+
+The table shows the count after each filter.
+
+| Step | Filter | Records before | Records after |
+|---|---|---|---|
+| 1 | Exact and near duplicates | 50,000 | 31,000 |
+| 2 | Customer rating below 4 | 31,000 | 9,500 |
+| 3 | Unsafe or private content | 9,500 | 7,800 |
+| 4 | Golden set overlap and length | 7,800 | 3,000 |
+
+The bars compare the record counts after each filter.
+
+:::bars
+title: Records that remain after each filter
+unit: records
+Raw logs: 50000
+After deduplication: 31000
+After rating filter: 9500
+After safety filter: 7800
+After decontamination and length: 3000
+:::
+
+The diagram shows the path of the logs through the four filters.
+
+:::flow
+title: From raw logs to a training set
+Raw logs -> Deduplication: 50000 records
+Deduplication -> Rating filter: 31000 records
+Rating filter -> Safety filter: 9500 records
+Safety filter -> Decontamination: 7800 records
+Decontamination -> Training set: 3000 records
+:::
+
+Press Next to follow the counts and the hand check.
+
+:::scenario
+title: Clean 50000 logs into 3000 examples
+state: records=50000, filters applied=0, hand check=not run
+step: Hash each conversation and compare embeddings at a threshold of 0.95. Duplicates go.
+state: records=31000, filters applied=1
+step: Keep only conversations with a customer rating of 4 or 5.
+state: records=9500, filters applied=2
+step: Drop records with personal data or policy violations.
+state: records=7800, filters applied=3
+step: Drop records that match a golden set question. Drop answers under 20 or over 1500 tokens.
+state: records=3000, filters applied=4
+step: Read 100 random records by hand. If more than 5 have a problem, add a filter and run again.
+state: hand check=3 problems in 100, pass
+:::
 
 The team then reads 100 random records by hand. If more than 5 of the 100 have a problem, they add a filter and run again.
 
@@ -2010,7 +2846,33 @@ The model already likes the chosen answer a little more than the reference does.
 
 The loss is the negative log of the sigmoid of the margin. The sigmoid of 0.08 is about 0.52. The negative log of 0.52 is about 0.654. The loss is 0.654 for this pair.
 
+Press Next to compute the loss for this pair step by step.
+
+:::scenario
+title: DPO loss for one preference pair
+state: chosen log-ratio=unknown, rejected log-ratio=unknown, margin=unknown, loss=unknown
+step: Subtract the reference log-probability of the chosen answer from the policy log-probability. The log-ratio is 0.5.
+state: chosen log-ratio=0.5
+step: Do the same for the rejected answer. The log-ratio is -0.3.
+state: rejected log-ratio=-0.3
+step: Subtract the rejected log-ratio from the chosen one and multiply by beta 0.1. The margin is 0.08.
+state: margin=0.08
+step: Apply the sigmoid to 0.08. The result is about 0.52.
+step: Take the negative log of 0.52. The loss is 0.654.
+state: loss=0.654
+step: The gradient raises the chosen probability and lowers the rejected one. At a margin of 3 the loss is 0.05.
+:::
+
 The gradient pushes the margin up. It raises the probability of the chosen answer and lowers the probability of the rejected answer. When the margin reaches 3, the sigmoid is 0.95 and the loss is 0.05. Training then moves to the pairs that the model still gets wrong.
+
+The bars compare the loss at three margins.
+
+:::bars
+title: DPO loss by margin
+Margin 0.08: 0.654
+Margin 1.0: 0.313
+Margin 3.0: 0.049
+:::
 
 ## How it works
 
@@ -2028,6 +2890,19 @@ Follow this procedure.
 2. Collect 1,000 to 10,000 preference pairs. Each pair needs a clear winner.
 3. Train for one pass with a learning rate near $5 \\times 10^{-7}$.
 4. Evaluate the win rate on 200 held-out prompts with a judge that did not label the data.
+
+The diagram shows the path of one pair through the loss and back to the policy.
+
+:::flow
+title: One DPO training step
+Prompt x -> Policy: chosen and rejected answers
+Prompt x -> Reference: chosen and rejected answers
+Policy -> Log-ratio: policy log-probabilities
+Reference -> Log-ratio: reference log-probabilities
+Log-ratio -> Margin: beta times the difference
+Margin -> Loss: negative log sigmoid
+Loss -> Policy: gradient update
+:::
 
 The table compares the two methods.
 
@@ -2119,6 +2994,15 @@ Now add an exact-response cache. The cache stores the answer under a hash of the
 
 The cache saves 270 dollars per day, or about 8,100 dollars per month.
 
+The bars compare the daily cost with and without the exact cache.
+
+:::bars
+title: Daily cost of the service
+unit: dollars
+No cache: 900
+Exact cache with 30 percent hits: 630
+:::
+
 ## How it works
 
 Three caches work at three levels.
@@ -2144,6 +3028,37 @@ A router adds a fourth saving. Follow this procedure.
 5. Sample 1 percent of routed requests and check them each week.
 
 If 60 percent of requests are easy and the small model costs one tenth as much, the bill falls by about 54 percent. Also set a maximum output length for every call, and trim retrieved context to a fixed token budget.
+
+The diagram shows the path of one request through the caches and the router.
+
+:::flow
+title: Request path through caches and router
+Request -> Exact cache: hash of the full prompt
+Exact cache -> Semantic cache: miss
+Semantic cache -> Router: similarity below 0.95
+Router -> Small model: easy request
+Router -> Large model: hard request
+Large model -> Response: answer
+Small model -> Response: answer
+Response -> Exact cache: store with time to live
+:::
+
+Press Next to follow one request and its cost.
+
+:::scenario
+title: One request through the cost controls
+state: exact cache=not checked, semantic cache=not checked, route=none, cost=unknown
+step: The program hashes the full prompt. No stored answer has that hash.
+state: exact cache=miss
+step: The program embeds the prompt. The closest stored prompt has a similarity of 0.91, below the 0.95 threshold.
+state: semantic cache=miss
+step: The classifier marks the request as easy. The router sends it to the small model.
+state: route=small model
+step: The small model reads 1500 input tokens and writes 300 output tokens at one tenth of the large model price.
+state: cost=0.0009 dollars
+step: The program stores the answer under the hash with a time to live of one day. A repeat request costs nothing.
+state: exact cache=stored
+:::
 
 Caution: a semantic cache can return a correct answer to a different question. Never use it for requests that contain user-specific data.
 
@@ -2209,6 +3124,50 @@ An agent answers a question in three steps. It retrieves documents, calls the mo
 The durations add up to 3,420 milliseconds (ms). The first model call takes 53 percent of the time. If the team wants a faster agent, that span is the target. A shorter prompt on that step saves more than any change to retrieval.
 
 Each model span also records the input tokens, the output tokens and the cost. If the first call has 4,000 input tokens and the second has 6,000, the context grows in the second call.
+
+The timeline shows the four spans of the trace on their own lanes.
+
+:::timeline
+title: Trace of a three-step agent call
+unit: ms
+lane Agent
+lane Retriever
+lane Model
+lane Tool
+Agent -> Retriever: query @0-0
+Retriever: retrieval @0-120
+Model: model call 1, 4000 input tokens @120-1920
+Tool: tool call @1920-2320
+Model: model call 2, 6000 input tokens @2320-3420
+Model -> Agent: final answer @3420-3420
+:::
+
+The bars compare the duration of each span.
+
+:::bars
+title: Span durations in the trace
+unit: ms
+retrieval: 120
+model call 1: 1800 (53 percent)
+tool call: 400
+model call 2: 1100
+:::
+
+Press Next to read the trace span by span.
+
+:::scenario
+title: Find the slowest span
+state: elapsed=0 ms, slowest span=none, input tokens=0
+step: The retrieval span starts at 0 and lasts 120 ms.
+state: elapsed=120 ms, slowest span=retrieval
+step: The first model call starts at 120 ms and lasts 1800 ms. It reads 4000 input tokens.
+state: elapsed=1920 ms, slowest span=model call 1, input tokens=4000
+step: The tool call starts at 1920 ms and lasts 400 ms.
+state: elapsed=2320 ms
+step: The second model call starts at 2320 ms and lasts 1100 ms. It reads 6000 input tokens, so the context grew.
+state: elapsed=3420 ms, input tokens=10000
+step: The first model call takes 53 percent of the total. A shorter prompt on that step is the best target.
+:::
 
 ## How it works
 
@@ -2300,6 +3259,33 @@ $$P(\\text{fail}) = 0.02 \\times 0.03 = 0.0006$$
 
 The combined availability is $1 - 0.0006 = 0.9994$, or 99.94 percent. On 100,000 requests per day, the single model fails 2,000 times. The pair fails 60 times.
 
+The bars compare the failed requests per day for the single model and the pair.
+
+:::bars
+title: Failed requests per day out of 100000
+unit: failures
+Single model at 98 percent: 2000
+Primary plus fallback: 60
+:::
+
+Press Next to follow one request through the fallback chain.
+
+:::scenario
+title: One request when the primary model is slow
+state: attempt=1, primary=waiting, breaker=closed, elapsed=0 s, answer=none
+step: The program calls the primary model with a 10-second timeout. The call times out.
+state: primary=timeout, elapsed=10 s
+step: The program waits 1 second and retries. The call times out again.
+state: attempt=2, elapsed=21 s
+step: The program waits 2 seconds and retries a second time. The call times out again.
+state: attempt=3, elapsed=33 s
+step: The program calls the fallback model on the other provider. It answers in 2 seconds.
+state: primary=failed, elapsed=35 s, answer=from fallback
+step: The breaker counts the failures. More than 50 percent of calls failed in one minute, so it opens.
+state: breaker=open
+step: For the next 30 seconds every call goes straight to the fallback. Then one test call checks the primary.
+:::
+
 Note: two models on the same provider fail together, so the arithmetic does not hold.
 
 ## How it works
@@ -2326,6 +3312,20 @@ The fallback chain runs in a fixed order. Follow this procedure.
 4. If the fallback fails, return a cached answer for the same question if one exists.
 5. If there is no cached answer, return a canned message and a request id.
 
+The diagram shows the path of one request through the filters and the fallback chain.
+
+:::flow
+title: Filters and the fallback chain
+Request -> Input filter: prompt
+Input filter -> Primary model: clean prompt
+Primary model -> Retry: timeout or transient error
+Retry -> Fallback model: retries failed
+Fallback model -> Cache: fallback failed
+Cache -> User: cached or canned answer
+Primary model -> Output filter: answer
+Output filter -> User: safe answer
+:::
+
 A circuit breaker stops the retries when the primary is down. It counts failures in a window. If more than 50 percent of calls fail in one minute, the breaker opens. An open breaker sends every call to the fallback at once. After 30 seconds it lets one test call through. If the test call succeeds, the breaker closes.
 
 The table shows the time cost of the full chain.
@@ -2336,6 +3336,17 @@ The table shows the time cost of the full chain.
 | Two retries with backoff | 23 s |
 | Fallback call with timeout | 10 s |
 | Cached or canned answer | under 0.1 s |
+
+The bars compare the worst-case time that each step adds.
+
+:::bars
+title: Worst-case time added per step
+unit: s
+Primary call with timeout: 10
+Two retries with backoff: 23
+Fallback call with timeout: 10
+Cached or canned answer: 0.1
+:::
 
 The worst case is 43 seconds, which is too long for a chat user. Shorten the timeouts on interactive routes to 5 seconds and allow one retry.
 

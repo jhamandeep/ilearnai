@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { unapproved } from '../lib/ste'
+import { Markdown } from '../components/Markdown'
 
 const rules: { title: string; text: string; bad: string; good: string }[] = [
   { title: 'Keep sentences short', text: 'Use no more than 20 words in an instruction and 25 words in a description. If a sentence is longer, split it.', bad: 'The KV cache stores the keys and values for each previous token so that the model does not have to recompute them at every decoding step, which would otherwise make decoding quadratic in the sequence length.', good: 'The KV cache stores the keys and values for each previous token. The model reads them instead of computing them again. Without the cache, decode cost grows with the square of the sequence length.' },
@@ -17,6 +18,78 @@ const rules: { title: string; text: string; bad: string; good: string }[] = [
   { title: 'Use lists and tables', text: 'Use a numbered list for a procedure, one step per item. Use a bullet list for parallel facts. Use a table for numbers.', bad: 'First embed the query, then search, then rerank, then build the prompt.', good: '1. Embed the query. 2. Search the index. 3. Rerank the top 50. 4. Build the prompt.' },
   { title: 'Explain every symbol', text: 'After an equation, give the meaning of each symbol in one sentence.', bad: '$L = E + A/N^\\alpha + B/D^\\beta$.', good: '$L = E + A/N^\\alpha + B/D^\\beta$. $L$ is the loss, $N$ the number of weights, $D$ the number of training tokens. $E$, $A$, $B$, $\\alpha$ and $\\beta$ are fitted constants.' },
 ]
+
+
+const demo = `
+Every lesson uses five kinds of visual block in addition to tables. The reader can press Play, step through, or replay each one.
+
+**Flow.** Boxes and arrows. A packet travels along each arrow in the order the data moves. Press the arrows to step.
+
+:::flow
+title: Request path through a retrieval system
+Client -> Gateway: HTTP request
+Gateway -> Retriever: query
+Retriever -> Vector DB: top-k search
+Vector DB -> Retriever: 50 chunks
+Retriever -> Reranker: 50 chunks
+Reranker -> LLM: 5 chunks + prompt
+LLM -> Client: answer with citations
+:::
+
+**Timeline.** Lanes with work bars and message arrows. Bars grow in time order.
+
+:::timeline
+title: Synchronous replication to one follower
+unit: ms
+lane Leader
+lane Follower
+Leader: write to disk @0-1
+Leader -> Follower: send record @1-1.5
+Follower: apply @1.5-2
+Follower -> Leader: ack @2-2.5
+Leader: reply to client @2.5-3
+:::
+
+**Scenario.** A worked example as steps with a live state panel. Changed values light up.
+
+:::scenario
+title: Quorum write and read with N=3, W=2, R=2
+state: A=v1, B=v1, C=v1
+step: The client writes v2 to all three replicas and waits for 2 confirmations.
+state: A=v2, B=v2
+step: A and B confirm. C is slow. The write returns success.
+step: The client reads from B and C and gets v2 and v1.
+state: read=v2
+step: The client keeps the highest version, v2.
+:::
+
+**Bars.** A comparison of numbers.
+
+:::bars
+title: KV cache per sequence at 8k context
+unit: GB
+Llama 3 8B: 1.07
+Llama 3 70B: 2.68
+70B without GQA: 21.5 (64 KV heads)
+:::
+
+**Matrix.** A heat-map grid for matrices, attention weights and probability tables.
+
+:::matrix
+title: Causal attention weights
+cols: the, cat, sat
+the: 1.0, 0, 0
+cat: 0.6, 0.4, 0
+sat: 0.2, 0.5, 0.3
+:::
+
+**Table.** For any set of numbers or definitions.
+
+| Setting | Latency | Data loss on leader crash |
+|---|---|---|
+| Asynchronous | 1 ms | up to 1 ms of writes |
+| Synchronous, 1 follower | 2 ms | none |
+`
 
 export function StyleGuide() {
   return (
@@ -56,6 +129,8 @@ export function StyleGuide() {
           <li><strong>Check your understanding.</strong> Three questions with one-line answers.</li>
           <li><strong>Go further.</strong> The free videos, papers and documents in the sidebar.</li>
         </ol>
+        <h2>Diagrams, scenarios and animation in lessons</h2>
+        <Markdown>{demo}</Markdown>
         <h2>Words we replace</h2>
         <p>A short list of common unapproved words and the approved alternative. The full STE dictionary has about 900 approved words and lists the unapproved ones with their replacements.</p>
         <table>

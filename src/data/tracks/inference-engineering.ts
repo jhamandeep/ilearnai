@@ -48,6 +48,16 @@ A transformer generates text one token at a time. To produce the next token, eac
 
 Without a cache, the engine recomputes all keys and values at every step. With a cache, the engine computes each key and value once and stores it.
 
+The diagram shows how one decode step uses the cache.
+
+:::flow
+title: One decode step with the KV cache
+New token -> Attention layer: query vector
+Attention layer -> KV cache: new key and value, stored once
+KV cache -> Attention layer: all earlier keys and values
+Attention layer -> Next token: attention output
+:::
+
 Take a 70B model with these settings:
 
 | Symbol | Meaning | Value |
@@ -68,7 +78,37 @@ Multiply the values in this order:
 
 One 8k-token sequence needs 2.68 GB of cache. If the GPU has 16 GB free after the weights, then $16 / 2.68 = 5.97$. The server can hold 5 full-length sequences at once.
 
+Press Next to admit sequences until the free memory runs out.
+
+:::scenario
+title: Admit 8k-token sequences into 16 GB of free memory
+state: free=16 GB, sequences=0, waiting=0
+step: The weights are loaded. The GPU has 16 GB free for the cache. Each full-length sequence needs 2.68 GB.
+step: The scheduler admits sequence 1 and reserves 2.68 GB.
+state: free=13.32 GB, sequences=1
+step: The scheduler admits sequence 2.
+state: free=10.64 GB, sequences=2
+step: The scheduler admits sequence 3.
+state: free=7.96 GB, sequences=3
+step: The scheduler admits sequence 4.
+state: free=5.28 GB, sequences=4
+step: The scheduler admits sequence 5.
+state: free=2.6 GB, sequences=5
+step: Sequence 6 needs 2.68 GB but only 2.6 GB is free. The scheduler makes it wait.
+state: waiting=1
+:::
+
 Now remove grouped-query attention. The model then has 64 key-value heads instead of 8. The cache grows by a factor of 8 to 21.5 GB per sequence. Not one full-length sequence fits in 16 GB.
+
+The bars compare the cache per sequence for three models.
+
+:::bars
+title: KV cache per 8k-token sequence in FP16
+unit: GB
+70B with GQA, 8 KV heads: 2.68
+70B without GQA, 64 KV heads: 21.5
+8B with GQA, 8 KV heads: 1.07
+:::
 
 ## How it works
 
@@ -89,6 +129,18 @@ The cache grows with $T$. This table shows the cache for the same 70B model at d
 | 8,192 | 2.68 GB |
 | 32,768 | 10.7 GB |
 | 131,072 | 42.9 GB |
+
+The bars show the same growth with context length.
+
+:::bars
+title: Cache per sequence for the 70B model by context length
+unit: GB
+1,024 tokens: 0.34
+4,096 tokens: 1.34
+8,192 tokens: 2.68
+32,768 tokens: 10.7
+131,072 tokens: 42.9
+:::
 
 To size a server, use this procedure:
 
@@ -160,12 +212,41 @@ $N$ is the number of weights. $b$ is the number of bytes per weight. FP16 uses 2
 | 13B | 26 GB | 13 GB | 6.5 GB |
 | 70B | 140 GB | 70 GB | 35 GB |
 
+The bars compare the three formats for the 70B model.
+
+:::bars
+title: Weight memory of a 70B model
+unit: GB
+FP16, 2 bytes per weight: 140
+INT8, 1 byte per weight: 70
+INT4, 0.5 bytes per weight: 35
+:::
+
 Now quantise four weights by hand. The values are 0.8, -1.2, 0.3 and 2.1. INT4 holds integers from -8 to 7. Use a symmetric scheme with one scale and no zero point.
 
 1. Find the largest absolute value: 2.1.
 2. Compute the scale: $s = 2.1 / 7 = 0.3$.
 3. Divide each value by the scale and round to the nearest integer.
 4. Store the four integers and the scale 0.3.
+
+Press Next to quantise the four weights one at a time.
+
+:::scenario
+title: Quantise 0.8, -1.2, 0.3 and 2.1 to INT4
+state: largest=none, scale=none, stored=none, restored=none
+step: Find the largest absolute value among the four weights. It is 2.1.
+state: largest=2.1
+step: Divide 2.1 by 7, the largest INT4 value. The scale is 0.3.
+state: scale=0.3
+step: Divide 0.8 by 0.3 and round. 2.67 rounds to 3.
+state: stored=3
+step: Divide -1.2 by 0.3 and round. -4.0 stays -4.
+state: stored=3 -4
+step: Divide 0.3 and 2.1 by the scale and round. The results are 1 and 7.
+state: stored=3 -4 1 7
+step: Multiply each integer by 0.3 to restore the weights. The first value is now 0.9 instead of 0.8.
+state: restored=0.9 -1.2 0.3 2.1, error on first weight=0.1
+:::
 
 | Weight | Divided by 0.3 | Stored integer | Restored value |
 | --- | --- | --- | --- |
@@ -192,6 +273,17 @@ The scale defines the error. One large weight forces a large scale, and then eve
 GPTQ quantises one column at a time and adjusts the remaining columns to cancel the error. AWQ scales up the weights that matter most to the activations before it quantises them.
 
 Weight-only quantisation stores INT4 weights and computes in FP16. The engine reads 0.5 bytes per weight, then converts each weight to FP16 before the multiply. This helps when decode is limited by memory bandwidth, which is the common case.
+
+The diagram shows the path of the weights in a weight-only INT4 multiply.
+
+:::flow
+title: Weight-only INT4 matrix multiply
+HBM -> Dequantise: INT4 weights, 0.5 bytes each
+Scales -> Dequantise: one FP16 scale per group of 128
+Dequantise -> Multiply: FP16 weights
+Activations -> Multiply: FP16 activations
+Multiply -> Output: FP16 result
+:::
 
 Activation quantisation stores the activations in INT8 as well. The scheme W8A8 means 8-bit weights and 8-bit activations. SmoothQuant moves the activation outliers into the weights, which are easier to quantise. W8A8 uses the faster integer arithmetic units, so it helps during prefill.
 
@@ -260,9 +352,39 @@ Take a 70B model in 4-bit integer (INT4) form on an 80 GB GPU. The budget has fo
 | Activation workspace | 2 GB | depends on batch size and prompt length |
 | KV cache | the rest | 80 - 35 - 3 - 2 = 40 GB |
 
+The bars compare the four parts of the budget.
+
+:::bars
+title: Budget parts on an 80 GB GPU
+unit: GB
+KV cache: 40
+Weights, INT4: 35
+Engine overhead: 3
+Activation workspace: 2
+:::
+
 Each 8k-token sequence needs 2.68 GB of cache. Divide: $40 / 2.68 = 14.9$. The GPU can hold 14 full-length sequences at once.
 
 Most engines do not use all 80 GB. vLLM has a setting named gpu-memory-utilization with a default of 0.9. That reserves 10 percent for the driver and for memory fragmentation. With 0.9, the engine sees 72 GB. The cache budget then drops to $72 - 35 - 3 - 2 = 32$ GB, which holds 11 full-length sequences.
+
+Press Next to build the budget one part at a time.
+
+:::scenario
+title: Memory budget for a 70B INT4 model on an 80 GB GPU
+state: remaining=80 GB, full sequences=none
+step: Multiply 80 GB by the utilisation fraction 0.9. The engine sees 72 GB.
+state: remaining=72 GB
+step: Subtract the INT4 weights, 35 GB.
+state: remaining=37 GB, weights=35 GB
+step: Subtract the engine overhead, 3 GB.
+state: remaining=34 GB, overhead=3 GB
+step: Subtract the activation workspace, 2 GB. What remains is the cache budget.
+state: remaining=32 GB, workspace=2 GB
+step: Divide 32 GB by 2.68 GB per 8k-token sequence. Round 11.9 down to 11.
+state: full sequences=11
+step: If the average sequence has 2,000 tokens, each one needs 0.67 GB. The same 32 GB holds about 47 sequences.
+state: average sequences=47
+:::
 
 Note: real requests are shorter than the maximum. If the average sequence has 2,000 tokens, each one needs 0.67 GB and 32 GB holds about 47 sequences.
 
@@ -278,6 +400,16 @@ Follow this procedure for any model and GPU:
 6. Divide the cache budget by the cache per sequence at your longest context.
 7. Round down. If the result is below 4, the GPU will serve few requests and idle.
 
+The diagram shows the path from GPU memory to a sequence count.
+
+:::flow
+title: From GPU memory to a sequence count
+GPU memory -> Usable memory: multiply by 0.9
+Usable memory -> After weights: subtract the weights
+After weights -> Cache budget: subtract overhead and workspace
+Cache budget -> Sequence count: divide by cache per sequence
+:::
+
 The activation workspace holds the intermediate tensors of one forward pass. Its size scales with batch size times prompt length times hidden size. A chunked prefill limits the number of prompt tokens per step, which caps this tensor.
 
 When one GPU does not fit, you have three options:
@@ -289,6 +421,16 @@ When one GPU does not fit, you have three options:
 | 2 GPUs, 70B FP16 | 80 GB each | 2 x 0 GB | does not fit |
 
 The FP16 row shows a common failure. The usable total is 2 x 0.9 x 80 = 144 GB. The weights take 140 GB. After overhead on each GPU nothing remains for the cache. A 70B FP16 model needs four 80 GB GPUs for a useful cache.
+
+The bars compare the total cache budget of the three options.
+
+:::bars
+title: Total cache budget by option
+unit: GB
+1 GPU, 70B INT4: 32
+2 GPUs, 70B FP8: 64
+2 GPUs, 70B FP16: 0 (does not fit)
+:::
 
 Tensor parallelism splits every weight matrix across the GPUs. Each GPU holds one slice of the weights and one slice of the cache for every sequence.
 
@@ -353,6 +495,23 @@ Prefill processes the whole prompt in one forward pass. For a 1,000-token prompt
 
 Decode produces one token per step. For each step the GPU reads every weight again and uses it once. The arithmetic units wait for memory. Decode is memory-bound.
 
+The timeline shows one request with a 141 ms prefill step and three 42 ms decode steps on an H100.
+
+:::timeline
+title: One request at batch size 1: prefill, then decode
+unit: ms
+lane Arithmetic units
+lane Memory reads
+Arithmetic units: prefill, 1,000 tokens, 140 TFLOPs @0-141
+Memory reads: weights once, 140 GB @0-42
+Memory reads: weights, 140 GB @141-183
+Arithmetic units: token 1 @141-143
+Memory reads: weights, 140 GB @183-225
+Arithmetic units: token 2 @183-185
+Memory reads: weights, 140 GB @225-267
+Arithmetic units: token 3 @225-227
+:::
+
 The measure that separates the two cases is arithmetic intensity:
 
 $$I = \\frac{\\text{FLOPs}}{\\text{bytes moved}}$$
@@ -362,6 +521,25 @@ $I$ is the arithmetic intensity. FLOPs is the number of floating-point operation
 Now compute the ridge point of an H100 GPU. It performs about 990 TFLOPS in 16-bit floating point (FP16). Its memory delivers 3.35 TB per second. Divide: $990 / 3.35 = 295$ FLOPs per byte. Below 295 the GPU waits for memory. Above 295 it waits for arithmetic.
 
 A 70B model in FP16 has 140 GB of weights. One decode step for one sequence does about 2 FLOPs per weight, so 140 GFLOPs. It reads all 140 GB. The intensity is $2$ FLOPs per byte, far below 295. The step time is set by the memory read: $140 / 3350 = 0.042$ seconds, or 42 ms per token. No kernel can beat this number on one GPU.
+
+Press Next to compute the ridge point and the decode floor step by step.
+
+:::scenario
+title: Ridge point and decode floor for a 70B model on an H100
+state: peak FLOPS=990 T, bandwidth=3.35 TB/s, ridge point=none
+step: Divide the peak FLOPS by the bandwidth. The ridge point is 295 FLOPs per byte.
+state: ridge point=295 FLOPs per byte
+step: One decode step at batch size 1 does 2 FLOPs per weight. That is 140 GFLOPs.
+state: FLOPs per step=140 G
+step: The step reads all 140 GB of weights.
+state: bytes per step=140 GB
+step: Divide FLOPs by bytes. The intensity is 2 FLOPs per byte, far below 295. The step is memory-bound.
+state: intensity=2 FLOPs per byte, bound=memory
+step: Divide 140 GB by 3.35 TB/s. The step takes 42 ms. No kernel beats this floor at batch size 1.
+state: step time=42 ms
+step: Batch 32 sequences. The GPU reads the weights once and does 32 times the arithmetic. The intensity rises to 64.
+state: intensity=64 FLOPs per byte, tokens per step=32
+:::
 
 ## How it works
 
@@ -374,6 +552,18 @@ Batching fixes the intensity. If 32 sequences decode together, the GPU reads the
 | 32 | 64 | 32 | 760 |
 | 128 | 256 | 128 | 3,050 |
 | 256 | 512 | 256 | 3,900 (now compute-bound) |
+
+The bars compare the tokens per second at each batch size.
+
+:::bars
+title: Decode tokens per second by batch size
+unit: tokens/s
+Batch 1: 24
+Batch 8: 190
+Batch 32: 760
+Batch 128: 3050
+Batch 256: 3900 (compute-bound)
+:::
 
 Above batch 148 the intensity crosses the ridge point. The step time then grows with the batch, and throughput stops growing in proportion.
 
@@ -441,13 +631,59 @@ Four requests arrive at the same moment. They need 10, 50, 100 and 200 output to
 
 With static batching the engine starts all four together. It runs 200 decode steps, one for the longest request. At each step it has 4 slots. The total number of slots is $4 \\times 200 = 800$. The useful slots are $10 + 50 + 100 + 200 = 360$. The engine wastes $800 - 360 = 440$ slots, or 55 percent of its work.
 
+Press Next to count the slots step by step.
+
+:::scenario
+title: Four requests of 10, 50, 100 and 200 tokens in 4 slots
+state: active=A B C D, empty slots=0, wasted slots=0
+step: Static batching starts all four requests together. Every step has 4 slots.
+step: At step 10 request A finishes. Its slot stays empty for the remaining 190 steps.
+state: active=B C D, empty slots=1, wasted slots=190
+step: At step 50 request B finishes. Its slot wastes 150 more steps.
+state: active=C D, empty slots=2, wasted slots=340
+step: At step 100 request C finishes. Its slot wastes 100 more steps.
+state: active=D, empty slots=3, wasted slots=440
+step: At step 200 request D finishes. The engine used 800 slots and wasted 440, or 55 percent.
+state: active=none, waste=55 percent
+step: With continuous batching and a full queue, request E takes the slot of A at step 11. The same happens at steps 51 and 101. The waste falls to 0 percent.
+state: waste=0 percent
+:::
+
 With continuous batching the engine checks the batch after every step. When the 10-token request finishes at step 10, its slot is free. A waiting request takes the slot at step 11. The same happens at steps 50 and 100. If the queue has enough work, every slot in every step does useful work. Waste falls from 55 percent to near zero.
+
+The timeline shows the four slots over 200 steps with a full queue.
+
+:::timeline
+title: Continuous batching with a full queue
+unit: steps
+lane Slot 1
+lane Slot 2
+lane Slot 3
+lane Slot 4
+Slot 1: request A, 10 tokens @0-10
+Slot 2: request B, 50 tokens @0-50
+Slot 3: request C, 100 tokens @0-100
+Slot 4: request D, 200 tokens @0-200
+Slot 1: request E takes the slot @10-200
+Slot 2: request F takes the slot @50-200
+Slot 3: request G takes the slot @100-200
+:::
 
 | Method | Steps | Slots used | Useful slots | Waste |
 | --- | --- | --- | --- | --- |
 | Static | 200 | 800 | 360 | 55 % |
 | Continuous, empty queue | 200 | 800 | 360 | 55 % |
 | Continuous, full queue | 200 | 800 | 800 | 0 % |
+
+The bars compare the useful slots of the three cases.
+
+:::bars
+title: Useful slots out of 800
+unit: slots
+Static: 360
+Continuous, empty queue: 360
+Continuous, full queue: 800
+:::
 
 Note: with an empty queue, continuous batching does not help. The gain comes from refilling the freed slots.
 
@@ -475,6 +711,16 @@ Prefill creates a second problem. A 4,000-token prompt takes about 300 ms of com
 | 512 | 8 | about 40 ms, 8 times |
 
 A smaller chunk gives smoother decode and a slower prefill. Choose the chunk size from your target for time per output token.
+
+The bars compare the delay that one chunk adds to a decode step.
+
+:::bars
+title: Delay per decode step by chunk size
+unit: ms
+Chunk 4,000 tokens: 300 (once)
+Chunk 1,024 tokens: 75 (4 times)
+Chunk 512 tokens: 40 (8 times)
+:::
 
 ## Common mistakes
 
@@ -533,7 +779,39 @@ The target model is a 70B model. The draft model is a 1B model with the same tok
 4. At the first rejected token, the engine samples a replacement from an adjusted target distribution and stops.
 5. If all 4 tokens pass, the engine takes one extra token from the last target position for free.
 
+The diagram shows the path of one step from draft to accepted tokens.
+
+:::flow
+title: One speculative decoding step
+Prompt -> Draft model: context
+Draft model -> Target model: 4 draft tokens
+Target model -> Verifier: probabilities for 5 positions
+Verifier -> Output: accepted tokens plus one sample
+Output -> Draft model: new context for the next step
+:::
+
 Suppose the first three tokens pass and "down" fails. The engine replaces "down" with a sample from the target model, "on". The step produced 4 tokens: "the", "cat", "sat", "on". A plain decode step produces 1 token for the same weight read.
+
+Press Next to follow one speculative step.
+
+:::scenario
+title: One speculative step with k = 4
+state: draft=none, accepted=none, rejected=none, output=none
+step: The 1B draft model proposes four tokens one by one: the, cat, sat, down.
+state: draft=the cat sat down
+step: The 70B target model runs one forward pass over the prompt plus the four draft tokens. It returns a probability for every position.
+state: target passes=1
+step: Position 1: the target gives p = 0.9 and the draft gave q = 0.8. The ratio is above 1, so the engine accepts the.
+state: accepted=the
+step: Position 2: p = 0.6 and q = 0.5. The ratio is above 1, so the engine accepts cat.
+state: accepted=the cat
+step: Position 3: p = 0.4 and q = 0.5. The engine accepts sat with probability 0.8. The draw passes.
+state: accepted=the cat sat
+step: Position 4: p = 0.1 and q = 0.6. The acceptance probability is 0.17. The draw fails, so the engine rejects down.
+state: rejected=down
+step: The engine samples a replacement from the adjusted target distribution and gets on. The step produced 4 tokens for one weight read.
+state: output=the cat sat on, tokens this step=4
+:::
 
 ## How it works
 
@@ -557,6 +835,17 @@ The cost of one step is $k$ draft forward passes plus one target forward pass. I
 | 0.7 | 2.76 | 2.6 x |
 | 0.8 | 3.36 | 3.2 x |
 | 0.9 | 4.10 | 3.9 x |
+
+The bars compare the speed-up at each acceptance rate.
+
+:::bars
+title: Speed-up with k = 4 draft tokens
+unit: x
+Acceptance 0.5: 1.8
+Acceptance 0.7: 2.6
+Acceptance 0.8: 3.2
+Acceptance 0.9: 3.9
+:::
 
 The method loses in two cases. At high batch size the target model is already compute-bound, so the verification pass costs $k$ times more and the gain vanishes. At low acceptance rate, below about 0.5, the draft work exceeds the saved work.
 
@@ -614,7 +903,37 @@ A server runs 32 decode streams at 30 ms per token. A 4,000-token prompt arrives
 
 In a shared engine the scheduler has two choices. It can run the prefill as one step. Then all 32 streams wait 300 ms for their next token, and TPOT spikes from 30 ms to 330 ms. Or it can chunk the prefill over 8 steps. Then TPOT rises to about 70 ms for 8 steps and the prompt waits 560 ms for its first token.
 
+Press Next to compare the three ways to handle the prompt.
+
+:::scenario
+title: A 4,000-token prompt meets 32 decode streams
+state: TPOT=30 ms, prompt TTFT=none, streams=32
+step: The 32 streams decode at 30 ms per token. A 4,000-token prompt arrives and needs 300 ms of prefill.
+step: Choice 1: the shared engine runs the prefill in one step. All 32 streams wait 300 ms for their next token.
+state: TPOT=330 ms for one step, prompt TTFT=300 ms
+step: Choice 2: the shared engine chunks the prefill over 8 steps. Each step carries 500 prompt tokens plus 32 decode tokens.
+state: TPOT=about 70 ms for 8 steps, prompt TTFT=560 ms
+step: Choice 3: the prefill GPU takes the prompt. The decode GPU never sees it.
+state: TPOT=30 ms, prompt TTFT=300 ms
+step: The engine copies the 1.3 GB cache to the decode GPU over NVLink in 3 ms. The new stream joins the batch.
+state: prompt TTFT=303 ms, streams=33
+:::
+
 With disaggregation the prefill pool handles the prompt. The decode pool never sees it. The 32 streams keep their 30 ms pace. When the prefill finishes, the engine copies the KV cache of the prompt to a decode GPU and the stream starts.
+
+The timeline shows the prompt on the prefill GPU, the cache copy, and the decode streams that keep their pace.
+
+:::timeline
+title: Disaggregated serving of one 4,000-token prompt
+unit: ms
+lane Prefill GPU
+lane Decode GPU
+Prefill GPU: prefill, 4,000 tokens @0-300
+Decode GPU: 32 streams at 30 ms per token @0-300
+Prefill GPU -> Decode GPU: copy 1.3 GB cache over NVLink @300-303
+Decode GPU: 33 streams at 30 ms per token @303-600
+Prefill GPU: next prompt @303-600
+:::
 
 Compute the copy cost. A 70B model with grouped-query attention stores about 0.33 MB of cache per token. The prompt has 4,000 tokens: $4000 \\times 0.33 = 1{,}320$ MB, about 1.3 GB. Over an NVLink connection at 400 GB per second, the copy takes $1.3 / 400 = 0.0033$ seconds, about 3 ms. Over a 100 Gb per second network, it takes about 105 ms.
 
@@ -624,6 +943,17 @@ Compute the copy cost. A 70B model with grouped-query attention stores about 0.3
 | PCIe 5 x16 | 64 GB/s | 20 ms |
 | 400 Gb Ethernet | 50 GB/s | 26 ms |
 | 100 Gb Ethernet | 12.5 GB/s | 105 ms |
+
+The bars compare the copy time over each link.
+
+:::bars
+title: Time to copy a 1.3 GB cache
+unit: ms
+NVLink, 400 GB/s: 3
+PCIe 5 x16, 64 GB/s: 20
+400 Gb Ethernet, 50 GB/s: 26
+100 Gb Ethernet, 12.5 GB/s: 105
+:::
 
 Within one node the copy is cheap compared with a 300 ms prefill.
 
@@ -636,6 +966,17 @@ The request path has five stages:
 3. The engine copies the cache to a decode GPU over the fastest available link.
 4. The decode GPU adds the sequence to its batch and streams tokens.
 5. The prefill GPU frees the cache and takes the next prompt.
+
+The diagram shows the path of one request through the two pools.
+
+:::flow
+title: Request path in a disaggregated engine
+Client -> Router: prompt
+Router -> Prefill GPU: prompt
+Prefill GPU -> Decode GPU: KV cache and first token
+Decode GPU -> Client: token stream
+Prefill GPU -> Router: ready for the next prompt
+:::
 
 The two pools want different settings. The prefill pool is compute-bound, so it benefits from large chunks and high tensor parallelism. The decode pool is memory-bound, so it benefits from large batches and a large cache budget.
 
@@ -718,6 +1059,25 @@ FlashAttention solves this with an online softmax. It processes the scores in bl
 
 Check against the direct method. The direct sum is $e^{-3} + e^{-1} + e^{-2} + e^{0} = 0.050 + 0.368 + 0.135 + 1 = 1.553$. The two methods agree. The kernel applies the same rescale factor to the running weighted sum of values. So the output is exact at the end of the last block.
 
+Press Next to run the online softmax over the two blocks.
+
+:::scenario
+title: Online softmax over the scores 1, 3, 2, 4 in two blocks
+state: running max=none, running sum=0, direct sum=none
+step: Block 1 arrives with scores 1 and 3. The block maximum is 3.
+state: running max=3
+step: Sum the exponentials of 1 - 3 and 3 - 3. The sum is 0.135 + 1 = 1.135.
+state: running sum=1.135
+step: Block 2 arrives with scores 2 and 4. The new maximum is 4.
+state: running max=4
+step: Rescale the old sum by the exponential of 3 - 4, which is 0.368. The sum becomes 0.418.
+state: running sum=0.418
+step: Add the exponentials of 2 - 4 and 4 - 4. The sum becomes 0.418 + 0.135 + 1 = 1.553.
+state: running sum=1.553
+step: The direct sum over all four scores is also 1.553. The two methods agree, so the result is exact.
+state: direct sum=1.553, match=yes
+:::
+
 ## How it works
 
 The kernel splits the query, key, and value matrices into blocks. A block is small enough to fit in SRAM. The procedure for one block of queries is:
@@ -729,6 +1089,17 @@ The kernel splits the query, key, and value matrices into blocks. A block is sma
 5. Repeat from step 2 for the next key block.
 6. Divide the running output by the running sum and write the final output to HBM.
 
+The diagram shows the data that moves between HBM and SRAM for one query block.
+
+:::flow
+title: FlashAttention data movement for one query block
+HBM -> SRAM: query block, loaded once
+HBM -> SRAM: key block and value block, one pair at a time
+SRAM -> Scores: block of scores, stays on chip
+Scores -> Running output: rescale and add
+Running output -> HBM: final output, written once
+:::
+
 The score matrix never exists in HBM. So memory grows linearly with $T$ instead of quadratically. The table shows the score-matrix memory for one layer with 64 heads in FP16.
 
 | Sequence length T | Standard attention | FlashAttention extra memory |
@@ -736,6 +1107,16 @@ The score matrix never exists in HBM. So memory grows linearly with $T$ instead 
 | 2,048 | 537 MB | a few MB |
 | 8,192 | 8.6 GB | a few MB |
 | 32,768 | 137 GB | a few MB |
+
+The bars compare the score-matrix memory of standard attention at three lengths.
+
+:::bars
+title: Score matrix for one layer with 64 heads in FP16
+unit: GB
+T = 2,048: 0.54
+T = 8,192: 8.6
+T = 32,768: 137
+:::
 
 Note: FlashAttention changes the order of the arithmetic, not the result. The output matches standard attention up to floating-point rounding.
 
@@ -808,13 +1189,49 @@ Now compare the contiguous layout with a maximum length of 2,048 tokens.
 | Contiguous, max 2,048 | 2,048 | 70 | 96.6 % |
 | Paged, block 16 | 80 | 70 | 12.5 % |
 
+The bars compare the waste of the two layouts.
+
+:::bars
+title: Waste for a 70-token sequence
+unit: percent
+Contiguous, max 2,048: 96.6
+Paged, block 16: 12.5
+:::
+
 The paged layout also grows with the sequence. When token 81 arrives, the engine allocates one more block.
+
+Press Next to allocate blocks as the sequence grows.
+
+:::scenario
+title: Block allocation for one sequence with block size 16
+state: tokens=0, blocks=0, empty slots=0, block table=empty
+step: The prompt arrives with 70 tokens. The engine needs 70 / 16 = 4.375, so 5 blocks.
+state: tokens=70, blocks=5, empty slots=10
+step: The block table lists five physical blocks, for example 17 3 42 8 25. They are not next to each other in memory.
+state: block table=17 3 42 8 25
+step: Decode adds tokens 71 to 80. They fill the empty slots of block 25.
+state: tokens=80, empty slots=0
+step: Token 81 arrives. The engine takes one free block, number 61, and appends it to the table.
+state: tokens=81, blocks=6, empty slots=15, block table=17 3 42 8 25 61
+step: The sequence finishes at 90 tokens. The engine frees all six blocks. Any sequence can use them, because every block has the same size.
+state: tokens=90, blocks=0, empty slots=0, block table=empty, free blocks returned=6
+:::
 
 ## How it works
 
 Two kinds of waste exist. Internal fragmentation is empty space inside a reserved region. The contiguous layout had 1,978 slots of internal fragmentation. External fragmentation is free memory split into pieces too small to use. The contiguous layout suffers from it when sequences of different lengths finish in a random order. Paged attention limits internal fragmentation to less than one block per sequence. It removes external fragmentation because every free block has the same size and fits any request.
 
 The attention kernel reads the block table during the computation. For query token $t$ and key position $j$, the kernel computes the block index $\\lfloor j / B \\rfloor$ and the offset $j \\bmod B$. Here $B$ is the block size. It looks up the physical block address in the table and reads the key and value from that address. The extra lookup costs a little time, so engines tune $B$ between 8 and 32 tokens.
+
+The diagram shows how the kernel finds the key at position 37 with a block size of 16.
+
+:::flow
+title: Lookup of key position 37 through the block table
+Kernel -> Block index: 37 / 16 = 2, offset 37 mod 16 = 5
+Block index -> Block table: read entry 2
+Block table -> Physical block: address of block 42
+Physical block -> Kernel: key and value at offset 5
+:::
 
 The block table also enables sharing. Several sequences can point at the same physical block. Parallel sampling produces many answers from one prompt, and beam search keeps many candidates with a common prefix. All of them share the prompt blocks. The engine keeps a reference count on each block. When one sequence wants to write into a shared block, the engine copies that block first and then writes into the copy. This is copy-on-write.
 
@@ -877,6 +1294,16 @@ An attention layer has $H$ query heads. Each query head needs a key head and a v
 - MQA gives all query heads one shared key head and one shared value head. The number of KV heads is 1.
 - GQA puts the query heads into $G$ groups. Each group shares one key head and one value head. The number of KV heads is $G$.
 
+The diagram shows a small GQA layout with 8 query heads in 2 groups.
+
+:::flow
+title: GQA with 8 query heads and 2 KV heads
+Query heads 1 to 4 -> KV head 1: share one key and one value head
+Query heads 5 to 8 -> KV head 2: share one key and one value head
+KV head 1 -> KV cache: 1 key and 1 value per token
+KV head 2 -> KV cache: 1 key and 1 value per token
+:::
+
 The cache size per sequence is:
 
 $$\\text{bytes} = 2 \\times L \\times H_{kv} \\times d_{\\text{head}} \\times T \\times b$$
@@ -887,15 +1314,51 @@ The factor 2 covers keys and values. $L$ is the number of layers, $H_{kv}$ is th
 2. GQA with 8 groups: $H_{kv} = 8$. Bytes $= 21.5 / 8 = 2.7$ GB.
 3. MQA: $H_{kv} = 1$. Bytes $= 21.5 / 64 = 0.34$ GB.
 
+Press Next to compute the cache for each layout.
+
+:::scenario
+title: KV cache at 8,192 tokens for a 70B-class model
+state: layers=80, head size=128, tokens=8192, bytes per element=2, MHA=none, GQA=none, MQA=none
+step: Start from the formula: 2 times layers times KV heads times head size times tokens times bytes.
+step: MHA has 64 KV heads. The cache is 2 x 80 x 64 x 128 x 8192 x 2 bytes, which is 21.5 GB.
+state: MHA=21.5 GB
+step: GQA with 8 groups has 8 KV heads. Only the KV head count changes, so divide 21.5 GB by 8.
+state: GQA=2.7 GB
+step: MQA has 1 KV head. Divide 21.5 GB by 64.
+state: MQA=0.34 GB
+step: With 40 GB free, MHA fits 1 sequence, GQA fits 14 and MQA fits 119.
+state: sequences in 40 GB=1 vs 14 vs 119
+:::
+
 | Layout | KV heads | Cache at 8,192 tokens | Sequences in 40 GB of free memory |
 |---|---|---|---|
 | MHA | 64 | 21.5 GB | 1 |
 | GQA (8 groups) | 8 | 2.7 GB | 14 |
 | MQA | 1 | 0.34 GB | 119 |
 
+The bars compare the cache of the three layouts.
+
+:::bars
+title: KV cache per sequence at 8,192 tokens
+unit: GB
+MHA, 64 KV heads: 21.5
+GQA, 8 KV heads: 2.7
+MQA, 1 KV head: 0.34
+:::
+
 ## How it works
 
 The cache size also sets the bytes read per decoded token. For one new token the kernel reads the keys and values of every previous token. For MHA at 8,192 tokens that is 21.5 GB per sequence per step. A GPU with 3.35 TB/s of HBM bandwidth needs 6.4 ms for that read alone. With GQA the read falls to 0.8 ms. With MQA it falls to 0.1 ms. The compute for attention is the same in all three cases, so GQA and MQA raise the arithmetic intensity of the step. Arithmetic intensity is the number of floating-point operations per byte moved.
+
+The bars compare the time to read the cache for one token.
+
+:::bars
+title: Cache read time per decode step at 8,192 tokens and 3.35 TB/s
+unit: ms
+MHA: 6.4
+GQA, 8 groups: 0.8
+MQA: 0.1
+:::
 
 Quality follows the number of KV heads. The GQA paper shows that 8 groups match MHA quality within noise on summarisation and translation. MQA loses a small but measurable amount of quality and trains less stably. Most teams pick $G = 8$ because it also matches the 8 GPUs in a tensor-parallel node, so each GPU holds one KV head.
 
@@ -967,6 +1430,19 @@ A transformer layer has an attention block and a multilayer perceptron (MLP) blo
 
 Split $A$ by columns across 4 GPUs: $A = [A_1, A_2, A_3, A_4]$. GPU $i$ computes $\\text{GeLU}(X A_i)$ with its own column block. The activation function is applied per element, so no communication is needed. Now split $B$ by rows: $B = [B_1; B_2; B_3; B_4]$. GPU $i$ computes the partial product $\\text{GeLU}(X A_i) B_i$. The full output is the sum of the four partial products. An all-reduce sums the partial products on every GPU, so one all-reduce completes the MLP.
 
+The diagram shows the same MLP split across 2 GPUs with one all-reduce at the end.
+
+:::flow
+title: MLP block on 2 GPUs with one all-reduce
+Input X -> GPU 0: full X
+Input X -> GPU 1: full X
+GPU 0 -> GPU 0 partial: GeLU(X A1) B1
+GPU 1 -> GPU 1 partial: GeLU(X A2) B2
+GPU 0 partial -> All-reduce: partial sum
+GPU 1 partial -> All-reduce: partial sum
+All-reduce -> Output Y: full sum on both GPUs
+:::
+
 Attention splits by head. A model with 64 heads places 16 heads on each of 4 GPUs. Each GPU computes attention for its heads. The output projection is row-split like $B$, so it ends with one more all-reduce. Each layer therefore performs two all-reduce steps.
 
 The memory arithmetic for a 70B model in FP16 on 4 GPUs is:
@@ -974,6 +1450,17 @@ The memory arithmetic for a 70B model in FP16 on 4 GPUs is:
 1. Weights: $140 / 4 = 35$ GB per GPU.
 2. The key-value (KV) cache also splits by head, so each GPU holds a quarter of the cache.
 3. Each GPU has 80 GB, so $80 - 35 = 45$ GB remains for the cache and activations.
+
+The bars compare the weight memory per GPU at each TP degree.
+
+:::bars
+title: Weights per GPU for a 70B FP16 model
+unit: GB
+TP 1: 140 (does not fit)
+TP 2: 70
+TP 4: 35
+TP 8: 17.5
+:::
 
 ## How it works
 
@@ -988,7 +1475,33 @@ An 80-layer model performs 160 all-reduce steps per token. That is about 160 MB 
 | NVLink inside a node | 900 GB/s | about 20 us | about 3 ms |
 | Ethernet between nodes | 50 GB/s | about 200 us | about 32 ms |
 
+The bars compare the communication time of 160 all-reduce steps on each link.
+
+:::bars
+title: Communication time per decode step for 160 all-reduce steps
+unit: ms
+NVLink inside a node: 3
+Ethernet between nodes: 32
+:::
+
 This is why engines keep tensor parallelism inside one node. Across nodes the latency per layer grows ten times.
+
+Press Next to follow one decode step through one layer at TP = 4.
+
+:::scenario
+title: One decode step through one layer at TP = 4 with batch 32
+state: all-reduce count=0, bytes moved per GPU=0 MB, added latency=0 ms
+step: Each GPU holds 16 of the 64 attention heads and a quarter of the KV cache. Each GPU computes attention for its own heads.
+step: The output projection is row-split. Each GPU holds a partial sum. The first all-reduce adds the four partial sums.
+state: all-reduce count=1, bytes moved per GPU=1 MB
+step: Each GPU multiplies X by its column block of A and applies GeLU. No communication is needed.
+step: Each GPU multiplies by its row block of B. The second all-reduce adds the four partial products.
+state: all-reduce count=2, bytes moved per GPU=2 MB
+step: The layer is done. Repeat for 80 layers: 160 all-reduce steps and about 160 MB per GPU per token.
+state: all-reduce count=160 per token, bytes moved per GPU=160 MB
+step: Each all-reduce has a fixed latency of about 20 us on NVLink. The 160 steps add about 3 ms to the decode step.
+state: added latency=about 3 ms
+:::
 
 The procedure to set tensor parallelism in a serving engine is:
 
@@ -1059,6 +1572,33 @@ A batch enters stage 1. Stage 1 runs its 20 layers and sends the activation tens
 
 The problem is idle time. While stage 2 works, stages 1, 3, and 4 wait. With one batch, only one GPU is busy at any moment. The fix is to cut the batch into $M$ micro-batches. Stage 1 finishes micro-batch 1, sends it on, and starts micro-batch 2 at once. After a short ramp-up, all stages work at the same time. The ramp-up and the ramp-down at the end are the pipeline bubble.
 
+The timeline shows 4 stages and 4 micro-batches over 7 steps, with the bubble as empty space on each lane.
+
+:::timeline
+title: Forward pass with 4 stages and 4 micro-batches
+unit: steps
+lane Stage 1
+lane Stage 2
+lane Stage 3
+lane Stage 4
+Stage 1: mb 1 @0-1
+Stage 1: mb 2 @1-2
+Stage 2: mb 1 @1-2
+Stage 1: mb 3 @2-3
+Stage 2: mb 2 @2-3
+Stage 3: mb 1 @2-3
+Stage 1: mb 4 @3-4
+Stage 2: mb 3 @3-4
+Stage 3: mb 2 @3-4
+Stage 4: mb 1 @3-4
+Stage 2: mb 4 @4-5
+Stage 3: mb 3 @4-5
+Stage 4: mb 2 @4-5
+Stage 3: mb 4 @5-6
+Stage 4: mb 3 @5-6
+Stage 4: mb 4 @6-7
+:::
+
 ## How it works
 
 With $S$ stages and $M$ micro-batches, each stage spends $M$ time units on useful work. The ramp-up and ramp-down add $S - 1$ idle units. The bubble fraction is:
@@ -1069,6 +1609,35 @@ $S$ is the number of stages, and $M$ is the number of micro-batches in one batch
 
 1. $M = 8$: bubble $= 3 / (8 + 3) = 3 / 11 = 27$ percent of the time is idle.
 2. $M = 32$: bubble $= 3 / (32 + 3) = 3 / 35 = 8.6$ percent of the time is idle.
+
+Press Next to follow one batch of 8 micro-batches through the 4 stages.
+
+:::scenario
+title: Bubble for 4 stages and 8 micro-batches
+state: step=0, busy stages=0, idle units per stage=0, bubble=none
+step: Micro-batch 1 enters stage 1. Stages 2, 3 and 4 wait.
+state: step=1, busy stages=1
+step: Micro-batch 1 moves to stage 2 and micro-batch 2 enters stage 1.
+state: step=2, busy stages=2
+step: After two more steps all four stages are busy. Stage 4 waited 3 steps during the ramp-up.
+state: step=4, busy stages=4, idle units per stage=3
+step: The pipeline stays full until micro-batch 8 leaves stage 1 at step 8.
+state: step=8
+step: The last three steps drain the pipeline. Stage 1, then stage 2, then stage 3 go idle. Stage 1 waits 3 steps at the end.
+state: step=11, busy stages=0
+step: Each stage worked 8 units out of 11. The bubble is 3 / 11 = 27 percent.
+state: bubble=27 percent
+:::
+
+The bars compare the bubble fraction for three micro-batch counts.
+
+:::bars
+title: Bubble fraction with 4 stages
+unit: percent
+4 micro-batches: 43
+8 micro-batches: 27
+32 micro-batches: 8.6
+:::
 
 More micro-batches shrink the bubble. But each micro-batch must be large enough to keep a GPU efficient, so $M$ has a practical limit.
 
@@ -1150,6 +1719,22 @@ ZeRO shards the state across the $N$ data-parallel GPUs in three stages. Work th
 2. Stage 2 also shards the gradients. Each GPU keeps 2 bytes of weights, $2 / 8 = 0.25$ bytes of gradients, and 1.5 bytes of optimizer state. Memory $= 7 \\times (2 + 0.25 + 1.5) = 26.25$ GB.
 3. Stage 3 also shards the weights. Each GPU keeps $16 / 8 = 2$ bytes per weight. Memory $= 112 / 8 = 14$ GB.
 
+Press Next to shard the training state one stage at a time.
+
+:::scenario
+title: Shard the 16 bytes per weight across 8 GPUs
+state: weights=2 B, gradients=2 B, optimizer state=12 B, per GPU=16 B, 7B model=112 GB, communication=1 x plain
+step: Plain data parallelism keeps all 16 bytes per weight on every GPU.
+step: Stage 1 shards the optimizer state. Each GPU keeps 12 / 8 = 1.5 bytes of it.
+state: optimizer state=1.5 B, per GPU=5.5 B, 7B model=38.5 GB
+step: Stage 2 also shards the gradients. Each GPU keeps 2 / 8 = 0.25 bytes.
+state: gradients=0.25 B, per GPU=3.75 B, 7B model=26.25 GB
+step: Stage 3 also shards the weights. Each GPU keeps 2 / 8 = 0.25 bytes.
+state: weights=0.25 B, per GPU=2 B, 7B model=14 GB
+step: Before a layer runs, the GPUs all-gather its weights, use them, and drop them. The communication rises to about 1.5 times plain data parallelism.
+state: communication=1.5 x plain
+:::
+
 | Configuration | Bytes per weight per GPU | 7B model, 8 GPUs |
 |---|---|---|
 | Plain data parallelism | 16 | 112 GB |
@@ -1157,9 +1742,32 @@ ZeRO shards the state across the $N$ data-parallel GPUs in three stages. Work th
 | ZeRO stage 2 | $2 + 14/N$ | 26.25 GB |
 | ZeRO stage 3 | $16/N$ | 14 GB |
 
+The bars compare the memory per GPU for the 7B model on 8 GPUs.
+
+:::bars
+title: Memory per GPU for a 7B model on 8 GPUs
+unit: GB
+Plain data parallelism: 112
+ZeRO stage 1: 38.5
+ZeRO stage 2: 26.25
+ZeRO stage 3: 14
+:::
+
 ## How it works
 
 In the table, $N$ is the number of data-parallel GPUs. Each stage adds communication. Stages 1 and 2 cost the same as plain data parallelism. Each step does one reduce-scatter of the gradients and one all-gather of the updated weights. Stage 3 adds more. Before each layer runs, the GPUs all-gather the weights of that layer, use them, and then drop them. This happens in the forward pass and again in the backward pass. The total traffic is about 1.5 times that of plain data parallelism.
+
+The diagram shows one layer of a stage 3 training step on one GPU.
+
+:::flow
+title: ZeRO stage 3 for one layer on one GPU
+Weight shards -> All-gather: 1/8 of the layer from each GPU
+All-gather -> Forward pass: full layer weights
+Forward pass -> Drop weights: keep only the activations
+Drop weights -> Backward pass: all-gather the weights again
+Backward pass -> Reduce-scatter: gradients
+Reduce-scatter -> Optimizer shard: 1/8 of the gradients
+:::
 
 PyTorch implements the same idea as Fully Sharded Data Parallel (FSDP). FSDP shards the weights, gradients, and optimizer state of each layer and gathers them on demand. DeepSpeed implements the three stages and adds offload to central processor (CPU) memory and disk.
 
@@ -1223,11 +1831,40 @@ A 405B model in FP16 (16-bit floating point) has $405 \\times 10^9 \\times 2 = 8
 2. Add PP = 2 across two nodes. Total memory $= 1280$ GB. Weights per GPU $= 810 / 16 = 51$ GB. The remaining $1280 - 810 = 470$ GB holds the key-value (KV) cache and activations.
 3. Alternative: quantise the weights to FP8 (8-bit floating point). Weights $= 405$ GB. With TP = 8 on one node, each GPU holds 51 GB and $640 - 405 = 235$ GB remains.
 
+Press Next to try each layout for the 405B model.
+
+:::scenario
+title: Fit a 405B model on nodes of eight 80 GB GPUs
+state: weights=810 GB in FP16, layout=none, per GPU=none, fits=none, free for cache=none
+step: Try TP = 8 on one node. Divide 810 GB by 8.
+state: layout=FP16 TP 8, per GPU=101 GB, fits=no
+step: 101 GB exceeds 80 GB. Add PP = 2 across two nodes and divide by 16 GPUs.
+state: layout=FP16 TP 8 PP 2, per GPU=51 GB, fits=yes, free for cache=470 GB
+step: Alternative: quantise to FP8. The weights drop to 405 GB.
+state: weights=405 GB in FP8
+step: Try TP = 8 on one node again. Divide 405 GB by 8.
+state: layout=FP8 TP 8 PP 1, per GPU=51 GB, fits=yes, free for cache=235 GB
+step: Add PP = 2 to the FP8 layout for the largest cache pool.
+state: layout=FP8 TP 8 PP 2, per GPU=25 GB, free for cache=875 GB
+step: Pick by goal. FP8 TP 8 on one node gives the lowest latency. FP8 TP 8 PP 2 gives the highest throughput. FP16 avoids quantisation loss.
+state: choice=depends on the goal
+:::
+
 | Layout | Nodes | Weights per GPU | Free for cache | Communication | Latency note |
 |---|---|---|---|---|---|
 | FP16, TP 8, PP 2 | 2 | 51 GB | 470 GB | NVLink all-reduce plus one cross-node hop | sum of two stage times |
 | FP8, TP 8, PP 1 | 1 | 51 GB | 235 GB | NVLink all-reduce only | lowest per token |
 | FP8, TP 8, PP 2 | 2 | 25 GB | 875 GB | NVLink all-reduce plus one hop | highest throughput |
+
+The bars compare the memory left for the cache in each layout.
+
+:::bars
+title: Memory free for the KV cache and activations
+unit: GB
+FP16, TP 8, PP 2: 470
+FP8, TP 8, PP 1: 235
+FP8, TP 8, PP 2: 875
+:::
 
 The second layout gives the lowest latency because no request crosses a node. The third gives the highest throughput because the large cache pool holds the most concurrent sequences. The first is the choice when you cannot accept any quantisation loss.
 
@@ -1240,11 +1877,32 @@ The general recipe has four steps.
 3. Add replicas. Each TP times PP group is one replica. Divide the required throughput by the throughput of one replica to get the DP count.
 4. Check the links. Compute the bytes per step on each link and divide by the link bandwidth. If that time is a large fraction of the step time, reduce the degree on that link.
 
+The diagram shows two replicas, each with TP = 8 over NVLink inside a node and PP = 2 across two nodes.
+
+:::flow
+title: Two replicas of TP 8 x PP 2 behind one load balancer
+Load balancer -> Replica 1 node 1: request
+Replica 1 node 1 -> Replica 1 node 2: activations after layers 1 to 63
+Replica 1 node 2 -> Load balancer: tokens
+Load balancer -> Replica 2 node 1: next request
+Replica 2 node 1 -> Replica 2 node 2: activations after layers 1 to 63
+Replica 2 node 2 -> Load balancer: tokens
+:::
+
 Take a TP group with $L$ layers, $N$ tokens per step, hidden size $d$, and $b$ bytes per element. The all-reduce traffic per step is about:
 
 $$\\text{bytes per step} = 2 \\times L \\times 2 \\times N \\times d \\times b$$
 
 The first 2 counts the two all-reduce steps per layer, and the second 2 counts the two phases of each all-reduce. With $L = 126$, $N = 64$, $d = 16384$, and $b = 2$ this is 1.06 GB per step. That takes about 1.2 ms at 900 GB/s. Over Ethernet at 50 GB/s it is 21 ms, which is why TP stays on NVLink.
+
+The bars compare the time for 1.06 GB of all-reduce traffic on each link.
+
+:::bars
+title: All-reduce time per step for 1.06 GB
+unit: ms
+NVLink, 900 GB/s: 1.2
+Ethernet, 50 GB/s: 21
+:::
 
 Mixture-of-experts (MoE) models add expert parallelism (EP). An MoE layer has many expert MLPs, and each token visits only a few of them. Expert parallelism places different experts on different GPUs and routes each token to the GPU that holds its expert with an all-to-all exchange.
 
@@ -1313,11 +1971,39 @@ Consider three requests at the start of a step:
 | B | Mid-decode, 40 tokens generated | 1 (decode) |
 | C | Mid-decode, 12 tokens generated | 1 (decode) |
 
+The bars compare the tokens that each request adds to the step.
+
+:::bars
+title: Tokens per request in this step
+unit: tokens
+A, prefill: 500
+B, decode: 1
+C, decode: 1
+:::
+
 The scheduler has a token budget of 2,048 tokens per step. The engine calls this limit max_num_batched_tokens. The scheduler counts: 500 + 1 + 1 = 502 tokens. The total is below 2,048, so all three requests fit in one batch.
 
 The key-value (KV) cache stores the keys and values of every token already processed. The cache is split into blocks of 16 tokens. Request A needs 500 / 16 = 31.25, so 32 blocks. Requests B and C each need one more token, so each one may need one new block. The block manager checks that 34 free blocks exist. If they do, the scheduler admits A.
 
 The model runner then executes one forward pass over 502 tokens. The sampler picks one new token for A, one for B, and one for C. The detokenizer turns each token into text. The scheduler appends the new tokens and moves A into the decode state. The next step starts.
+
+Press Next to build the step by hand.
+
+:::scenario
+title: One scheduler step with a budget of 2,048 tokens
+state: budget left=2048, free blocks=40, batch=empty, tokens produced=0
+step: Free the blocks of sequences that finished in the last step. None finished, so 40 blocks stay free.
+step: Add one decode token for request B. B may need one new block.
+state: budget left=2047, free blocks=39, batch=B
+step: Add one decode token for request C.
+state: budget left=2046, free blocks=38, batch=B C
+step: Request A waits with a 500-token prompt. It needs 32 blocks and 500 tokens of budget. Both are available, so admit A.
+state: budget left=1546, free blocks=6, batch=B C A
+step: Run one forward pass over 502 tokens. The sampler returns one token for each request.
+state: tokens produced=3
+step: Append the tokens. Move A to the decode state. Start the next step.
+state: A=decode, B=decode, C=decode
+:::
 
 Note: a step with a long prefill makes every decode request in the same batch wait. Chunked prefill splits A into chunks of, for example, 512 tokens, so each step stays short.
 
@@ -1333,6 +2019,19 @@ The layers, in the order a request passes through them, are:
     Sampler         picks one token per sequence from the logits
     Detokenizer     turns new token ids back into text
     API server      streams the text back to the client
+
+The diagram shows the path of one request through these layers.
+
+:::flow
+title: Path of one request through the engine
+API server -> Tokenizer: prompt text
+Tokenizer -> Scheduler: token ids
+Scheduler -> Block manager: tokens picked for this step
+Block manager -> Model runner: KV cache blocks
+Model runner -> Sampler: logits
+Sampler -> Detokenizer: one token id per sequence
+Detokenizer -> API server: text to stream
+:::
 
 The model runner uses CUDA graphs for decode steps. A CUDA graph records a fixed sequence of GPU kernels once and replays it. The replay removes the launch cost of the many small kernels in a decode step.
 
@@ -1403,11 +2102,37 @@ The system prompt fills 1,200 / 16 = 75 full blocks. The first request computes 
 
 The second request arrives. The engine hashes its first 75 blocks and finds every one in the table. It links the new request to those blocks and does not compute them. The user part of 200 tokens needs 200 / 16 = 12.5, so 13 blocks. The engine runs prefill on 200 tokens instead of 1,400 tokens.
 
+Press Next to follow the second request through the cache table.
+
+:::scenario
+title: Second request with a 1,200-token system prompt
+state: blocks matched=0, blocks to compute=88, prefill tokens=1400, prefill time=about 70 ms
+step: The engine splits the 1,400-token prompt into blocks of 16. The first 75 blocks hold the system prompt.
+step: It hashes block 1 from its tokens. The hash is in the table.
+state: blocks matched=1, blocks to compute=87
+step: It hashes block 2 from its tokens and the hash of block 1. The hash is in the table. It continues down the chain.
+state: blocks matched=2, blocks to compute=86
+step: All 75 system prompt blocks match. The engine links the request to them and raises their reference counts.
+state: blocks matched=75, blocks to compute=13, prefill tokens=200
+step: Block 76 holds user tokens. Its hash is not in the table. The chain stops.
+step: The engine runs prefill on the 200 user tokens only. The prefill time drops from about 70 ms to about 12 ms.
+state: prefill time=about 12 ms
+:::
+
 | Quantity | Without caching | With caching |
 |---|---|---|
 | Prefill tokens per request | 1,400 | 200 |
 | Prefill time (illustrative) | 70 ms | 12 ms |
 | KV blocks computed | 88 | 13 |
+
+The bars compare the prefill tokens per request.
+
+:::bars
+title: Prefill tokens per request
+unit: tokens
+Without caching: 1400
+With caching: 200
+:::
 
 The prefill time drops by about 6 times. The number 70 ms is illustrative; the real time depends on the model and the GPU.
 
@@ -1423,6 +2148,18 @@ The engine does this when a new request arrives:
 4. Stop at the first block not found.
 5. Link the request to the found blocks and raise their reference count.
 6. Run prefill on the remaining tokens only.
+
+The diagram shows the lookup path for one new request.
+
+:::flow
+title: Prefix lookup for a new request
+Prompt tokens -> Block hasher: blocks of 16 tokens
+Block hasher -> Cache table: hash of the tokens plus the previous hash
+Cache table -> Block hasher: hit, try the next block
+Cache table -> Prefill: first miss, remaining tokens
+Prefill -> KV cache: new blocks
+KV cache -> Cache table: hashes of the new blocks
+:::
 
 The saving in prefill tokens for a request is $s = n_{shared} - (n_{shared} \\bmod b)$. Here $n_{shared}$ is the number of shared prefix tokens and $b$ is the block size. The modulo removes the last partial block, because the engine still computes that block.
 
@@ -1489,7 +2226,34 @@ A request asks for an answer of 300 tokens. The engine decodes at 30 ms per toke
 | Total decode time | 300 × 30 ms = 9.0 s |
 | Total request time | 9.4 s |
 
+The bars compare the wait before the user sees text.
+
+:::bars
+title: Time until the user sees text
+unit: s
+Without streaming: 9.4
+With streaming: 0.4
+:::
+
 Without streaming the client waits 9.4 s and then receives the whole text. With streaming the client receives the first token at 400 ms. A person reads about 5 tokens per second, and the engine produces about 33 tokens per second. The text arrives faster than the user reads it.
+
+The timeline shows the first half second of the stream.
+
+:::timeline
+title: First tokens of a streamed response
+unit: ms
+lane Engine
+lane Client
+Engine: prefill, time to first token @0-400
+Engine -> Client: token 1 @400-405
+Engine: decode step @400-430
+Engine -> Client: token 2 @430-435
+Engine: decode step @430-460
+Engine -> Client: token 3 @460-465
+Engine: decode step @460-490
+Engine -> Client: token 4 @490-495
+Client: shows text as it arrives @405-500
+:::
 
 The engine sends the stream as server-sent events over one HTTP response. Each event is a line of text that starts with data: and ends with a blank line. A stream of three events looks like this:
 
@@ -1514,6 +2278,23 @@ The path of one token is short:
 5. The client parses the event and appends the text to the screen.
 
 Step 2 has an edge case. Tokenizers split text into byte pieces. A single character outside the ASCII range, such as an accented letter or an emoji, can span two or more tokens. After the first token the bytes do not form a complete UTF-8 character. The detokenizer holds the bytes and emits nothing. When the next token completes the character, the detokenizer emits the full character. The client therefore sees a short pause of one or two tokens on such characters.
+
+Press Next to follow four tokens through the detokenizer and then a disconnect.
+
+:::scenario
+title: Streaming the text café ok
+state: held bytes=0, sent text=none, events sent=0, request=running
+step: The sampler picks a token for caf. The detokenizer gets three complete ASCII bytes and sends caf.
+state: sent text=caf, events sent=1
+step: The next token holds the first byte of the two-byte character é. The byte does not form a complete UTF-8 character. The detokenizer holds it and sends nothing.
+state: held bytes=1
+step: The next token holds the second byte. The character is complete. The detokenizer sends é.
+state: held bytes=0, sent text=café, events sent=2
+step: The next token is the word ok with a space in front. The detokenizer sends it at once.
+state: sent text=café ok, events sent=3
+step: The client closes the socket. The API server cancels the request, and the scheduler frees its KV cache blocks.
+state: request=cancelled, cache blocks=freed
+:::
 
 The user-visible latency has two parts. The time to first token (TTFT) is the prefill time plus any queue time. The time per output token (TPOT) is the decode time per step. The total time is:
 
@@ -1590,6 +2371,23 @@ The TTFT is the prefill time plus any time in the queue. The prefill time is 2,0
 
 The decode time is 299 steps × 25 ms = 7.475 s. The first token arrives at TTFT, so only 299 steps remain. The end-to-end latency is 0.2 s + 7.475 s = 7.675 s.
 
+The timeline shows the first 280 ms of the request.
+
+:::timeline
+title: TTFT and the first decode steps
+unit: ms
+lane Engine
+lane Client
+Engine: prefill, 2,000 tokens @0-200
+Engine -> Client: token 1 @200-203
+Engine: decode step @200-225
+Engine -> Client: token 2 @225-228
+Engine: decode step @225-250
+Engine -> Client: token 3 @250-253
+Engine: decode step @250-275
+Engine -> Client: token 4 @275-278
+:::
+
 The same engine serves three request shapes with different results:
 
 | Shape | Input tokens | Output tokens | TTFT | Decode time | End-to-end |
@@ -1598,7 +2396,36 @@ The same engine serves three request shapes with different results:
 | Retrieval prompt | 4,000 | 300 | 400 ms | 7.475 s | 7.875 s |
 | Long summary | 20,000 | 100 | 2,000 ms | 2.475 s | 4.475 s |
 
+The bars compare the TTFT of the three shapes.
+
+:::bars
+title: TTFT by request shape
+unit: ms
+Chat turn, 200 input tokens: 20
+Retrieval prompt, 4,000 input tokens: 400
+Long summary, 20,000 input tokens: 2000
+:::
+
 The long summary has the slowest TTFT but a short total time. The chat turn has the fastest TTFT but spends almost all of its time in decode. Only the pair of numbers describes each shape.
+
+Press Next to compute the latency of the retrieval prompt.
+
+:::scenario
+title: End-to-end latency of a 2,000-token prompt with a 300-token answer
+state: prefill=none, TTFT=none, decode time=none, end-to-end=none
+step: Divide the 2,000 prompt tokens by the prefill rate of 10,000 tokens per second. The prefill takes 0.2 s.
+state: prefill=0.2 s
+step: Add the queue time. The queue is empty, so TTFT is 200 ms.
+state: TTFT=200 ms
+step: The first token is already counted. 299 decode steps remain at 25 ms each.
+state: decode steps=299
+step: Multiply 299 by 25 ms. The decode time is 7.475 s.
+state: decode time=7.475 s
+step: Add TTFT and the decode time. The end-to-end latency is 7.675 s.
+state: end-to-end=7.675 s
+step: A queue wait of 500 ms would raise TTFT to 700 ms and the end-to-end latency to 8.175 s.
+state: with a 500 ms queue=8.175 s
+:::
 
 ## How it works
 
@@ -1675,6 +2502,23 @@ A service-level objective (SLO) is a latency target that a request must meet. A 
 
 A system serves 100 requests per second. Measurements show that 70 percent of the requests meet both parts of the SLO. The throughput is 100 requests per second. The goodput is 100 × 0.7 = 70 requests per second. The other 30 requests per second are work the system did but the user did not accept.
 
+Press Next to compute the goodput.
+
+:::scenario
+title: Goodput of a system at 100 requests per second
+state: throughput=100 req/s, inside SLO=unknown, goodput=unknown, wasted=unknown
+step: Write the SLO down: TTFT p99 under 1 s and TPOT p99 under 50 ms.
+state: SLO=TTFT under 1 s and TPOT under 50 ms
+step: Measure every request. 70 percent meet both parts of the SLO.
+state: inside SLO=70 percent
+step: Multiply the throughput by the fraction. The goodput is 70 requests per second.
+state: goodput=70 req/s
+step: The other 30 requests per second are work the system did but the user did not accept.
+state: wasted=30 req/s
+step: Raise the load until throughput is 14 requests per second per replica at concurrency 64. Only 30 percent stay inside the SLO, so goodput falls to 4.2.
+state: throughput=14 req/s per replica, inside SLO=30 percent, goodput=4.2 req/s, wasted=9.8 req/s
+:::
+
 A load test now ramps the number of concurrent requests. Each row records the p99 of TTFT and TPOT and the fraction of requests inside the SLO:
 
 | Concurrency | Throughput (req/s) | TTFT p99 | TPOT p99 | Inside SLO | Goodput (req/s) |
@@ -1684,6 +2528,30 @@ A load test now ramps the number of concurrent requests. Each row records the p9
 | 16 | 6.5 | 0.7 s | 38 ms | 95% | 6.2 |
 | 64 | 14.0 | 1.6 s | 65 ms | 30% | 4.2 |
 | 128 | 15.0 | 4.0 s | 120 ms | 5% | 0.75 |
+
+The bars show the throughput at each concurrency.
+
+:::bars
+title: Throughput by concurrency
+unit: req/s
+Concurrency 1: 0.5
+Concurrency 4: 1.9
+Concurrency 16: 6.5
+Concurrency 64: 14
+Concurrency 128: 15
+:::
+
+The bars show the goodput at the same concurrency levels.
+
+:::bars
+title: Goodput by concurrency
+unit: req/s
+Concurrency 1: 0.5
+Concurrency 4: 1.9
+Concurrency 16: 6.2 (the knee)
+Concurrency 64: 4.2
+Concurrency 128: 0.75
+:::
 
 Throughput rises at every row. Goodput peaks at concurrency 16 and then collapses. The point where goodput stops rising is the knee. Above the knee, extra load adds queue time and larger batches, so both TTFT and TPOT cross their targets. The right capacity for this system is about 16 concurrent requests per replica, not 128.
 
@@ -1708,6 +2576,23 @@ Run a load test with this procedure:
 7. Mark the knee and set the capacity per replica below it.
 
 A closed-loop generator keeps a fixed number of requests in flight. When one finishes, it sends the next. This generator never overloads the system, because the system sets the pace. An open-loop generator sends requests at a fixed rate, for example 20 per second, whatever the system does. This generator shows queue growth and back-pressure under real arrival patterns. Use closed-loop tests to find the knee and open-loop tests to check behaviour at a given arrival rate.
+
+The timeline shows that the closed-loop generator waits for each request, while the open-loop generator keeps sending every second.
+
+:::timeline
+title: Closed-loop and open-loop load generators with 2 s requests
+unit: s
+lane Closed-loop
+lane Open-loop
+Closed-loop: request 1 @0-2
+Closed-loop: request 2 @2-4
+Closed-loop: request 3 @4-6
+Open-loop: request 1 @0-2
+Open-loop: request 2 @1-3
+Open-loop: request 3 @2-4
+Open-loop: request 4 @3-5
+Open-loop: request 5 @4-6
+:::
 
 Caution: a closed-loop test at low concurrency can hide a capacity problem. Production traffic is open-loop, and a burst above the knee builds a queue that does not drain.
 
@@ -1767,13 +2652,57 @@ At batch size 1 the floor for one step is 140 GB / 3.35 TB/s = 42 ms. If the mea
 
 If the measured time per token is 60 ms, the achieved bandwidth is 140 / 0.060 = 2.33 TB/s. The MBU is 70 percent. The other 30 percent is overhead: kernel launches, synchronisation, or the scheduler.
 
+The timeline shows where the 18 ms of overhead sits in a 60 ms step.
+
+:::timeline
+title: A 60 ms decode step with 30 percent overhead
+unit: ms
+lane CPU
+lane GPU
+CPU: schedule the step @0-6
+CPU -> GPU: launch kernels @6-8
+GPU: attention and MLP kernels, 42 ms of weight reads @8-50
+GPU: sampler @50-53
+GPU -> CPU: new token @53-55
+CPU: detokenize and append @55-60
+:::
+
 Model FLOPs utilisation measures the arithmetic side. A forward pass costs about 2 floating point operations per weight per token. For the 70B model that is 140 GFLOPs per token. Now run a batch of 64 sequences, one token each, in a step of 25 ms. The work is 64 × 140 GFLOPs = 8.96 TFLOPs, so the rate is 8.96 / 0.025 = 358 TFLOPS. The H100 peak in FP16 is about 990 TFLOPS, so the MFU is 358 / 990 = 36 percent.
+
+Press Next to compute MBU and MFU for the two measurements.
+
+:::scenario
+title: MBU and MFU for a 70B FP16 model on an H100
+state: peak bandwidth=3.35 TB/s, peak FLOPS=990 T, weights=140 GB, MBU=none, MFU=none
+step: Measure the decode step at batch size 1. It takes 60 ms.
+state: step time=60 ms
+step: Divide 140 GB by 0.060 s. The achieved bandwidth is 2.33 TB/s.
+state: achieved bandwidth=2.33 TB/s
+step: Divide by the peak. The MBU is 70 percent. The other 30 percent is overhead.
+state: MBU=70 percent
+step: Now measure a batch of 64 sequences. The step takes 25 ms and does 64 x 140 GFLOPs = 8.96 TFLOPs.
+state: step time=25 ms, work=8.96 TFLOPs
+step: Divide the work by the time. The rate is 358 TFLOPS.
+state: achieved FLOPS=358 T
+step: Divide by the peak of 990 TFLOPS. The MFU is 36 percent. The arithmetic units mostly idle, so raise the batch size or move fewer bytes.
+state: MFU=36 percent, fix=raise the batch or quantise
+:::
 
 | Metric | Value | Reading |
 |---|---|---|
 | nvidia-smi GPU-Util | 100% | A kernel is always running |
 | MBU at batch 1, 60 ms per token | 70% | 30% of time is overhead |
 | MFU at batch 64, 25 ms per step | 36% | Arithmetic units are mostly idle |
+
+The bars compare the three readings.
+
+:::bars
+title: Three utilisation readings for the same server
+unit: percent
+nvidia-smi GPU-Util: 100
+MBU at batch 1: 70
+MFU at batch 64: 36
+:::
 
 ## How it works
 

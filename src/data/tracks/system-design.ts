@@ -53,11 +53,38 @@ Step 3, apply a peak factor. Traffic is not flat. A common peak factor is 3. Pea
 
 Step 4, compute read bandwidth. 7,000 QPS × 10 KB = 70,000 KB per second = 70 MB per second. A 10 gigabit network link moves 1,250 MB per second. One machine handles this.
 
+The bars compare the read bandwidth with the capacity of one link.
+
+:::bars
+title: Peak read bandwidth against one network link
+unit: MB per second
+Peak read bandwidth: 70
+One 10 gigabit link: 1250
+:::
+
 Step 5, compute write storage. 10,000,000 users × 2 photos × 2 MB = 40 terabytes (TB) per day. After 1 year, 40 × 365 = 14,600 TB, about 15 petabytes (PB). This is the number that forces a design choice. Photos must go to object storage, not to a database.
 
 Step 6, compute write QPS. 20,000,000 uploads per day / 86,400 = 231 uploads per second on average, about 700 at peak.
 
 The read path fits on one machine. The storage does not. That is the result of the estimate.
+
+Press Next to replay the six steps of the estimate.
+
+:::scenario
+title: Size the photo service step by step
+state: requests per day=0, average QPS=0, peak QPS=0, read bandwidth=0, storage per year=0
+step: Multiply 10 million users by 20 requests. The result is 200 million requests per day.
+state: requests per day=200 million
+step: Divide by 86,400 seconds. The average is 2,300 QPS.
+state: average QPS=2300
+step: Multiply by the peak factor of 3. The peak is 7,000 QPS.
+state: peak QPS=7000
+step: Multiply 7,000 QPS by 10 KB. The read bandwidth is 70 MB per second, far below one 10 gigabit link.
+state: read bandwidth=70 MB per second
+step: Multiply 10 million users by 2 photos by 2 MB by 365 days. The storage is about 15 PB per year.
+state: storage per year=15 PB
+step: Compare each number with one machine. The reads fit, and the storage does not.
+:::
 
 ## How it works
 
@@ -85,6 +112,17 @@ The general procedure is:
 4. Multiply by the peak factor, from 2 to 5 depending on the product.
 5. Multiply bytes per day by the retention period to get storage.
 6. Compare each result with the capacity of one machine.
+
+The diagram shows how each number in the procedure feeds the next one.
+
+:::flow
+title: From users to machine count
+Users -> Requests per day: times 20 per user
+Requests per day -> Average QPS: divide by 86,400
+Average QPS -> Peak QPS: times peak factor 3
+Peak QPS -> Bandwidth: times 10 KB
+Peak QPS -> Machines: divide by 10,000 per machine
+:::
 
 A machine capacity reference: a modern server handles about 10,000 to 50,000 simple requests per second. A single database handles about 5,000 to 20,000 writes per second. A 10 gigabit link moves 1,250 MB per second.
 
@@ -143,7 +181,37 @@ Now the server handles 8 requests at the same time, each still in 10 ms. Through
 
 Now add batching. The server waits until 8 requests arrive, then processes them together in 12 ms. Throughput is 8 / 0.012 = 667 requests per second per batch slot. But a request that arrives first waits for 7 others. At 100 requests per second, the wait for 7 more arrivals is 70 ms. Its latency is 70 + 12 = 82 ms. The last request in the batch has latency 12 ms.
 
+The timeline shows the wait of the first and the last request in one batch.
+
+:::timeline
+title: One batch of 8 requests at 100 requests per second
+unit: ms
+lane Request 1
+lane Request 8
+lane Server
+Request 1: wait for the batch to fill @0-70
+Request 8: arrives @69-70
+Request 1 -> Server: batch of 8 starts @70-70
+Server: process the batch @70-82
+Server -> Request 1: reply after 82 ms @82-82
+Server -> Request 8: reply after 12 ms @82-82
+:::
+
 Measure latency with percentiles. Sort the latencies of 1,000 requests. The value at position 500 is the median, p50. The value at position 990 is p99. In the batched example, p50 is about 47 ms and p99 is close to 82 ms.
+
+Press Next to replay the three settings of the server.
+
+:::scenario
+title: Throughput from latency and concurrency
+state: concurrency=1, latency=10 ms, throughput=100 per second
+step: One server handles one request at a time in 10 ms. Throughput is 100 requests per second.
+step: The server now handles 8 requests at once, each still in 10 ms. Throughput rises to 800 per second.
+state: concurrency=8, throughput=800 per second
+step: The server now waits for 8 requests and processes them together in 12 ms.
+state: latency=12 ms to 82 ms, throughput=667 per second
+step: The first request waited 70 ms for 7 others. Its latency is 82 ms.
+step: The last request waited 0 ms. Its latency is 12 ms. Throughput rose and latency rose at the same time.
+:::
 
 ## How it works
 
@@ -153,7 +221,25 @@ $$\\text{throughput} = \\frac{\\text{concurrency}}{\\text{latency}}$$
 
 Here throughput is in requests per second, concurrency is the number of requests in progress at once, and latency is the time per request in seconds. This is one form of Little's law, which the next lesson covers in full.
 
+The table lists the three settings from the example.
+
+| Setting | Concurrency | Latency | Throughput |
+|---|---|---|---|
+| One at a time | 1 | 10 ms | 100 per second |
+| 8 in parallel | 8 | 10 ms | 800 per second |
+| Batch of 8 | 8 | 12 to 82 ms | 667 per second |
+
 To raise throughput you have two options. Reduce latency, or raise concurrency. Concurrency is limited by cores, memory, and connections. Latency is limited by the slowest step in the request.
+
+The bars compare the throughput of the three settings.
+
+:::bars
+title: Throughput of the three settings
+unit: requests per second
+One at a time: 100
+8 in parallel: 800
+Batch of 8: 667
+:::
 
 A percentile is a value below which a given fraction of samples fall. The procedure to compute p99 by hand is:
 
@@ -222,6 +308,22 @@ Now apply the law to the database. Each request makes one query that takes 5 ms.
 
 Now the database slows to 20 ms per query under load. $L = 1{,}000 \\times 0.020 = 20$. A pool of 10 is now too small. Requests wait for a connection, $W$ rises, and $L$ rises again. This is the feedback loop behind most outages.
 
+Press Next to follow the pool size through the example.
+
+:::scenario
+title: Size the connection pool with Little's law
+state: arrival rate=1000 per second, query time=5 ms, L=0, pool=0
+step: Queries arrive at 1,000 per second. Each query takes 5 ms. Compute L as 1,000 times 0.005.
+state: L=5
+step: L is 5. The pool needs at least 5 connections. Set the pool to 10 for a margin.
+state: pool=10
+step: The database slows to 20 ms per query under load. Compute L again.
+state: query time=20 ms, L=20
+step: L is now 20, but the pool has 10. Requests wait for a connection.
+step: The wait raises W, and a higher W raises L again. This is the feedback loop behind the outage.
+state: query time=rising, L=rising
+:::
+
 ## How it works
 
 Little's law holds for any stable system, with any arrival pattern, as long as the long-run averages exist. Stable means the arrival rate is below the service rate.
@@ -244,6 +346,35 @@ Take a server with $\\mu = 1{,}000$ requests per second, so the service time is 
 | 99 percent | 990 per second | 100 ms |
 
 Latency doubles from 50 to 80 percent and then grows 10 times from 90 to 99 percent. This is why teams keep utilisation at 60 to 70 percent.
+
+The bars show the same growth of the time in the system.
+
+:::bars
+title: Average time in system by utilisation
+unit: ms
+50 percent: 2
+80 percent: 5
+90 percent: 10
+99 percent: 100
+:::
+
+The timeline shows how a wait forms when three queries share one connection.
+
+:::timeline
+title: Three queries share one connection of 5 ms each
+unit: ms
+lane Query 1
+lane Query 2
+lane Query 3
+lane Connection
+Query 1 -> Connection: take the connection @0-0.2
+Connection: run query 1 @0.2-5
+Query 2: wait for a connection @1-5
+Connection: run query 2 @5-10
+Query 3: wait for a connection @2-10
+Connection: run query 3 @10-15
+Connection -> Query 3: reply after 13 ms inside @15-15.2
+:::
 
 The sizing procedure is:
 
@@ -310,6 +441,22 @@ Step 3, track the spend. In week 1, a bad deploy fails 4,000 requests. In week 2
 
 Step 4, apply the policy. The policy says: if less than 30 percent of the budget remains, freeze feature releases and work on reliability. 3,000 remain, which is 30 percent. The team freezes releases until the next month.
 
+Press Next to follow the budget through the month.
+
+:::scenario
+title: Spend the error budget over one month
+state: budget=10000 failed requests, spent=0, remaining=10000, releases=open
+step: The SLO is 99.9 percent of 10 million requests. The budget is 0.1 percent, 10,000 failed requests.
+step: In week 1 a bad deploy fails 4,000 requests.
+state: spent=4000, remaining=6000
+step: In week 2 a database failover fails 3,000 requests.
+state: spent=7000, remaining=3000
+step: 30 percent of the budget remains. The policy says freeze releases at 30 percent or less.
+state: releases=frozen
+step: The team works on reliability until the next month resets the budget.
+state: spent=0, remaining=10000, releases=open
+:::
+
 Now compare targets:
 
 | Availability | Downtime per month | Downtime per year |
@@ -320,6 +467,17 @@ Now compare targets:
 | 99.999 percent | 26 seconds | 5.3 minutes |
 
 Each extra nine costs about 10 times more engineering. 99.99 percent means a human cannot be in the recovery path, because paging and logging in takes longer than 4 minutes.
+
+The bars show the allowed downtime per month in minutes for each target.
+
+:::bars
+title: Allowed downtime per month
+unit: minutes
+99 percent: 432
+99.9 percent: 43
+99.99 percent: 4.3
+99.999 percent: 0.43
+:::
 
 ## How it works
 
@@ -343,6 +501,18 @@ The procedure to set an SLO is:
 A service level agreement (SLA) is a contract with a customer, with a penalty. Set the SLA looser than the SLO, so you breach the internal target before you breach the contract.
 
 Burn rate is the speed of budget use. A burn rate of 1 uses the full budget in exactly one window. A burn rate of 14.4 uses a 30-day budget in 2 days, and that is a common page threshold.
+
+The diagram shows how the indicator, the objective, the budget, and the policy connect.
+
+:::flow
+title: From a user action to a release decision
+User action -> SLI: measure good over total
+SLI -> SLO: set the target
+SLO -> Error budget: 100 percent minus SLO
+Error budget -> Burn rate: spend per window
+Burn rate -> Page: above 14.4
+Error budget -> Release policy: freeze below 30 percent
+:::
 
 Note: a dependency with a 99.9 percent SLO caps your own SLO at 99.9 percent unless you add a fallback.
 
@@ -398,12 +568,45 @@ A key-value store has 3 replicas: A, B, and C. The key "balance" starts at 100.
 
 At time 1, client 1 writes balance = 50 to replica A. At time 2, replica A acknowledges. At time 3, client 2 reads balance from replica B.
 
+The timeline shows the write, the acknowledgement, and the read on the two replicas.
+
+:::timeline
+title: Write on replica A, read on replica B
+unit: ms
+lane Client 1
+lane Replica A
+lane Replica B
+lane Client 2
+Client 1 -> Replica A: write balance 50 @1-1.5
+Replica A: apply the write @1.5-2
+Replica A -> Client 1: acknowledge @2-2.5
+Replica A -> Replica B: replicate @2-3.5
+Client 2 -> Replica B: read balance @3-3.2
+Replica B -> Client 2: 100 or 50 depends on the model @3.2-3.5
+:::
+
 Under each model, what may client 2 see?
 
 - Linearizable: client 2 must see 50. The write finished at time 2, and every later read sees it.
 - Sequential: client 2 may see 100 or 50, as long as all clients agree on one order of operations. Client 2 could see 100 now and 50 later, but never 50 then 100.
 - Causal: the same as sequential here, because nothing links the two clients. If client 2 had sent a message to client 1 that caused the write, client 2 must see 50.
 - Eventual: client 2 may see 100 for seconds or minutes. If writes stop, all replicas converge to 50.
+
+Press Next to see what client 2 may read under each model.
+
+:::scenario
+title: What client 2 may see under each model
+state: balance on A=50, balance on B=100 or 50, model=none, client 2 sees=unknown
+step: Client 1 wrote 50 to replica A and got an acknowledgement at time 2. Client 2 reads from replica B at time 3.
+step: Under linearizability the write completed before the read started. Client 2 must see 50.
+state: model=linearizable, client 2 sees=50
+step: Under sequential consistency client 2 may see 100 or 50. It may never see 50 and then 100.
+state: model=sequential, client 2 sees=100 or 50
+step: Under causal consistency nothing links the two clients. Client 2 may see 100 or 50.
+state: model=causal, client 2 sees=100 or 50
+step: Under eventual consistency client 2 may see 100 for minutes. If writes stop, every replica ends at 50.
+state: model=eventual, client 2 sees=100 for a while then 50
+:::
 
 Now add a network partition. Replica C cannot reach A or B. A client writes to C. Under linearizability, C must refuse the write, because it cannot know the latest value. Under eventual consistency, C accepts the write and merges it later.
 
@@ -498,9 +701,47 @@ Query 2: show the 10 newest posts from everyone user 42 follows. The relational 
 
 Now the key-value version. The key is "feed:42". The value is a list of the 10 newest post ids from followed users. Query 2 is one lookup, 100 us from memory.
 
+The bars compare the latency of the three lookups.
+
+:::bars
+title: Latency of the feed query
+unit: ms
+Relational, posts by one user: 1
+Relational, feed of 50 followed users: 55
+Key-value, precomputed feed: 0.1
+:::
+
 But the value must be maintained. When user 7 posts, the system must append the post id to "feed:" for each of the followers of user 7. If user 7 has 200 followers, that is 200 writes per post. The relational store did zero extra work at write time.
 
+The diagram shows the work that one post causes at write time.
+
+:::flow
+title: Key-value feed, the cost moves to write time
+User 7 -> Posts table: new post
+Posts table -> Fan-out worker: post id
+Fan-out worker -> Follows table: who follows user 7
+Follows table -> Fan-out worker: 200 followers
+Fan-out worker -> Feed keys: 200 appends
+Feed keys -> Reader: one lookup for feed 42
+:::
+
 The key-value store moved the cost from read time to write time. This is the core trade.
+
+Press Next to run the same feed query in both stores.
+
+:::scenario
+title: The same feed query in two stores
+state: store=relational, disk reads=0, latency=0
+step: Query 1 asks for the 10 newest posts of user 42. The index gives 1 lookup and 10 row reads.
+state: disk reads=11, latency=1 ms
+step: Query 2 asks for the 10 newest posts from the 50 users that user 42 follows. The store reads 50 follow rows and up to 500 posts.
+state: disk reads=550, latency=55 ms
+step: Now switch to a key-value store. The key feed:42 holds the 10 newest post ids.
+state: store=key-value, disk reads=0, latency=0.1 ms
+step: User 7 posts. The store must append the post id to the feed key of each of 200 followers.
+state: writes per post=200
+step: The read became cheap and the write became costly. This is the core trade.
+:::
 
 ## How it works
 
@@ -583,7 +824,35 @@ Now build a B-tree index on order id. An index page holds pairs of (id, page poi
 
 The tree has levels. The bottom level has 100,000,000 / 500 = 200,000 pages. The level above has 200,000 / 500 = 400 pages. The level above that has 1 page, the root. So the tree has 3 levels.
 
+Press Next to build the index level by level.
+
+:::scenario
+title: Build the index level by level
+state: keys=100 million, fan-out=500, levels=0, reads per lookup=1.25 million pages
+step: Without an index the database reads half of 2.5 million pages. That is 1,250 seconds.
+step: One 8 KB index page holds 500 pairs of id and pointer. The fan-out is 500.
+step: The bottom level needs 100 million divided by 500, which is 200,000 pages.
+state: levels=1, bottom level=200000 pages
+step: The next level needs 200,000 divided by 500, which is 400 pages.
+state: levels=2, level 2=400 pages
+step: 400 pointers fit in one root page. The tree has 3 levels.
+state: levels=3, root=1 page
+step: A lookup reads the root, a level 2 page, a leaf, then the row page. That is 4 reads, or 2 reads with the top levels in memory.
+state: reads per lookup=4 pages
+:::
+
 A lookup reads the root, one page on level 2, one page on level 3, then the row page. That is 4 reads, 4 ms. The root and level 2 are small enough to stay in memory, so the real cost is 2 reads, 2 ms. The index turned 1,250 seconds into 2 ms.
+
+The diagram shows the path of one lookup through the tree.
+
+:::flow
+title: Lookup of order id 73,000,000 in a 3-level B-tree
+Query -> Root page: id 73,000,000
+Root page -> Level 2 page: pointer, 1 of 400
+Level 2 page -> Leaf page: pointer, 1 of 200,000
+Leaf page -> Row page: page pointer
+Row page -> Query: the order row
+:::
 
 ## How it works
 
@@ -592,6 +861,14 @@ A B-tree keeps keys in sorted order inside pages. Each page has up to $f$ childr
 $$h = \\lceil \\log_f N \\rceil$$
 
 Here $h$ is the number of levels, $N$ is the number of keys, and $f$ is the fan-out. With $f = 500$ and $N = 10^8$, $h = 3$. With $N = 10^{11}$, $h = 4$. The height grows very slowly, which is the whole point.
+
+The table gives the height for several key counts at fan-out 500.
+
+| Keys | Levels at fan-out 500 | Reads per lookup with the row page |
+|---|---|---|
+| 250,000 | 2 | 3 |
+| 100 million | 3 | 4 |
+| 100 billion | 4 | 5 |
 
 A lookup procedure by hand is:
 
@@ -603,6 +880,16 @@ A lookup procedure by hand is:
 An insert adds the key to the right leaf. If the leaf is full, the tree splits it into two and adds a key to the parent. Splits keep every leaf at the same depth.
 
 Every index costs writes. One insert into a table with 5 indexes writes 1 row page and 5 index pages. A table with 20 indexes writes 21 pages per insert.
+
+The bars compare the pages written per insert.
+
+:::bars
+title: Pages written per insert
+unit: pages
+No index: 1
+5 indexes: 6
+20 indexes: 21
+:::
 
 A composite index covers several columns in order, for example (customer_id, created_at). The index is sorted by customer first, then by date within a customer. The query "orders for customer 42 in March" uses both columns. The query "all orders in March" cannot use the index, because March orders are spread across all customers. Put the equality column first and the range column second.
 
@@ -667,13 +954,51 @@ Step 3, after 10 flushes, level 0 holds 10 SSTables with overlapping key ranges.
 
 Step 4, level 1 fills. Compaction merges it into level 2, which holds 6.4 GB. Each level is 10 times larger than the one above.
 
+The diagram shows the path of one write from the client to the lower levels.
+
+:::flow
+title: Path of one write through an LSM tree
+Client -> WAL: append 100 bytes
+Client -> Memtable: insert in sorted order
+Memtable -> Level 0: flush a 64 MB SSTable
+Level 0 -> Level 1: compact 10 files
+Level 1 -> Level 2: compact when 640 MB is full
+:::
+
 Now a read for key "user:42". The store checks the memtable. Not there. It checks each level 0 file. Each file has a Bloom filter, a small bit array that says "definitely not here" or "maybe here". The filters reject 9 of 10 files. It reads one file, finds nothing, and moves to level 1. One file covers that key range. The Bloom filter says maybe. It reads the file block and finds the value. Total: 2 disk reads.
+
+Press Next to follow the read through the levels.
+
+:::scenario
+title: Read the key user:42 through the levels
+state: place=memtable, files checked=0, disk reads=0, found=no
+step: Check the memtable in memory. The key is not there.
+state: place=level 0
+step: Level 0 has 10 files. Ask each Bloom filter. Nine say definitely not here.
+state: files checked=10
+step: One filter says maybe. Read that file block. The key is not there, a false positive.
+state: disk reads=1
+step: Move to level 1. One file covers the key range. Its filter says maybe.
+state: place=level 1
+step: Read the block and find the value. The read cost 2 disk reads in total.
+state: disk reads=2, found=yes
+:::
 
 ## How it works
 
 The levels form a geometric series. With a size ratio $T$ between levels and $L$ levels, the total capacity is about $T^L$ times the first level. With $T = 10$ and a 64 MB memtable, 5 levels hold 640 GB.
 
 Write amplification is the number of bytes written to disk per byte written by the user. Each byte moves through every level once, and each compaction rewrites the level it merges into. The amplification is about $T \\times L / 2$ for levelled compaction. With $T = 10$ and $L = 5$, that is about 25. So 5 MB per second of user writes causes 125 MB per second of disk writes. That is still far below the sequential limit.
+
+The bars compare the user write rate, the disk write rate, and the disk limit.
+
+:::bars
+title: Write rates with amplification of 25
+unit: MB per second
+User writes: 5
+Disk writes after amplification: 125
+SSD sequential limit: 500
+:::
 
 Read cost is one Bloom filter check per file plus a few disk reads. A read for a key that does not exist checks every level. Bloom filters with 10 bits per key give a false positive rate of about 1 percent.
 
@@ -752,9 +1077,44 @@ With a log, the steps are:
 5. Report commit to the client.
 6. Later, write pages 17 and 92 to disk at leisure.
 
+The timeline shows the order of the log write, the fsync, and the page writes.
+
+:::timeline
+title: One commit with the write-ahead log
+unit: ms
+lane Client
+lane Database
+lane Log disk
+lane Data disk
+Client -> Database: transfer 30 from A to B @0-0.1
+Database: append 3 log records @0.1-0.2
+Database -> Log disk: fsync @0.2-1.2
+Log disk -> Database: confirmed @1.2-1.3
+Database -> Client: commit @1.3-1.4
+Database -> Data disk: write pages 17 and 92 later @3-4
+:::
+
 Now the power fails after step 5. On restart, the database reads the log. It finds a commit record for transaction 501. It applies both page changes. Both balances are right.
 
 If the power fails after step 2, there is no commit record. Recovery ignores transaction 501. Neither balance changes. The transfer is lost, but the client never got a commit, so it will retry.
+
+Press Next to follow transaction 501 through a crash and a recovery.
+
+:::scenario
+title: Crash and recovery of transaction 501
+state: log=empty, page 17=A 100, page 92=B 50, client=waiting
+step: The database appends the record for page 17, A from 100 to 70.
+state: log=1 record
+step: It appends the record for page 92, B from 50 to 80, then the commit record.
+state: log=3 records
+step: It calls fsync on the log and reports commit to the client. The pages on disk are unchanged.
+state: client=got commit
+step: The power fails before the pages reach disk. On restart the database reads the log.
+state: page 17=A 100, page 92=B 50
+step: The log has a commit record for 501. Recovery applies both changes. Both balances are right.
+state: page 17=A 70, page 92=B 80
+step: If the power had failed before the commit record, recovery would ignore 501 and the client would retry.
+:::
 
 ## How it works
 
@@ -762,7 +1122,23 @@ The log works because appending is sequential and small. One commit appends a fe
 
 The fsync call is the expensive step. It waits until the disk confirms the write. On an SSD this takes about 100 us to 1 ms. On a hard disk, about 10 ms. At 1 ms per fsync, one log can commit at most 1,000 transactions per second.
 
+The table gives the fsync time and the commit limit for each device.
+
+| Device | Time per fsync | Maximum commits per second without group commit |
+|---|---|---|
+| SSD | 0.1 to 1 ms | 1,000 to 10,000 |
+| Hard disk | 10 ms | 100 |
+
 Group commit raises this limit. The database collects all transactions that arrive during one fsync and writes them in a single call. At 10,000 commits per second with 1 ms per fsync, each fsync carries about 10 commits. Throughput rises 10 times. Each commit waits up to 1 ms extra.
+
+The bars compare the commit rate with and without group commit.
+
+:::bars
+title: Commit rate with 1 ms per fsync
+unit: commits per second
+One fsync per commit: 1000
+Group commit, 10 per fsync: 10000
+:::
 
 A checkpoint is the point where all data pages up to a log position are on disk. The database records the checkpoint position, and recovery starts there. Without checkpoints, recovery replays the entire log from the start.
 
@@ -841,13 +1217,66 @@ With asynchronous replication, the leader replies to the client at once, after i
 
 With synchronous replication to one follower, the leader waits for that follower to confirm. The write takes 1 + 0.5 + 0.5 = 2 ms. The write is safe on two machines. If the follower is slow, every write is slow.
 
+The timeline shows an asynchronous write and then a synchronous write to one follower.
+
+:::timeline
+title: Asynchronous and synchronous write to one follower
+unit: ms
+lane Client
+lane Leader
+lane Follower
+Client -> Leader: async write @0-0.1
+Leader: write to log and disk @0.1-1
+Leader -> Client: reply at 1 ms @1-1.1
+Leader -> Follower: stream the record @1-1.5
+Follower: apply @1.5-2
+Client -> Leader: sync write @3-3.1
+Leader: write to log and disk @3.1-4
+Leader -> Follower: stream the record @4-4.5
+Follower: apply @4.5-4.6
+Follower -> Leader: confirm @4.6-5.1
+Leader -> Client: reply at 2 ms @5.1-5.2
+:::
+
+The bars compare the write latency of the two settings.
+
+:::bars
+title: Write latency by replication setting
+unit: ms
+Asynchronous: 1
+Synchronous, 1 follower: 2
+:::
+
 Now the reads. The leader serves 1,000 writes per second and some reads. Each follower serves 5,000 reads per second. A client reads "order 501" from follower 2 at 0.5 ms after the write. Follower 2 has not applied the record yet. The client sees "unpaid". This is replication lag.
+
+Press Next to follow the write and the stale read.
+
+:::scenario
+title: A read during replication lag
+state: leader=order 501 unpaid, follower 1=unpaid, follower 2=unpaid, client sees=unknown
+step: A client writes order 501 paid to the leader. The leader appends to its log and applies the write.
+state: leader=order 501 paid
+step: The leader replies to the client at once, because replication is asynchronous.
+step: The leader streams the record to both followers. Follower 1 applies it after 1 ms.
+state: follower 1=paid
+step: At 0.5 ms after the write, the client reads order 501 from follower 2. Follower 2 has not applied the record.
+state: client sees=unpaid
+step: Follower 2 applies the record at 1 ms. A second read now returns paid. The gap was replication lag.
+state: follower 2=paid, client sees=paid
+:::
 
 ## How it works
 
 The leader keeps a log of every write in order. Each record has a position number. A follower asks for records from its last position. The leader streams them. The follower applies them in the same order. A follower that was down for an hour catches up from its last position.
 
 Replication lag is the time between a write on the leader and its visibility on a follower. Under normal load it is milliseconds. Under heavy writes, or on a slow follower, it grows to seconds or minutes. Monitor it as a number of seconds or a number of log bytes behind.
+
+The table compares the two replication settings.
+
+| Setting | Write latency | Data loss on leader crash | Effect of a slow follower |
+|---|---|---|---|
+| Asynchronous | 1 ms | Up to the lag, about 1 ms of writes | None |
+| Synchronous, 1 follower | 2 ms | None | Every write slows |
 
 Lag breaks three expectations. Read-your-writes: a user posts a comment and does not see it. Monotonic reads: a user sees the comment, refreshes on another follower, and it vanishes. Consistent prefix: a user sees a reply before the message it answers.
 
@@ -921,11 +1350,44 @@ Step 1, a client writes version 2. It sends the write to all 3 replicas and wait
 
 Step 2, another client reads. It sends the read to all 3 and waits for R = 2 answers. The answers come from B, with version 2, and from C, with version 1. The client picks the highest version, 2. The read is correct.
 
+Press Next to follow the write and the read across the three replicas.
+
+:::scenario
+title: Quorum write and read with N=3, W=2, R=2
+state: A=v1, B=v1, C=v1, read result=none
+step: A client writes version 2 to all three replicas and waits for 2 confirmations.
+state: A=v2, B=v2
+step: A and B confirm. C is slow and still holds version 1. The write returns success.
+step: Another client reads from all three and waits for 2 answers. B answers v2 and C answers v1.
+step: The client keeps the highest version. The read returns v2.
+state: read result=v2
+step: Read repair writes v2 back to C, so C is no longer stale.
+state: C=v2
+:::
+
 Why did it work? W + R = 4, which is more than N = 3. Any set of 2 replicas that wrote and any set of 2 that read must share at least one replica. That shared replica has the fresh value.
 
 Now set W = 1 and R = 1. W + R = 2, not more than 3. A write to A alone and a read from C alone never meet. The read returns version 1. This setting is fast and available but stale.
 
 Now set W = 3 and R = 1. Every write hits all replicas, so any read is fresh. But if one replica is down, no write can succeed. Availability drops.
+
+The table compares the three settings.
+
+| W | R | W + R > 3 | Fresh reads | One replica down |
+|---|---|---|---|---|
+| 1 | 1 | No | No | Reads and writes work |
+| 2 | 2 | Yes | Yes | Reads and writes work |
+| 3 | 1 | Yes | Yes | Writes fail |
+
+The grid marks every pair of W and R that overlaps with N = 3, where 1 means yes.
+
+:::matrix
+title: Does W plus R exceed N with N = 3
+cols: R=1, R=2, R=3
+W=1: 0, 0, 1
+W=2: 0, 1, 1
+W=3: 1, 1, 1
+:::
 
 ## How it works
 
@@ -946,6 +1408,17 @@ The procedure to pick the values is:
 The guarantee has limits. Two writes can arrive at the same time on different replicas. The replicas then hold different values with the same version. The store must resolve the conflict. Last-writer-wins uses a timestamp and drops one write. Version vectors keep both and let the application merge them.
 
 A sloppy quorum relaxes the rule. If replica C is down, the store writes to a spare replica D instead and still counts W = 2. Later, D hands the write to C. This is hinted handoff. It raises availability, but a read from A and C during the outage does not see the write on D. The quorum overlap no longer holds.
+
+The diagram shows a sloppy quorum write and the later handoff.
+
+:::flow
+title: Sloppy quorum with hinted handoff
+Client -> A: write v3
+Client -> D: write v3 with a hint for C
+A -> Client: confirm
+D -> Client: confirm, W is 2
+D -> C: hand off v3 when C returns
+:::
 
 Two mechanisms repair stale replicas. Read repair: when a read sees version 1 on C and version 2 on B, the client writes version 2 back to C. Anti-entropy: a background process compares replicas with a hash tree and copies missing values. Without these, a replica that missed a write stays stale forever.
 
@@ -1009,11 +1482,39 @@ A register holds one value. Three clients run these operations, with real-time s
 
 Is this history linearizable? We must place each operation at one instant inside its interval, in an order that a single variable would produce.
 
+The timeline shows the three operations with their start and end times.
+
+:::timeline
+title: Three operations on one register
+unit: ms
+lane Client 1
+lane Client 2
+lane Client 3
+Client 1: write 5 @0-10
+Client 2: read returns 5 @4-6
+Client 3: read returns 0 @12-14
+:::
+
 Client 2 read 5, so the write must take effect before 6 ms. Place the write at 3 ms and the read at 5 ms. Now client 3 reads 0 at some instant after 12 ms. But the value has been 5 since 3 ms. No placement works. The history is not linearizable.
 
 Now change client 3 to return 5. Place the write at 3 ms, read 2 at 5 ms, read 3 at 13 ms. All consistent. The history is linearizable.
 
 Now a case that looks wrong but is allowed. Client 1 writes 5 from 0 to 10 ms. Client 2 reads 0 from 2 to 4 ms. Place the read at 3 ms and the write at 8 ms. Allowed. A read that overlaps a write may return either value.
+
+Press Next to place each operation at one instant.
+
+:::scenario
+title: Try to place each operation at one instant
+state: write 5 at=unplaced, read by client 2 at=unplaced, read by client 3 at=unplaced, verdict=unknown
+step: Client 2 read 5 between 4 and 6 ms. The write must take effect before 6 ms.
+step: Place the write at 3 ms and the read of client 2 at 5 ms. Both are inside their intervals.
+state: write 5 at=3 ms, read by client 2 at=5 ms
+step: Client 3 read 0 between 12 and 14 ms. The value has been 5 since 3 ms. No instant works.
+state: read by client 3 at=impossible, verdict=not linearizable
+step: Change the read of client 3 to return 5. Place it at 13 ms.
+state: read by client 3 at=13 ms, verdict=linearizable
+step: A read that overlaps a write may return the old or the new value. The order of the instants decides.
+:::
 
 ## How it works
 
@@ -1028,6 +1529,15 @@ The check procedure for a small history is:
 For large histories, use a checker tool such as Knossos. The problem is NP-complete in general, so checkers use heuristics.
 
 A replicated system provides linearizability with a leader and agreement. Each write goes to the leader. The leader sends the write to a majority of replicas and waits for their confirmation. Only then does it apply the write and reply. The next lesson on Raft shows the full protocol. The cost is one network round trip to a majority per write, about 1 ms inside a datacenter and 100 ms across continents.
+
+The bars compare the cost of one majority round trip in the two settings.
+
+:::bars
+title: Cost of one majority round trip per write
+unit: ms
+Inside a datacenter: 1
+Across continents: 100
+:::
 
 Linearizable reads also cost a round trip. A leader that answers from its own state may be a stale leader that was replaced. Two fixes exist. A read index: the leader confirms with a majority that it is still the leader, then answers. A lease: the leader holds a time-bound lease and answers alone while the lease is valid. Leases rely on bounded clock drift.
 
@@ -1101,7 +1611,37 @@ Step 4, S1 sets its commit index to 10 and applies "set x = 7" to its state mach
 
 Step 5, S1 includes commit index 10 in its next message. S2 and S3 apply the entry. S4 catches up later. S5 catches up when it returns.
 
+The diagram shows the messages for one log entry.
+
+:::flow
+title: Log replication of index 10 on 5 nodes
+Client -> S1 leader: set x to 7
+S1 leader -> S2: AppendEntries index 10
+S1 leader -> S3: AppendEntries index 10
+S1 leader -> S4: AppendEntries index 10, slow
+S1 leader -> S5: AppendEntries index 10, down
+S2 -> S1 leader: success
+S3 -> S1 leader: success
+S1 leader -> Client: committed, 3 of 5 hold it
+:::
+
 Now S1 crashes. S2 through S5 stop receiving heartbeats. After a random timeout between 150 and 300 ms, S3 times out first. S3 increments the term to 4 and asks the others for votes. S2 and S4 see that S3's log is at least as complete as theirs. They vote for S3. S3 has 3 votes, a majority, and becomes leader. Index 10 was on a majority, so S3 has it. No committed entry is lost.
+
+Press Next to follow the election.
+
+:::scenario
+title: Election after the leader S1 crashes
+state: term=3, leader=S1, votes for S3=0, S3 role=follower
+step: S1 crashes. S2 to S5 stop receiving heartbeats.
+state: leader=none
+step: S3 times out first after a random wait between 150 and 300 ms. It increments the term and becomes a candidate.
+state: term=4, S3 role=candidate, votes for S3=1
+step: S3 sends RequestVote to all nodes with its last log index 10 and term 3.
+step: S2 and S4 see that the log of S3 is at least as complete as theirs. They vote for S3.
+state: votes for S3=3
+step: 3 of 5 is a majority. S3 becomes leader for term 4. Index 10 was on a majority, so S3 holds it.
+state: leader=S3, S3 role=leader
+:::
 
 ## How it works
 
@@ -1112,6 +1652,26 @@ A majority of $N$ nodes is $\\lfloor N / 2 \\rfloor + 1$. The cluster survives $
 $$N \\ge 2f + 1$$
 
 Here $N$ is the number of nodes and $f$ is the number of failures to survive. So 3 nodes survive 1 failure, 5 survive 2, and 7 survive 3. A 4-node cluster also survives only 1, so even sizes waste a node.
+
+The table gives the majority and the failures survived for common sizes.
+
+| Nodes | Majority | Failures survived |
+|---|---|---|
+| 3 | 2 | 1 |
+| 4 | 3 | 1 |
+| 5 | 3 | 2 |
+| 7 | 4 | 3 |
+
+The bars show that 4 nodes survive no more failures than 3.
+
+:::bars
+title: Failures survived by cluster size
+unit: failures
+3 nodes: 1
+4 nodes: 1
+5 nodes: 2
+7 nodes: 3
+:::
 
 Any two majorities share at least one node. That shared node holds every committed entry. A candidate wins only if its log is at least as up to date as each voter's log. So the new leader always holds every committed entry.
 
@@ -1208,6 +1768,28 @@ Key at 17 goes to B at 35. Key at 22 goes to B. Key at 35 goes to B. Key at 40 g
 
 Add node E at 50. Only keys between 35 and 50 move, from C to E. The key at 40 moves. The others stay. On average, adding one node moves $1 / (N + 1)$ of the keys, 20 percent for 4 to 5 nodes. The moved keys all come from one neighbour.
 
+Press Next to see which node owns each key as node E joins.
+
+:::scenario
+title: Add node E to a ring of 4 nodes
+state: key 17=B, key 22=B, key 35=B, key 40=C, key 90=A, moved=0
+step: Nodes sit at positions A 10, B 35, C 60, and D 85. A key belongs to the first node clockwise from its position.
+step: Keys 17, 22, and 35 reach B at 35 first. Key 40 reaches C at 60. Key 90 wraps around to A at 10.
+step: Add node E at position 50. Only keys between 35 and 50 change owner.
+step: Key 40 now reaches E at 50 before C at 60. It moves from C to E.
+state: key 40=E, moved=1
+step: The other 4 keys keep their owner. Adding one node moved 1 of 5 keys, all from one neighbour.
+:::
+
+The bars compare the share of keys that move with each method.
+
+:::bars
+title: Keys that move when a fifth node joins
+unit: percent
+Modulo hashing: 80
+Consistent hashing: 20
+:::
+
 ## How it works
 
 A hash function maps a key to a number in a fixed range, for example 0 to $2^{32} - 1$. A good hash spreads keys evenly and does not change over time. Use a stable function such as MurmurHash or xxHash, not the language's built-in hash, because that can differ between processes.
@@ -1217,6 +1799,17 @@ The lookup procedure on a ring is:
 1. Hash the key to a position.
 2. Find the first node position that is greater than or equal to it. Use binary search over the sorted node positions.
 3. If none is found, wrap to the smallest node position.
+
+The diagram shows the lookup from a key to its owner.
+
+:::flow
+title: Find the owner of a key on the ring
+Key -> Hash function: stable hash such as xxHash
+Hash function -> Ring position: number from 0 to 99
+Ring position -> Sorted node list: binary search
+Sorted node list -> Owner node: first position at or after the key
+Ring position -> Owner node: wrap to the smallest position if none
+:::
 
 With 4 nodes at random positions, the arcs are uneven. One node can own 40 percent of the ring. Virtual nodes fix this. Each physical node gets 100 to 200 positions on the ring. The arcs average out, and the spread is within a few percent. Virtual nodes also let a bigger machine take more positions.
 
@@ -1281,7 +1874,29 @@ A fourth node arrives. The target is 7 or 8 partitions per node. The plan moves 
 
 The copy rate is throttled to 50 MB per second, so that the live traffic keeps most of the bandwidth. 80 GB at 50 MB per second takes 1,600 seconds, about 27 minutes. Without the throttle, at 500 MB per second, it takes 3 minutes, but the live reads on nodes 1 to 3 slow down by half.
 
+The bars compare the copy time with and without the throttle.
+
+:::bars
+title: Time to move 80 GB
+unit: minutes
+Throttled at 50 MB per second: 27
+Full speed at 500 MB per second: 3
+:::
+
 During the copy, writes keep arriving for the moving partitions. The source node keeps serving them and logs each write. When the copy is done, the source sends the log to the target. The target applies it. The routing table switches. The source stops.
+
+Press Next to follow the fourth node into the cluster.
+
+:::scenario
+title: Add a fourth node to a 30-partition store
+state: node 1=10 partitions, node 2=10, node 3=10, node 4=0, copied=0 GB, time=0 min
+step: Each partition holds 10 GB. The target is 7 or 8 partitions per node.
+step: The plan moves 2 partitions from node 1, 3 from node 2, and 3 from node 3 to node 4. No key changes partition.
+step: The copy is throttled to 50 MB per second. 80 GB takes about 27 minutes.
+state: node 1=8 partitions, node 2=7, node 3=7, node 4=8, copied=80 GB, time=27 min
+step: During the copy the sources serve writes and log them. After the copy they send the log to node 4.
+step: The routing table switches 8 partitions to node 4. Clients refresh the table on a moved error.
+:::
 
 ## How it works
 
@@ -1298,11 +1913,36 @@ The migration procedure for one partition is:
 
 The pause in step 4 lasts milliseconds, so clients see a short latency bump, not an error.
 
+The timeline shows the migration of one 10 GB partition.
+
+:::timeline
+title: Migrate one 10 GB partition at 50 MB per second
+unit: s
+lane Routing table
+lane Source
+lane Target
+Routing table: mark partition as moving @0-1
+Source -> Target: copy snapshot with throttle @1-201
+Source: serve writes and log them @1-205
+Source -> Target: stream logged writes @201-205
+Source: pause writes for milliseconds @205-205.5
+Routing table: switch owner to target @205.5-206
+Target: serve reads and writes @206-210
+:::
+
 Clients find the owner through a routing table. Three designs exist:
 
 - Clients hold a copy of the table and refresh it on a "moved" error from a node.
 - A proxy holds the table and forwards every request.
 - A coordination service such as ZooKeeper or etcd holds the table and clients watch for changes.
+
+The table compares the three designs.
+
+| Design | Who holds the table | Cost |
+|---|---|---|
+| Client-side table | Every client | Refresh on a moved error |
+| Proxy | One proxy tier | One extra hop per request |
+| Coordination service | ZooKeeper or etcd | Clients watch for changes |
 
 The time to add a node is:
 
@@ -1363,11 +2003,38 @@ A cache has 10 nodes and 100,000 reads per second. Spread evenly, each node serv
 
 Now a celebrity key takes 60 percent of traffic. That is 60,000 reads per second on one key, on one node. That node must serve 60,000 plus its share of the rest, 4,000, for 64,000 reads per second. It is over its limit. Its latency climbs, and the requests for every other key on that node slow down too. The other 9 nodes serve 4,000 each and idle.
 
+The bars compare the load on the busiest node before and after each fix.
+
+:::bars
+title: Reads per second on the busiest cache node
+unit: reads per second
+Even spread: 10000
+Hot key with no fix: 64000
+Node limit: 50000
+Salting into 10 copies: 10000
+Local cache for 1 second: 4200
+:::
+
 Fix 1, local cache. Each application server keeps the hot value in its own memory for 1 second. With 200 application servers, the cache node sees at most 200 reads per second for that key. The cost is up to 1 second of staleness.
 
 Fix 2, key salting. Store the value under 10 keys: "celeb:42:0" to "celeb:42:9". A reader picks a random suffix. Each copy lands on a different node by the hash. Each node sees 6,000 reads per second for its copy. A write must update all 10 copies.
 
 Fix 3, for a hot counter. Each application server adds to a local counter and flushes the sum every 100 ms. 200 servers at 10 flushes per second is 2,000 writes per second on the key, instead of 60,000.
+
+Press Next to apply each fix to the celebrity key.
+
+:::scenario
+title: One celebrity key on a 10-node cache
+state: reads per second on key=60000, busiest node=64000, limit=50000, fix=none
+step: 100,000 reads per second spread over 10 nodes is 10,000 each. Then one key takes 60 percent.
+step: The node that owns the key serves 60,000 for that key plus 4,000 for the rest. It is over its limit.
+step: Fix 1, each of 200 application servers caches the value for 1 second. The node sees at most 200 reads for the key.
+state: reads per second on key=200, busiest node=4200, fix=local cache
+step: Fix 2, store the value under 10 salted keys. Each node sees 6,000 reads for its copy. A write must update 10 copies.
+state: reads per second on key=6000 per copy, busiest node=10000, fix=salting
+step: Fix 3, for a hot counter, each server sums locally and flushes every 100 ms. The key sees 2,000 writes per second.
+state: fix=aggregate then flush
+:::
 
 ## How it works
 
@@ -1379,6 +2046,17 @@ Key salting procedure:
 2. On write, write the value to all $k$ keys, with a suffix 0 to $k - 1$.
 3. On read, pick a random suffix and read that key.
 4. If a read misses, fall back to the base key or the database.
+
+The diagram shows a write to all copies and a read from one copy.
+
+:::flow
+title: Key salting spreads one key over 10 nodes
+Writer -> Copy 0: write celeb 42 suffix 0
+Writer -> Copy 9: write celeb 42 suffix 9
+Reader -> Random suffix: pick 0 to 9
+Random suffix -> Copy 3: read one copy on its node
+Copy 3 -> Reader: value
+:::
 
 The load per node drops from the full key rate $R$ to about $R / k$. The write cost rises from 1 to $k$ writes. Salting fits read-heavy keys.
 
@@ -1462,7 +2140,32 @@ The database load fell 10 times. One replica is enough.
 
 Now raise the hit rate to 99 percent. The database sees 100 reads per second. The average latency is 0.25 ms. The step from 90 to 99 cut database load another 10 times.
 
+The bars compare the database load at each hit rate.
+
+:::bars
+title: Database reads per second by hit rate
+unit: reads per second
+No cache: 10000
+90 percent hit rate: 1000
+99 percent hit rate: 100
+:::
+
 Now the cache node restarts. The hit rate is 0 for a few seconds. The database sees 10,000 reads per second with 1 replica. It fails. This is a cold cache. Plan for it with a warm-up or several cache nodes.
+
+Press Next to follow the load and the latency through the example.
+
+:::scenario
+title: Database load and latency at each hit rate
+state: hit rate=0 percent, database reads per second=10000, average latency=5 ms, replicas=5
+step: With no cache, all 10,000 reads per second reach the database. It needs 5 replicas.
+step: Add a cache with a 90 percent hit rate. 9,000 reads hit the cache and 1,000 reach the database.
+state: hit rate=90 percent, database reads per second=1000, average latency=0.7 ms, replicas=1
+step: Raise the hit rate to 99 percent. Only 100 reads per second reach the database.
+state: hit rate=99 percent, database reads per second=100, average latency=0.25 ms
+step: The cache node restarts. The hit rate falls to 0 for a few seconds.
+state: hit rate=0 percent, database reads per second=10000, average latency=5 ms
+step: One replica cannot serve 10,000 reads per second. The database fails. Plan for a cold cache.
+:::
 
 ## How it works
 
@@ -1482,6 +2185,18 @@ Cache-aside is the default. The read procedure is:
 3. If not found, read from the database.
 4. Write the value to the cache with a time to live (TTL).
 5. Return the value.
+
+The diagram shows the cache-aside read on a miss.
+
+:::flow
+title: Cache-aside read on a miss
+App -> Cache: get key
+Cache -> App: miss
+App -> Database: read row
+Database -> App: value
+App -> Cache: set key with a TTL
+App -> Client: value
+:::
 
 The TTL is the time after which the cache drops the entry. A short TTL limits staleness. A long TTL raises the hit rate.
 
@@ -1546,7 +2261,42 @@ Race 1, update the cache after the write. Writer 1 sets the price to 20 in the d
 
 Now use delete instead of update. Writer 1 writes 20 and deletes the cache key. Writer 2 writes 30 and deletes the cache key. The next reader misses, reads 30 from the database, and fills the cache. Correct. Order no longer matters, because a delete is the same whoever runs it last.
 
+Press Next to run race 1 with update and then with delete.
+
+:::scenario
+title: Two writers, update the cache or delete the key
+state: database=10, cache=empty, method=update
+step: Writer 1 sets the price to 20 in the database. Writer 2 sets it to 30 right after.
+state: database=30
+step: Writer 2 writes 30 to the cache. Then the slow writer 1 writes 20 to the cache.
+state: cache=20
+step: The database says 30 and the cache says 20. The cache is stale until the TTL expires.
+step: Now use delete instead. Writer 1 writes 20 and deletes the key. Writer 2 writes 30 and deletes the key.
+state: cache=empty, method=delete
+step: The next reader misses, reads 30 from the database, and fills the cache. Order no longer matters.
+state: cache=30
+:::
+
 Race 2, a read during a write. A reader misses the cache and reads price = 10 from the database. Before it fills the cache, a writer sets the price to 20 and deletes the cache key. The delete finds nothing. The reader then fills the cache with 10. Stale.
+
+The timeline shows the slow reader and the writer in race 2.
+
+:::timeline
+title: Race 2, a slow reader fills the cache after the delete
+unit: ms
+lane Reader
+lane Writer
+lane Cache
+lane Database
+Reader -> Cache: get item 7 @0-0.2
+Cache -> Reader: miss @0.2-0.4
+Reader -> Database: read price @0.4-1
+Database -> Reader: price is 10 @1-1.5
+Writer -> Database: set price to 20 @2-3
+Writer -> Cache: delete item 7, nothing there @3-3.5
+Reader: slow, a garbage collection pause @1.5-5
+Reader -> Cache: set item 7 to 10, stale @5-5.5
+:::
 
 This race needs a slow reader between its database read and its cache fill. It is rare, but it happens. Two fixes exist. A short TTL acts as a safety net. A lease gives the reader a token on the miss, and the delete invalidates the token so the fill is rejected.
 
@@ -1560,6 +2310,14 @@ Explicit invalidation. The writer deletes the key after each write. Low stalenes
 
 Versioned keys. The key includes a version, such as "item:7:v12". A write increments the version in a small store, and readers build the new key. Old entries become unreachable and expire. No delete needed, no race between delete and fill.
 
+The table compares the three methods.
+
+| Method | Staleness | Coordination | Weak point |
+|---|---|---|---|
+| TTL only | Up to the TTL | None | Stale for the full TTL |
+| Explicit delete | Milliseconds | Every write path | A missed write path |
+| Versioned keys | Milliseconds | A version store | Old entries use memory until expiry |
+
 The safe write procedure for cache-aside is:
 
 1. Write the new value to the database.
@@ -1570,6 +2328,15 @@ The safe write procedure for cache-aside is:
 The delete must come after the commit. If it comes before, a reader can refill the cache with the old value before the commit.
 
 Change data capture (CDC) moves invalidation out of the application. A process reads the database write-ahead log and deletes the cache key for each changed row. Every write path is covered, even manual fixes. Facebook's McSqueal does this. Debezium is the open-source tool. The delay is the lag of the log reader, usually under one second.
+
+The bars compare the worst-case staleness of two methods.
+
+:::bars
+title: Worst-case staleness
+unit: seconds
+TTL of 60 seconds only: 60
+Change data capture: 1
+:::
 
 Caution: a cache in a second region cannot be invalidated at the same instant. Writes in region A reach the cache in region B after the replication lag. Route writes and the reads right after them to the leader region.
 
@@ -1629,9 +2396,45 @@ Step 2, produce. The producer hashes the order id to pick a partition. Order 501
 
 Step 3, consume. The invoice service runs 6 instances in a consumer group. The broker assigns 2 partitions to each. Instance 2 reads partition 3 from its last committed offset, 88,200. It processes 10 events, up to 88,210, and commits offset 88,210.
 
+The diagram shows the path of order 501 from the producer to the committed offset.
+
+:::flow
+title: Orders topic with 12 partitions and 6 consumers
+Order service -> Partitioner: order 501
+Partitioner -> Partition 3: hash of order id mod 12
+Partition 3 -> Instance 2: events from offset 88,200
+Instance 2 -> Invoice store: 10 invoices
+Instance 2 -> Offset store: commit 88,210
+:::
+
 Step 4, crash. Instance 2 crashes after processing 88,205 but before the commit. The broker gives partition 3 to instance 4. It starts from 88,200. Events 88,200 to 88,205 are processed again. This is at-least-once delivery.
 
+Press Next to follow the offsets through the crash.
+
+:::scenario
+title: Offsets, a crash, and at-least-once delivery
+state: partition 3 end=88210, committed offset=88200, processed by=none, repeats=0
+step: The producer appends order 501 to partition 3. It gets offset 88,210.
+step: Instance 2 reads from the committed offset 88,200 and processes 10 events up to 88,210.
+state: processed by=instance 2 up to 88205
+step: Instance 2 crashes after 88,205 and before the commit. The committed offset is still 88,200.
+step: The broker gives partition 3 to instance 4. It starts from 88,200.
+state: processed by=instance 4 from 88200
+step: Events 88,200 to 88,205 are processed a second time. The consumer must be idempotent.
+state: repeats=6, committed offset=88210
+:::
+
 Step 5, retention. The topic keeps 7 days. 10,000 events per second times 1 KB is 10 MB per second, 864 GB per day, 6 TB per week. With replication factor 3, that is 18 TB of disk across the brokers.
+
+The bars compare the storage for one day, one week, and one week with replication.
+
+:::bars
+title: Storage for the orders topic
+unit: TB
+One day: 0.86
+One week: 6
+One week with 3 replicas: 18
+:::
 
 ## How it works
 
@@ -1650,6 +2453,14 @@ The throughput sizing procedure is:
 Ordering holds within one partition. Events for order 501 all go to partition 3 and stay in order. Events across partitions have no order. If you need all events for a user in order, use the user id as the partition key.
 
 At-least-once means no event is lost but some are repeated. The consumer must be idempotent: processing an event twice has the same effect as once. Store the event id with the result, and skip an id you have seen. At-most-once commits the offset before processing and can lose events. Exactly-once in Kafka uses transactions between the consumer offset and the producer output, and works within Kafka only.
+
+The table compares the three delivery guarantees.
+
+| Guarantee | Offset commit | Risk | Consumer rule |
+|---|---|---|---|
+| At-most-once | Before processing | Lost events | None |
+| At-least-once | After processing | Repeated events | Skip seen event ids |
+| Exactly-once | In a transaction with the output | Works inside Kafka only | Use Kafka transactions |
 
 Note: a message queue in the style of RabbitMQ deletes a message once a consumer acknowledges it. A log keeps it until retention expires. The log lets you add a new consumer that reads from the start.
 
@@ -1705,9 +2516,37 @@ A producer sends 1,000 events per second into an unbounded in-memory queue. A co
 
 The queue grows by 200 events per second. After 1 minute, 12,000 events, 24 MB. After 1 hour, 720,000 events, 1.4 GB. After 6 hours, 8.6 GB, and a process with 8 GB of memory dies. Every event in the queue is lost. The consumer also processes events that are 6 hours old, which may be useless.
 
+The bars compare the queue memory over time with the bounded case.
+
+:::bars
+title: Memory held by the queue
+unit: MB
+After 1 minute: 24
+After 1 hour: 1400
+After 6 hours: 8600
+Bounded at 10,000 events: 20
+:::
+
 Now bound the queue at 10,000 events. After 50 seconds the queue is full. The producer's next put call blocks. The producer slows to 800 per second, the consumer's rate. The latency through the queue is 10,000 / 800 = 12.5 seconds, and stays there. Nothing crashes.
 
 But the producer is a web server. Blocked puts mean blocked requests. The web server now holds 200 extra requests per second in flight. Its own thread pool fills. It starts to reject requests with a 503 error. The back-pressure reached the user, which is the right place for it. The user sees a clear error instead of a 6-hour delay.
+
+Press Next to follow the queue with and without a bound.
+
+:::scenario
+title: A queue between a 1,000 per second producer and an 800 per second consumer
+state: queue=unbounded, depth=0, memory=0 MB, delay=0 s
+step: The queue grows by 200 events per second. After 1 minute it holds 12,000 events, 24 MB.
+state: depth=12000, memory=24 MB, delay=15 s
+step: After 1 hour it holds 720,000 events, 1.4 GB. The consumer works on events that are 15 minutes old.
+state: depth=720000, memory=1400 MB, delay=900 s
+step: After 6 hours the process with 8 GB of memory dies. Every queued event is lost.
+state: depth=0, memory=crashed, delay=lost
+step: Now bound the queue at 10,000 events. After 50 seconds it is full and the next put blocks.
+state: queue=bounded at 10000, depth=10000, memory=20 MB, delay=12.5 s
+step: The producer slows to 800 per second. The web server fills its thread pool and returns 503 to some users.
+state: producer rate=800 per second, user sees=503 on some requests
+:::
 
 ## How it works
 
@@ -1717,6 +2556,14 @@ Three mechanisms carry the signal:
 - Credit-based flow control. The consumer sends the producer a number of credits, for example 100. The producer sends at most 100 items, then waits for more credits. TCP, HTTP/2, gRPC, and the Reactive Streams standard all work this way.
 - Rate limit. The producer sends at most a fixed rate. It does not react to the consumer, so it is a static form of back-pressure.
 
+The table compares the three mechanisms.
+
+| Mechanism | Who decides | Reacts to the consumer | Used by |
+|---|---|---|---|
+| Bounded queue | The queue | Yes | One process |
+| Credits | The consumer | Yes | TCP, HTTP/2, gRPC, Reactive Streams |
+| Rate limit | The producer | No | Static quotas |
+
 The procedure to add back-pressure to a pipeline is:
 
 1. Find the slowest stage by measuring the throughput of each one.
@@ -1725,6 +2572,17 @@ The procedure to add back-pressure to a pipeline is:
 4. Alert on queue depth, not only on failures.
 
 The choice at step 3 depends on the data. Reject a user request with an error, so the user can retry. Drop a metric sample, because the next one arrives in a second. Block a batch job, because it has no deadline.
+
+The diagram shows the signal as it travels from the slowest stage to the user.
+
+:::flow
+title: Back-pressure travels from the slowest stage to the user
+Consumer -> Queue: full, stop accepting
+Queue -> Web server: put blocks
+Web server -> Thread pool: 200 extra requests in flight
+Thread pool -> Load balancer: pool full, reject with 503
+Load balancer -> User: clear error, retry later
+:::
 
 With a log-based queue like Kafka, the broker stores the backlog on disk, so the producer does not block. The signal is consumer lag, the number of events between the newest offset and the committed offset. Alert when lag rises for more than a few minutes. Then add consumers or slow the producer.
 
@@ -1792,7 +2650,53 @@ Now look at the load. A sends 1,000 calls per second. With 10 percent failures a
 
 Now B is not failing 10 percent. B is overloaded and failing 80 percent. Extra calls: 1,000 × (0.8 + 0.64) = 1,440. B sees 2,440 calls per second, 2.4 times its normal load, while it is already overloaded. The retries make B worse. B never recovers while the retries continue.
 
+Press Next to follow the load on B as the failure rate rises.
+
+:::scenario
+title: Load on B as the failure rate rises
+state: calls from A=1000 per second, failure rate=10 percent, retries=up to 2, load on B=1000 per second
+step: B fails 10 percent of calls. The chance that all 3 attempts fail is 0.001. Success rises to 99.9 percent.
+state: success rate=99.9 percent
+step: Extra calls are 1,000 times 0.1 plus 0.01, which is 110 per second. B sees 1,110 calls per second.
+state: load on B=1110 per second
+step: Now B is overloaded and fails 80 percent. Extra calls are 1,000 times 0.8 plus 0.64, which is 1,440.
+state: failure rate=80 percent, load on B=2440 per second
+step: B sees 2.4 times its normal load while it is already overloaded. It never recovers.
+step: A 10 percent retry budget caps extra calls at 100 per second. B sees at most 1,100 and can recover.
+state: retries=10 percent budget, load on B=1100 per second
+:::
+
+The bars compare the load on B in each case.
+
+:::bars
+title: Calls per second that reach B
+unit: calls per second
+Normal: 1000
+10 percent failures, 2 retries: 1110
+80 percent failures, 2 retries: 2440
+80 percent failures, 10 percent retry budget: 1100
+:::
+
 Add a chain. C calls A, which calls B. C also retries 3 times. On a failure in B, C's 3 attempts each cause 3 attempts from A. B sees 9 calls for 1 original. With 4 levels, 81 calls. This is the amplification that takes a system down.
+
+The timeline shows the retry storm in the chain for one user request.
+
+:::timeline
+title: Retry storm in a chain, C calls A and A calls B
+unit: s
+lane C
+lane A
+lane B
+C -> A: attempt 1 @0-0.05
+A -> B: attempt 1 @0.05-0.1
+B: overloaded, times out @0.1-1.1
+A -> B: retry 1 @1.2-1.25
+B: times out @1.25-2.25
+A -> B: retry 2 @2.4-2.45
+B: times out @2.45-3.45
+A -> C: failure after 3 calls to B @3.5-3.55
+C -> A: retry 1, which causes 3 more calls to B @3.6-3.65
+:::
 
 ## How it works
 
@@ -1811,7 +2715,26 @@ Here base is the first wait, for example 100 ms, cap is the maximum wait, for ex
 
 Jitter adds randomness. Without it, 1,000 clients that failed at the same instant all retry at the same instant. Full jitter picks a random wait between 0 and $t_n$. This spreads the retries evenly.
 
+The table gives the wait before each attempt with base 100 ms.
+
+| Attempt | Wait without jitter | Wait with full jitter |
+|---|---|---|
+| 0 | 100 ms | 0 to 100 ms |
+| 1 | 200 ms | 0 to 200 ms |
+| 2 | 400 ms | 0 to 400 ms |
+| 3 | 800 ms | 0 to 800 ms |
+
 A retry budget caps retries as a fraction of the normal traffic. A common budget is 10 percent: retries may add at most 10 percent to the call rate. Above that, failed calls are not retried. The amplification in the chain above becomes at most 1.1 per level, 1.46 over 4 levels, instead of 81.
+
+The bars compare the amplification over 4 levels with and without a budget.
+
+:::bars
+title: Calls that reach B for one user request over 4 levels
+unit: calls
+No retries: 1
+3 attempts per level: 81
+10 percent retry budget per level: 1.46
+:::
 
 Retry only idempotent calls. An idempotent call has the same effect when run twice. A read is idempotent. A "create order" call is not, unless it carries a unique request id that the callee checks.
 
@@ -1868,6 +2791,17 @@ Service A calls a recommendation service R 500 times per second with a 1-second 
 
 R goes down. Every call waits 1 second and fails. By Little's law, A has 500 × 1 = 500 calls in flight. A has 200 threads. The threads fill within 0.4 seconds. A stops serving every request, including those that do not need R.
 
+The bars compare the threads that R can block under each setting.
+
+:::bars
+title: Threads blocked on R one second after R fails
+unit: threads
+Calls in flight by Little's law: 500
+Threads that A has: 200
+Bulkhead for R: 20
+Breaker open: 0
+:::
+
 Now add a circuit breaker with a window of 100 calls, a failure threshold of 50 percent, and an open duration of 30 seconds.
 
 Closed state. Calls go through. The breaker counts results over the last 100 calls.
@@ -1882,6 +2816,23 @@ Second 31, R is still down. 10 calls fail. Open again. R sees 10 calls every 30 
 
 Second 91. R is back. 10 calls succeed. The breaker closes. Traffic returns to normal.
 
+Press Next to follow the breaker through its states.
+
+:::scenario
+title: Breaker with a 100-call window, 50 percent threshold, 30 second open time
+state: state=closed, failures in window=0 of 100, calls to R per second=500, fallback=off
+step: R goes down. The first 100 calls fail. The failure rate is 100 percent, above 50.
+state: failures in window=100 of 100
+step: The breaker opens. Every call fails at once with a circuit open error. A serves the popular items list.
+state: state=open, calls to R per second=0, fallback=on
+step: After 30 seconds the breaker goes half-open and lets 10 calls through.
+state: state=half-open, calls to R per second=10 per 30 s
+step: R is still down. The 10 calls fail. The breaker opens again for 30 seconds.
+state: state=open
+step: At second 91 R is back. 10 probe calls succeed. The breaker closes and traffic returns to 500 per second.
+state: state=closed, failures in window=0 of 100, calls to R per second=500, fallback=off
+:::
+
 ## How it works
 
 The breaker has three states:
@@ -1891,6 +2842,16 @@ The breaker has three states:
 | Closed | All pass | Opens when failures in the window pass the threshold |
 | Open | All fail fast | Goes half-open after the open duration |
 | Half-open | A few pass | Closes on success, reopens on failure |
+
+The diagram shows the transitions between the states.
+
+:::flow
+title: The three breaker states
+Closed -> Open: failures above 50 percent of the window
+Open -> Half-open: after 30 seconds
+Half-open -> Closed: 10 probe calls succeed
+Half-open -> Open: any probe call fails
+:::
 
 The procedure to set the numbers is:
 
@@ -1963,7 +2924,33 @@ Offered load rises to 2,000 per second. The server accepts all of them. The queu
 
 Now add shedding. The server accepts at most 100 requests in its queue. The 101st is rejected at once with a 503 error. The queue wait is at most 100 ms. Every accepted request finishes in time. The server completes 1,000 useful requests per second and rejects 1,000 per second in a few microseconds each. Goodput is 1,000. Half the clients get a fast error and can retry later, with backoff.
 
+The bars compare the goodput with and without shedding.
+
+:::bars
+title: Goodput at 2,000 offered requests per second
+unit: requests per second
+Capacity: 1000
+No shedding, after 2 seconds: 0
+Shedding above 100 queued: 1000
+:::
+
 Now add priority. The 2,000 requests are 1,500 feed reads and 500 payments. The server sheds feed reads first. All 500 payments and 500 feed reads complete. The users who lose are the ones who lose least.
+
+Press Next to follow the goodput through the example.
+
+:::scenario
+title: Goodput at 2,000 offered on a 1,000 per second server
+state: offered=2000 per second, queue limit=none, queue wait=0 s, goodput=1000 per second
+step: The server accepts everything. The queue grows by 1,000 requests per second.
+state: queue wait=1 s
+step: After 2 seconds the wait is 2 seconds. Every request passes the 1 second client timeout.
+state: queue wait=2 s, goodput=0
+step: The server still processes abandoned requests at 1,000 per second. The CPU is at 100 percent for nothing.
+step: Now cap the queue at 100. The 101st request gets a 503 at once. The wait is at most 100 ms.
+state: queue limit=100, queue wait=0.1 s, goodput=1000 per second, rejected=1000 per second
+step: Add priority. Shed feed reads first. All 500 payments and 500 feed reads complete.
+state: payments done=500 per second, feed reads done=500 per second
+:::
 
 ## How it works
 
@@ -1973,6 +2960,14 @@ Three signals tell a server it is overloaded:
 - Concurrency. The number of requests in progress. By Little's law, it equals rate times latency, so it rises as soon as latency rises. Netflix's concurrency-limits library adapts the limit from measured latency.
 - CPU or memory use. Slow to react and hard to map to requests. Use as a backup.
 
+The table compares the three signals.
+
+| Signal | Reaction speed | Maps to requests | Use |
+|---|---|---|---|
+| Queue wait time | Fast | Direct | Primary |
+| Concurrency | Fast | By Little's law | Primary, adaptive |
+| CPU or memory | Slow | Indirect | Backup |
+
 The procedure to add shedding is:
 
 1. Measure the capacity $C$ in requests per second, from a load test.
@@ -1980,6 +2975,18 @@ The procedure to add shedding is:
 3. Reject requests above the limit with a clear code, such as 503 and a retry-after header.
 4. Assign each request a priority class. Shed the lowest class first.
 5. Make the reject path cheap: no logging per request, no database call.
+
+The diagram shows the accept path and the reject path at the door of the server.
+
+:::flow
+title: Admission control at the door of a server
+Client -> Load balancer: 2,000 requests per second
+Load balancer -> Admission check: priority header
+Admission check -> Queue: accept while under 100 queued
+Admission check -> Client: 503 with retry-after, microseconds
+Queue -> Worker: 1,000 per second, 1 ms each
+Worker -> Client: reply within 100 ms
+:::
 
 Goodput under overload with shedding stays near:
 
@@ -2053,7 +3060,33 @@ Now fan out to 10 servers. $0.99^{10} = 0.904$. 10 percent of users wait 1 secon
 
 Now cut each server's tail to 0.01 percent, with a 1 in 10,000 slow call. $0.9999^{100} = 0.99$. 1 percent of users wait 1 second. The server p99.99 became the user p99.
 
+The bars compare the share of users that wait in each case.
+
+:::bars
+title: Users that wait 1 second
+unit: percent
+Fan-out 100, 1 percent per shard: 63
+Fan-out 10, 1 percent per shard: 10
+Fan-out 100, 0.01 percent per shard: 1
+:::
+
 Now add hedging. The client sends each shard call, and if no reply arrives within 20 ms, sends the same call to a second replica. It uses the first reply. A slow call is now slow only if both replicas are slow: $0.01^2 = 0.0001$. The user sees the same 1 percent tail as above, at a cost of a second call for 1 percent of shard calls. Extra load: 1 percent.
+
+Press Next to follow the fan-out arithmetic.
+
+:::scenario
+title: Fan-out of one request to many shards
+state: fan-out=100, per-shard slow fraction=1 percent, users that wait 1 s=unknown, hedging=off
+step: Each shard is fast 99 percent of the time. All 100 must be fast for a fast reply.
+step: 0.99 to the power 100 is 0.366. 63 percent of users wait 1 second.
+state: users that wait 1 s=63 percent
+step: Cut the fan-out to 10. 0.99 to the power 10 is 0.904. 10 percent of users wait.
+state: fan-out=10, users that wait 1 s=10 percent
+step: Keep fan-out 100 but cut each shard tail to 0.01 percent. 0.9999 to the power 100 is 0.99.
+state: fan-out=100, per-shard slow fraction=0.01 percent, users that wait 1 s=1 percent
+step: Or hedge. Send a second copy after 20 ms. A shard call is slow only if both replicas are slow. Extra load is 1 percent.
+state: per-shard slow fraction=1 percent, hedging=on, extra load=1 percent
+:::
 
 ## How it works
 
@@ -2062,6 +3095,14 @@ The general rule for fan-out to $n$ servers with a per-server slow fraction $p$ 
 $$P(\\text{slow}) = 1 - (1 - p)^n$$
 
 Here $P(\\text{slow})$ is the chance the user request is slow, $p$ is the per-server slow fraction, and $n$ is the fan-out. For a target user tail $P$ you need $p \\approx P / n$. A user p99 with fan-out 100 needs server p99.99.
+
+The table gives the user tail for several fan-outs and per-shard tails.
+
+| Fan-out | Per-shard tail | Users that hit the tail |
+|---|---|---|
+| 10 | 1 percent | 10 percent |
+| 100 | 1 percent | 63 percent |
+| 100 | 0.01 percent | 1 percent |
 
 The common causes of a long tail in one server are:
 
@@ -2079,6 +3120,22 @@ The techniques to cut the tail are:
 3. Partial results. Return after 95 percent of shards reply. A feed with 95 of 100 shards is still a feed.
 4. Micro-partitions. Many small shards per server, so a slow server can shed shards to others fast.
 5. Limit the fan-out. Fewer, larger shards reduce $n$.
+
+The timeline shows a hedged call that wins against a slow replica.
+
+:::timeline
+title: Hedged request after a 20 ms delay
+unit: ms
+lane Client
+lane Replica 1
+lane Replica 2
+Client -> Replica 1: shard call @0-0.5
+Replica 1: slow, a garbage collection pause @0.5-100
+Client -> Replica 2: hedge after 20 ms @20-20.5
+Replica 2: answer in 10 ms @20.5-30.5
+Replica 2 -> Client: reply at 31 ms @30.5-31
+Client -> Replica 1: cancel @31-31.5
+:::
 
 Measure the tail with a histogram, such as HdrHistogram, and record p99, p99.9, and p99.99 per server. The p99.9 of each server is the number that predicts the user p99 at fan-out 10.
 
@@ -2143,6 +3200,18 @@ Requirements. 100 million new links per month. Each link is read 100 times over 
 
 Estimate. Writes: 100 million per month / 2.6 million seconds = 40 per second, about 120 at peak. Reads: 100 times that, 4,000 per second, 12,000 at peak. Storage: each row holds a 7-character key, a 500-byte URL, and metadata, about 600 bytes. 100 million × 600 bytes = 60 GB per month. Over 5 years, 6 billion rows, 3.6 TB.
 
+The bars compare the request rates from the estimate.
+
+:::bars
+title: Requests per second
+unit: per second
+Writes, average: 40
+Writes, peak: 120
+Reads, average: 4000
+Reads, peak: 12000
+Cache misses at peak: 1200
+:::
+
 Key. Use base62: the digits 0 to 9, a to z, and A to Z, 62 characters. A 7-character key gives $62^7 \\approx 3.5 \\times 10^{12}$ keys, 3.5 trillion. We need 6 billion. Plenty.
 
 Key generation. Option 1, hash the long URL and take 7 characters. Two URLs can collide, so check and retry. Option 2, a counter. Each write takes the next integer and encodes it in base62. No collisions. The counter is a single point, so pre-allocate ranges. Each server takes a block of 1,000 ids from a central store and hands them out locally. Option 2 with ranges is the choice.
@@ -2151,6 +3220,23 @@ Storage. The data is a key to a value with no joins. A key-value store partition
 
 Read path. A redirect hits the cache first. The working set is the links read in the last day. Suppose 20 percent of reads go to 1 percent of links. Then a cache of 10 million entries at 600 bytes, 6 GB, gives a hit rate above 90 percent. The 1,200 misses per second at peak go to the store, which handles them with one node.
 
+Press Next to create one short link and serve its first redirect.
+
+:::scenario
+title: Create a short link and serve a redirect
+state: next id=1000, local range=1000 to 1999, key=none, cache=empty, store rows=0
+step: A client sends a long URL. The web server validates it.
+step: The server takes id 1000 from its local range. The next id is 1001.
+state: next id=1001
+step: The server encodes 1000 in base62. The result is g8, padded to 7 characters.
+state: key=00000g8
+step: The server writes the key, the URL, the creation date, and the expiry to the store and returns the short URL.
+state: store rows=1
+step: A visitor opens the short URL. The cache misses, the store returns the long URL, and the cache fills.
+state: cache=1 entry
+step: The server returns a 302 redirect. The next visitor hits the cache in 0.2 ms.
+:::
+
 Write path:
 
 1. Validate the long URL.
@@ -2158,6 +3244,20 @@ Write path:
 3. Encode it in base62 to get the key.
 4. Write (key, URL, created, expiry) to the store.
 5. Return the short URL.
+
+The diagram shows the read path and the write path of the whole system.
+
+:::flow
+title: Read path and write path of the shortener
+Browser -> Load balancer: GET short key
+Load balancer -> Web server: route
+Web server -> Local cache: 1 second TTL for hot links
+Web server -> Cache cluster: get key, 90 percent hits
+Cache cluster -> Key-value store: miss, 1,200 per second at peak
+Web server -> Browser: 302 redirect
+Web server -> Id range store: take a block of 1,000 ids
+Web server -> Key-value store: write key and URL
+:::
 
 ## How it works
 
@@ -2230,9 +3330,27 @@ Requirements. 50 million daily users, 10 million online at peak. Each user sends
 
 Estimate. Messages: 50 million × 40 = 2 billion per day, 23,000 per second, about 70,000 at peak. Storage: 2 billion × 100 bytes = 200 GB per day of text, plus metadata, about 400 GB per day, 150 TB per year. Connections: 10 million open connections at peak.
 
+The bars compare the message rates and the push rate at peak.
+
+:::bars
+title: Messages per second
+unit: per second
+Average: 23000
+Peak: 70000
+Pushes at peak with group size 5: 350000
+:::
+
 Connection tier. A WebSocket is a long-lived two-way connection over one TCP socket. One server holds about 100,000 open connections with 10 KB of memory each, 1 GB. So the tier needs 100 servers for 10 million users, 150 with headroom.
 
 Presence. A registry maps user id to the server that holds the connection. It is a key-value store with 10 million entries, 50 bytes each, 500 MB. It updates on connect and disconnect, a few thousand writes per second.
+
+The table lists the size of each component.
+
+| Component | Size | Why |
+|---|---|---|
+| Connection servers | 150 | 10 million connections at 100,000 each, with headroom |
+| Presence registry | 500 MB | 10 million entries of 50 bytes |
+| Message store | 150 TB per year | 400 GB per day with metadata |
 
 Message path. User A on server 12 sends a message to user B:
 
@@ -2244,6 +3362,35 @@ Message path. User A on server 12 sends a message to user B:
 6. B's client sends an acknowledgement. Server 47 marks the message delivered.
 
 The path has 2 network hops inside the datacenter and 1 store write. Total under 20 ms.
+
+The diagram shows the message path from user A to user B.
+
+:::flow
+title: Message from user A on server 12 to user B on server 47
+User A -> Server 12: message over WebSocket
+Server 12 -> Message store: write, get message id
+Server 12 -> Presence registry: where is B
+Presence registry -> Server 12: server 47
+Server 12 -> Server 47: internal push
+Server 47 -> User B: push over WebSocket
+User B -> Server 47: acknowledgement
+:::
+
+Press Next to follow one message through delivery, a resend, and an offline user.
+
+:::scenario
+title: Deliver one message with acknowledgement and resend
+state: B online=yes, B server=47, message=stored, delivered=no, resends=0
+step: Server 12 writes the message to the store and asks the presence registry for B. B is on server 47.
+step: Server 47 pushes the message to B. No acknowledgement arrives in 5 seconds.
+state: resends=1
+step: Server 47 resends. B had received the first copy and deduplicates by message id. B sends an acknowledgement.
+state: delivered=yes
+step: B goes offline. A new message finds no entry for B in the registry.
+state: B online=no, B server=none, delivered=no
+step: Server 12 stores the message as undelivered and sends a push notification. When B connects, the client asks for messages since its last seen id.
+state: B online=yes, B server=31, delivered=yes
+:::
 
 ## How it works
 
@@ -2317,11 +3464,36 @@ Fan-out on read. The feed load reads the 300 followed accounts, fetches the rece
 
 Fan-out on write. When a user posts, the system writes the post id into the timeline of each follower. A timeline is a list of post ids per user, kept in a cache. With 300 followers on average, each post causes 300 timeline writes. 7,000 posts per second × 300 = 2.1 million writes per second. A feed load reads one timeline, 35,000 reads per second. The feed load is one lookup and takes 1 ms.
 
+The bars compare the operations per second of the two methods at peak.
+
+:::bars
+title: Operations per second at peak
+unit: thousand per second
+Fan-out on read, lookups: 10000
+Fan-out on write, timeline writes: 2100
+Fan-out on write, timeline reads: 35
+:::
+
 Storage for timelines: 100 million users × 500 post ids × 8 bytes = 400 GB. Fits in a cache cluster.
 
 The celebrity case. One account has 50 million followers. One post is 50 million timeline writes. At 100,000 writes per second, that takes 500 seconds. The post appears 8 minutes late for the last follower, and the write queue blocks every other post.
 
 Hybrid. Users with under 10,000 followers fan out on write. Users above that fan out on read. A feed load reads the timeline, then fetches the recent posts of the few celebrities the user follows, usually under 10, and merges. One lookup becomes about 10. The feed load stays under 20 ms. The celebrity post costs 1 write.
+
+Press Next to compare a normal post with a celebrity post.
+
+:::scenario
+title: One post from a normal user and one from a celebrity
+state: author followers=300, timeline writes=0, feed load lookups=1, delay for last follower=0 s
+step: A normal user posts. The fan-out worker appends the post id to 300 timelines.
+state: timeline writes=300, delay for last follower=under 1 s
+step: A celebrity with 50 million followers posts. Fan-out on write would need 50 million timeline writes.
+state: author followers=50 million, timeline writes=50 million, delay for last follower=500 s
+step: At 100,000 writes per second the last follower sees the post after 8 minutes, and the queue blocks every other post.
+step: Switch the celebrity to fan-out on read. The post costs 1 write. A feed load fetches the recent posts of the few celebrities the user follows.
+state: timeline writes=1, feed load lookups=about 10, delay for last follower=0 s
+step: The feed load stays under 20 ms and the celebrity post costs 1 write.
+:::
 
 ## How it works
 
@@ -2332,6 +3504,18 @@ The write path for a normal user:
 3. A fan-out worker reads the event and fetches the follower list of the author.
 4. The worker appends the post id to each follower's timeline in the cache, in batches of 1,000.
 5. The worker trims each timeline to the last 500 ids.
+
+The diagram shows the write path for a normal user.
+
+:::flow
+title: Fan-out on write for a normal user
+Post service -> Post store: write post, get id
+Post service -> Queue: event with post id and author
+Queue -> Fan-out worker: read event
+Fan-out worker -> Follow store: 300 followers
+Fan-out worker -> Timeline cache: 300 appends in batches
+Timeline cache -> Feed reader: one read per feed load
+:::
 
 The read path:
 
@@ -2403,9 +3587,44 @@ Requirements. 1,000 requests per second at peak. Each request has a 1,000-token 
 
 Replica capacity. One replica runs a 70-billion-weight model in 16-bit on 2 GPUs with 80 GB each, 160 GB total. The weights take 140 GB. 20 GB remain for the key-value (KV) cache, which stores the attention keys and values for every token in flight. For this model, the KV cache needs about 320 KB per token. 20 GB / 320 KB = 62,500 tokens in flight. A request holds 1,300 tokens at its end, so about 48 concurrent requests fit. Memory, not compute, sets this limit.
 
+The bars compare the memory on one replica.
+
+:::bars
+title: Memory on one replica with 2 GPUs
+unit: GB
+Weights in 16-bit: 140
+KV cache: 20
+Total GPU memory: 160
+:::
+
 Replica throughput. With continuous batching, the replica decodes about 40 tokens per second per request at 48 concurrent requests, about 2,000 tokens per second total. A request takes 300 / 40 = 7.5 seconds. By Little's law, the replica serves 48 / 7.5 = 6.4 requests per second.
 
 Fleet size. 1,000 / 6.4 = 156 replicas, 312 GPUs. With 30 percent headroom, about 200 replicas.
+
+Press Next to follow the arithmetic from the KV cache to the fleet size.
+
+:::scenario
+title: From KV cache memory to the fleet size
+state: weights=140 GB, KV cache=20 GB, tokens in flight=0, concurrent requests=0, requests per second per replica=0, replicas=0
+step: Two 80 GB GPUs hold 160 GB. The 70-billion-weight model in 16-bit takes 140 GB. 20 GB remain for the KV cache.
+step: Each token in flight needs about 320 KB. 20 GB divided by 320 KB is 62,500 tokens.
+state: tokens in flight=62500
+step: A request holds 1,300 tokens at its end. 62,500 divided by 1,300 is about 48 concurrent requests.
+state: concurrent requests=48
+step: Each request decodes 300 tokens at 40 per second, 7.5 seconds. By Little's law one replica serves 48 divided by 7.5, 6.4 requests per second.
+state: requests per second per replica=6.4
+step: 1,000 requests per second divided by 6.4 is 156 replicas. With 30 percent headroom, about 200 replicas, 400 GPUs.
+state: replicas=200
+:::
+
+The bars compare the replica count with and without headroom.
+
+:::bars
+title: Replicas for 1,000 requests per second
+unit: replicas
+Minimum at 6.4 per replica: 156
+With 30 percent headroom: 200
+:::
 
 Request path:
 
@@ -2416,6 +3635,20 @@ Request path:
 5. The replica decodes one token per step and the gateway forwards each token to the client at once.
 6. On the last token, the replica frees the KV cache and the gateway records the token counts.
 
+The diagram shows one streaming request through the gateway.
+
+:::flow
+title: One streaming request through the gateway
+Client -> Gateway: prompt with streaming on
+Gateway -> Rate limiter: check quota and count tokens
+Rate limiter -> Router: admitted
+Router -> Replica 7: most free KV cache
+Replica 7 -> Gateway: first token after a 200 ms prefill
+Gateway -> Client: stream each token at once
+Replica 7 -> Gateway: last token, free the KV cache
+Gateway -> Usage log: token counts
+:::
+
 ## How it works
 
 Routing. The gateway keeps a view of each replica: free KV cache tokens, queue depth, and in-flight requests. It routes to the replica with the most free cache. For prompts that share a long prefix, such as a system prompt, it routes to the replica that already holds that prefix in its cache. vLLM and SGLang reuse cached prefixes.
@@ -2423,6 +3656,23 @@ Routing. The gateway keeps a view of each replica: free KV cache tokens, queue d
 Admission control. Each replica has a concurrency limit from its KV cache size. The gateway holds a bounded queue per replica. Above the bound, it rejects with a 429 code and a retry-after header.
 
 Timeouts. Set two. Time to first token, 2 seconds, which catches a stuck prefill. Time between tokens, 5 seconds, which catches a stalled decode. Do not set one total timeout, because a 2,000-token answer takes a minute by design.
+
+The timeline shows where the two timeouts apply on one streaming request.
+
+:::timeline
+title: Two timeouts on a streaming request
+unit: s
+lane Client
+lane Gateway
+lane Replica
+Client -> Gateway: prompt @0-0.02
+Gateway -> Replica: route @0.02-0.04
+Replica: prefill 1,000 tokens @0.04-0.24
+Replica -> Client: first token, inside the 2 s limit @0.24-0.26
+Replica: decode 300 tokens @0.26-7.5
+Replica -> Client: one token every 25 ms, 5 s limit between tokens @1-1.02
+Replica -> Client: last token @7.5-7.52
+:::
 
 Retries and hedging. Retry only before the first token. After tokens have streamed, a retry would repeat text to the client.
 

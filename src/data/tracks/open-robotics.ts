@@ -54,7 +54,28 @@ The model takes three inputs:
 - The instruction, split into text tokens.
 - Sometimes the previous actions, so the model knows what it did last.
 
+The table lists the size of each input and of the output in this example.
+
+| Signal | Role | Size in the example |
+|---|---|---|
+| Camera image | Input | 224 by 224 pixels with 3 colour values each |
+| Instruction | Input | About 8 text tokens |
+| Previous actions | Optional input | 7 numbers per past step |
+| Action | Output | 7 numbers, one per joint or gripper |
+
 The model writes one action. The action is a vector of 7 numbers. Each number is a small change for one joint or for the gripper. For example, the output could be (0.01, -0.02, 0.00, 0.0, 0.0, 0.1, 1.0). The first three numbers move the gripper 1 cm along x and 2 cm along y. The last number closes the gripper.
+
+The diagram shows the path from the camera and the instruction to the motors.
+
+:::flow
+title: One pass through a VLA model
+Camera -> Vision encoder: 224 by 224 image
+Instruction -> Language model: text tokens
+Vision encoder -> Language model: image tokens
+Language model -> Action tokens: 7 tokens
+Action tokens -> Driver: bin centres
+Driver -> Motors: 7 joint commands
+:::
 
 The control loop then repeats:
 
@@ -64,6 +85,39 @@ The control loop then repeats:
 4. Wait for the next control tick, often 10 times per second.
 
 After 50 ticks, the block is in the bowl. The model never planned the full path. It chose one small step at a time.
+
+The timing diagram shows one control tick at 10 ticks per second.
+
+:::timeline
+title: One control tick at 10 ticks per second
+unit: ms
+lane Camera
+lane Model
+lane Motors
+Camera: capture frame @0-10
+Camera -> Model: image @10-12
+Model: encode image and text @12-40
+Model: write 7 action tokens @40-90
+Model -> Motors: action vector @90-92
+Motors: move 1 cm @92-100
+:::
+
+Press Next to follow the block from the table to the bowl.
+
+:::scenario
+title: Put the red block in the bowl in 50 ticks
+state: tick=0, gripper x=0.00 m, gripper y=0.00 m, gripper=open, block=on the table
+step: Tick 1. The camera takes a frame. The model writes the action (0.01, -0.02, 0.00, 0.0, 0.0, 0.1, 0.0). The gripper moves 1 cm along x and 2 cm along y.
+state: tick=1, gripper x=0.01 m, gripper y=-0.02 m
+step: Ticks 2 to 20. The model reads a new frame each tick and repeats a small step. The gripper reaches the block.
+state: tick=20, gripper x=0.20 m, gripper y=-0.40 m
+step: Tick 21. The last number of the action is 1.0. The gripper closes on the block.
+state: tick=21, gripper=closed, block=in the gripper
+step: Ticks 22 to 49. Each action moves the gripper a little toward the bowl. The model never plans the full path.
+state: tick=49, gripper x=0.05 m, gripper y=0.10 m
+step: Tick 50. The last number of the action is 0.0. The gripper opens and the block is in the bowl.
+state: tick=50, gripper=open, block=in the bowl
+:::
 
 ## How it works
 
@@ -79,6 +133,16 @@ The output must be text-like for a language model. The developers convert each a
 4. Map each integer to a reserved token in the vocabulary.
 
 A 7-dimensional action becomes 7 tokens. If the model predicts a chunk of 5 future steps, it writes 35 tokens per control tick. The loss is the normal next-token cross-entropy loss, so the training code does not change.
+
+The bars compare the number of action tokens per control tick for three chunk sizes.
+
+:::bars
+title: Action tokens per control tick for a 7-dimensional action
+unit: tokens
+One action: 7
+Chunk of 5 steps: 35
+Chunk of 10 steps: 70
+:::
 
 Note: the next lesson covers action tokens in more detail.
 
@@ -142,6 +206,17 @@ $$w = \\frac{0.05 - (-0.05)}{256} = \\frac{0.1}{256} \\approx 0.00039 \\text{ m}
 
 Here $w$ is the width of one bin in metres. The maximum rounding error is half a bin, about 0.2 mm. That is fine for a block in a bowl. It is too coarse to insert a 0.1 mm pin.
 
+The bars compare the maximum rounding error for three bin counts with the pin tolerance.
+
+:::bars
+title: Maximum rounding error over a 0.1 m range
+unit: mm
+64 bins: 0.78
+256 bins: 0.2
+1024 bins: 0.05
+Pin tolerance: 0.1
+:::
+
 Now convert the value 0.012 m to a token:
 
 1. Shift the value to start at zero: 0.012 + 0.05 = 0.062.
@@ -151,7 +226,44 @@ Now convert the value 0.012 m to a token:
 
 To convert back, take the bin centre: (158 + 0.5) × 0.00039 - 0.05 = 0.0118 m. The error is 0.2 mm.
 
+Press Next to follow the value 0.012 m through the conversion and back.
+
+:::scenario
+title: Convert 0.012 m to a token and back
+state: value=0.012 m, bin width=0.00039 m, bin index=none, decoded=none
+step: Shift the value so the range starts at zero. 0.012 + 0.05 = 0.062.
+state: shifted=0.062 m
+step: Divide by the bin width. 0.062 / 0.00039 = 158.7.
+state: quotient=158.7
+step: Round down. The bin index is 158.
+state: bin index=158
+step: Add the index to the start of the reserved token range. If that range starts at 32000, the token id is 32158.
+state: token id=32158
+step: Decode with the bin centre. (158 + 0.5) x 0.00039 - 0.05 = 0.0118 m.
+state: decoded=0.0118 m
+step: Compare with the original value. The error is 0.0002 m, or 0.2 mm.
+state: error=0.2 mm
+:::
+
 Now add chunking. Instead of one action per tick, the model predicts a chunk of 10 future actions. The control loop runs the model once, then plays the 10 actions over 10 ticks. At 10 ticks per second, the model runs once per second. A model with 500 ms of latency can now keep up.
+
+The timing diagram shows one chunk of 10 actions with a model that needs 500 ms per call.
+
+:::timeline
+title: Action chunking with a 500 ms model at 10 ticks per second
+unit: ms
+lane Camera
+lane Model
+lane Driver
+Camera -> Model: frame 1 @0-10
+Model: predict chunk 1 @10-510
+Model -> Driver: 10 actions @510-520
+Driver: play actions 1 to 10 @520-1520
+Camera -> Model: frame 2 @1010-1020
+Model: predict chunk 2 @1020-1520
+Model -> Driver: next 10 actions @1520-1530
+Driver: play actions 11 to 20 @1530-2530
+:::
 
 ## How it works
 
@@ -168,6 +280,14 @@ Action chunking is the method of ACT. The model outputs a chunk of $k$ actions, 
 Temporal ensembling smooths the join between chunks. At each tick, several past chunks each predicted an action for the current time. The driver averages them with weights that favour the newest prediction.
 
 Diffusion Policy and pi0 replace tokens with a continuous head. The model starts from random noise with the shape of the chunk. It removes the noise in several steps until a clean action chunk remains. This avoids bins and handles cases where two different actions are both correct. For example, a robot can go left or right around a cup. A bin model may average to the middle and hit the cup. A diffusion head picks one side.
+
+The table compares the three output heads.
+
+| Policy | Output head | Chunk size | Two valid actions |
+|---|---|---|---|
+| RT-2 and OpenVLA | 256 bins per dimension | 1 | May average to the middle |
+| ACT | Continuous chunk with an L1 loss | 10 to 100 | May average to the middle |
+| Diffusion Policy and pi0 | Denoising head, 10 or more steps | 16 to 50 | Picks one side |
 
 Note: a diffusion head needs 10 or more denoising steps, so the model latency rises. Chunking makes up for the extra time.
 
@@ -223,7 +343,31 @@ A lab records episodes with teleoperation. A person moves a controller, and the 
 
 Suppose one episode lasts 30 seconds. That is 300 frames. The lab records 500 episodes per day. After 20 days it has 10,000 episodes, 3 million frames, and about 83 hours of robot time.
 
+Press Next to follow the dataset as it grows over 20 days.
+
+:::scenario
+title: Twenty days of teleoperation
+state: day=0, episodes=0, frames=0, robot hours=0
+step: A person teleoperates for one day. The system logs 500 episodes of 30 seconds at 10 frames per second.
+state: day=1, episodes=500, frames=150000, robot hours=4.2
+step: Each episode holds 300 frames. So one day gives 150000 frames and about 4.2 hours of robot time.
+step: After 10 days the dataset has 5000 episodes.
+state: day=10, episodes=5000, frames=1500000, robot hours=41.7
+step: After 20 days the dataset has 10000 episodes and 3 million frames.
+state: day=20, episodes=10000, frames=3000000, robot hours=83.3
+step: Open X-Embodiment has 100 times more episodes. One lab cannot record that alone.
+:::
+
 Now compare this with Open X-Embodiment. That dataset pools 22 robot types from 21 labs. It has over 1 million episodes and 527 skills. One lab cannot record that alone, so pooling is the only way to reach that size.
+
+The bars compare the two dataset sizes.
+
+:::bars
+title: Episodes after 20 days versus Open X-Embodiment
+unit: episodes
+One lab after 20 days: 10000
+Open X-Embodiment: 1000000 (22 robot types from 21 labs)
+:::
 
 The RT-X experiment trained one model on all robots and tested on each robot. The pooled model beat the single-robot model on 5 of 6 labs tested. The pooled model had a mean success rate about 50 percent higher in the small-data labs.
 
@@ -236,6 +380,18 @@ Cross-embodiment training means one model learns from robots with different arms
 3. Sample batches with a weight per dataset, so large datasets do not drown small ones.
 4. Train one model on the mixture.
 5. Fine-tune on the target robot with a small set of its own episodes.
+
+The diagram shows how episodes from two labs reach one model.
+
+:::flow
+title: Cross-embodiment training
+Lab A episodes -> Converter: images and actions
+Lab B episodes -> Converter: images and actions
+Converter -> Common format: 7-dimensional action
+Common format -> Sampler: weight per dataset
+Sampler -> Shared model: mixed batches
+Shared model -> Target robot: fine-tune on its episodes
+:::
 
 The model learns common structure. A reach-and-grasp motion looks similar on most arms. The cameras differ, but the vision backbone already handles many image styles from web pretraining.
 
@@ -254,6 +410,17 @@ Success rate is the number of successful trials divided by the number of trials.
 $$\\sigma = \\sqrt{\\frac{p(1-p)}{n}} = \\sqrt{\\frac{0.75 \\times 0.25}{20}} \\approx 0.097$$
 
 Here $p$ is the success rate and $n$ is the number of trials. So the result is 75 percent plus or minus about 10 percent. A difference of 5 percent between two policies at 20 trials is noise.
+
+The bars show how the standard error falls as the number of trials rises.
+
+:::bars
+title: Standard error of a 75 percent success rate
+unit: percent
+5 trials: 19.4
+20 trials: 9.7
+50 trials: 6.1
+100 trials: 4.3
+:::
 
 Caution: a policy that scores 90 percent on seen objects and 20 percent on unseen objects has memorised the training set. Report both numbers.
 
@@ -326,6 +493,33 @@ The corner appears at pixel (420, 290).
 
 Now move the block to 1.0 m away. Step 1 gives 0.1 and 0.05. Step 2 gives 50 and 25. The pixel is (370, 265). The block moved half as far from the centre, because it is twice as far from the camera.
 
+Press Next to follow the corner from metres to pixels.
+
+:::scenario
+title: Project a block corner to a pixel
+state: X=0.1 m, Y=0.05 m, Z=0.5 m, u=none, v=none
+step: Divide X and Y by Z. 0.1 / 0.5 = 0.2 and 0.05 / 0.5 = 0.1.
+state: X/Z=0.2, Y/Z=0.1
+step: Multiply by the focal length of 500 pixels. 0.2 x 500 = 100 and 0.1 x 500 = 50.
+state: f X/Z=100, f Y/Z=50
+step: Add the principal point (320, 240). The pixel is (420, 290).
+state: u=420, v=290
+step: Move the block to Z = 1.0 m. The first step now gives 0.1 and 0.05.
+state: Z=1.0 m, X/Z=0.1, Y/Z=0.05
+step: Multiply by 500 and add the principal point. The pixel is (370, 265). The block is twice as far, so it is half as far from the centre.
+state: f X/Z=50, f Y/Z=25, u=370, v=265
+:::
+
+The bars compare the horizontal offset from the image centre at three depths.
+
+:::bars
+title: Horizontal offset of the corner from the image centre
+unit: pixels
+Depth 0.5 m: 100
+Depth 1.0 m: 50
+Depth 2.0 m: 25
+:::
+
 ## How it works
 
 The pinhole model is:
@@ -336,7 +530,26 @@ Here $(u, v)$ is the pixel, $(X, Y, Z)$ is the point in camera coordinates in me
 
 $$K = \\begin{pmatrix} f_x & 0 & c_x \\\\ 0 & f_y & c_y \\\\ 0 & 0 & 1 \\end{pmatrix}$$
 
+The grid shows the same matrix with the values of the example camera.
+
+:::matrix
+title: Intrinsic matrix K of the example camera
+cols: column 1, column 2, column 3
+row 1: 500, 0, 320
+row 2: 0, 500, 240
+row 3: 0, 0, 1
+:::
+
 The focal length in pixels depends on the lens and the sensor. A wide lens has a small focal length. A zoom lens has a large one.
+
+The table lists the four intrinsic parameters of the example camera.
+
+| Parameter | Symbol | Example value | Meaning |
+|---|---|---|---|
+| Horizontal focal length | $f_x$ | 500 pixels | Scale from X/Z to pixels along $u$ |
+| Vertical focal length | $f_y$ | 500 pixels | Scale from Y/Z to pixels along $v$ |
+| Principal point column | $c_x$ | 320 pixels | Column where the optical axis meets the sensor |
+| Principal point row | $c_y$ | 240 pixels | Row where the optical axis meets the sensor |
 
 Real lenses also bend straight lines near the edge of the image. This is distortion. Calibration measures the intrinsic parameters and the distortion together. The procedure is:
 
@@ -355,6 +568,17 @@ $$X = \\frac{(u - c_x) Z}{f_x}, \\qquad Y = \\frac{(v - c_y) Z}{f_y}$$
 With the first example, pixel (420, 290) and depth 0.5 m, we get X = (420 - 320) × 0.5 / 500 = 0.1 m. This matches.
 
 The extrinsic matrix is a rotation and a translation. It moves a point from robot coordinates to camera coordinates. Hand-eye calibration finds it. The next lessons use the depth $Z$ from a depth sensor.
+
+The diagram shows the full path from robot coordinates to a pixel.
+
+:::flow
+title: From a point in robot coordinates to a pixel
+Robot coordinates -> Extrinsic matrix: rotate and translate
+Extrinsic matrix -> Camera coordinates: (X, Y, Z) in metres
+Camera coordinates -> Divide by Z: (X/Z, Y/Z)
+Divide by Z -> Intrinsic matrix: scale by f, shift by c
+Intrinsic matrix -> Pixel: (u, v)
+:::
 
 ## Common mistakes
 
@@ -415,6 +639,34 @@ Here $Z$ is depth in metres, $f$ is the focal length in pixels, $b$ is the basel
 
 Now move the cup to 2.0 m. The disparity is 500 × 0.06 / 2.0 = 15 pixels. If the matcher is off by 1 pixel, the depth becomes 500 × 0.06 / 14 = 2.14 m. The error is 14 cm. At 0.5 m, the same 1-pixel error gives 0.508 m, an error of 8 mm. Stereo error grows with the square of the distance.
 
+Press Next to follow the cup through the depth calculation at two distances.
+
+:::scenario
+title: Depth of a cup from a stereo pair
+state: baseline=0.06 m, focal length=500 px, disparity=none, depth=none, error=none
+step: The left camera sees the cup at column 400 and the right camera at column 340. Subtract the columns. The disparity is 60 pixels.
+state: disparity=60 px
+step: Multiply the focal length by the baseline and divide by the disparity. 500 x 0.06 / 60 = 0.5 m.
+state: depth=0.5 m
+step: Move the cup to 2.0 m. The disparity falls to 500 x 0.06 / 2.0 = 15 pixels.
+state: disparity=15 px, depth=2.0 m
+step: The matcher is off by one pixel and reports 14 pixels. The depth becomes 500 x 0.06 / 14 = 2.14 m.
+state: disparity=14 px, depth=2.14 m, error=14 cm
+step: Back at 0.5 m, the same one-pixel error gives 59 pixels and 0.508 m. The error is only 8 mm.
+state: disparity=59 px, depth=0.508 m, error=8 mm
+:::
+
+The bars compare the depth error from a one-pixel disparity error at four distances.
+
+:::bars
+title: Depth error from a 1-pixel disparity error with a 6 cm baseline
+unit: mm
+0.5 m: 8
+1.0 m: 34
+2.0 m: 143
+4.0 m: 615
+:::
+
 ## How it works
 
 There are four common methods:
@@ -439,6 +691,19 @@ To build a point cloud from a depth image:
 5. Apply the extrinsic matrix to move the points into robot coordinates.
 
 A 640 by 480 depth image gives up to 307,200 points. Downsample with a voxel grid of 5 mm for planning.
+
+The diagram shows the path from a depth image to the planner.
+
+:::flow
+title: From a depth image to a point cloud
+Depth image -> Mask: drop pixels with depth zero
+Mask -> Back-project: X = (u - cx) Z / fx
+Back-project -> Camera points: up to 307200 points
+Camera points -> Extrinsic matrix: rotate and translate
+Extrinsic matrix -> Robot points: metres in the robot frame
+Robot points -> Voxel grid: one point per 5 mm cell
+Voxel grid -> Planner: downsampled cloud
+:::
 
 Caution: a depth sensor returns zero or a wrong value on glass, mirrors, and shiny metal. Check the invalid-pixel rate before you trust a grasp.
 
@@ -501,6 +766,15 @@ $$K = \\frac{P}{P + R} = \\frac{0.04}{0.04 + 0.09} = 0.31$$
 
 Here $K$ is the gain, $P$ is the prediction variance, and $R$ is the measurement variance.
 
+The table lists the four numbers in the example.
+
+| Symbol | Name | Value in the example | Where it comes from |
+|---|---|---|---|
+| $Q$ | Process noise variance | 0.04 | Wheel slip, measured from drive tests |
+| $P$ | Prediction variance | 0.04 | Grows by $Q$ at each predict step |
+| $R$ | Measurement noise variance | 0.09 | Camera jitter, measured with the robot still |
+| $K$ | Kalman gain | 0.31 | $P / (P + R)$ |
+
 Step 4, update the estimate:
 
 $$\\hat{x} = 1.0 + K (1.3 - 1.0) = 1.0 + 0.31 \\times 0.3 = 1.09 \\text{ m}$$
@@ -513,7 +787,35 @@ $$P' = (1 - K) P = 0.69 \\times 0.04 = 0.028$$
 
 The variance dropped. Two sources of information are better than one.
 
+Press Next to follow the estimate and its variance through one cycle.
+
+:::scenario
+title: One predict and update cycle in one dimension
+state: estimate=0.0 m, variance=0, gain=none, measurement=none
+step: Predict. The motion model moves the robot 1 m. The process noise adds 0.04 to the variance.
+state: estimate=1.0 m, variance=0.04
+step: Measure. The camera reports 1.3 m with a measurement variance of 0.09.
+state: measurement=1.3 m
+step: Compute the gain. 0.04 / (0.04 + 0.09) = 0.31.
+state: gain=0.31
+step: Update the estimate. 1.0 + 0.31 x (1.3 - 1.0) = 1.09 m. The estimate moves 31 percent of the way to the measurement.
+state: estimate=1.09 m
+step: Update the variance. 0.69 x 0.04 = 0.028. The variance is smaller than before.
+state: variance=0.028
+step: Predict again for the next second. The estimate becomes 2.09 m and the variance becomes 0.028 + 0.04 = 0.068.
+state: estimate=2.09 m, variance=0.068, gain=none, measurement=none
+:::
+
 Now suppose the camera was very precise, with $R = 0.01$. Then $K = 0.04 / 0.05 = 0.8$, and the estimate is 1.24 m. The filter trusts the better source.
+
+The bars compare the gain for three camera variances with the same prediction variance of 0.04.
+
+:::bars
+title: Kalman gain for three measurement variances
+R = 0.09: 0.31 (estimate 1.09 m)
+R = 0.04: 0.5 (estimate 1.15 m)
+R = 0.01: 0.8 (estimate 1.24 m)
+:::
 
 ## How it works
 
@@ -521,6 +823,18 @@ The Kalman filter repeats two steps at each tick:
 
 1. Predict: move the state forward with the motion model, and add the process noise $Q$ to the variance.
 2. Update: compute the gain $K$, correct the state with the measurement, and shrink the variance.
+
+The diagram shows the loop of predict and update.
+
+:::flow
+title: The Kalman filter loop
+Motion model -> Predict: move x by F and add Q
+Predict -> Gain: predicted x and P
+Sensor -> Gain: measurement z and R
+Gain -> Update: K = P / (P + R)
+Update -> Estimate: new x and smaller P
+Estimate -> Predict: next tick
+:::
 
 In more than one dimension, the state is a vector $x$, the variance is a matrix $P$, and the equations use matrices. The prediction is $x' = F x$, where $F$ is the motion model matrix. The measurement is $z = H x + \\text{noise}$, where $H$ selects which parts of the state the sensor sees. The gain is $K = P H^T (H P H^T + R)^{-1}$. The structure is the same as the 1D case: the gain is the prediction variance divided by the total variance.
 
@@ -591,6 +905,15 @@ A joint must move to 90 degrees. It starts at 0 degrees. The setpoint is the des
 
 We use gains $K_p = 0.5$, $K_i = 0.1$, and $K_d = 0.2$. The time step is 0.1 s. The command is in volts.
 
+The bars compare the three gains.
+
+:::bars
+title: The three gains in the example
+Proportional gain Kp: 0.5
+Integral gain Ki: 0.1
+Derivative gain Kd: 0.2
+:::
+
 Step 1, time 0.0 s. Position 0. Error = 90. Integral = 90 × 0.1 = 9. Derivative = (90 - 90) / 0.1 = 0, because the previous error was also 90.
 
 Command = 0.5 × 90 + 0.1 × 9 + 0.2 × 0 = 45 + 0.9 + 0 = 45.9 V.
@@ -601,11 +924,36 @@ Command = 0.5 × 60 + 0.1 × 15 + 0.2 × (-300) = 30 + 1.5 - 60 = -28.5 V.
 
 The derivative term is large and negative. It brakes the joint because the error is falling fast.
 
+The bars compare the size of the three terms at step 2.
+
+:::bars
+title: The three terms at step 2
+unit: V
+Proportional term: 30
+Integral term: 1.5
+Derivative term: -60
+:::
+
 Step 3, time 0.2 s. The joint is at 50 degrees. Error = 40. Integral = 15 + 4 = 19. Derivative = (40 - 60) / 0.1 = -200.
 
 Command = 20 + 1.9 - 40 = -18.1 V.
 
 The joint slows as it nears the target. Without the derivative term, the command at step 2 would be 31.5 V, and the joint would pass 90 and come back.
+
+Press Next to follow the error and the three terms through the three steps.
+
+:::scenario
+title: Three PID steps toward 90 degrees
+state: time=0.0 s, position=0 deg, error=90, P term=0 V, I term=0 V, D term=0 V, command=0 V
+step: Step 1. The error is 90. The integral is 90 x 0.1 = 9. The derivative is 0 because the previous error was also 90.
+state: P term=45 V, I term=0.9 V, D term=0 V, command=45.9 V
+step: The joint moves to 30 degrees. The error falls to 60. The integral grows to 15. The derivative is (60 - 90) / 0.1 = -300.
+state: time=0.1 s, position=30 deg, error=60, P term=30 V, I term=1.5 V, D term=-60 V, command=-28.5 V
+step: The derivative term brakes the joint. The command is negative although the error is still positive.
+step: The joint moves to 50 degrees. The error is 40. The integral is 19. The derivative is (40 - 60) / 0.1 = -200.
+state: time=0.2 s, position=50 deg, error=40, P term=20 V, I term=1.9 V, D term=-40 V, command=-18.1 V
+step: The joint slows as it nears the target. Without the derivative term the command at step 2 would be 31.5 V.
+:::
 
 ## How it works
 
@@ -615,11 +963,35 @@ $$u(t) = K_p e(t) + K_i \\int_0^t e(\\tau) \\, d\\tau + K_d \\frac{de(t)}{dt}$$
 
 Here $u$ is the command, $e$ is the error, $K_p$ is the proportional gain, $K_i$ is the integral gain, and $K_d$ is the derivative gain.
 
+The diagram shows how the three terms combine into one motor command.
+
+:::flow
+title: The PID loop
+Setpoint -> Error: 90 degrees
+Sensor -> Error: measured position
+Error -> P term: Kp times e
+Error -> I term: Ki times the sum of e
+Error -> D term: Kd times the change of e
+P term -> Sum
+I term -> Sum
+D term -> Sum
+Sum -> Motor: command in volts
+Motor -> Sensor: new position
+:::
+
 Each term has one job:
 
 - The proportional term pushes harder when the error is larger. Alone, it leaves a small steady error against gravity or friction.
 - The integral term sums the error over time. It removes the steady error. Too much causes slow oscillation.
 - The derivative term resists fast change. It reduces overshoot. It also amplifies sensor noise.
+
+The table sums up the three terms.
+
+| Term | Gain | Responds to | Too little | Too much |
+|---|---|---|---|---|
+| Proportional | $K_p$ | The current error | Slow response | Oscillation |
+| Integral | $K_i$ | The sum of past errors | A steady error remains | Slow oscillation and windup |
+| Derivative | $K_d$ | The rate of change of the error | Overshoot | Noise in the command |
 
 Manual tuning procedure:
 
@@ -689,7 +1061,34 @@ Now the car drives itself. At step 1, it picks an angle that is a little off. At
 
 This is compounding error. The policy makes a small mistake, lands in a state it never saw, and makes a bigger mistake. If the error per step is $\\epsilon$, the total cost after $T$ steps can grow as $T^2 \\epsilon$. With $T = 50$ and $\\epsilon = 0.01$, the bound is 25 times worse than a policy with linear growth.
 
+The bars compare the two error bounds for 50 steps and an error of 0.01 per step.
+
+:::bars
+title: Total error bound after 50 steps
+Linear growth, T times epsilon: 0.5
+Quadratic growth, T squared times epsilon: 25
+:::
+
 DAgger fixes this. We let the trained policy drive. The person watches and labels the correct steering angle at each step, but does not control the car. These new pairs show the states the policy actually visits. We add them to the dataset and retrain. After 3 rounds, the car stays in the lane.
+
+Press Next to watch the drift and the DAgger fix.
+
+:::scenario
+title: A cloned policy drifts, then DAgger fixes it
+state: step=0, offset from centre=0 cm, view seen in training=yes, in lane=yes, dataset=5000 pairs
+step: The car starts at the lane centre. The view matches the training images. The policy picks an angle that is a little off.
+state: step=1, offset from centre=1 cm
+step: The car is 2 cm left of any training image. The policy has never seen this view. Its error is larger.
+state: step=2, offset from centre=2 cm, view seen in training=no
+step: The error grows at each step. The car is 6 cm left.
+state: step=3, offset from centre=6 cm
+step: By step 20 the car leaves the lane. One small mistake became a failure.
+state: step=20, offset from centre=40 cm, in lane=no
+step: DAgger round 1. The policy drives and the person labels the correct angle at each step. The new pairs cover the views the policy visits.
+state: dataset=5000 + 50 new pairs
+step: After 3 rounds the dataset covers the drifted views. The car stays in the lane for all 50 steps.
+state: step=50, offset from centre=2 cm, view seen in training=yes, in lane=yes, dataset=5000 + 150 new pairs
+:::
 
 ## How it works
 
@@ -710,7 +1109,27 @@ The DAgger procedure is:
 4. Add the new pairs to the dataset.
 5. Retrain on the full dataset. Repeat from step 2.
 
+The diagram shows one round of DAgger.
+
+:::flow
+title: One DAgger round
+Expert demos -> Dataset: 5000 pairs
+Dataset -> Train: all pairs
+Train -> Policy: new weights
+Policy -> Drive: steering angles
+Drive -> Expert labels: visited images
+Expert labels -> Dataset: new pairs
+:::
+
 DAgger needs an expert who can label states after the fact. For a human teleoperator this is costly. Two cheaper substitutes are common. The first is to add small noise to the expert's actions during recording, so the dataset already contains recovery moves. The second is to record many demonstrations from varied start positions.
+
+The table compares the three ways to get recovery data.
+
+| Method | Who drives during recording | Who labels | Cost |
+|---|---|---|---|
+| DAgger | The learned policy | The expert, after the fact | High, one label per visited state |
+| Noise injection | The expert, with small added noise | The expert, by driving | Low, no extra pass |
+| Varied starts | The expert, from many start positions | The expert, by driving | Medium, more demonstrations |
 
 Note: generative adversarial imitation learning trains a reward from demonstrations instead of copying actions. It avoids compounding error but needs a simulator and many interactions.
 
@@ -773,9 +1192,58 @@ Now train again with domain randomisation. At the start of each episode, the sim
 - Robot mass from 90 to 110 percent of the nominal value.
 - A random push of up to 5 N once per second.
 
+The table lists each randomised parameter next to the fixed simulator value and the real value.
+
+| Parameter | Fixed simulator | Real robot | Randomised range |
+|---|---|---|---|
+| Ground friction | 1.0 | 0.6 on carpet | 0.4 to 1.2 |
+| Motor delay | 0 ms | 20 ms | 0 to 40 ms |
+| Robot mass | 100 percent of nominal | Unknown, changes with the battery | 90 to 110 percent |
+| External push | None | Bumps and slopes | Up to 5 N once per second |
+
 The policy sees 4,096 different robots in each batch. It learns a gait that works across all of them. On the real carpet, it walks. The real robot is one more sample from the range.
 
+Press Next to follow the two training runs from the simulator to the carpet.
+
+:::scenario
+title: From a fixed simulator to a real carpet
+state: friction=1.0, motor delay=0 ms, training time=0 min, result=none
+step: Train in the fixed simulator for 20 minutes. The policy walks in simulation.
+state: training time=20 min, result=walks in simulation
+step: Run the policy on the real robot. The carpet friction is 0.6 and the motors respond 20 ms late. The policy falls on the first step.
+state: friction=0.6, motor delay=20 ms, result=falls on the first step
+step: Train again with domain randomisation. Each episode draws friction from 0.4 to 1.2 and delay from 0 to 40 ms.
+state: friction=0.4 to 1.2, motor delay=0 to 40 ms, training time=0 min, result=none
+step: The policy sees 4096 different robots in each batch. It learns a gait that works across all of them.
+state: training time=20 min, result=walks in simulation
+step: Run it on the real carpet. The real robot is one more sample from the range. It walks.
+state: friction=0.6, motor delay=20 ms, result=walks on the carpet
+:::
+
 The compute budget is simple to estimate. One policy update needs 4,096 robots × 24 steps = 98,304 steps. The simulator runs 200,000 steps per second. One update takes 0.5 s. A policy that needs 1,500 updates trains in about 12 minutes.
+
+The timing diagram shows one policy update.
+
+:::timeline
+title: One policy update with 4096 parallel robots
+unit: s
+lane Simulator
+lane Learner
+Simulator: step 4096 robots 24 times @0-0.5
+Simulator -> Learner: 98304 transitions @0.5-0.52
+Learner: gradient update @0.52-0.6
+Learner -> Simulator: new weights @0.6-0.62
+Simulator: next rollout @0.62-1.12
+:::
+
+The bars compare the steps per second from one real robot and from the simulator.
+
+:::bars
+title: Robot steps per second
+unit: steps
+One real robot at 50 Hz: 50
+Simulator with 4096 robots: 200000
+:::
 
 ## How it works
 
@@ -794,6 +1262,19 @@ Domain randomisation is the procedure:
 3. Draw new values at the start of each episode.
 4. Train the policy on the full mixture.
 5. Narrow a range only if the policy cannot learn with it.
+
+The diagram shows how the ranges feed the training loop and the real robot.
+
+:::flow
+title: Domain randomisation in the training loop
+Parameter ranges -> Draw per episode: friction, delay, mass
+Draw per episode -> Simulator: 4096 robot variants
+Simulator -> Policy: observations
+Policy -> Simulator: actions
+Simulator -> Update: 98304 steps of experience
+Update -> Policy: new weights
+Policy -> Real robot: one more sample from the range
+:::
 
 The policy must work for every draw, so it learns to be robust rather than exact. The cost is some performance: a policy for one exact robot is faster than one for a range.
 

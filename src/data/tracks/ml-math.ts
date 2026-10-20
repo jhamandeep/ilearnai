@@ -43,9 +43,41 @@ $$W = \\begin{pmatrix} 2 & 0 \\\\ 1 & 1 \\end{pmatrix}$$
 
 Apply it to the first basis vector $e_1 = [1, 0]$. The product $W e_1$ is the first column, $[2, 1]$. Apply it to $e_2 = [0, 1]$. The product is the second column, $[0, 1]$. So the matrix sends $e_1$ to $[2, 1]$ and $e_2$ to $[0, 1]$. The columns are the images of the basis vectors.
 
+The grid shows the matrix W with one column for each basis vector image.
+
+:::matrix
+title: The matrix W, one column per basis vector image
+cols: image of e1, image of e2
+row 1: 2, 0
+row 2: 1, 1
+:::
+
 Now apply $W$ to any vector, say $x = [3, 2]$. Write $x$ as $3 e_1 + 2 e_2$. The map is linear, so $W x = 3 W e_1 + 2 W e_2 = 3 [2, 1] + 2 [0, 1] = [6, 5]$. Check by the usual rule: row 1 gives $2 \\times 3 + 0 \\times 2 = 6$, and row 2 gives $1 \\times 3 + 1 \\times 2 = 5$. Both methods agree.
 
+Press Next to compute W x by hand.
+
+:::scenario
+title: Compute W x for x = [3, 2]
+state: x=[3 2], W e1=[2 1], W e2=[0 1]
+step: Write x as 3 times e1 plus 2 times e2.
+step: Scale the first column by 3 and the second column by 2.
+state: 3 W e1=[6 3], 2 W e2=[0 2]
+step: Add the two scaled columns. The result is [6, 5].
+state: W x=[6 5]
+step: Check with the row rule. Row 1 gives 2 times 3 plus 0 times 2. Row 2 gives 1 times 3 plus 1 times 2.
+state: row 1=6, row 2=5
+:::
+
 Picture the unit square with corners at $[0, 0]$, $[1, 0]$, $[0, 1]$, and $[1, 1]$. The map sends it to a parallelogram with corners at $[0, 0]$, $[2, 1]$, $[0, 1]$, and $[2, 2]$. The map stretches and shears the plane. Every linear map does something of this kind: it keeps the origin fixed, keeps lines straight, and keeps parallel lines parallel.
+
+The table lists each corner of the unit square and the point where the map sends it.
+
+| Corner | Image under W |
+| --- | --- |
+| [0, 0] | [0, 0] |
+| [1, 0] | [2, 1] |
+| [0, 1] | [0, 1] |
+| [1, 1] | [2, 2] |
 
 ## How it works
 
@@ -64,6 +96,15 @@ The set of all outputs $W x$ is the column space. It is the span of the columns.
 
 Matrix multiplication is composition. If $A$ maps $\\mathbb{R}^n$ to $\\mathbb{R}^m$ and $B$ maps $\\mathbb{R}^m$ to $\\mathbb{R}^p$, then $BA$ maps $\\mathbb{R}^n$ to $\\mathbb{R}^p$. It applies $A$ first and $B$ second. The order matters: $AB$ and $BA$ are different maps, and one of them may not even be defined.
 
+The diagram shows the input vector pass through A and then through B.
+
+:::flow
+title: The product B A applies A first and B second
+x in R^n -> Map A: input x
+Map A -> Map B: A x in R^m
+Map B -> y in R^p: B A x
+:::
+
 To compute a product $BA$ by hand:
 
 1. Check that the number of columns of $B$ equals the number of rows of $A$.
@@ -73,6 +114,14 @@ To compute a product $BA$ by hand:
 A linear layer computes $y = W x + b$. The bias $b$ shifts the output, so the layer is affine, not strictly linear. A network stacks layers with a nonlinearity between them, because a stack of linear maps with no nonlinearity is one linear map.
 
 Note: a weight matrix of shape 4096 by 4096 is a map from 4096 inputs to 4096 outputs with 16.8 million entries.
+
+The bars compare the entry count of that matrix with the entry count of its bias.
+
+:::bars
+title: Weights in one 4096 by 4096 linear layer
+Matrix entries: 16777216
+Bias entries: 4096
+:::
 
 ## Common mistakes
 
@@ -129,7 +178,38 @@ Apply it to $v = [1, 1]$. The result is $[3, 3] = 3 v$. The map stretched $v$ by
 
 Apply it to $u = [1, -1]$. The result is $[1, -1] = 1 u$. So $[1, -1]$ is an eigenvector with eigenvalue 1.
 
+The grid shows the matrix A.
+
+:::matrix
+title: The symmetric matrix A
+cols: col 1, col 2
+row 1: 2, 1
+row 2: 1, 2
+:::
+
 Now apply $A$ to a vector that is not an eigenvector, say $x = [1, 0]$. Write $x$ in terms of the eigenvectors: $x = \\tfrac{1}{2} v + \\tfrac{1}{2} u$. Then $A x = \\tfrac{1}{2} (3 v) + \\tfrac{1}{2} (1 u) = [2, 1]$. Apply $A$ ten times: $A^{10} x = \\tfrac{1}{2} 3^{10} v + \\tfrac{1}{2} u$. The first term is about 29,500 times $v$ and the second is still $\\tfrac{1}{2} u$. After many steps, the output points almost exactly along $v$. The largest eigenvalue wins.
+
+Press Next to apply A to x step by step.
+
+:::scenario
+title: Repeated multiplication of x = [1, 0] by A
+state: x=[1 0], v part=0.5, u part=0.5
+step: Write x as half of v plus half of u.
+step: Apply A once. The v part grows by 3 and the u part stays the same. The result is [2, 1].
+state: A x=[2 1], v part=1.5, u part=0.5
+step: Apply A again. The v part is now 4.5 times v. The result is [5, 4].
+state: A^2 x=[5 4], v part=4.5, u part=0.5
+step: After ten applications the v part is about 29,500 and the u part is still 0.5. The output points along v.
+state: A^10 x=[29525 29524], v part=29524.5, u part=0.5
+:::
+
+The bars compare the growth of each eigenvector direction after ten steps.
+
+:::bars
+title: Growth factor after ten applications of A
+Direction v (eigenvalue 3): 59049
+Direction u (eigenvalue 1): 1
+:::
 
 That is the whole story of repeated multiplication. Each eigenvector direction grows or shrinks by its own eigenvalue, and the largest one dominates.
 
@@ -150,6 +230,13 @@ To find the eigenvalues of a 2 by 2 matrix by hand:
 5. For each $\\lambda$, solve $(A - \\lambda I) v = 0$ for $v$.
 
 For the example: $\\det(A - \\lambda I) = (2 - \\lambda)^2 - 1 = 0$, so $\\lambda = 3$ or $\\lambda = 1$. For $\\lambda = 3$, the equation $(A - 3I) v = 0$ gives $-v_1 + v_2 = 0$, so $v = [1, 1]$ up to scale.
+
+The table lists both eigenpairs of A.
+
+| Eigenvalue | Eigenvector | A times the eigenvector |
+| --- | --- | --- |
+| 3 | [1, 1] | [3, 3] |
+| 1 | [1, -1] | [1, -1] |
 
 A symmetric matrix, one with $A = A^\\top$, always has real eigenvalues and eigenvectors at right angles to each other. Covariance matrices and Hessians are symmetric. For such a matrix, write $A = Q \\Lambda Q^\\top$. $Q$ holds the eigenvectors as columns. $\\Lambda$ is diagonal with the eigenvalues. This is diagonalisation. In the eigenvector basis, the map is a plain stretch along each axis.
 
@@ -217,9 +304,43 @@ $$M^\\top M = \\begin{pmatrix} 25 & 20 \\\\ 20 & 25 \\end{pmatrix}$$
 
 This matrix is symmetric. Its eigenvalues are $45$ and $5$, with eigenvectors $[1, 1]$ and $[1, -1]$ scaled to length one. The singular values of $M$ are the square roots: $\\sigma_1 = \\sqrt{45} \\approx 6.71$ and $\\sigma_2 = \\sqrt{5} \\approx 2.24$.
 
+The grid shows the Gram matrix with its symmetric entries.
+
+:::matrix
+title: Gram matrix M transpose M
+cols: col 1, col 2
+row 1: 25, 20
+row 2: 20, 25
+:::
+
+Press Next to compute the singular values by hand.
+
+:::scenario
+title: Singular values of M from the Gram matrix
+state: M=[3 0; 4 5]
+step: Form M transpose M. Entry (1, 1) is 3 times 3 plus 4 times 4, which is 25. Entry (1, 2) is 4 times 5, which is 20.
+state: Gram=[25 20; 20 25]
+step: Solve the characteristic equation (25 - lambda)^2 - 400 = 0. The roots are 45 and 5.
+state: lambda 1=45, lambda 2=5
+step: Take square roots. Sigma 1 is 6.71 and sigma 2 is 2.24.
+state: sigma 1=6.71, sigma 2=2.24
+step: Find the unit eigenvectors [0.71, 0.71] and [0.71, -0.71]. These are the columns of V.
+state: v1=[0.71 0.71], v2=[0.71 -0.71]
+step: Compute u1 as M v1 divided by sigma 1, which is [0.32, 0.95]. Compute u2 as M v2 divided by sigma 2, which is [0.95, -0.32].
+state: u1=[0.32 0.95], u2=[0.95 -0.32]
+:::
+
 Read this as a picture. $M$ takes the unit circle to an ellipse. The long axis of the ellipse has length 6.71. The short axis has length 2.24. The eigenvectors of $M^\\top M$ are the input directions that land on the two axes.
 
 The ratio of the two singular values is 3. The first direction carries three times more stretch than the second. If you keep only the first direction, you keep most of what the matrix does. The sum of squared singular values is $45 + 5 = 50$, and the first direction holds 90 percent of it.
+
+The bars compare the squared singular values.
+
+:::bars
+title: Squared singular values of M
+Sigma 1 squared: 45 (90 percent)
+Sigma 2 squared: 5 (10 percent)
+:::
 
 ## How it works
 
@@ -228,6 +349,16 @@ The SVD of an $m \\times n$ matrix is:
 $$M = U \\Sigma V^\\top$$
 
 $U$ is an $m \\times m$ orthogonal matrix, a rotation of the output space. $\\Sigma$ is an $m \\times n$ matrix with the singular values on its diagonal, in decreasing order, and zeros elsewhere. $V$ is an $n \\times n$ orthogonal matrix, a rotation of the input space. The map $M$ does three things in order: rotate by $V^\\top$, stretch each axis by $\\sigma_i$, rotate by $U$.
+
+The diagram shows the three steps that M applies to an input vector.
+
+:::flow
+title: M = U Sigma V transpose as three steps
+Input x -> Rotate by V^T: turn to the axes
+Rotate by V^T -> Stretch by Sigma: scale by 6.71 and 2.24
+Stretch by Sigma -> Rotate by U: turn to the output
+Rotate by U -> Output M x: result
+:::
 
 To compute the SVD of a small matrix by hand:
 
@@ -243,6 +374,23 @@ $$M_k = \\sum_{i=1}^{k} \\sigma_i\\, u_i\\, v_i^\\top$$
 Each term $u_i v_i^\\top$ is a rank-1 matrix. The Eckart-Young theorem says no other rank-$k$ matrix is closer to $M$ in the Frobenius norm, the square root of the sum of squared entries. The error is $\\sqrt{\\sigma_{k+1}^2 + \\dots + \\sigma_r^2}$.
 
 LoRA applies this picture to fine-tuning. A weight update $\\Delta W$ for a 4096 by 4096 matrix has 16.8 million entries. LoRA writes $\\Delta W = B A$ with $B$ of shape 4096 by 8 and $A$ of shape 8 by 4096. That is a rank-8 matrix with 65,536 entries, 256 times fewer. The method works because the measured singular values of real updates fall fast.
+
+The table compares the full update with the rank-8 update.
+
+| Update | Shape | Entries |
+| --- | --- | --- |
+| Full update | 4096 by 4096 | 16,777,216 |
+| LoRA factor B | 4096 by 8 | 32,768 |
+| LoRA factor A | 8 by 4096 | 32,768 |
+| LoRA total | rank 8 | 65,536 |
+
+The bars compare the two entry counts.
+
+:::bars
+title: Entries to train for one 4096 by 4096 weight matrix
+Full update: 16777216
+LoRA rank 8: 65536 (256 times fewer)
+:::
 
 Note: the SVD of a symmetric positive matrix is its eigendecomposition. For a general matrix the two are different, and the SVD always exists.
 
@@ -301,11 +449,54 @@ $$a \\cdot (b - c\\, a) = 0 \\quad \\Rightarrow \\quad c = \\frac{a \\cdot b}{a 
 
 So $\\hat{b} = [1, 2]$ and the residual is $b - \\hat{b} = [2, -1]$. Check: $[1, 2] \\cdot [2, -1] = 2 - 2 = 0$. The residual is perpendicular to the line.
 
+Press Next to project b onto the line step by step.
+
+:::scenario
+title: Project b = [3, 1] onto the line through a = [1, 2]
+state: a=[1 2], b=[3 1]
+step: Compute the dot product of a and b. It is 1 times 3 plus 2 times 1, which is 5.
+state: a dot b=5
+step: Compute the dot product of a with itself. It is 1 plus 4, which is 5.
+state: a dot a=5
+step: Divide. The coefficient c is 5 / 5 = 1.
+state: c=1
+step: Scale a by c. The projection is [1, 2].
+state: projection=[1 2]
+step: Subtract the projection from b. The residual is [2, -1], and its dot product with a is 2 - 2 = 0.
+state: residual=[2 -1], a dot residual=0
+:::
+
+The bars compare the squared lengths of b, its projection, and its residual.
+
+:::bars
+title: Squared lengths in the projection of b
+b: 10
+Projection: 5
+Residual: 5
+:::
+
 Now a regression. You have three data points $(x, y)$: $(0, 1)$, $(1, 2)$, $(2, 2)$. Fit $y = w x + v$. Write the three equations as a matrix equation $A \\theta = y$ with:
 
 $$A = \\begin{pmatrix} 0 & 1 \\\\ 1 & 1 \\\\ 2 & 1 \\end{pmatrix}, \\quad y = \\begin{pmatrix} 1 \\\\ 2 \\\\ 2 \\end{pmatrix}, \\quad \\theta = \\begin{pmatrix} w \\\\ v \\end{pmatrix}$$
 
 Three equations and two unknowns have no exact solution. The best $\\theta$ makes $A \\theta$ the projection of $y$ onto the column space of $A$. Solve $A^\\top A\\, \\theta = A^\\top y$: $A^\\top A = \\begin{pmatrix} 5 & 3 \\\\ 3 & 3 \\end{pmatrix}$ and $A^\\top y = [6, 5]$. The solution is $w = 0.5$ and $v = 1.17$. The fitted line passes as close as possible to all three points in the squared sense.
+
+The grid shows the Gram matrix for the regression.
+
+:::matrix
+title: Gram matrix A transpose A for the three data points
+cols: w, v
+w: 5, 3
+v: 3, 3
+:::
+
+The table compares each target with its fitted value.
+
+| x | y | Fitted y | Residual |
+| --- | --- | --- | --- |
+| 0 | 1 | 1.17 | -0.17 |
+| 1 | 2 | 1.67 | 0.33 |
+| 2 | 2 | 2.17 | -0.17 |
 
 ## How it works
 
@@ -385,6 +576,18 @@ $$W_1 = \\begin{pmatrix} 1 & 0 \\\\ 1 & 1 \\end{pmatrix}, \\quad W_2 = \\begin{p
 
 Forward pass: $h = W_1 x = [1, 3]$. Then $y = W_2 h = 2$. Then $L = \\tfrac{1}{2} \\times 4 = 2$.
 
+The diagram shows the forward values and the backward gradients through the two layers.
+
+:::flow
+title: Forward pass and backward pass
+x -> W1: x = [1, 2]
+W1 -> W2: h = [1, 3]
+W2 -> Loss: y = 2
+Loss -> W2: y bar = 2
+W2 -> W1: h bar = [4, 0]
+W1 -> x: x bar = [4, 0]
+:::
+
 Backward pass. Start from the loss and move toward the input:
 
 1. The derivative of $L$ with respect to $y$ is $y$ itself: $\\bar{y} = 2$.
@@ -395,6 +598,43 @@ The bar notation means "gradient of the loss with respect to". Each step multipl
 
 The weight gradients come from the same quantities. The gradient with respect to $W_2$ is $\\bar{y}\\, h^\\top = [4, 6]$. The gradient with respect to $W_1$ is $\\bar{h}\\, x^\\top$, a 2 by 2 matrix with first row $[4, 8]$ and second row $[0, 0]$. The second row is zero because $W_2$ ignores the second hidden unit.
 
+Press Next to follow the gradient from the loss back to the input.
+
+:::scenario
+title: Backward pass through two linear layers
+state: h=[1 3], y=2, L=2
+step: Start at the loss. The gradient of L with respect to y is y itself, so y bar is 2.
+state: y bar=2
+step: Multiply by W2 transpose. W2 is [2, 0], so h bar is [4, 0].
+state: h bar=[4 0]
+step: Multiply by W1 transpose. Its rows are [1, 1] and [0, 1], so x bar is [4, 0].
+state: x bar=[4 0]
+step: Form the weight gradient for W2 as y bar times h transpose. It is [4, 6].
+state: W2 grad=[4 6]
+step: Form the weight gradient for W1 as h bar times x transpose. Row 1 is [4, 8] and row 2 is [0, 0].
+state: W1 grad=[4 8; 0 0]
+:::
+
+The grid shows the gradient of W1 with its zero second row.
+
+:::matrix
+title: Gradient of the loss with respect to W1
+cols: col 1, col 2
+row 1: 4, 8
+row 2: 0, 0
+:::
+
+The table lists each quantity in the pass with its shape.
+
+| Quantity | Value | Entries |
+| --- | --- | --- |
+| x | [1, 2] | 2 |
+| h | [1, 3] | 2 |
+| y | 2 | 1 |
+| y bar | 2 | 1 |
+| h bar | [4, 0] | 2 |
+| x bar | [4, 0] | 2 |
+
 ## How it works
 
 A chain of maps $x \\to h \\to y \\to L$ has the derivative:
@@ -404,6 +644,14 @@ $$\\frac{\\partial L}{\\partial x} = \\frac{\\partial L}{\\partial y}\\, \\frac{
 Each factor is a Jacobian, the matrix of all partial derivatives of one map's outputs with respect to its inputs. For a linear map $h = W x$, the Jacobian $\\partial h / \\partial x$ is $W$. For the loss $L$, which is a scalar, $\\partial L / \\partial y$ is a row vector.
 
 The product can be computed in two orders. Forward mode starts at the input and multiplies matrix by matrix. For a layer with $n$ inputs and $n$ outputs, each step costs $n^3$. Reverse mode starts at the loss, where the Jacobian is a single row, and multiplies row by matrix. Each step costs $n^2$. For a scalar loss and millions of inputs, reverse mode wins by a factor of $n$.
+
+The bars compare the cost of one layer step in each mode for n = 1,000.
+
+:::bars
+title: Operations per layer for n = 1,000
+Forward mode (n cubed): 1000000000
+Reverse mode (n squared): 1000000
+:::
 
 The operation that reverse mode performs at each layer is the vector-Jacobian product:
 
@@ -480,6 +728,31 @@ Take the function $f(x) = x^2$. At $x = 3$, the output is 9. Move the input to $
 
 Now move the input to $3.01$. The output is $9.0601$. The ratio is $0.0601 / 0.01 = 6.01$. Make the step smaller again and the ratio approaches 6. The derivative of $x^2$ at $x = 3$ is 6.
 
+Press Next to shrink the step and watch the ratio.
+
+:::scenario
+title: Slope of x squared at x = 3 from smaller steps
+state: x=3, f(x)=9
+step: Take a step of 0.1. The output is 9.61 and the change is 0.61. The ratio is 6.1.
+state: step=0.1, ratio=6.1
+step: Take a step of 0.01. The output is 9.0601. The ratio is 6.01.
+state: step=0.01, ratio=6.01
+step: Take a step of 0.001. The output is 9.006001. The ratio is 6.001.
+state: step=0.001, ratio=6.001
+step: The ratio approaches 6 as the step shrinks. The derivative at x = 3 is 6.
+state: derivative=6
+:::
+
+The bars compare the ratio for each step size with the true slope.
+
+:::bars
+title: Slope estimate for each step size
+Step 0.1: 6.1
+Step 0.01: 6.01
+Step 0.001: 6.001
+Limit: 6
+:::
+
 Use the derivative to predict. At $x = 3$ with slope 6, a step of $0.05$ should change the output by about $6 \\times 0.05 = 0.3$. The true change is $3.05^2 - 9 = 0.3025$. The prediction is close because the function is almost a straight line over a small step. This is the linear approximation.
 
 Now interpret a loss. Suppose a loss $L(w)$ has derivative $-2$ at the current weight $w$. The loss falls when $w$ increases, at a rate of 2 per unit. To lower the loss, increase $w$. If the derivative were $+2$, decrease $w$. If the derivative were 0, the loss is flat at this point, and a small step in either direction changes it only in second order.
@@ -512,6 +785,17 @@ To differentiate a polynomial by hand:
 
 For $f(x) = 3x^2 + 2x + 7$: the terms give $6x$, $2$, and $0$. So $f'(x) = 6x + 2$.
 
+The diagram shows the path from the polynomial to its derivative.
+
+:::flow
+title: Differentiate 3x^2 + 2x + 7 term by term
+f -> Sum rule: 3x^2 + 2x + 7
+Sum rule -> Power rule: 3x^2 and 2x
+Sum rule -> Constant rule: 7
+Power rule -> f prime: 6x + 2
+Constant rule -> f prime: 0
+:::
+
 The linear approximation is:
 
 $$f(x + h) \\approx f(x) + f'(x)\\, h$$
@@ -521,6 +805,14 @@ The approximation is exact for a straight line and good for a small $h$ on any s
 A point where $f'(x) = 0$ is a stationary point. It can be a minimum, a maximum, or a flat point between two slopes. The second derivative, the slope of the slope, tells which: positive means a minimum.
 
 Note: the sigmoid $\\sigma(x) = 1 / (1 + e^{-x})$ has derivative $\\sigma(x)(1 - \\sigma(x))$, which is at most 0.25. That small slope is the cause of vanishing gradients in deep sigmoid networks.
+
+The bars compare the largest slope of the sigmoid with the slope of the rectified linear unit.
+
+:::bars
+title: Largest derivative of two activation functions
+Sigmoid: 0.25
+Rectified linear unit (positive input): 1
+:::
 
 ## Common mistakes
 
@@ -573,9 +865,44 @@ Take $f(x) = (3x + 1)^2$. This is a square applied to a linear function. Name th
 
 The derivative of $u^2$ with respect to $u$ is $2u$. The derivative of $3x + 1$ with respect to $x$ is 3. The chain rule multiplies them: $f'(x) = 2u \\times 3 = 6(3x + 1)$. At $x = 1$, $u = 4$ and $f'(1) = 24$.
 
+The diagram shows the forward values and then the local derivatives along the chain.
+
+:::flow
+title: Chain rule on f(x) = (3x + 1) squared at x = 1
+x -> u: u = 3x + 1 = 4
+u -> f: f = u squared = 16
+f -> u: df/du = 2u = 8
+u -> x: du/dx = 3, product 24
+:::
+
 Check with a small step. At $x = 1$, $f = 16$. At $x = 1.01$, $f = (4.03)^2 = 16.2409$. The ratio is $0.2409 / 0.01 = 24.09$, close to 24.
 
 Now a neuron. The output is $y = \\sigma(wx + b)$ with the sigmoid $\\sigma(z) = 1 / (1 + e^{-z})$. Take $w = 2$, $b = -1$, $x = 1$. The inner value is $z = 1$. The sigmoid gives $\\sigma(1) \\approx 0.731$. The derivative of the sigmoid is $\\sigma(z)(1 - \\sigma(z)) \\approx 0.197$. The derivative of $z$ with respect to $w$ is $x = 1$. By the chain rule, $\\partial y / \\partial w \\approx 0.197 \\times 1 = 0.197$. With respect to $b$ it is $0.197 \\times 1$. With respect to $x$ it is $0.197 \\times w = 0.393$.
+
+Press Next to apply the chain rule to the sigmoid neuron.
+
+:::scenario
+title: Derivatives of y = sigmoid(w x + b) with w = 2, b = -1, x = 1
+state: w=2, b=-1, x=1
+step: Compute the inner value z = w x + b = 2 - 1 = 1.
+state: z=1
+step: Apply the sigmoid. y = 1 / (1 + e^-1) = 0.731.
+state: y=0.731
+step: Compute the local derivative of the sigmoid, y (1 - y) = 0.731 times 0.269 = 0.197.
+state: dy/dz=0.197
+step: Multiply by dz/dw = x = 1. The derivative with respect to w is 0.197.
+state: dy/dw=0.197
+step: Multiply by dz/db = 1 and by dz/dx = w = 2. The derivatives are 0.197 and 0.393.
+state: dy/db=0.197, dy/dx=0.393
+:::
+
+The table lists the local derivatives and the product along each path.
+
+| Path | Local derivatives | Product |
+| --- | --- | --- |
+| w | 0.197 and x = 1 | 0.197 |
+| b | 0.197 and 1 | 0.197 |
+| x | 0.197 and w = 2 | 0.393 |
 
 Each factor is a local derivative. The chain rule says: compute every local derivative, then multiply along the path.
 
@@ -601,6 +928,15 @@ To apply the chain rule by hand:
 Step 2 is the forward pass. Steps 3 and 4 are the backward pass. Backpropagation stores the forward values because step 3 needs them.
 
 Now consider a chain of 20 sigmoid layers. Each local derivative is at most 0.25. The product of 20 such factors is at most $0.25^{20} \\approx 10^{-12}$. The gradient at the first layer is almost zero, and that layer stops learning. This is the vanishing gradient. The rectified linear unit has derivative 1 for positive inputs, so its chain does not shrink. Residual connections add a path with derivative 1 around each layer. Both fixes follow from the chain rule.
+
+The bars compare the largest local derivative that each kind of layer passes on.
+
+:::bars
+title: Largest local derivative per layer
+Sigmoid layer: 0.25
+Rectified linear unit: 1
+Residual path: 1
+:::
 
 Note: the chain rule for many variables uses the same idea with a sum over paths. The next lesson covers it.
 
@@ -655,6 +991,21 @@ Take $f(x, y) = x^2 + 3xy$. To get the partial derivative with respect to $x$, t
 
 The gradient stacks them: $\\nabla f = [2x + 3y, 3x]$. At the point $(1, 2)$, the gradient is $[8, 3]$.
 
+Press Next to compute the gradient at (1, 2) by hand.
+
+:::scenario
+title: Gradient of f(x, y) = x^2 + 3xy at (1, 2)
+state: x=1, y=2
+step: Hold y fixed and differentiate with respect to x. The partial derivative is 2x + 3y.
+state: df/dx=2x + 3y
+step: Hold x fixed and differentiate with respect to y. The partial derivative is 3x.
+state: df/dy=3x
+step: Substitute x = 1 and y = 2. The first partial derivative is 2 + 6 = 8. The second is 3.
+state: df/dx=8, df/dy=3
+step: Stack the two numbers. The gradient is [8, 3] and its length is about 8.54.
+state: gradient=[8 3], length=8.54
+:::
+
 The gradient points uphill. To see this, move from $(1, 2)$ by a small step of length 0.1 in a few directions and watch the change in $f$:
 
 | Direction | Step | Change in $f$ |
@@ -666,11 +1017,30 @@ The gradient points uphill. To see this, move from $(1, 2)$ by a small step of l
 
 The step along the gradient gives the largest rise. The step against it gives the largest fall. The change in any direction $d$ is the dot product $\\nabla f \\cdot d$, which is largest when $d$ lines up with $\\nabla f$.
 
+The bars compare the change in f for each direction of the step.
+
+:::bars
+title: Change in f for a step of length 0.1 from (1, 2)
+Along x: 0.8
+Along y: 0.3
+Along the gradient: 0.85
+Against the gradient: -0.85
+:::
+
 Now a vector function. Take $g(x, y) = [x y,\\ x + y^2]$. It has two outputs and two inputs, so it has four partial derivatives. The Jacobian puts output $i$ in row $i$ and input $j$ in column $j$:
 
 $$J_g = \\begin{pmatrix} y & x \\\\ 1 & 2y \\end{pmatrix}$$
 
 At $(1, 2)$ the Jacobian is $\\begin{pmatrix} 2 & 1 \\\\ 1 & 4 \\end{pmatrix}$. It is the matrix of the linear map that best approximates $g$ near that point.
+
+The grid shows the Jacobian of g at (1, 2), with one row per output and one column per input.
+
+:::matrix
+title: Jacobian of g at (1, 2)
+cols: d/dx, d/dy
+output xy: 2, 1
+output x + y^2: 1, 4
+:::
 
 ## How it works
 
@@ -770,7 +1140,42 @@ Now consider two variables together. Let $A$ be "the roll is at most 2" and keep
 
 The cells are the joint probabilities $P(A, Y)$. The row totals are the marginal $P(A)$. The column totals are the marginal $P(Y)$. The conditional probability $P(Y = 1 \\mid A = 1)$ is the cell divided by the row total: $(1/6) / (2/6) = 1/2$.
 
+The grid shows the same joint table as a heat map.
+
+:::matrix
+title: Joint probabilities P(A, Y) from the die
+cols: Y = 0 (odd), Y = 1 (even)
+A = 1 (roll 1 or 2): 0.167, 0.167
+A = 0 (roll 3 to 6): 0.333, 0.333
+:::
+
+Press Next to build the marginal and the conditional from the joint table.
+
+:::scenario
+title: From joint to marginal to conditional
+state: joint A1 Y0=1/6, joint A1 Y1=1/6, joint A0 Y0=2/6, joint A0 Y1=2/6
+step: Count the outcomes for each cell. Roll 1 is odd and at most 2, so it goes to the cell A1 Y0. Each of the six rolls fills one cell.
+step: Sum each row to get the marginal of A. P(A = 1) is 1/6 + 1/6 = 2/6.
+state: P(A1)=2/6, P(A0)=4/6
+step: Sum each column to get the marginal of Y. P(Y = 1) is 1/6 + 2/6 = 3/6.
+state: P(Y1)=3/6, P(Y0)=3/6
+step: Divide the cell by the row total. P(Y = 1 given A = 1) is (1/6) / (2/6) = 1/2.
+state: P(Y1 given A1)=1/2
+step: Check independence. P(A1) times P(Y1) is (2/6)(3/6) = 1/6, which equals the joint cell. The variables are independent.
+state: independent=yes
+:::
+
 A language model works the same way. Given the prompt "The cat sat on the", the model outputs a distribution over the next token: "mat" with 0.4, "floor" with 0.2, "sofa" with 0.1, and the rest spread over the other tokens. That is a conditional distribution $P(\\text{next} \\mid \\text{prompt})$ over a vocabulary of 100,000 values.
+
+The bars compare the probabilities the model gives to the top three tokens.
+
+:::bars
+title: Next-token distribution after "The cat sat on the"
+mat: 0.4
+floor: 0.2
+sofa: 0.1
+all other tokens: 0.3
+:::
 
 ## How it works
 
@@ -857,9 +1262,44 @@ Count a population of 100,000 people:
 
 Out of 1,098 positive tests, 99 are true. The probability is $99 / 1{,}098 \\approx 0.09$. A positive test means a 9 percent chance of the condition, not 99 percent. The false positives from the large healthy group outnumber the true positives from the small affected group.
 
+The grid shows the four counts as a confusion table.
+
+:::matrix
+title: Confusion table for 100,000 people
+cols: test positive, test negative
+have the condition: 99, 1
+do not have it: 999, 98901
+:::
+
 Now the formula. The prior is $P(C) = 0.001$. The likelihood is $P(+ \\mid C) = 0.99$. The false positive rate is $P(+ \\mid \\neg C) = 0.01$. The evidence is $P(+) = 0.99 \\times 0.001 + 0.01 \\times 0.999 = 0.01098$. The posterior is $0.99 \\times 0.001 / 0.01098 \\approx 0.09$. The two methods agree.
 
+Press Next to apply Bayes rule with the formula.
+
+:::scenario
+title: Posterior after one positive test
+state: prior=0.001, likelihood=0.99, false positive rate=0.01
+step: Multiply the prior by the likelihood. 0.001 times 0.99 is 0.00099.
+state: prior times likelihood=0.00099
+step: Multiply the complement of the prior by the false positive rate. 0.999 times 0.01 is 0.00999.
+state: healthy times false positive=0.00999
+step: Add the two products to get the evidence P(+) = 0.01098.
+state: evidence=0.01098
+step: Divide the first product by the evidence. The posterior is 0.00099 / 0.01098 = 0.09.
+state: posterior=0.09
+step: Use 0.09 as the new prior for a second positive test. The new posterior is 0.0891 / (0.0891 + 0.0091) = 0.91.
+state: prior=0.09, posterior=0.91
+:::
+
 A second positive test changes the picture. Use the posterior 0.09 as the new prior. The new posterior is $0.99 \\times 0.09 / (0.99 \\times 0.09 + 0.01 \\times 0.91) \\approx 0.91$. Two pieces of evidence move the belief from 0.1 percent to 91 percent.
+
+The bars compare the belief before and after each test.
+
+:::bars
+title: Probability of the condition
+Before any test: 0.001
+After one positive test: 0.09
+After two positive tests: 0.91
+:::
 
 ## How it works
 
@@ -953,7 +1393,42 @@ The variance measures spread. Subtract the mean from each value, square the resu
 
 The average of the squared column is $17.5 / 6 \\approx 2.92$. That is the variance. The standard deviation is the square root, about 1.71. It has the same units as the variable.
 
+The grid shows the deviation and the squared deviation for each face.
+
+:::matrix
+title: Deviation from the mean 3.5 for each face of the die
+cols: 1, 2, 3, 4, 5, 6
+deviation: -2.5, -1.5, -0.5, 0.5, 1.5, 2.5
+squared: 6.25, 2.25, 0.25, 0.25, 2.25, 6.25
+:::
+
+Press Next to compute the variance with the shortcut formula.
+
+:::scenario
+title: Variance of a fair die by the shortcut formula
+state: values=1 to 6, probability=1/6 each
+step: Compute E[X]. The sum 1 + 2 + 3 + 4 + 5 + 6 = 21, divided by 6, is 3.5.
+state: E[X]=3.5
+step: Compute E[X^2]. The sum 1 + 4 + 9 + 16 + 25 + 36 = 91, divided by 6, is 15.17.
+state: E[X^2]=15.17
+step: Square the mean. 3.5 times 3.5 is 12.25.
+state: E[X]^2=12.25
+step: Subtract. 15.17 - 12.25 = 2.92. This is the variance.
+state: variance=2.92
+step: Take the square root. The standard deviation is 1.71.
+state: standard deviation=1.71
+:::
+
 Now a weighted coin that gives 1 with probability $p = 0.3$ and 0 otherwise. The expectation is $0.3$. The variance is $p(1 - p) = 0.21$. Flip the coin 100 times and take the average. The expectation of the average is still $0.3$. Its variance is $0.21 / 100 = 0.0021$, and its standard deviation is about 0.046. The average of 100 flips sits within about 0.05 of the truth most of the time. The average of 10,000 flips sits within about 0.005.
+
+The bars compare the standard deviation of the sample mean for three sample sizes.
+
+:::bars
+title: Standard deviation of the average of n coin flips with p = 0.3
+1 flip: 0.458
+100 flips: 0.046
+10000 flips: 0.0046
+:::
 
 ## How it works
 
@@ -983,6 +1458,16 @@ To compute expectation and variance from a table:
 3. Subtract $E[X]^2$ from $E[X^2]$. This is the variance.
 
 In training, the true loss is $E[\\ell(\\theta, x)]$ over the data distribution. The batch loss is the sample mean over $n$ examples. Its gradient has variance proportional to $1 / n$. A larger batch gives a less noisy gradient, which allows a larger learning rate. This is a Monte Carlo estimate, an average of random samples that stands in for an expectation.
+
+The diagram shows how a batch gradient estimates the true gradient.
+
+:::flow
+title: A batch gradient is a Monte Carlo estimate
+Data distribution -> Batch of n: sample n examples
+Batch of n -> Per-example loss: compute each loss
+Per-example loss -> Sample mean: average over n
+Sample mean -> Batch gradient: variance falls as 1/n
+:::
 
 Note: the expectation can be undefined. A distribution with a heavy tail can have infinite variance, and the sample mean then does not settle down.
 
@@ -1046,7 +1531,53 @@ A language model looks at a prompt and outputs scores for four tokens: $[2.0, 1.
 
 The column of $e^{\\text{score}}$ sums to 11.48, and each probability is the entry divided by that sum. Divide every score by a temperature of 2 before softmax and the probabilities move toward $[0.45, 0.27, 0.17, 0.10]$. A higher temperature flattens the distribution.
 
+Press Next to compute the softmax by hand.
+
+:::scenario
+title: Softmax of the scores [2, 1, 0, -1]
+state: scores=[2 1 0 -1]
+step: Exponentiate each score. e^2 = 7.39, e^1 = 2.72, e^0 = 1.00, and e^-1 = 0.37.
+state: exponentials=[7.39 2.72 1.00 0.37]
+step: Add the exponentials. The sum is 11.48.
+state: sum=11.48
+step: Divide each exponential by the sum. The probabilities are 0.64, 0.24, 0.09, and 0.03.
+state: probabilities=[0.64 0.24 0.09 0.03]
+step: Check that the probabilities sum to one. 0.64 + 0.24 + 0.09 + 0.03 = 1.00.
+state: total=1.00
+step: Divide the scores by a temperature of 2 and repeat. The probabilities move to 0.45, 0.27, 0.17, and 0.10.
+state: temperature=2, probabilities=[0.45 0.27 0.17 0.10]
+:::
+
+The grid shows the probabilities at temperature 1 and at temperature 2.
+
+:::matrix
+title: Softmax output at two temperatures
+cols: A, B, C, D
+temperature 1: 0.64, 0.24, 0.09, 0.03
+temperature 2: 0.45, 0.27, 0.17, 0.10
+:::
+
+The bars compare the four probabilities at temperature 1.
+
+:::bars
+title: Categorical distribution over the four tokens
+A: 0.64
+B: 0.24
+C: 0.09
+D: 0.03
+:::
+
 A weight in a new network is drawn from a Gaussian with mean 0 and standard deviation 0.02. About 68 percent of weights fall within $\\pm 0.02$ and about 95 percent fall within $\\pm 0.04$. The Gaussian is the natural choice because the sum of many small independent effects tends to a Gaussian. That result is the central limit theorem, and it is why the sample mean of any distribution with finite variance looks Gaussian for a large sample.
+
+The bars compare the share of weights inside each band around zero.
+
+:::bars
+title: Share of Gaussian weights with standard deviation 0.02
+unit: percent
+Within 0.02: 68
+Within 0.04: 95
+Within 0.06: 99.7
+:::
 
 ## How it works
 
@@ -1147,7 +1678,34 @@ The probability of this exact sequence under a given $p$ is $p^7 (1 - p)^3$. Thi
 
 The likelihood is largest near $p = 0.7$. That is the maximum likelihood estimate, and it matches the fraction of heads.
 
+The bars compare the likelihood at each value of p.
+
+:::bars
+title: Likelihood of 7 heads in 10 flips, times 1,000
+p = 0.5: 0.98
+p = 0.6: 1.79
+p = 0.7: 2.22
+p = 0.8: 1.68
+:::
+
 Now derive it. Take the log: $\\ell(p) = 7 \\ln p + 3 \\ln(1 - p)$. The log turns the product into a sum and does not move the maximum. Differentiate: $\\ell'(p) = 7 / p - 3 / (1 - p)$. Set it to zero: $7(1 - p) = 3p$, so $p = 0.7$. The estimate is the count of heads divided by the total.
+
+Press Next to derive the estimate step by step.
+
+:::scenario
+title: Maximum likelihood for 7 heads in 10 flips
+state: heads=7, tails=3
+step: Write the likelihood p^7 (1 - p)^3.
+state: likelihood=p^7 (1 - p)^3
+step: Take the log. The log-likelihood is 7 ln p + 3 ln(1 - p).
+state: log-likelihood=7 ln p + 3 ln(1 - p)
+step: Differentiate with respect to p. The derivative is 7 / p - 3 / (1 - p).
+state: derivative=7/p - 3/(1 - p)
+step: Set the derivative to zero. 7 (1 - p) = 3 p, so 7 = 10 p.
+state: equation=7 = 10 p
+step: Solve. p = 0.7, the fraction of heads.
+state: estimate=0.7
+:::
 
 Minimising the negative log-likelihood $-\\ell(p)$ gives the same answer. That negative log-likelihood is the loss.
 
@@ -1170,9 +1728,28 @@ To derive a loss from a likelihood:
 3. Sum over the dataset and negate.
 4. Drop terms that do not depend on $\\theta$.
 
+The diagram shows the four steps that turn a likelihood into a loss.
+
+:::flow
+title: From a likelihood to a training loss
+Model probability -> Log: take the log of one example
+Log -> Sum: add over n examples
+Sum -> Negate: multiply by -1
+Negate -> Drop constants: remove terms without theta
+Drop constants -> Loss: average negative log-likelihood
+:::
+
 Apply the recipe to regression. Suppose the target is $y = f_\\theta(x) + \\epsilon$ with Gaussian noise $\\epsilon$ of variance $\\sigma^2$. The probability of one target is the Gaussian density at $y$ with mean $f_\\theta(x)$. Its log is $-(y - f_\\theta(x))^2 / 2\\sigma^2$ plus a constant. Step 4 drops the constant and the factor $1 / 2\\sigma^2$. The loss is the sum of squared errors. Squared error is maximum likelihood under Gaussian noise.
 
 Apply it to classification. The model outputs a probability $q_k$ for each class. The probability of the true class $y$ is $q_y$. The negative log is $-\\ln q_y$. Summed over the data, this is the cross-entropy loss. The next lesson explains the name.
+
+The table lists the loss that each likelihood produces.
+
+| Output type | Likelihood | Loss after the recipe |
+| --- | --- | --- |
+| Real value | Gaussian with fixed variance | squared error |
+| Yes or no label | Bernoulli | binary cross-entropy |
+| One class among K | categorical | cross-entropy |
 
 The log matters for numbers as well as for algebra. A product of 1,000 probabilities below 0.1 is below $10^{-1000}$, which no floating-point format can hold. The sum of 1,000 logs is a number near $-2{,}300$, which is easy.
 
@@ -1241,6 +1818,43 @@ The entropy is $1.75$ bits. A uniform distribution over four tokens would have e
 Now a model that predicts $Q = [0.25, 0.25, 0.25, 0.25]$ for the same tokens. The cross-entropy weights the model's surprise by the true probabilities. Every model surprise is 2 bits, so the cross-entropy is $2$ bits. The model spends 2 bits per token where 1.75 would do. The extra 0.25 bits is the price of the wrong model.
 
 Try a second model, $Q' = [0.4, 0.3, 0.2, 0.1]$. Its surprises are $1.32, 1.74, 2.32, 3.32$ bits. Weight them by $P$: $0.66 + 0.43 + 0.29 + 0.42 = 1.80$ bits. This model is closer to the truth and pays less. No model pays less than 1.75, and only $Q = P$ pays exactly 1.75.
+
+Press Next to compute the cross-entropy of Q prime term by term.
+
+:::scenario
+title: Cross-entropy of Q prime = [0.4, 0.3, 0.2, 0.1] under P
+state: P=[0.5 0.25 0.125 0.125], Q prime=[0.4 0.3 0.2 0.1]
+step: Compute the surprise of each token under Q prime. The negative log base 2 of 0.4 is 1.32 bits.
+state: surprises=[1.32 1.74 2.32 3.32]
+step: Weight each surprise by the true probability. 0.5 times 1.32 is 0.66.
+state: term A=0.66
+step: Repeat for B, C, and D. 0.25 times 1.74 is 0.43. 0.125 times 2.32 is 0.29. 0.125 times 3.32 is 0.42.
+state: term B=0.43, term C=0.29, term D=0.42
+step: Add the four terms. The cross-entropy is 1.80 bits.
+state: cross-entropy=1.80
+step: Compare with the entropy of P, 1.75 bits. The gap of 0.05 bits is the price of the wrong model.
+state: entropy=1.75, gap=0.05
+:::
+
+The grid shows the surprise in bits of each model for each token.
+
+:::matrix
+title: Surprise in bits under P, Q, and Q prime
+cols: A, B, C, D
+true P: 1, 2, 3, 3
+uniform Q: 2, 2, 2, 2
+Q prime: 1.32, 1.74, 2.32, 3.32
+:::
+
+The bars compare the bits per token that each model pays.
+
+:::bars
+title: Bits per token
+unit: bits
+Entropy of P (the floor): 1.75
+Q prime: 1.80
+Uniform Q: 2
+:::
 
 ## How it works
 
@@ -1334,7 +1948,44 @@ Compute it directly to confirm. For each token, take $P(x) \\log_2 (P(x) / Q(x))
 
 The sum is $0.25$ bits. Individual terms can be negative, but the total is never negative.
 
+The grid shows P, Q, and the term each token adds to the divergence.
+
+:::matrix
+title: Terms of KL(P || Q) in bits
+cols: A, B, C, D
+P: 0.5, 0.25, 0.125, 0.125
+Q: 0.25, 0.25, 0.25, 0.25
+P log2(P/Q): 0.5, 0, -0.125, -0.125
+:::
+
 Now swap the roles and compute $D_{\\mathrm{KL}}(Q \\,\\|\\, P)$. The terms are $Q(x) \\log_2(Q(x) / P(x))$: $-0.25, 0, 0.25, 0.25$. The sum is $0.25$ bits. In this example the two directions happen to agree. They do not in general. Change $Q$ to $[0.5, 0.5, 0, 0]$. Then $D_{\\mathrm{KL}}(P \\,\\|\\, Q)$ is infinite, because $P$ gives mass to tokens C and D where $Q$ gives none. But $D_{\\mathrm{KL}}(Q \\,\\|\\, P) = 0.5 \\log_2(0.5 / 0.5) + 0.5 \\log_2(0.5 / 0.25) = 0.5$ bits. The direction matters.
+
+Press Next to compute both directions for the second Q.
+
+:::scenario
+title: Both directions of KL divergence for Q = [0.5, 0.5, 0, 0]
+state: P=[0.5 0.25 0.125 0.125], Q=[0.5 0.5 0 0]
+step: Compute KL(P || Q). Token A gives 0.5 times log2(0.5 / 0.5) = 0.
+state: term A=0
+step: Token B gives 0.25 times log2(0.25 / 0.5) = -0.25.
+state: term B=-0.25
+step: Tokens C and D have P above zero and Q equal to zero. The ratio is infinite, so KL(P || Q) is infinite.
+state: KL(P || Q)=infinite
+step: Compute KL(Q || P). Token A gives 0. Token B gives 0.5 times log2(0.5 / 0.25) = 0.5.
+state: term A=0, term B=0.5
+step: Tokens C and D have Q equal to zero, so they add 0. KL(Q || P) is 0.5 bits.
+state: KL(Q || P)=0.5
+:::
+
+The bars compare the finite divergences in this lesson.
+
+:::bars
+title: KL divergence in bits
+unit: bits
+KL(P || Q) for uniform Q: 0.25
+KL(Q || P) for uniform Q: 0.25
+KL(Q || P) for Q = [0.5, 0.5, 0, 0]: 0.5
+:::
 
 ## How it works
 
@@ -1363,6 +2014,18 @@ To estimate the KL penalty during training:
 2. For each token, compute $\\log \\pi(t) - \\log \\pi_{\\text{ref}}(t)$.
 3. Sum over the tokens of the answer.
 4. Average over many sampled answers.
+
+The diagram shows how the penalty is estimated during training.
+
+:::flow
+title: Estimate the KL penalty for one answer
+Prompt -> Policy: sample an answer
+Policy -> Log-prob difference: log pi(t) per token
+Prompt -> Reference: score the same answer
+Reference -> Log-prob difference: log pi ref(t) per token
+Log-prob difference -> Sum over tokens: one number per answer
+Sum over tokens -> KL estimate: average over answers
+:::
 
 Note: the penalty is reported in nats. A drift of 10 nats means the policy's answers are on average $e^{10}$ times more likely under the policy than under the reference.
 
@@ -1432,7 +2095,41 @@ Each step computes $w \\leftarrow w - \\eta L'(w)$:
 
 The gradient is negative, so the step moves $w$ to the right, toward 3. Each step halves the distance to the minimum. The loss falls by a factor of 4 each step.
 
+Press Next to run the three steps with the state panel.
+
+:::scenario
+title: Gradient descent on L(w) = (w - 3)^2 with learning rate 0.25
+state: w=0, gradient=-6, loss=9
+step: Start at w = 0. The gradient is 2(0 - 3) = -6 and the loss is 9.
+step: Subtract 0.25 times -6. The new w is 1.5 and the loss is 2.25.
+state: w=1.5, gradient=-3, loss=2.25
+step: Subtract 0.25 times -3. The new w is 2.25 and the loss is 0.5625.
+state: w=2.25, gradient=-1.5, loss=0.5625
+step: Subtract 0.25 times -1.5. The new w is 2.625 and the loss is 0.1406.
+state: w=2.625, gradient=-0.75, loss=0.1406
+step: Each step halves the distance to 3 and divides the loss by 4.
+:::
+
+The bars compare the loss after each step.
+
+:::bars
+title: Loss per step with learning rate 0.25
+Start: 9
+Step 1: 2.25
+Step 2: 0.5625
+Step 3: 0.1406
+:::
+
 Now try $\\eta = 1.25$. From $w = 0$, the first step gives $w = 0 + 1.25 \\times 6 = 7.5$. The distance to the minimum grew from 3 to 4.5. The second step gives $w = 7.5 - 1.25 \\times 9 = -3.75$. The weights swing wider each step and the loss grows. The run has diverged. For this loss, any $\\eta$ above 1 diverges, and $\\eta = 0.5$ reaches the minimum in one step.
+
+The bars compare the loss after one step for three learning rates.
+
+:::bars
+title: Loss after one step from w = 0
+Learning rate 0.25: 2.25
+Learning rate 0.5: 0
+Learning rate 1.25: 20.25 (diverges)
+:::
 
 ## How it works
 
@@ -1450,6 +2147,16 @@ To run gradient descent by hand:
 4. Compute the loss at the new point.
 5. If the loss rose, reduce $\\eta$ and repeat the step.
 6. Stop when the loss changes by less than a chosen tolerance.
+
+The diagram shows one loop of gradient descent.
+
+:::flow
+title: One step of the training loop
+Weights w -> Loss L(w): forward pass
+Loss L(w) -> Gradient: differentiate
+Gradient -> Step: multiply by minus eta
+Step -> Weights w: subtract the step
+:::
 
 The gradient over a full dataset of millions of examples is expensive. Three variants trade accuracy for cost:
 
@@ -1521,6 +2228,31 @@ Gradient descent on a quadratic with curvature $c$ is stable only if $\\eta < 2 
 
 Now watch the slow direction. With $\\eta = 0.019$, each step along $w_2$ multiplies the distance to the minimum by $1 - 0.019 \\times 2 = 0.962$. To shrink that distance by a factor of 1,000 takes about 180 steps. Along $w_1$ the same rate reaches the minimum in a few steps. The ratio of the two curvatures, 50, is the condition number. A large condition number forces a small rate and a slow run. Momentum and Adam, in the next lesson, attack this problem.
 
+Press Next to follow both directions step by step.
+
+:::scenario
+title: Gradient descent on the valley with learning rate 0.019
+state: w1=1, w2=10
+step: Start at w1 = 1 and w2 = 10. The gradient along w1 is 100 w1 = 100. Along w2 it is 2 w2 = 20.
+step: Take one step. w1 becomes 1 - 0.019 times 100 = -0.9. w2 becomes 10 - 0.019 times 20 = 9.62.
+state: w1=-0.9, w2=9.62
+step: Take a second step. w1 flips to 0.81 and w2 falls to 9.25. The fast direction bounces, and the slow direction crawls.
+state: w1=0.81, w2=9.25
+step: After 50 steps the w1 distance is 0.9 to the power 50, about 0.005. The w2 distance is 10 times 0.962 to the power 50, about 1.44.
+state: w1=0.005, w2=1.44
+step: After 180 steps the w2 distance is about 0.01. The slow direction sets the length of the run.
+state: w2=0.01
+:::
+
+The bars compare the number of steps each direction needs to shrink its distance by 1,000.
+
+:::bars
+title: Steps to shrink the distance to the minimum by 1,000
+unit: steps
+Along w1 (curvature 100): 66
+Along w2 (curvature 2): 180
+:::
+
 Noise adds a second limit. With a mini-batch gradient, the step has a random part of size $\\eta$ times the gradient noise. At a fixed rate the weights jitter around the minimum and the loss stops falling. Decay the rate and the jitter shrinks.
 
 ## How it works
@@ -1536,6 +2268,29 @@ A standard schedule has three parts:
 1. Warmup: raise the rate linearly from near zero to the peak over the first 1 to 5 percent of steps. Early gradients are large and the Adam statistics are unreliable, and warmup prevents an early divergence.
 2. Stable or cosine phase: hold the peak, or follow a cosine curve from the peak toward a small final value.
 3. Decay: reduce the rate to about 10 percent of the peak, or to zero, over the last part of the run. The decay removes the gradient noise and gives the final drop in loss.
+
+The table lists the three phases with their share of the run.
+
+| Phase | Share of the run | Learning rate |
+| --- | --- | --- |
+| Warmup | first 1 to 5 percent | rises from near 0 to the peak |
+| Stable or cosine | middle | the peak, or a cosine curve from the peak |
+| Decay | last part | falls to 10 percent of the peak or to 0 |
+
+The diagram shows the three phases of a schedule over a run of 1,000 steps.
+
+:::timeline
+title: Warmup, stable, decay over 1,000 steps
+unit: steps
+lane Rate
+lane Loss
+Rate: warmup to the peak @0-50
+Rate: hold the peak @50-800
+Rate: decay to 10 percent @800-1000
+Loss: falls fast @0-300
+Loss: jitters at the noise floor @300-800
+Loss: final drop @800-1000
+:::
 
 The cosine schedule after warmup is:
 
@@ -1612,6 +2367,34 @@ Momentum keeps a velocity $v$ and updates it with each gradient. Start at $w_2 =
 
 The step grows each time because the gradient keeps pointing the same way. In the limit, the velocity reaches $g / (1 - \\beta) = 10 g$, so momentum moves ten times faster along a direction with a steady gradient. Along $w_1$, the gradient flips sign at each step, the velocity averages toward zero, and the oscillation damps. The valley no longer forces a tiny rate.
 
+Press Next to run the momentum steps with the state panel.
+
+:::scenario
+title: Momentum along w2 with learning rate 0.019 and beta = 0.9
+state: w2=10, v=0
+step: Start at w2 = 10 with velocity 0. The gradient is 2 times 10 = 20.
+state: g=20
+step: Update the velocity to 0.9 times 0 plus 20 = 20. Step by -0.019 times 20 = -0.38. w2 is 9.62.
+state: v=20, w2=9.62
+step: The gradient is 19.24. The velocity is 0.9 times 20 plus 19.24 = 37.24. The step is -0.71 and w2 is 8.91.
+state: g=19.24, v=37.24, w2=8.91
+step: The gradient is 17.82. The velocity is 0.9 times 37.24 plus 17.82 = 51.34. The step is -0.98 and w2 is 7.93.
+state: g=17.82, v=51.34, w2=7.93
+step: In the limit the velocity reaches 10 times the gradient. Momentum moves ten times faster than plain descent here.
+state: limit of v=10 times g
+:::
+
+The bars compare the size of each momentum step with the plain gradient step.
+
+:::bars
+title: Step size along w2
+Plain descent: 0.38
+Momentum step 1: 0.38
+Momentum step 2: 0.71
+Momentum step 3: 0.98
+Momentum in the limit: 3.8
+:::
+
 Adam goes further. It keeps a second average $s$ of the squared gradient per weight and divides the step by $\\sqrt{s}$. Along $w_1$ the gradients are large, so the step is scaled down. Along $w_2$ the gradients are small, so the step is scaled up. Each weight gets its own effective learning rate, and the step size is about $\\eta$ in every direction no matter the gradient scale.
 
 ## How it works
@@ -1640,6 +2423,18 @@ To run one Adam step by hand:
 4. Compute the step as $\\eta$ times $\\hat{m}_t$ divided by $\\sqrt{\\hat{s}_t} + \\epsilon$.
 5. Subtract the step from the weights.
 
+The diagram shows the path of one gradient through the Adam update.
+
+:::flow
+title: One Adam step
+Gradient g -> Average m: beta1 = 0.9
+Gradient g -> Average s: beta2 = 0.95, uses g squared
+Average m -> Bias correction: divide by 1 - beta1^t
+Average s -> Bias correction: divide by 1 - beta2^t
+Bias correction -> Step: eta times m hat over root s hat
+Step -> Weights: subtract the step
+:::
+
 AdamW adds weight decay as a separate term: $w_{t+1} = w_t - \\eta (\\text{Adam step} + \\lambda w_t)$. The decay pulls weights toward zero at a rate that does not depend on the gradient scale. Decay inside the gradient would be rescaled by $\\sqrt{\\hat{s}_t}$ and lose its meaning.
 
 Choose between the two:
@@ -1648,6 +2443,24 @@ Choose between the two:
 - Adam or AdamW: transformers and any model with gradients of very different scales across layers.
 
 Note: Adam stores $m$ and $s$ for every weight. In 32-bit, that is 8 bytes per weight on top of the weights and gradients.
+
+The table compares the memory per weight for each optimiser in 32-bit.
+
+| Optimiser | Optimiser state per weight | Bytes per weight with weights and gradients |
+| --- | --- | --- |
+| Plain gradient descent | none | 8 |
+| Momentum | v | 12 |
+| Adam or AdamW | m and s | 16 |
+
+The bars compare the three memory costs.
+
+:::bars
+title: Bytes per weight in 32-bit training
+unit: bytes
+Plain gradient descent: 8
+Momentum: 12
+Adam or AdamW: 16
+:::
 
 ## Common mistakes
 
@@ -1702,7 +2515,39 @@ Now take $g(x) = x^4 - 4x^2$. At $x = -2$ and $x = 2$ the values are both 0. The
 
 Gradient descent on $g$ from $x = 0.1$ moves right and lands at $\\sqrt{2}$. From $x = -0.1$ it lands at $-\\sqrt{2}$. Both are global minima here, but in a general non-convex function one of them could be worse. The starting point decides the outcome.
 
+Press Next to run the midpoint test on g.
+
+:::scenario
+title: Midpoint test on g(x) = x^4 - 4x^2
+state: g(-2)=0, g(0)=0, g(2)=0
+step: Pick x = -2 and x = 2. Both values are 0, so the line between them is flat at height 0. The function at the midpoint 0 is 0. No violation yet.
+state: pair=-2 and 2, line height=0, g at midpoint=0
+step: Pick x = -2 and x = 0. The line is flat at 0. The function at the midpoint -1 is 1 - 4 = -3. It lies below the line.
+state: pair=-2 and 0, line height=0, g at midpoint=-3
+step: Pick x = -1 and x = 1. Both values are -3, so the line is flat at -3. The function at the midpoint 0 is 0. It lies above the line.
+state: pair=-1 and 1, line height=-3, g at midpoint=0
+step: One pair breaks the rule, so g is not convex. Check with the second derivative 12 x^2 - 8, which is -8 at x = 0.
+state: second derivative at 0=-8, convex=no
+:::
+
 The second derivative gives a quick test. For $f$, $f''(x) = 2 > 0$ everywhere, so $f$ is convex. For $g$, $g''(x) = 12x^2 - 8$, which is negative near 0. So $g$ is not convex.
+
+The table lists the midpoint test for each pair of points.
+
+| Function | Points | Line height at midpoint | Function at midpoint | Line above graph? |
+| --- | --- | --- | --- | --- |
+| $x^2$ | -1 and 3 | 5 | 1 | yes |
+| $x^4 - 4x^2$ | -2 and 0 | 0 | -3 | yes |
+| $x^4 - 4x^2$ | -1 and 1 | -3 | 0 | no |
+
+The bars compare the second derivative of g at three points.
+
+:::bars
+title: Second derivative of g(x) = x^4 - 4x^2
+At x = 0: -8
+At x = 1: 4
+At x = 2: 40
+:::
 
 ## How it works
 
@@ -1712,11 +2557,31 @@ $$f(t x + (1 - t) y) \\le t f(x) + (1 - t) f(y)$$
 
 The left side is the function at a point between $x$ and $y$. The right side is the line between the function values. For a twice-differentiable function of one variable, convexity is the same as $f''(x) \\ge 0$ everywhere. For many variables, it is the same as the Hessian having no negative eigenvalues.
 
+The grid shows the Hessian of the valley loss from the learning-rate lesson, with both eigenvalues positive.
+
+:::matrix
+title: Hessian of 50 w1^2 + w2^2
+cols: w1, w2
+w1: 100, 0
+w2: 0, 2
+:::
+
 To test convexity by hand:
 
 1. Compute the second derivative, or the Hessian.
 2. Check its sign, or the signs of the Hessian's eigenvalues, over the domain.
 3. If none is negative, the function is convex.
+
+The diagram shows the test as a sequence of checks.
+
+:::flow
+title: Test a function for convexity
+Function f -> Second derivative: differentiate twice
+Second derivative -> Sign check: over the whole domain
+Sign check -> Convex: never negative
+Sign check -> Not convex: negative somewhere
+Convex -> Global minimum: any local minimum is global
+:::
 
 Three facts about convex functions:
 
@@ -1788,11 +2653,53 @@ A model predicts whether an email is spam from two features: the number of links
 
 Take an email with $x = [2, 1]$. The linear score, called the logit, is $z = 0.5 \\times 2 + 1.0 \\times 1 - 2 = 0$. The sigmoid $\\sigma(z) = 1 / (1 + e^{-z})$ maps the score to a probability: $\\sigma(0) = 0.5$. The model is unsure.
 
+The diagram shows the path from the features to the loss for the first email.
+
+:::flow
+title: Logistic regression on one email
+x = [2, 1] -> Logit z: w dot x + b = 0
+Logit z -> Sigmoid: 1 / (1 + e^-z)
+Sigmoid -> y hat = 0.5: probability of spam
+y hat = 0.5 -> Loss: -ln 0.5 = 0.69
+:::
+
 Take a second email with $x = [4, 3]$. The logit is $2 + 3 - 2 = 3$. The probability is $\\sigma(3) \\approx 0.95$. The model says spam.
 
 Suppose the first email is spam ($y = 1$) and the second is not ($y = 0$). The loss for each is the negative log of the probability assigned to the true label. For the first, $-\\ln 0.5 \\approx 0.69$. For the second, $-\\ln(1 - 0.95) \\approx 3.0$. The second email is a confident mistake, and it costs much more.
 
+The table lists the logit, the probability, the label, and the loss for both emails.
+
+| Email | Logit | Probability | Label | Loss |
+| --- | --- | --- | --- | --- |
+| 1 | 0 | 0.5 | 1 (spam) | 0.69 |
+| 2 | 3 | 0.95 | 0 (not spam) | 3.0 |
+
+The bars compare the loss of the two emails.
+
+:::bars
+title: Loss per email
+Email 1 (unsure and correct): 0.69
+Email 2 (confident and wrong): 3.0
+:::
+
 Now one gradient step. The gradient of the loss with respect to the weights for one example is $(\\hat{y} - y)\\, x$, where $\\hat{y}$ is the predicted probability. For the first email, $(0.5 - 1) \\times [2, 1] = [-1, -0.5]$. For the second, $(0.95 - 0) \\times [4, 3] = [3.8, 2.85]$. The average is $[1.4, 1.18]$. With learning rate 0.1, the new weights are $[0.5 - 0.14, 1.0 - 0.118] = [0.36, 0.88]$. The weights fell, because the confident mistake pushed harder than the uncertain correct case.
+
+Press Next to run the gradient step on both emails.
+
+:::scenario
+title: One gradient step with learning rate 0.1
+state: w=[0.5 1.0], b=-2
+step: Compute the error for email 1. The prediction is 0.5 and the label is 1, so the error is -0.5.
+state: error 1=-0.5
+step: Compute the error for email 2. The prediction is 0.95 and the label is 0, so the error is 0.95.
+state: error 2=0.95
+step: Multiply each error by its input. Email 1 gives -0.5 times [2, 1] = [-1, -0.5]. Email 2 gives 0.95 times [4, 3] = [3.8, 2.85].
+state: gradient 1=[-1 -0.5], gradient 2=[3.8 2.85]
+step: Average the two. The weight gradient is [1.4, 1.18]. The bias gradient is the average error, 0.225.
+state: weight gradient=[1.4 1.18], bias gradient=0.225
+step: Subtract 0.1 times each gradient. The new weights are [0.36, 0.88] and the new bias is -2.02.
+state: w=[0.36 0.88], b=-2.02
+:::
 
 ## How it works
 
@@ -1883,9 +2790,45 @@ A model classifies an image as cat, dog, or bird. It computes three logits: $z =
 
 The sum of the exponentials is 11.22, and each probability is the entry divided by that sum. The probabilities add to one.
 
+The bars compare the three class probabilities.
+
+:::bars
+title: Softmax output for logits [2.0, 1.0, 0.1]
+Cat: 0.66
+Dog: 0.24
+Bird: 0.10
+:::
+
 Suppose the true class is dog. The one-hot target is $y = [0, 1, 0]$. The cross-entropy loss is the negative log of the probability of the true class: $-\\ln 0.24 \\approx 1.43$.
 
 The gradient with respect to the logits is the prediction minus the target: $[0.66, 0.24, 0.10] - [0, 1, 0] = [0.66, -0.76, 0.10]$. The gradient is positive for cat and bird, so a descent step lowers those logits. It is negative for dog, so a step raises that logit. The entries of the gradient sum to zero, because the probabilities and the target each sum to one.
+
+The grid shows the probabilities, the one-hot target, and the logit gradient.
+
+:::matrix
+title: Probabilities, target, and gradient at the logits
+cols: cat, dog, bird
+probability p: 0.66, 0.24, 0.10
+target y: 0, 1, 0
+gradient p - y: 0.66, -0.76, 0.10
+:::
+
+Press Next to run the forward and backward pass by hand.
+
+:::scenario
+title: Forward and backward pass for logits [2.0, 1.0, 0.1] with true class dog
+state: logits=[2.0 1.0 0.1]
+step: Subtract the largest logit, 2.0, from every logit. The shifted logits are [0, -1, -1.9]. The probabilities do not change.
+state: shifted=[0 -1 -1.9]
+step: Exponentiate. e^0 = 1.00, e^-1 = 0.37, and e^-1.9 = 0.15. The sum is 1.52.
+state: exponentials=[1.00 0.37 0.15], sum=1.52
+step: Divide by the sum. The probabilities are [0.66, 0.24, 0.10].
+state: p=[0.66 0.24 0.10]
+step: Read the probability of the true class, dog, which is 0.24. The loss is -ln 0.24 = 1.43.
+state: loss=1.43
+step: Subtract the one-hot target [0, 1, 0] from p. The logit gradient is [0.66, -0.76, 0.10].
+state: gradient=[0.66 -0.76 0.10]
+:::
 
 ## How it works
 
@@ -1991,7 +2934,44 @@ Add a hidden layer with two units and the rectified linear unit (ReLU), the func
 
 The output $h_1 - 2 h_2$ matches the labels exactly. The hidden unit $h_2$ switches on only when both inputs are on, and the output layer subtracts it. The ReLU is the key: without it, $h_2 = x_1 + x_2 - 1$ for all inputs, the output is a linear function of $x$, and the table cannot be matched.
 
+The grid shows the hidden weight matrix W1 and the bias, one row per hidden unit.
+
+:::matrix
+title: Hidden weights W1 and bias b1 of the XOR network
+cols: x1, x2, bias
+h1: 1, 1, 0
+h2: 1, 1, -1
+:::
+
+The diagram shows the forward pass for the input (1, 1).
+
+:::flow
+title: Forward pass of the XOR network for input (1, 1)
+x1 = 1 -> h1: weight 1
+x2 = 1 -> h1: weight 1
+x1 = 1 -> h2: weight 1
+x2 = 1 -> h2: weight 1, bias -1
+h1 -> Output: h1 = 2, weight 1
+h2 -> Output: h2 = 1, weight -2
+:::
+
 In the hidden space $(h_1, h_2)$, the four points become $(0, 0)$, $(1, 0)$, $(1, 0)$, and $(2, 1)$. A straight line separates them. The hidden layer moved the data into a space where a linear model works.
+
+Press Next to trace the forward pass for each of the four inputs.
+
+:::scenario
+title: Forward pass of the XOR network
+state: h1=ReLU(x1 + x2), h2=ReLU(x1 + x2 - 1), output=h1 - 2 h2
+step: Input (0, 0). h1 = ReLU(0) = 0 and h2 = ReLU(-1) = 0. The output is 0.
+state: input=(0 0), h1=0, h2=0, output=0
+step: Input (0, 1). h1 = ReLU(1) = 1 and h2 = ReLU(0) = 0. The output is 1.
+state: input=(0 1), h1=1, h2=0, output=1
+step: Input (1, 0). The sums are the same as for (0, 1). The output is 1.
+state: input=(1 0), h1=1, h2=0, output=1
+step: Input (1, 1). h1 = ReLU(2) = 2 and h2 = ReLU(1) = 1. The output is 2 - 2 = 0.
+state: input=(1 1), h1=2, h2=1, output=0
+step: All four outputs match the labels. Without the ReLU, h2 would be -1 for input (0, 0) and the output would be 2, not 0.
+:::
 
 ## How it works
 
@@ -2017,6 +2997,15 @@ To count the weights:
 2. Sum over the layers.
 
 A network with widths 4096, 16384, and 4096, the shape of a transformer feed-forward block, has $4096 \\times 16384 + 16384 + 16384 \\times 4096 + 4096 \\approx 134$ million weights.
+
+The bars compare the weight count of each part of the block.
+
+:::bars
+title: Weights in a 4096 to 16384 to 4096 feed-forward block
+W1 (4096 by 16384): 67108864
+W2 (16384 by 4096): 67108864
+Both biases: 20480
+:::
 
 Note: the transformer feed-forward block applies this MLP to each token separately. Tokens mix only in attention.
 
@@ -2081,6 +3070,17 @@ Forward pass, step by step:
 4. Prediction: $\\hat{y} = \\sigma(-1) \\approx 0.269$.
 5. Loss: $\\mathcal{L} = -\\ln 0.269 \\approx 1.313$.
 
+The diagram shows the computation graph with the forward values.
+
+:::flow
+title: Computation graph of the tiny network
+x = [1, 2] -> z1: W1 x + b1 = [-1, 1]
+z1 -> h: ReLU gives [0, 1]
+h -> z2: w2 dot h + b2 = -1
+z2 -> y hat: sigmoid gives 0.269
+y hat -> Loss: -ln 0.269 = 1.313
+:::
+
 Backward pass, from the loss toward the input:
 
 1. Gradient at the logit: $\\bar{z}_2 = \\hat{y} - y = 0.269 - 1 = -0.731$.
@@ -2090,6 +3090,44 @@ Backward pass, from the loss toward the input:
 5. Hidden weight gradient: $\\bar{W}_1 = \\bar{z}_1\\, x^\\top$. Row 1 is $0 \\times [1, 2] = [0, 0]$. Row 2 is $0.731 \\times [1, 2] = [0.731, 1.462]$. Bias gradient: $\\bar{b}_1 = [0, 0.731]$.
 
 The first hidden unit was off, so it receives no gradient and its weights do not change this step. The second unit was on, and its gradient is positive, so a descent step lowers its weights. That lowers $h_2$, which raises the logit through the negative weight $-1$, which raises $\\hat{y}$ toward the label 1.
+
+Press Next to follow the gradient through each layer.
+
+:::scenario
+title: Backward pass with every number
+state: y hat=0.269, y=1, h=[0 1], z1=[-1 1]
+step: Start at the logit. The gradient is y hat minus y, which is -0.731.
+state: z2 bar=-0.731
+step: Compute the output weight gradient as z2 bar times h, which is [0, -0.731]. The bias gradient is -0.731.
+state: w2 bar=[0 -0.731], b2 bar=-0.731
+step: Pass the gradient to the hidden activation. h bar is z2 bar times w2, which is [-1.462, 0.731].
+state: h bar=[-1.462 0.731]
+step: Apply the ReLU mask [0, 1] from z1. z1 bar is [0, 0.731].
+state: mask=[0 1], z1 bar=[0 0.731]
+step: Compute the hidden weight gradient as z1 bar times x transpose. Row 1 is [0, 0] and row 2 is [0.731, 1.462]. The bias gradient is [0, 0.731].
+state: W1 bar=[0 0; 0.731 1.462], b1 bar=[0 0.731]
+:::
+
+The grid shows the gradient of W1 with the zero row of the unit that was off.
+
+:::matrix
+title: Gradient of the hidden weights W1
+cols: x1, x2
+unit 1 (off): 0, 0
+unit 2 (on): 0.731, 1.462
+:::
+
+The bars compare the gradient size of each weight in the network.
+
+:::bars
+title: Gradient size per weight
+W1 row 1 (both entries): 0
+W1[2, 1]: 0.731
+W1[2, 2]: 1.462
+b1[2]: 0.731
+w2[2]: 0.731
+b2: 0.731
+:::
 
 ## How it works
 
@@ -2112,6 +3150,12 @@ To check a gradient with a finite difference:
 2. Add a small $\\epsilon = 10^{-4}$ to it and recompute the loss. With $W_1[2, 1] = 0.0001$, $z_1[2] = 1.0001$, $h_2 = 1.0001$, $z_2 = -1.0001$, and the loss rises to about $1.313334$.
 3. Subtract $\\epsilon$ and recompute. The loss falls to about $1.313187$.
 4. The estimate is $(1.313334 - 1.313187) / (2 \\times 10^{-4}) \\approx 0.73$.
+
+The table compares the hand-computed gradient with the finite-difference estimate.
+
+| Weight | Hand gradient | Loss at plus epsilon | Loss at minus epsilon | Estimate |
+| --- | --- | --- | --- | --- |
+| W1[2, 1] | 0.731 | 1.313334 | 1.313187 | 0.73 |
 
 The estimate matches the hand-computed gradient. Run this check on every new layer you write.
 

@@ -7,7 +7,7 @@ export function Courses() {
     <>
       <header className="page-head">
         <h1>Courses</h1>
-        <p className="lede">Six tracks. Intro lessons in every module are free.</p>
+        <p className="lede">Six tracks. Every lesson is free and written in Simplified Technical English.</p>
       </header>
       <div className="grid">
         {tracks.map((t) => (
@@ -51,9 +51,7 @@ export function TrackPage() {
             {m.lessons.map((l) => (
               <li key={l.slug}>
                 <Link to={`/courses/${track.slug}/${m.slug}/${l.slug}`}>{l.title}</Link>
-                <span className="meta">
-                  {l.minutes} min {l.tier === 'pro' ? <span className="pill pill-pro">Pro</span> : <span className="pill">Free</span>}
-                </span>
+                <span className="meta">{l.minutes} min</span>
               </li>
             ))}
           </ol>

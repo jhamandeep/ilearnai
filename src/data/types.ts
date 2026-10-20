@@ -1,12 +1,20 @@
-export type Tier = 'free' | 'pro'
+export interface LessonLink {
+  label: string
+  url: string
+  kind: 'video' | 'paper' | 'docs' | 'article' | 'repo' | 'course'
+}
 
+// Lesson bodies follow ASD-STE100 Simplified Technical English: short sentences,
+// active voice, one instruction per sentence, consistent terms.
 export interface Lesson {
   slug: string
   title: string
   summary: string
-  tier: Tier
   minutes: number
+  objectives: string[] // what the reader can do after the lesson
+  keyTerms: string[] // glossary slugs or plain terms used in the lesson
   body: string // markdown, supports $math$
+  links: LessonLink[] // free external resources: videos, papers, docs
 }
 
 export interface Module {
@@ -26,6 +34,19 @@ export interface Track {
   modules: Module[]
 }
 
+export interface Video {
+  id: string // YouTube video id, or '' when only a playlist/channel url is known
+  url: string // canonical YouTube url (video, playlist or channel)
+  title: string
+  channel: string
+  track: string
+  topic: string
+  level: Level
+  minutes?: number
+  why: string
+  kind: 'video' | 'playlist' | 'channel'
+}
+
 export interface Paper {
   slug: string
   day: number
@@ -37,6 +58,8 @@ export interface Paper {
   track: string
   tldr: string
   notes: string // markdown
+  prereqs?: string[] // paper slugs to read first; defines the reading-order hierarchy
+  tags?: string[]
 }
 
 export interface GlossaryTerm {
@@ -51,5 +74,58 @@ export interface Lab {
   slug: string
   title: string
   blurb: string
-  category: 'inference' | 'agents' | 'systems' | 'math'
+  category: 'inference' | 'agents' | 'systems' | 'math' | 'writing'
+}
+
+export interface BlogPost {
+  slug: string
+  title: string
+  date: string // ISO yyyy-mm-dd
+  track: string // track slug
+  summary: string
+  minutes: number
+  body: string // markdown, supports $math$
+}
+
+export type ResourceKind = 'course' | 'book' | 'lecture' | 'repo' | 'blog' | 'tool' | 'paper-list'
+export type Level = 'beginner' | 'intermediate' | 'advanced'
+
+export interface Resource {
+  title: string
+  url: string
+  kind: ResourceKind
+  level: Level
+  track: string // track slug
+  topic: string // short topic label, e.g. "Attention", "Consistency"
+  why: string // one sentence on why it is worth the time
+}
+
+export interface RoadmapStage {
+  title: string
+  weeks: number
+  goal: string
+  items: { label: string; to: string }[] // internal links: /courses/..., /papers/..., /labs/...
+}
+
+export interface Roadmap {
+  track: string
+  title: string
+  summary: string
+  stages: RoadmapStage[]
+}
+
+export type ConceptKind = 'concept' | 'lesson' | 'paper' | 'lab' | 'term'
+
+export interface ConceptNode {
+  id: string
+  label: string
+  kind: ConceptKind
+  track: string
+  to?: string // internal route
+}
+
+export interface ConceptEdge {
+  source: string
+  target: string
+  relation: 'requires' | 'explains' | 'uses' | 'related'
 }

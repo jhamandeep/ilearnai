@@ -1,0 +1,2156 @@
+import type { Track } from '../types'
+
+export const track: Track = {
+  slug: 'ai-research',
+  title: 'AI Research',
+  tagline: 'Read the papers that matter, in the order they matter.',
+  description:
+    'A guided path through the foundational literature of modern deep learning: transformers, scaling laws, alignment, pretraining data, sparse and recurrent architectures, reasoning models, and the practice of research itself.',
+  accent: 'var(--accent-research)',
+  status: 'live',
+  modules: [
+    {
+      slug: 'transformers',
+      title: 'Transformers from first principles',
+      description: 'The architecture behind every frontier model, built piece by piece with small worked examples.',
+      lessons: [
+        {
+          slug: 'why-attention',
+          title: 'Why attention replaced recurrence',
+          summary: 'Recurrent networks squeeze the past into one vector, and attention removes that bottleneck.',
+          minutes: 14,
+          objectives: [
+            'Explain why a recurrent network loses information over long sequences.',
+            'Compute scaled dot-product attention for a 3-token sequence by hand.',
+            'State the cost of attention in sequence length and why it matters.',
+            'Describe the role of the scale factor in the attention equation.',
+          ],
+          keyTerms: ['attention', 'query', 'key', 'value', 'softmax', 'recurrent neural network', 'KV cache'],
+          body: `
+## What this lesson covers
+
+This lesson explains the problem with recurrent networks on long text. It then introduces attention, the operation that replaced recurrence in modern language models. You will compute one attention step by hand for a 3-token sequence.
+
+## Why it matters
+
+Every large language model today uses attention as its core operation. The cost of attention sets the cost of inference. The key-value (KV) cache, grouped-query attention, and flash attention all exist to make this one operation cheaper. If you understand the equation, you understand most of the inference engineering track.
+
+## The idea with an example
+
+A recurrent neural network (RNN) reads a sequence one token at a time. A token is one unit of text, often part of a word. At each step, the RNN updates one hidden vector $h_t$. The hidden vector must hold everything the model knows about the past. Information about token 3 must survive hundreds of updates before it can influence token 400. In practice, the gradient through that long chain either shrinks to zero or grows without bound. The model forgets.
+
+Attention removes the chain. Each position looks at every other position in a single step. Consider a sequence of 3 tokens with 2-dimensional vectors. Suppose the query of token 3 is $q_3 = [1, 0]$. Suppose the keys are $k_1 = [1, 0]$, $k_2 = [0, 1]$, and $k_3 = [1, 1]$. The dot products are:
+
+| Key | Score $q_3 \\cdot k_i$ |
+| --- | --- |
+| $k_1$ | 1 |
+| $k_2$ | 0 |
+| $k_3$ | 1 |
+
+Divide each score by $\\sqrt{d_k} = \\sqrt{2} \\approx 1.41$. The scaled scores are $[0.71, 0, 0.71]$. Apply softmax, the function that turns scores into positive weights that sum to one. The weights are about $[0.40, 0.20, 0.40]$. The output for token 3 is the weighted sum of the three value vectors with these weights. Token 3 now reads mostly from tokens 1 and 3, and a little from token 2. No information passed through a chain of hidden states.
+
+## How it works
+
+The general equation is:
+
+$$\\mathrm{Attention}(Q, K, V) = \\mathrm{softmax}\\left(\\frac{QK^\\top}{\\sqrt{d_k}}\\right) V$$
+
+$Q$ is the matrix of queries, one row per token. $K$ is the matrix of keys. $V$ is the matrix of values. $d_k$ is the width of each key vector. The model produces $Q$, $K$, and $V$ from the input with three learned weight matrices.
+
+To compute attention for a sequence of $T$ tokens by hand:
+
+1. Multiply the input by the weight matrices $W_Q$, $W_K$, and $W_V$ to get $Q$, $K$, and $V$.
+2. Compute the score matrix $QK^\\top$. The result has shape $T \\times T$.
+3. Divide every score by $\\sqrt{d_k}$.
+4. Apply softmax to each row.
+5. Multiply the weight matrix by $V$.
+
+The scale factor matters. Dot products grow with $d_k$. Without the division, large scores push softmax to put all weight on one token. In that regime the gradients are close to zero and training stalls.
+
+The cost is quadratic. Step 2 compares every token with every token, so the work grows with $T^2$. For a sequence of 4,000 tokens, that is 16 million scores per head per layer. The benefit is a path of length one between any two tokens. That short path is the reason that scale works.
+
+Note: in a decoder model, each token can only look at earlier tokens. The model sets the scores for later tokens to minus infinity before softmax. This is the causal mask.
+
+## Common mistakes
+
+- Mistake: you forget the scale factor and training stalls. Fix: always divide by $\\sqrt{d_k}$ before softmax.
+- Mistake: you apply softmax over columns. Fix: apply softmax over each row, so each query gets weights that sum to one.
+- Mistake: you think attention has no memory cost. Fix: the score matrix is $T \\times T$ per head, and the KV cache grows with $T$.
+- Mistake: you confuse keys with values. Fix: keys decide the weights, values provide the content.
+
+## Check your understanding
+
+- Why does an RNN forget early tokens? The information must survive a long chain of updates, and the gradient through that chain vanishes.
+- What is the shape of $QK^\\top$ for 10 tokens? It is 10 by 10.
+- What does the scale factor prevent? It prevents large scores that saturate softmax and kill the gradient.
+
+## Go further
+
+Read the original Transformer paper for the full architecture. The Illustrated Transformer article gives pictures for each step. The Annotated Transformer provides working code next to each equation. The 3Blue1Brown channel has a visual series on attention.
+`,
+          links: [
+            { label: 'Attention Is All You Need (Vaswani et al., 2017)', url: 'https://arxiv.org/abs/1706.03762', kind: 'paper' },
+            { label: 'The Illustrated Transformer', url: 'https://jalammar.github.io/illustrated-transformer/', kind: 'article' },
+            { label: 'The Annotated Transformer', url: 'https://nlp.seas.harvard.edu/annotated-transformer/', kind: 'article' },
+            { label: '3Blue1Brown', url: 'https://www.youtube.com/@3blue1brown', kind: 'video' },
+          ],
+        },
+        {
+          slug: 'multi-head',
+          title: 'Multi-head attention and why heads specialise',
+          summary: 'The model splits its width into several small attention heads so each head can learn a different pattern.',
+          minutes: 12,
+          objectives: [
+            'Compute the head width from the model width and the number of heads.',
+            'Explain why multi-head attention costs the same as one wide head.',
+            'Describe two attention patterns that heads learn in practice.',
+            'Explain why pruning heads leads to grouped-query attention.',
+          ],
+          keyTerms: ['multi-head attention', 'attention head', 'induction head', 'grouped-query attention', 'KV cache'],
+          body: `
+## What this lesson covers
+
+This lesson explains multi-head attention. One attention head computes one pattern of similarity across the sequence. Language has many patterns at once. Multi-head attention runs several heads in parallel so the model can learn several patterns.
+
+## Why it matters
+
+Heads are the unit that inference engineers prune, share, and cache. Grouped-query attention shares keys and values across heads to shrink the KV cache. Interpretability researchers study single heads to understand what a model does. If you know how heads split the model width, you can read both kinds of paper.
+
+## The idea with an example
+
+Take a model with width $d_{\\text{model}} = 8$ and $h = 2$ heads. Each head gets width $d_k = 8 / 2 = 4$. The model projects the 8-dimensional input into two 4-dimensional query vectors, two 4-dimensional key vectors, and two 4-dimensional value vectors.
+
+Consider the 4-token sentence "the cat sat down". Head 1 might learn to look at the previous token. At the token "sat", head 1 puts weight 0.9 on "cat" and 0.1 elsewhere. Head 2 might learn to look at the subject of the sentence. At the token "down", head 2 puts weight 0.8 on "cat". Each head produces a 4-dimensional output. The model concatenates the two outputs into one 8-dimensional vector and multiplies by an output matrix.
+
+Compare the cost with one head of width 8. One head computes scores from 8-dimensional dot products. Two heads compute scores from two 4-dimensional dot products. The total number of multiplications is the same. The difference is capacity. One wide head learns one weighting of the sequence. Two narrow heads learn two different weightings.
+
+## How it works
+
+The equation is:
+
+$$\\mathrm{MultiHead}(X) = \\mathrm{Concat}(\\mathrm{head}_1, \\dots, \\mathrm{head}_h) W^O$$
+
+$X$ is the input matrix with one row per token. $\\mathrm{head}_i$ is the output of scaled dot-product attention for head $i$, computed with its own projection matrices $W_i^Q$, $W_i^K$, and $W_i^V$. $W^O$ is the output projection. It mixes the heads back into the model width.
+
+To size the heads:
+
+1. Choose the model width $d_{\\text{model}}$ and the number of heads $h$.
+2. Compute the head width $d_k = d_{\\text{model}} / h$.
+3. Allocate one $W_i^Q$, $W_i^K$, and $W_i^V$ per head, each of shape $d_{\\text{model}} \\times d_k$.
+4. Allocate one $W^O$ of shape $d_{\\text{model}} \\times d_{\\text{model}}$.
+
+Probing studies find heads with clear jobs. Some heads attend to the previous token. Some heads track the subject of a clause. Induction heads find an earlier copy of the current token and attend to the token after it. Induction heads are the mechanism behind in-context learning, the ability to copy a pattern from the prompt.
+
+Many heads can be removed with a small loss in quality. That observation led to multi-query attention and grouped-query attention. In grouped-query attention, several query heads share one key head and one value head. The KV cache shrinks by the same factor.
+
+Note: the number of heads is a design choice. Llama 3 8B uses 32 query heads and 8 key-value heads.
+
+## Common mistakes
+
+- Mistake: you think more heads cost more compute. Fix: for a fixed model width, the compute is the same, because each head is narrower.
+- Mistake: you set $d_{\\text{model}}$ not divisible by $h$. Fix: choose $h$ so that $d_k$ is an integer.
+- Mistake: you skip the output projection $W^O$. Fix: the heads must mix, or each head only sees its own subspace.
+- Mistake: you assume every head is important. Fix: measure the loss after removing a head before you keep it.
+
+## Check your understanding
+
+- A model has width 4096 and 32 heads. What is the head width? It is 128.
+- Why does multi-head attention cost the same as one wide head? The dot-product work splits across heads with no extra total.
+- What does an induction head do? It finds an earlier copy of the current token and attends to the token that followed it.
+
+## Go further
+
+The Transformer paper introduces multi-head attention in section 3.2. The grouped-query attention paper shows how to convert a trained model to fewer key-value heads. The Illustrated Transformer has clear diagrams of the split and concatenation. Lilian Weng's attention survey covers the variants.
+`,
+          links: [
+            { label: 'Attention Is All You Need (Vaswani et al., 2017)', url: 'https://arxiv.org/abs/1706.03762', kind: 'paper' },
+            { label: 'GQA: Training generalized multi-query transformer models', url: 'https://arxiv.org/abs/2305.13245', kind: 'paper' },
+            { label: 'The Illustrated Transformer', url: 'https://jalammar.github.io/illustrated-transformer/', kind: 'article' },
+            { label: 'Attention? Attention! (Lilian Weng)', url: 'https://lilianweng.github.io/posts/2018-06-24-attention/', kind: 'article' },
+          ],
+        },
+        {
+          slug: 'positional-encodings',
+          title: 'Positional encodings: sinusoids to RoPE',
+          summary: 'Attention ignores order, so the model adds a position signal to each token.',
+          minutes: 18,
+          objectives: [
+            'Explain why attention without positions treats a sentence as a set.',
+            'Compute a sinusoidal position vector for a small example.',
+            'Describe how rotary position embedding (RoPE) makes scores depend on relative offset.',
+            'Choose a method to extend a trained model to longer sequences.',
+          ],
+          keyTerms: ['positional encoding', 'RoPE', 'ALiBi', 'relative position', 'context length', 'extrapolation'],
+          body: `
+## What this lesson covers
+
+This lesson explains why a transformer needs a position signal. It covers four methods: sinusoidal encodings, learned encodings, attention with linear biases (ALiBi), and rotary position embedding (RoPE). It ends with the methods that extend a trained model to a longer context.
+
+## Why it matters
+
+Order carries meaning. "Dog bites man" and "man bites dog" contain the same tokens. Without a position signal, attention produces the same output for both. The choice of position method also decides how far a model can read past its training length. Long-context work in production depends on RoPE scaling.
+
+## The idea with an example
+
+Attention is a set operation. If you shuffle the input rows, the output rows shuffle in the same way, and nothing else changes. The model needs a way to tell token 1 from token 2.
+
+The simplest fix adds a position vector to each token embedding. Take a width of 4 and the sinusoidal method from the original Transformer. For position $p$ and dimension pair $i$, the entries are $\\sin(p / 10000^{2i/d})$ and $\\cos(p / 10000^{2i/d})$. With $d = 4$ the two pairs use frequencies $1$ and $1/100$. The vectors for the first three positions are:
+
+| Position | Entries |
+| --- | --- |
+| 0 | $[0, 1, 0, 1]$ |
+| 1 | $[0.84, 0.54, 0.01, 1.00]$ |
+| 2 | $[0.91, -0.42, 0.02, 1.00]$ |
+
+The first pair changes fast. The second pair changes slowly. Together they form a unique code for each position, like the hands of a clock.
+
+RoPE takes a different route. Instead of adding a vector, it rotates the query and key vectors by an angle that grows with position. Pair up the dimensions. Rotate the pair at position $m$ by the angle $m\\theta$. Take a query at position 5 and a key at position 2. Rotate one by $5\\theta$ and the other by $2\\theta$. Their dot product depends only on the difference, $3\\theta$. The score depends on relative offset, not on absolute position.
+
+## How it works
+
+The RoPE property is:
+
+$$\\langle R_m q, R_n k \\rangle = \\langle q, R_{n-m} k \\rangle$$
+
+$R_m$ is the rotation matrix for position $m$. $q$ is a query vector. $k$ is a key vector. $\\langle \\cdot, \\cdot \\rangle$ is the dot product. The equation says that rotating both vectors by their positions equals rotating one vector by the offset.
+
+To apply RoPE to one head:
+
+1. Split the head width into pairs of dimensions.
+2. Assign each pair $i$ a frequency $\\theta_i = 10000^{-2i/d}$.
+3. Rotate the pair of the query at position $m$ by the angle $m\\theta_i$.
+4. Rotate the pair of the key at position $n$ by the angle $n\\theta_i$.
+5. Compute the dot product as usual.
+
+ALiBi uses no position vectors at all. It subtracts a penalty from each score. The penalty grows with the distance between the query and the key. Close tokens get a small penalty and far tokens get a large one.
+
+Models fail past their training length because they never saw the large angles. Position interpolation scales every position down so the largest angle stays inside the trained range. NTK-aware scaling and YaRN change the base frequency instead, so high frequencies stay sharp and low frequencies stretch. Both methods need a short fine-tune on long sequences.
+
+Caution: a model that reads a 128,000-token prompt still needs a KV cache for all 128,000 tokens. Position scaling solves the encoding problem, not the memory problem.
+
+## Common mistakes
+
+- Mistake: you add RoPE to the value vectors. Fix: rotate only queries and keys.
+- Mistake: you run inference at twice the training length with no scaling. Fix: apply position interpolation or YaRN and fine-tune.
+- Mistake: you think sinusoidal encodings give relative positions. Fix: they give absolute codes; the model must learn relative use.
+- Mistake: you change the RoPE base and keep the old weights unchanged. Fix: fine-tune for a few hundred steps on long documents.
+
+## Check your understanding
+
+- What happens to attention output if you shuffle the tokens and use no position signal? The output rows shuffle the same way and nothing else changes.
+- In RoPE, what does the score between two tokens depend on? It depends on the difference of their positions.
+- Why does a RoPE model fail at long lengths? The rotation angles exceed the range seen in training.
+
+## Go further
+
+The RoFormer paper introduces RoPE with the full derivation. The ALiBi paper shows the linear bias method and its extrapolation results. The YaRN paper explains frequency-aware scaling and compares it with position interpolation. Lilian Weng's transformer family survey places all four methods side by side.
+`,
+          links: [
+            { label: 'RoFormer: Enhanced transformer with rotary position embedding', url: 'https://arxiv.org/abs/2104.09864', kind: 'paper' },
+            { label: 'Train Short, Test Long: ALiBi', url: 'https://arxiv.org/abs/2108.12409', kind: 'paper' },
+            { label: 'YaRN: Efficient context window extension', url: 'https://arxiv.org/abs/2309.00071', kind: 'paper' },
+            { label: 'The Transformer Family v2 (Lilian Weng)', url: 'https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/', kind: 'article' },
+          ],
+        },
+        {
+          slug: 'transformer-block',
+          title: 'The full block: residuals, normalisation, and the MLP',
+          summary: 'A transformer layer combines attention with a residual stream, a normalisation step, and a feed-forward network.',
+          minutes: 16,
+          objectives: [
+            'Draw the data flow through one pre-norm transformer block.',
+            'Explain why residual connections let deep models train.',
+            'Compute the weight count of one block from its width.',
+            'Describe the job of the feed-forward network compared with attention.',
+          ],
+          keyTerms: ['residual connection', 'layer normalisation', 'feed-forward network', 'MLP', 'pre-norm', 'residual stream'],
+          body: `
+## What this lesson covers
+
+This lesson assembles a full transformer block from its parts. The parts are attention, the residual connection, layer normalisation, and the feed-forward network. You will count the weights of one block and trace a vector through it.
+
+## Why it matters
+
+The block is the repeated unit of every language model. A 32-layer model is 32 copies of this block. The weight count of a block decides memory use. The feed-forward network holds about two thirds of the weights, and that is where mixture of experts applies. The residual stream is the object that interpretability research reads and edits.
+
+## The idea with an example
+
+Take a model with width $d = 4$ and a single token. The token enters as the vector $x = [1, 2, 0, 1]$. This vector is the residual stream. The block updates it in two steps.
+
+Step one is attention. The block normalises $x$ to have mean 0 and variance 1. Then attention produces an update, say $a = [0.5, 0, 0.5, 0]$. The block adds the update to the stream: $x' = x + a = [1.5, 2, 0.5, 1]$.
+
+Step two is the feed-forward network. The block normalises $x'$ again. It multiplies by an up-projection of shape $4 \\times 16$, applies a nonlinearity, and multiplies by a down-projection of shape $16 \\times 4$. Suppose the result is $f = [0, -1, 0, 1]$. The block adds it: $x'' = x' + f = [1.5, 1, 0.5, 2]$. That vector goes to the next block.
+
+The important point is that each part only adds to the stream. The original $x$ survives unchanged inside $x''$. A block that learns nothing adds zero and passes the input through. That property lets a 100-layer model train.
+
+## How it works
+
+The pre-norm block computes:
+
+$$x' = x + \\mathrm{Attn}(\\mathrm{LN}(x)), \\qquad x'' = x' + \\mathrm{FFN}(\\mathrm{LN}(x'))$$
+
+$x$ is the residual stream, with one row per token. $\\mathrm{LN}$ is layer normalisation, the operation that rescales each row to mean 0 and unit variance and then applies a learned gain. $\\mathrm{Attn}$ is multi-head attention. $\\mathrm{FFN}$ is the feed-forward network, also called the multilayer perceptron (MLP).
+
+The feed-forward network is:
+
+$$\\mathrm{FFN}(z) = \\sigma(z W_1) W_2$$
+
+$W_1$ has shape $d \\times 4d$. $W_2$ has shape $4d \\times d$. $\\sigma$ is a nonlinearity such as the Gaussian error linear unit (GELU). Modern models use a gated variant called SwiGLU with three matrices.
+
+To count the weights in one block:
+
+1. Count the four attention matrices: $4 \\times d \\times d$.
+2. Count the two feed-forward matrices: $2 \\times d \\times 4d = 8d^2$.
+3. Add the two normalisation gains: $2d$, small enough to ignore.
+4. Total: about $12d^2$.
+
+For $d = 4096$, one block has about 200 million weights. The feed-forward part is 8 of the 12 parts. Attention moves information between tokens. The feed-forward network processes each token on its own and stores most of the learned facts.
+
+Note: the original Transformer applied normalisation after the residual add. Modern models apply it before, which is more stable at depth.
+
+## Common mistakes
+
+- Mistake: you replace the stream instead of adding to it. Fix: always write $x + f(x)$, never $f(x)$ alone.
+- Mistake: you normalise across the batch. Fix: layer normalisation works across the width of one token.
+- Mistake: you set the hidden width equal to $d$. Fix: use $4d$, or about $2.7d$ for a gated network.
+- Mistake: you count only attention weights. Fix: the feed-forward network has twice as many.
+
+## Check your understanding
+
+- What does a block add to the stream when it has learned nothing? It adds zero, and the input passes through unchanged.
+- Which part of the block holds most of the weights? The feed-forward network.
+- Where does pre-norm place layer normalisation? Before each sub-layer, inside the residual branch.
+
+## Go further
+
+The Transformer paper gives the original post-norm block in section 3. The layer normalisation paper explains why per-token normalisation helps. The GLU variants paper describes SwiGLU. Karpathy's nanoGPT repository contains a full block in about 100 lines of code.
+`,
+          links: [
+            { label: 'Attention Is All You Need (Vaswani et al., 2017)', url: 'https://arxiv.org/abs/1706.03762', kind: 'paper' },
+            { label: 'Layer Normalization (Ba et al., 2016)', url: 'https://arxiv.org/abs/1607.06450', kind: 'paper' },
+            { label: 'GLU Variants Improve Transformer (Shazeer, 2020)', url: 'https://arxiv.org/abs/2002.05202', kind: 'paper' },
+            { label: 'nanoGPT', url: 'https://github.com/karpathy/nanoGPT', kind: 'repo' },
+            { label: 'Andrej Karpathy', url: 'https://www.youtube.com/@AndrejKarpathy', kind: 'video' },
+          ],
+        },
+      ],
+    },
+    {
+      slug: 'scaling',
+      title: 'Scaling laws and compute-optimal training',
+      description: 'How loss falls with model size, data, and compute, and how to spend a fixed budget.',
+      lessons: [
+        {
+          slug: 'kaplan-to-chinchilla',
+          title: 'From Kaplan to Chinchilla',
+          summary: 'Loss follows a power law in weights and tokens, and the Chinchilla paper fixed the ratio between them.',
+          minutes: 16,
+          objectives: [
+            'Explain what a power law in loss means with a numerical example.',
+            'Compute the Chinchilla-optimal token count for a given weight count.',
+            'State why the Kaplan and Chinchilla papers reached different conclusions.',
+            'Estimate training compute from weights and tokens with the 6ND rule.',
+          ],
+          keyTerms: ['scaling law', 'power law', 'Chinchilla-optimal', 'compute budget', 'FLOPs', 'perplexity'],
+          body: `
+## What this lesson covers
+
+This lesson explains scaling laws, the empirical rules that link loss to model size, data size, and compute. It covers the Kaplan paper of 2020 and the Chinchilla paper of 2022. You will compute a compute-optimal training plan for a small budget.
+
+## Why it matters
+
+A frontier training run costs tens of millions of dollars. Scaling laws let a team predict the loss of a large run from small runs. They also decide how to split a budget between a bigger model and more data. Every modern model card reports its weight count and token count, and the ratio between them comes from this work.
+
+## The idea with an example
+
+Loss is the number that training tries to reduce. For a language model, lower loss means better next-token prediction. A power law says that loss falls by a fixed fraction every time you multiply the input by a fixed factor.
+
+Suppose loss depends on weight count $N$ as $L = 2.0 + 400 / N^{0.34}$. Compute the loss for three model sizes:
+
+| Weights $N$ | $400 / N^{0.34}$ | Loss |
+| --- | --- | --- |
+| 100 million | 0.75 | 2.75 |
+| 1 billion | 0.34 | 2.34 |
+| 10 billion | 0.16 | 2.16 |
+
+Each 10 times increase in size removes about 55 percent of the excess loss above 2.0. The 2.0 is the floor. No model size reaches below it, because natural text has irreducible randomness.
+
+Now add data. The Chinchilla paper found that a fixed compute budget has one best split. Take a budget large enough to train a 1 billion weight model on 20 billion tokens. The same budget trains a 2 billion weight model on 10 billion tokens, or a 500 million weight model on 40 billion tokens. Chinchilla found that the balanced option, about 20 tokens per weight, gives the lowest loss.
+
+## How it works
+
+The Chinchilla fit is:
+
+$$L(N, D) = E + \\frac{A}{N^{\\alpha}} + \\frac{B}{D^{\\beta}}$$
+
+$N$ is the weight count. $D$ is the training token count. $E$ is the irreducible loss. $A$, $B$, $\\alpha$, and $\\beta$ are fitted constants. The paper reports $\\alpha \\approx 0.34$ and $\\beta \\approx 0.28$.
+
+Training compute $C$ in floating-point operations (FLOPs) follows the rule $C \\approx 6ND$. Each weight takes part in about 6 operations per token: 2 in the forward pass and 4 in the backward pass.
+
+To plan a compute-optimal run:
+
+1. Fix the compute budget $C$ in FLOPs.
+2. Set $D = 20N$.
+3. Solve $C = 6N \\cdot 20N = 120N^2$ for $N$.
+4. Compute $D = 20N$.
+5. Check the result against your data supply.
+
+For $C = 10^{21}$ FLOPs, step 3 gives $N \\approx 2.9$ billion weights and $D \\approx 58$ billion tokens.
+
+The Kaplan paper reached a different conclusion. It found that weights should grow much faster than data. The cause was the learning rate schedule. Kaplan reused one long schedule for every run, and short runs ended before their learning rate decayed. Chinchilla tuned the schedule to each run length. With the fair comparison, the balanced split won.
+
+Note: the exact ratio depends on the data and the tokeniser. Treat 20 as a starting point, not a constant.
+
+## Common mistakes
+
+- Mistake: you compare runs with mismatched learning rate schedules. Fix: decay the learning rate to the end of each run.
+- Mistake: you read loss as a measure of downstream quality. Fix: loss predicts benchmarks only within one model family and data mix.
+- Mistake: you fit a power law from two points. Fix: use at least five model sizes across two orders of magnitude.
+- Mistake: you ignore the floor $E$. Fix: fit $E$ as a free constant, or the exponents come out wrong.
+
+## Check your understanding
+
+- With the rule $D = 20N$, how many tokens does a 7 billion weight model need? About 140 billion tokens.
+- What does $E$ represent in the Chinchilla fit? The irreducible loss of the data.
+- Why did Kaplan favour larger models over more data? The learning rate schedule penalised short runs.
+
+## Go further
+
+The Kaplan paper is the first full study of the power laws. The Chinchilla paper corrects the ratio and provides the fitted equation. The Deep Double Descent paper explains why loss can rise and fall again as size grows. Yannic Kilcher's channel has walkthroughs of both scaling papers.
+`,
+          links: [
+            { label: 'Scaling Laws for Neural Language Models (Kaplan et al., 2020)', url: 'https://arxiv.org/abs/2001.08361', kind: 'paper' },
+            { label: 'Training Compute-Optimal Large Language Models (Hoffmann et al., 2022)', url: 'https://arxiv.org/abs/2203.15556', kind: 'paper' },
+            { label: 'Deep Double Descent (Nakkiran et al., 2019)', url: 'https://arxiv.org/abs/1912.02292', kind: 'paper' },
+            { label: 'Yannic Kilcher', url: 'https://www.youtube.com/@YannicKilcher', kind: 'video' },
+          ],
+        },
+        {
+          slug: 'inference-aware-scaling',
+          title: 'Inference-aware scaling',
+          summary: 'When serving cost counts, the best plan trains a smaller model on far more tokens than Chinchilla suggests.',
+          minutes: 14,
+          objectives: [
+            'Add expected inference tokens to a compute budget.',
+            'Explain why production models train past the Chinchilla point.',
+            'Compute the lifetime cost of two model sizes for a fixed request volume.',
+            'Describe the data limit that bounds overtraining.',
+          ],
+          keyTerms: ['inference cost', 'overtraining', 'Chinchilla-optimal', 'FLOPs', 'tokens per weight'],
+          body: `
+## What this lesson covers
+
+This lesson extends scaling laws to include the cost of serving a model. The Chinchilla rule minimises training loss for a training budget. When a model serves billions of requests, the serving cost dominates. You will compute the lifetime cost of two model sizes and see why the smaller one wins.
+
+## Why it matters
+
+Llama 3 8B trained on 15 trillion tokens, about 1,900 tokens per weight. That is nearly 100 times the Chinchilla ratio. The reason is inference. A smaller model is cheaper to run on every request for the life of the product. Teams that only know the Chinchilla rule misjudge this decision.
+
+## The idea with an example
+
+Suppose you need a model with a target loss. Two plans reach it:
+
+- Plan A: 10 billion weights trained on 200 billion tokens. This is Chinchilla-optimal.
+- Plan B: 5 billion weights trained on 800 billion tokens. This is overtrained.
+
+Compute the training cost with $C = 6ND$:
+
+| Plan | Weights | Tokens | Training FLOPs |
+| --- | --- | --- | --- |
+| A | 10 B | 200 B | $1.2 \\times 10^{22}$ |
+| B | 5 B | 800 B | $2.4 \\times 10^{22}$ |
+
+Plan B costs twice as much to train. Now add serving. Each generated token costs about $2N$ FLOPs. Suppose the product serves 1 trillion tokens over its life:
+
+| Plan | Serving FLOPs | Total FLOPs |
+| --- | --- | --- |
+| A | $2 \\times 10^{22}$ | $3.2 \\times 10^{22}$ |
+| B | $1 \\times 10^{22}$ | $3.4 \\times 10^{22}$ |
+
+At 1 trillion served tokens the plans are close. At 10 trillion served tokens, Plan A costs $21.2 \\times 10^{22}$ and Plan B costs $12.4 \\times 10^{22}$. Plan B wins by a wide margin. The more you serve, the more the small model pays back its extra training.
+
+## How it works
+
+The combined cost is:
+
+$$C_{\\text{total}} = 6ND_{\\text{train}} + 2ND_{\\text{infer}}$$
+
+$N$ is the weight count. $D_{\\text{train}}$ is the number of training tokens. $D_{\\text{infer}}$ is the expected number of tokens served over the life of the model. The first term is training. The second term is serving.
+
+To choose a plan:
+
+1. Fix the target loss from the product requirement.
+2. Estimate $D_{\\text{infer}}$ from the expected request volume.
+3. For each candidate $N$, use the Chinchilla fit to find the $D_{\\text{train}}$ that reaches the target loss.
+4. Compute $C_{\\text{total}}$ for each candidate.
+5. Choose the $N$ with the lowest total.
+
+The loss curve bounds this process. A small model cannot reach a low target no matter how many tokens it sees. The term $A / N^{\\alpha}$ sets a floor for each size. Overtraining has diminishing returns, so the curve flattens.
+
+Data supply is the other bound. Plan B needs 800 billion tokens of good data. The quality of the extra tokens matters as much as the count. The lesson on data-constrained scaling covers what happens when the supply runs out.
+
+Caution: inference FLOPs are not the only serving cost. Memory bandwidth for the KV cache often dominates at long context. Include it in a real estimate.
+
+## Common mistakes
+
+- Mistake: you plan with training cost only. Fix: add $2ND_{\\text{infer}}$ to the budget.
+- Mistake: you assume any loss target is reachable by a small model. Fix: check the floor $E + A / N^{\\alpha}$ first.
+- Mistake: you estimate serving volume for the first month. Fix: estimate for the full life of the model.
+- Mistake: you count only FLOPs. Fix: memory traffic sets latency on real hardware.
+
+## Check your understanding
+
+- What is the serving cost per token for a 5 billion weight model? About 10 billion FLOPs.
+- Why does the small model win at high serving volume? Its cheaper per-token cost repays the extra training.
+- What stops you from overtraining without limit? The loss floor for that size and the supply of good data.
+
+## Go further
+
+The Sardana and Frankle paper adds inference to the Chinchilla objective and gives the full method. The Llama 3 report explains the decision to train small models on 15 trillion tokens. The Chinchilla paper provides the loss fit that the method depends on.
+`,
+          links: [
+            { label: 'Beyond Chinchilla-Optimal: Accounting for Inference (Sardana and Frankle, 2023)', url: 'https://arxiv.org/abs/2401.00448', kind: 'paper' },
+            { label: 'The Llama 3 Herd of Models (2024)', url: 'https://arxiv.org/abs/2407.21783', kind: 'paper' },
+            { label: 'Training Compute-Optimal Large Language Models (Hoffmann et al., 2022)', url: 'https://arxiv.org/abs/2203.15556', kind: 'paper' },
+            { label: 'LLaMA: Open and Efficient Foundation Language Models (2023)', url: 'https://arxiv.org/abs/2302.13971', kind: 'paper' },
+          ],
+        },
+        {
+          slug: 'data-constrained-scaling',
+          title: 'Scaling when data runs out',
+          summary: 'When good tokens are scarce, repeated epochs help up to a point, and then more weights help less.',
+          minutes: 14,
+          objectives: [
+            'Describe how loss changes when a model sees the same tokens again.',
+            'Estimate the number of useful epochs from the Muennighoff result.',
+            'Choose between repeating data and adding lower-quality data.',
+            'Explain why synthetic data changes the data budget.',
+          ],
+          keyTerms: ['epoch', 'data-constrained', 'repeated data', 'overfitting', 'synthetic data', 'tokens per weight'],
+          body: `
+## What this lesson covers
+
+This lesson covers scaling when the supply of training tokens is fixed. It explains the effect of repeated epochs, the value of lower-quality data, and the role of synthetic data. You will use a simple rule to decide how many times to repeat a dataset.
+
+## Why it matters
+
+The public web holds a finite number of good tokens. Estimates put the usable English web text at a few tens of trillions of tokens. Frontier models already train on that scale. Every team that trains a model in a narrow domain, such as code or law, hits the limit much earlier. The rules in this lesson decide what to do next.
+
+## The idea with an example
+
+An epoch is one full pass over the training data. Suppose you have 100 billion tokens of good text and a budget to train on 400 billion tokens. You have three options:
+
+- Repeat the 100 billion tokens for 4 epochs.
+- Train for 1 epoch and stop, which wastes compute.
+- Add 300 billion tokens of lower-quality text for 1 epoch.
+
+The Muennighoff study measured the first option. Tokens seen for the second time are worth almost as much as new tokens. Tokens seen for the fourth time are worth about as much as new tokens too. Past 4 epochs the value falls fast. By 16 epochs, extra passes add almost nothing, and loss can rise. So 4 epochs of good data is a safe plan.
+
+Here is the pattern from the study in rough numbers:
+
+| Epochs | Value of each repeated token |
+| --- | --- |
+| 1 | 1.00 |
+| 4 | about 0.9 |
+| 8 | about 0.6 |
+| 16 | about 0.2 |
+
+Option three depends on the quality gap. If the extra text is close in quality, mix it in. If it is far worse, repeat the good data instead.
+
+## How it works
+
+The study extends the Chinchilla fit with an effective data term:
+
+$$D_{\\text{eff}} = U + U R^{*} \\left(1 - e^{-R_D / R^{*}}\\right)$$
+
+$U$ is the number of unique tokens. $R_D$ is the number of repeats, so $R_D = 0$ means one epoch. $R^{*}$ is a fitted constant of about 15. $D_{\\text{eff}}$ is the number of fresh tokens with the same value. The exponential term says that each extra repeat adds less than the one before.
+
+To plan a data-constrained run:
+
+1. Count the unique good tokens $U$.
+2. Compute the Chinchilla token target $D = 20N$ for the planned $N$.
+3. If $D \\le 4U$, train for $D / U$ epochs.
+4. If $D > 4U$, compute $D_{\\text{eff}}$ and check whether more weights still help.
+5. If weights no longer help, spend the budget on data filtering or synthetic data instead.
+
+Synthetic data changes the budget. A model generates text that matches a target style, and a filter keeps the best outputs. The Phi series of models trains on textbook-style synthetic text and matches larger models on reasoning tasks. The cost moves from collection to generation and filtering.
+
+Note: repeated epochs help less for a large model than for a small one. Large models memorise sooner.
+
+## Common mistakes
+
+- Mistake: you train for 20 epochs on a small dataset. Fix: stop near 4 epochs and look for more data.
+- Mistake: you add a huge low-quality corpus to reach a token target. Fix: measure loss on a held-out set with and without it.
+- Mistake: you generate synthetic data without a filter. Fix: score every sample and keep only the top fraction.
+- Mistake: you count tokens before deduplication. Fix: count unique tokens after deduplication.
+
+## Check your understanding
+
+- How many epochs of good data are close to free in the study? About 4.
+- What is $R_D$ for a run that sees the data 3 times? It is 2.
+- What does synthetic data trade for collection cost? Generation and filtering cost.
+
+## Go further
+
+The Muennighoff paper gives the full data-constrained fit and the epoch experiments. The Phi paper shows what a filtered synthetic textbook corpus can do. The Chinchilla paper provides the base fit. The FineWeb paper describes how a modern web corpus is filtered to extend the supply of good tokens.
+`,
+          links: [
+            { label: 'Scaling Data-Constrained Language Models (Muennighoff et al., 2023)', url: 'https://arxiv.org/abs/2305.16264', kind: 'paper' },
+            { label: 'Textbooks Are All You Need (Gunasekar et al., 2023)', url: 'https://arxiv.org/abs/2306.11644', kind: 'paper' },
+            { label: 'Training Compute-Optimal Large Language Models (Hoffmann et al., 2022)', url: 'https://arxiv.org/abs/2203.15556', kind: 'paper' },
+            { label: 'The FineWeb Datasets (2024)', url: 'https://arxiv.org/abs/2406.17557', kind: 'paper' },
+          ],
+        },
+      ],
+    },
+    {
+      slug: 'alignment',
+      title: 'Alignment: SFT, RLHF, DPO',
+      description: 'How a base model becomes an assistant through demonstrations, preferences, and reinforcement learning.',
+      lessons: [
+        {
+          slug: 'rlhf-pipeline',
+          title: 'The RLHF pipeline',
+          summary: 'Supervised fine-tuning, a reward model, and reinforcement learning turn a base model into an assistant.',
+          minutes: 18,
+          objectives: [
+            'Describe the three stages of reinforcement learning from human feedback (RLHF).',
+            'Compute the Bradley-Terry loss for one preference pair.',
+            'Explain the purpose of the KL penalty in the RL stage.',
+            'Choose the data each stage needs.',
+          ],
+          keyTerms: ['RLHF', 'supervised fine-tuning', 'reward model', 'Bradley-Terry', 'KL divergence', 'PPO', 'policy'],
+          body: `
+## What this lesson covers
+
+This lesson explains reinforcement learning from human feedback (RLHF), the recipe that turns a base model into an assistant. It covers the three stages: supervised fine-tuning, reward modelling, and reinforcement learning. You will compute the reward model loss for one example pair.
+
+## Why it matters
+
+A base model predicts the next token of web text. Ask it a question and it may continue with more questions. RLHF teaches the model to answer, to refuse unsafe requests, and to follow a format. Every chat model you have used went through a version of this pipeline. The cost and the failure modes of alignment come from these three stages.
+
+## The idea with an example
+
+Take the prompt "Explain photosynthesis to a child". The base model produces a random continuation. The pipeline fixes this in three steps.
+
+Stage one is supervised fine-tuning (SFT). A labeler writes a good answer. The model trains to reproduce that answer token by token, with the same loss as pretraining. After a few thousand examples, the model answers questions in the right format.
+
+Stage two is reward modelling. The SFT model produces two answers to the prompt. A labeler picks the better one. Call the chosen answer $y_w$ and the rejected one $y_l$. A reward model, a copy of the SFT model with a scalar output head, learns to give $y_w$ a higher score. Suppose it currently scores $y_w$ at 1.0 and $y_l$ at 0.5. The difference is 0.5. The loss is $-\\log \\sigma(0.5) \\approx 0.47$. If the scores were swapped, the loss would be $-\\log \\sigma(-0.5) \\approx 0.97$. The loss pushes the gap in the right direction.
+
+Stage three is reinforcement learning (RL). The policy, the model under training, generates answers. The reward model scores them. The policy updates its weights to raise the score. A penalty keeps the policy close to the SFT model so it does not find scoring tricks.
+
+## How it works
+
+The reward model loss for one pair is:
+
+$$\\mathcal{L}_{\\text{RM}} = -\\log \\sigma\\big(r_\\phi(x, y_w) - r_\\phi(x, y_l)\\big)$$
+
+$x$ is the prompt. $r_\\phi$ is the reward model with weights $\\phi$. $y_w$ is the preferred answer and $y_l$ is the rejected answer. $\\sigma$ is the sigmoid function, which maps any number to the range 0 to 1. This is the Bradley-Terry model of pairwise choice.
+
+The RL objective is:
+
+$$\\max_\\pi \\; \\mathbb{E}_{y \\sim \\pi}[r(x, y)] - \\beta\\, \\mathrm{KL}\\big(\\pi \\,\\|\\, \\pi_{\\text{SFT}}\\big)$$
+
+$\\pi$ is the policy. $\\mathbb{E}_{y \\sim \\pi}$ is the average over answers the policy generates. $\\mathrm{KL}$ is the Kullback-Leibler divergence, a measure of how far the policy has moved from the SFT model. $\\beta$ sets the strength of the penalty. Proximal policy optimisation (PPO) is the algorithm that performs the update.
+
+To run the pipeline:
+
+1. Collect 10,000 to 100,000 prompt and answer pairs. Train the SFT model.
+2. Sample two answers per prompt from the SFT model. Collect labeler choices.
+3. Train the reward model with the Bradley-Terry loss.
+4. Run PPO with the reward model and the KL penalty.
+5. Evaluate with fresh labelers, not the reward model.
+
+Caution: the reward model is a proxy. Optimise it too hard and the policy finds answers that score high but read badly. This is reward hacking.
+
+## Common mistakes
+
+- Mistake: you set $\\beta = 0$ to get higher rewards. Fix: keep the KL penalty and watch the KL value during training.
+- Mistake: you judge the final model by its reward score. Fix: use held-out human ratings.
+- Mistake: you train the reward model on answers from a different model. Fix: sample preference pairs from the SFT model you will optimise.
+- Mistake: you skip SFT and go straight to RL. Fix: SFT gives the policy a sensible starting distribution.
+
+## Check your understanding
+
+- What does the SFT stage need as data? Prompts with written answers.
+- What is the reward model loss when both answers score the same? $-\\log 0.5 \\approx 0.69$.
+- What does the KL penalty prevent? Drift of the policy away from the SFT model into reward hacking.
+
+## Go further
+
+The InstructGPT paper describes the full three-stage recipe with results. The earlier summarisation paper tested the same method on one task. The original deep RL from human preferences paper introduced the idea of learning a reward from comparisons. The TRL documentation shows each stage in code.
+`,
+          links: [
+            { label: 'Training language models to follow instructions with human feedback (Ouyang et al., 2022)', url: 'https://arxiv.org/abs/2203.02155', kind: 'paper' },
+            { label: 'Learning to summarize from human feedback (Stiennon et al., 2020)', url: 'https://arxiv.org/abs/2009.01325', kind: 'paper' },
+            { label: 'Deep reinforcement learning from human preferences (Christiano et al., 2017)', url: 'https://arxiv.org/abs/1706.03741', kind: 'paper' },
+            { label: 'TRL documentation', url: 'https://huggingface.co/docs/trl', kind: 'docs' },
+          ],
+        },
+        {
+          slug: 'dpo-derivation',
+          title: 'Deriving DPO',
+          summary: 'Direct preference optimisation removes the reward model by solving the RLHF objective in closed form.',
+          minutes: 20,
+          objectives: [
+            'Write the optimal policy of the KL-regularised objective.',
+            'Invert the optimal policy to express the reward in terms of the policy.',
+            'Explain why the partition function cancels in a preference pair.',
+            'Compute the DPO loss for one example pair.',
+          ],
+          keyTerms: ['DPO', 'partition function', 'reference model', 'KL divergence', 'Bradley-Terry', 'implicit reward'],
+          body: `
+## What this lesson covers
+
+This lesson derives direct preference optimisation (DPO) step by step. DPO trains a policy on preference pairs with no separate reward model and no reinforcement learning loop. The derivation has three steps: solve the RLHF objective, invert the solution, and substitute into the Bradley-Terry loss.
+
+## Why it matters
+
+DPO replaces the PPO stage with a single supervised loss. It needs two copies of the model instead of four. It has no sampling loop and few hyperparameters. Most open-weight assistants released after 2023 use DPO or a close variant. If you understand the derivation, you can read every variant paper.
+
+## The idea with an example
+
+Start with a tiny world. A prompt has only two possible answers, A and B. The reference model, the SFT model, gives A probability 0.5 and B probability 0.5. A reward model scores A at 1.0 and B at 0.0. Set $\\beta = 1$.
+
+The RLHF objective asks for a policy that raises reward but stays close to the reference. The best policy multiplies each reference probability by $e^{r / \\beta}$ and renormalises. For A, $0.5 \\times e^{1} = 1.36$. For B, $0.5 \\times e^{0} = 0.5$. The sum is 1.86, the partition function. The optimal policy gives A probability $1.36 / 1.86 = 0.73$ and B probability 0.27.
+
+Now reverse the question. Suppose you observe the optimal policy and the reference. Can you recover the reward? Yes, up to a constant. For A, $\\beta \\log(0.73 / 0.5) = 0.38$. For B, $\\beta \\log(0.27 / 0.5) = -0.62$. The difference is $1.0$, which equals the original reward gap. The constant from the partition function dropped out when you subtracted. DPO builds its loss from this difference, so it never needs the partition function.
+
+## How it works
+
+Step one. The KL-regularised objective has the closed-form optimum:
+
+$$\\pi^{*}(y \\mid x) = \\frac{1}{Z(x)}\\, \\pi_{\\text{ref}}(y \\mid x)\\, \\exp\\!\\left(\\frac{r(x, y)}{\\beta}\\right)$$
+
+$\\pi^{*}$ is the optimal policy. $\\pi_{\\text{ref}}$ is the reference model. $r$ is the reward. $\\beta$ is the KL strength. $Z(x)$ is the partition function, the sum over all answers that makes the probabilities add to one.
+
+Step two. Take logarithms and solve for the reward:
+
+$$r(x, y) = \\beta \\log \\frac{\\pi^{*}(y \\mid x)}{\\pi_{\\text{ref}}(y \\mid x)} + \\beta \\log Z(x)$$
+
+Step three. Put this reward into the Bradley-Terry loss. The loss uses $r(x, y_w) - r(x, y_l)$. The term $\\beta \\log Z(x)$ appears in both and cancels. The result is the DPO loss:
+
+$$\\mathcal{L}_{\\text{DPO}} = -\\log \\sigma\\!\\left(\\beta \\log \\frac{\\pi_\\theta(y_w \\mid x)}{\\pi_{\\text{ref}}(y_w \\mid x)} - \\beta \\log \\frac{\\pi_\\theta(y_l \\mid x)}{\\pi_{\\text{ref}}(y_l \\mid x)}\\right)$$
+
+$\\pi_\\theta$ is the policy under training with weights $\\theta$. $y_w$ and $y_l$ are the chosen and rejected answers. $\\sigma$ is the sigmoid.
+
+To train with DPO:
+
+1. Freeze a copy of the SFT model as $\\pi_{\\text{ref}}$.
+2. For each pair, compute the log probability of $y_w$ and $y_l$ under both models.
+3. Form the two log ratios and subtract them.
+4. Apply the DPO loss and take a gradient step on $\\theta$.
+
+Note: the log ratio $\\beta \\log(\\pi_\\theta / \\pi_{\\text{ref}})$ acts as an implicit reward. You can read it off a trained DPO model.
+
+## Common mistakes
+
+- Mistake: you let the reference model update. Fix: freeze it, or the log ratios lose their meaning.
+- Mistake: you sum log probabilities over answers of different lengths without care. Fix: check for a length bias in the chosen answers.
+- Mistake: you choose $\\beta$ too small. Fix: start near 0.1 and watch how far the policy drifts.
+- Mistake: you reuse preference pairs from a different reference model. Fix: sample pairs from the reference you will train from.
+
+## Check your understanding
+
+- Why can DPO ignore the partition function? It is the same for both answers to one prompt and cancels in the difference.
+- What plays the role of the reward in a DPO model? $\\beta$ times the log ratio of policy to reference.
+- How many model copies does DPO need in memory? Two: the policy and the frozen reference.
+
+## Go further
+
+The DPO paper contains the derivation with proofs in the appendix. The InstructGPT paper gives the objective DPO solves. The TRL documentation has a DPO trainer with examples. Umar Jamil's channel has a long derivation video.
+`,
+          links: [
+            { label: 'Direct Preference Optimization (Rafailov et al., 2023)', url: 'https://arxiv.org/abs/2305.18290', kind: 'paper' },
+            { label: 'Training language models to follow instructions with human feedback (Ouyang et al., 2022)', url: 'https://arxiv.org/abs/2203.02155', kind: 'paper' },
+            { label: 'TRL documentation', url: 'https://huggingface.co/docs/trl', kind: 'docs' },
+            { label: 'Umar Jamil', url: 'https://www.youtube.com/@umarjamilai', kind: 'video' },
+          ],
+        },
+        {
+          slug: 'reward-hacking-and-ai-feedback',
+          title: 'Reward hacking and AI feedback',
+          summary: 'Reward models fail in predictable ways, and AI-written feedback both scales and reshapes the pipeline.',
+          minutes: 15,
+          objectives: [
+            'Describe three ways a policy exploits a reward model.',
+            'Explain how a KL budget and reward model ensembles limit the damage.',
+            'Describe the constitutional AI loop for AI feedback.',
+            'Choose when to use AI feedback instead of human labels.',
+          ],
+          keyTerms: ['reward hacking', 'overoptimisation', 'constitutional AI', 'RLAIF', 'KL divergence', 'length bias'],
+          body: `
+## What this lesson covers
+
+This lesson covers two topics that follow from the RLHF pipeline. The first is reward hacking, the failure where a policy scores high on the reward model and low with people. The second is AI feedback, the use of a model instead of a labeler to produce preferences. Constitutional AI is the main example.
+
+## Why it matters
+
+Reward hacking is the most common way an alignment run goes wrong. The reward curve rises, the demo looks worse, and the team loses a week. AI feedback is the main way labs scale preference data past what labelers can produce. A researcher needs to know both the failure and the fix.
+
+## The idea with an example
+
+Suppose a reward model trained on 50,000 pairs. In that data, labelers often preferred the longer answer because it gave more detail. The reward model learned that length predicts preference. Now run PPO. The policy discovers that a 600-word answer scores higher than a 200-word answer. By step 1,000, every answer is long and padded with repetition. The reward has risen from 1.0 to 3.5. Human ratings have fallen.
+
+Here is a simplified trace from such a run:
+
+| PPO step | Reward score | KL from SFT | Human rating |
+| --- | --- | --- | --- |
+| 0 | 1.0 | 0 | 6.0 |
+| 500 | 2.0 | 5 | 6.8 |
+| 1,000 | 3.5 | 20 | 5.1 |
+
+The best model is at step 500, not at the end. The KL value is the early warning signal. The Gao study found that the true quality follows a curve that rises and then falls as the KL grows. The peak moves later with a bigger reward model and more preference data.
+
+Constitutional AI replaces the labeler for harmlessness. The model generates an answer. The model then critiques its own answer against a written principle such as "choose the response that is least harmful". The model rewrites the answer. The pairs of original and rewritten answers train the reward model. The principles replace the labeler, and one principle applies to thousands of prompts.
+
+## How it works
+
+Overoptimisation follows an approximate law:
+
+$$R_{\\text{true}}(d) = d\\,(\\alpha - \\beta \\log d)$$
+
+$d$ is the square root of the KL distance from the SFT model. $R_{\\text{true}}$ is the quality judged by a gold reward. $\\alpha$ and $\\beta$ are fitted constants. The curve rises, peaks, and falls.
+
+To protect a run against reward hacking:
+
+1. Record the KL from the SFT model at every evaluation step.
+2. Stop PPO when the KL passes a fixed budget, often between 5 and 20 nats.
+3. Train an ensemble of reward models from different seeds. Use the minimum score, or the mean minus a margin.
+4. Subtract a length penalty from the reward.
+5. Have people rate samples from several checkpoints and pick the best.
+
+The constitutional AI loop has two phases:
+
+1. Supervised phase: generate, critique, revise, and fine-tune on the revisions.
+2. RL phase: generate two answers, ask the model which one better follows a principle, and train a reward model on those AI preferences. This is reinforcement learning from AI feedback (RLAIF).
+
+AI feedback works best for criteria a model can judge, such as harmlessness or format. It works less well where the judge model lacks the skill, such as hard mathematics.
+
+Note: the judge model has its own biases. Many judges prefer their own style and longer answers.
+
+## Common mistakes
+
+- Mistake: you train PPO until the reward stops rising. Fix: stop on a KL budget and pick the checkpoint with the best human rating.
+- Mistake: you use one reward model for a long run. Fix: use an ensemble and refresh it with new pairs.
+- Mistake: you use AI feedback for a skill the judge does not have. Fix: keep human labels or verifiable checks for that skill.
+- Mistake: you write vague principles. Fix: write one clear, testable sentence per principle.
+
+## Check your understanding
+
+- What signal warns of reward hacking before a human sees it? The KL distance from the SFT model.
+- Why does a reward model ensemble help? The policy must fool several models at once.
+- What replaces the labeler in constitutional AI? A written principle that the model applies as a critic.
+
+## Go further
+
+The reward model overoptimisation paper fits the curve and tests ensembles. The constitutional AI paper gives the full critique and revision loop. The RLAIF paper compares AI preferences to human preferences on several tasks. The InstructGPT paper describes the human baseline that these methods extend.
+`,
+          links: [
+            { label: 'Scaling Laws for Reward Model Overoptimization (Gao et al., 2022)', url: 'https://arxiv.org/abs/2210.10760', kind: 'paper' },
+            { label: 'Constitutional AI: Harmlessness from AI Feedback (Bai et al., 2022)', url: 'https://arxiv.org/abs/2212.08073', kind: 'paper' },
+            { label: 'RLAIF: Scaling RL from Human Feedback with AI Feedback (Lee et al., 2023)', url: 'https://arxiv.org/abs/2309.00267', kind: 'paper' },
+            { label: 'Training language models to follow instructions with human feedback (Ouyang et al., 2022)', url: 'https://arxiv.org/abs/2203.02155', kind: 'paper' },
+          ],
+        },
+      ],
+    },
+    {
+      slug: 'pretraining-data',
+      title: 'Pretraining data',
+      description: 'Tokenisation, data mixtures, deduplication, and curriculum: the work that decides what a model learns.',
+      lessons: [
+        {
+          slug: 'tokenisation',
+          title: 'Tokenisation and byte-pair encoding',
+          summary: 'A tokeniser splits text into units from a fixed vocabulary, and the split shapes everything the model sees.',
+          minutes: 16,
+          objectives: [
+            'Run three merge steps of byte-pair encoding (BPE) on a small corpus by hand.',
+            'Explain why vocabulary size trades sequence length against embedding size.',
+            'Describe two failure modes caused by the tokeniser.',
+            'Compute the compression ratio of a tokeniser on a sample.',
+          ],
+          keyTerms: ['token', 'tokeniser', 'byte-pair encoding', 'vocabulary', 'embedding', 'compression ratio'],
+          body: `
+## What this lesson covers
+
+This lesson explains how a tokeniser turns text into tokens. It covers byte-pair encoding (BPE), the algorithm used by most language models. You will run the merge procedure by hand on a tiny corpus and see how vocabulary size affects the model.
+
+## Why it matters
+
+The model never sees characters. It sees token identifiers. A bad tokeniser makes arithmetic hard, makes some languages three times more expensive, and wastes context. Every token count in a scaling law, an API bill, or a KV cache estimate depends on the tokeniser. Research on data starts here.
+
+## The idea with an example
+
+Take a corpus with three words and their counts: "low" appears 5 times, "lower" appears 2 times, and "newest" appears 6 times. Start with a vocabulary of single characters. Write each word as a sequence of characters with an end marker: l o w _, l o w e r _, n e w e s t _.
+
+BPE finds the most frequent pair of adjacent units and merges them into one unit. Count the pairs:
+
+| Pair | Count |
+| --- | --- |
+| l o | 7 |
+| o w | 7 |
+| e s | 6 |
+| s t | 6 |
+| t _ | 6 |
+
+The pair "l o" ties with "o w" at 7. Merge "l o" into "lo". Now "lo w" appears 7 times, so merge it into "low". Next, "e s" appears 6 times, so merge it into "es". After three merges the vocabulary has three new units: "lo", "low", and "es". The word "lower" now tokenises as "low", "e", "r", "_". Repeat until the vocabulary reaches a target size, often 32,000 to 128,000 units.
+
+A larger vocabulary makes sequences shorter. The sentence "the newest lower" might take 7 tokens with a vocabulary of 100 and 3 tokens with a vocabulary of 50,000. Shorter sequences cost less attention. The price is a larger embedding table and a larger output layer.
+
+## How it works
+
+The BPE training procedure:
+
+1. Split the corpus into words. Split each word into bytes or characters.
+2. Count every pair of adjacent units across the corpus.
+3. Merge the most frequent pair into a new unit. Record the merge.
+4. Repeat steps 2 and 3 until the vocabulary reaches the target size.
+
+To tokenise new text, apply the recorded merges in order. Modern tokenisers work on bytes, so any input has a tokenisation and there is no unknown token.
+
+The compression ratio is:
+
+$$\\rho = \\frac{\\text{number of bytes}}{\\text{number of tokens}}$$
+
+$\\rho$ is the average number of bytes per token. English text with a 100,000 unit vocabulary gives about 4 bytes per token. A tokeniser trained on English gives about 1.5 bytes per token on Thai, so Thai text costs almost three times as many tokens.
+
+Two failure modes come from the tokeniser. Numbers split in odd places, so "1234" may become "12" and "34", and the model must learn arithmetic across the split. Rare strings that appear in the vocabulary but not in training data become glitch tokens with untrained embeddings.
+
+Note: the embedding table has one row per vocabulary unit. With a vocabulary of 128,000 and a width of 4,096, the table holds 524 million weights.
+
+## Common mistakes
+
+- Mistake: you count words to estimate cost. Fix: run the tokeniser and count tokens.
+- Mistake: you train the tokeniser on English only for a multilingual model. Fix: sample the tokeniser corpus with the same mix as the training data.
+- Mistake: you change the tokeniser after pretraining. Fix: the embeddings are tied to the vocabulary; keep it fixed.
+- Mistake: you ignore how digits split. Fix: split numbers into single digits or fixed groups of three.
+
+## Check your understanding
+
+- After the merges "l o" and "lo w", how does "lower" tokenise? As "low", "e", "r", and the end marker.
+- What does a larger vocabulary cost? A larger embedding table and output layer.
+- Why does the same text cost more tokens in some languages? The vocabulary holds fewer merges for those languages.
+
+## Go further
+
+The Sennrich paper introduced BPE for neural translation. The SentencePiece paper describes a tokeniser that works from raw text. Karpathy's minbpe repository implements BPE in about 100 lines. The Hugging Face tokenizers documentation covers the production library.
+`,
+          links: [
+            { label: 'Neural Machine Translation of Rare Words with Subword Units (Sennrich et al., 2015)', url: 'https://arxiv.org/abs/1508.07909', kind: 'paper' },
+            { label: 'SentencePiece (Kudo and Richardson, 2018)', url: 'https://arxiv.org/abs/1808.06226', kind: 'paper' },
+            { label: 'minbpe', url: 'https://github.com/karpathy/minbpe', kind: 'repo' },
+            { label: 'Hugging Face tokenizers documentation', url: 'https://huggingface.co/docs/tokenizers', kind: 'docs' },
+            { label: 'tiktoken', url: 'https://github.com/openai/tiktoken', kind: 'repo' },
+          ],
+        },
+        {
+          slug: 'data-mixtures',
+          title: 'Data mixtures and domain weights',
+          summary: 'A pretraining corpus mixes sources with chosen weights, and the weights change what the model is good at.',
+          minutes: 15,
+          objectives: [
+            'Compute the token share of each source from a mixture table.',
+            'Explain why upsampling a small high-quality source helps and where it stops helping.',
+            'Describe the DoReMi method for choosing domain weights.',
+            'Design a small mixture experiment with a held-out evaluation per domain.',
+          ],
+          keyTerms: ['data mixture', 'domain weight', 'upsampling', 'DoReMi', 'held-out set', 'epoch'],
+          body: `
+## What this lesson covers
+
+This lesson explains how a pretraining corpus is assembled from sources with weights. It covers the trade-offs in those weights, the method that learns them, and a procedure to test a mixture at small scale.
+
+## Why it matters
+
+Two models with the same architecture and the same token count can differ by 10 points on a code benchmark. The cause is usually the mixture. A team that tunes the mixture gets more quality per token than a team that adds weights. Mixture decisions also decide what the model knows about law, medicine, or a low-resource language.
+
+## The idea with an example
+
+Suppose you have four sources:
+
+| Source | Available tokens | Weight | Tokens in a 1 T run | Epochs |
+| --- | --- | --- | --- | --- |
+| Web | 10 T | 0.70 | 700 B | 0.07 |
+| Code | 500 B | 0.15 | 150 B | 0.3 |
+| Books | 100 B | 0.10 | 100 B | 1.0 |
+| Papers | 20 B | 0.05 | 50 B | 2.5 |
+
+The weight is the fraction of training tokens drawn from each source. Multiply the weight by the run length to get the tokens per source. Divide by the available tokens to get the epochs. The papers source repeats 2.5 times, which is safe. The web source uses only 7 percent of its supply, so you can filter it hard and keep the best part.
+
+Now change one weight. Raise code from 0.15 to 0.30 and lower web to 0.55. The model will likely improve on code benchmarks and lose a little on general knowledge. If you raise papers to 0.30, the papers source would repeat 15 times, and the lesson on data-constrained scaling says that is past the useful limit. The available supply caps how far you can upsample a small source.
+
+## How it works
+
+The mixture is a probability vector $w$ over domains. During training, each batch draws from domain $i$ with probability $w_i$. The expected loss is:
+
+$$L(w) = \\sum_i w_i\\, L_i$$
+
+$L_i$ is the loss on domain $i$. $w_i$ is the weight of domain $i$. This equation says that the mixture sets which losses the model works hardest to reduce. It does not say the domains are independent. Code data improves reasoning on other tasks, and web data improves code comments.
+
+DoReMi learns the weights with a small proxy model:
+
+1. Train a small reference model on a uniform mixture.
+2. Train a second small model. At each step, raise the weight of domains where this model lags the reference by the most.
+3. Average the weights over training. Use the average for the full-size run.
+
+The method finds domains that are hard but learnable and gives them more weight. The authors reported that weights found with a 280 million weight proxy transferred to an 8 billion weight model.
+
+To test a mixture by hand:
+
+1. Build a held-out evaluation set for each domain, at least 1 million tokens each.
+2. Train a small model, about 100 million weights, on each candidate mixture for the same token count.
+3. Record the loss per domain for each run.
+4. Pick the mixture with the best trade-off for your target use.
+
+Caution: the best mixture at 100 million weights is not always the best at 10 billion weights. Confirm the top two candidates at a larger scale before committing a big run.
+
+## Common mistakes
+
+- Mistake: you set weights from available supply alone. Fix: weight by value per token, and cap by the epoch limit.
+- Mistake: you evaluate one average loss. Fix: track loss per domain, or a gain in one domain can hide a loss in another.
+- Mistake: you test mixtures with different token counts. Fix: hold the total token budget fixed across candidates.
+- Mistake: you move weights late in training without a plan. Fix: use a fixed schedule, such as an annealing phase with more high-quality data.
+
+## Check your understanding
+
+- A source has 50 billion tokens and weight 0.2 in a 1 trillion token run. How many epochs? Four.
+- What does DoReMi raise the weight of? Domains where the proxy lags the reference the most.
+- Why does a small-scale mixture test need a per-domain held-out set? A single average loss hides trade-offs between domains.
+
+## Go further
+
+The DoReMi paper gives the weighting algorithm and the transfer results. The Pile paper describes the first widely used public mixture with its weights. The Llama 3 report explains the annealing phase with upsampled high-quality data. The Dolma paper documents a fully open corpus and its mixture decisions.
+`,
+          links: [
+            { label: 'DoReMi: Optimizing Data Mixtures (Xie et al., 2023)', url: 'https://arxiv.org/abs/2305.10429', kind: 'paper' },
+            { label: 'The Pile: An 800GB Dataset of Diverse Text (Gao et al., 2020)', url: 'https://arxiv.org/abs/2101.00027', kind: 'paper' },
+            { label: 'The Llama 3 Herd of Models (2024)', url: 'https://arxiv.org/abs/2407.21783', kind: 'paper' },
+            { label: 'Dolma: An Open Corpus of Three Trillion Tokens (Soldaini et al., 2024)', url: 'https://arxiv.org/abs/2402.00159', kind: 'paper' },
+          ],
+        },
+        {
+          slug: 'deduplication',
+          title: 'Deduplication with MinHash',
+          summary: 'Duplicate documents waste compute and cause memorisation, and MinHash finds near-duplicates at web scale.',
+          minutes: 15,
+          objectives: [
+            'Compute the Jaccard similarity of two small documents.',
+            'Explain how MinHash estimates Jaccard similarity with a few numbers per document.',
+            'Describe why exact and near-duplicate removal need different tools.',
+            'Set a similarity threshold for a corpus and explain the trade-off.',
+          ],
+          keyTerms: ['deduplication', 'Jaccard similarity', 'MinHash', 'shingle', 'near-duplicate', 'memorisation'],
+          body: `
+## What this lesson covers
+
+This lesson explains why duplicate documents hurt a language model and how to remove them. It covers exact matching, Jaccard similarity, and MinHash. You will compute a similarity by hand and see how MinHash makes the computation cheap.
+
+## Why it matters
+
+Web crawls are full of copies. Boilerplate, mirrored pages, and syndicated articles appear thousands of times. The Lee study found that removing duplicates lets a model reach the same loss in fewer steps and cuts memorised output by ten times. Duplicates between training and test sets also inflate benchmark scores. Deduplication is the first filter in every modern pipeline.
+
+## The idea with an example
+
+Take two short documents:
+
+- Document A: "the cat sat on the mat"
+- Document B: "the cat sat on a mat"
+
+Split each into shingles, overlapping runs of three words. Document A has the shingles "the cat sat", "cat sat on", "sat on the", and "on the mat". Document B has "the cat sat", "cat sat on", "sat on a", and "on a mat". The two sets share 2 shingles. The union has 6 distinct shingles. The Jaccard similarity is $2 / 6 \\approx 0.33$.
+
+Exact matching finds only identical documents. It uses a hash of the full text and a lookup table. It misses Document B because one word differs. Near-duplicate detection needs the Jaccard measure, but comparing every pair of 1 billion documents is impossible.
+
+MinHash fixes this. Take a hash function and apply it to every shingle in a document. Keep only the minimum hash value. Two documents have the same minimum with probability equal to their Jaccard similarity. Repeat with 100 different hash functions. The fraction of matching minimums estimates the similarity. Each document now carries 100 numbers, its signature, instead of thousands of shingles.
+
+## How it works
+
+The Jaccard similarity is:
+
+$$J(A, B) = \\frac{|A \\cap B|}{|A \\cup B|}$$
+
+$A$ and $B$ are the shingle sets. $|A \\cap B|$ is the number of shared shingles. $|A \\cup B|$ is the number of distinct shingles across both. The key property of MinHash is:
+
+$$P\\big[\\min h(A) = \\min h(B)\\big] = J(A, B)$$
+
+$h$ is a random hash function. $\\min h(A)$ is the smallest hash over the shingles of $A$.
+
+The full procedure for a corpus:
+
+1. Normalise the text: lowercase, remove punctuation, collapse spaces.
+2. Remove exact duplicates with a hash of the full text.
+3. Split each document into shingles of 5 words, or 13 for long documents.
+4. Compute a MinHash signature of 100 to 200 values per document.
+5. Group the signature into bands. Put documents with an identical band into one bucket.
+6. Compare documents in the same bucket. Mark pairs above the threshold as duplicates.
+7. Keep one document per group of duplicates.
+
+Step 5 is locality-sensitive hashing. It keeps the number of comparisons small. With 20 bands of 5 values each, pairs with similarity 0.8 land in a shared bucket with high probability, and pairs with similarity 0.3 almost never do.
+
+The threshold is a trade-off. A threshold of 0.9 removes mirrored pages and keeps paraphrases. A threshold of 0.5 removes more templated text and some useful variants. Most pipelines use 0.7 to 0.85.
+
+Note: the Lee study also removed repeated substrings of 50 tokens across documents with a suffix array. That catches licence text and headers that MinHash misses.
+
+## Common mistakes
+
+- Mistake: you only remove exact duplicates. Fix: add MinHash for near-duplicates.
+- Mistake: you deduplicate within each source but not across sources. Fix: run one pass over the whole corpus.
+- Mistake: you forget to deduplicate against evaluation sets. Fix: remove training documents that overlap benchmark test sets.
+- Mistake: you use short shingles on long documents. Fix: longer shingles reduce false matches.
+
+## Check your understanding
+
+- Two documents share 4 shingles and have 10 distinct shingles in total. What is their Jaccard similarity? It is 0.4.
+- What does one MinHash value tell you? Whether two documents share the smallest hash, which happens with probability equal to their similarity.
+- Why group signatures into bands? To compare only likely pairs instead of every pair.
+
+## Go further
+
+The Lee paper measures the effect of deduplication on loss and memorisation. The RefinedWeb paper describes a web pipeline built around deduplication. The datasketch repository implements MinHash and locality-sensitive hashing in Python. The FineWeb paper reports the surprising result that global deduplication can remove too much.
+`,
+          links: [
+            { label: 'Deduplicating Training Data Makes Language Models Better (Lee et al., 2021)', url: 'https://arxiv.org/abs/2107.06499', kind: 'paper' },
+            { label: 'The RefinedWeb Dataset for Falcon LLM (Penedo et al., 2023)', url: 'https://arxiv.org/abs/2306.01116', kind: 'paper' },
+            { label: 'datasketch', url: 'https://github.com/ekzhu/datasketch', kind: 'repo' },
+            { label: 'The FineWeb Datasets (2024)', url: 'https://arxiv.org/abs/2406.17557', kind: 'paper' },
+          ],
+        },
+        {
+          slug: 'curriculum',
+          title: 'Quality filtering and curriculum',
+          summary: 'Filters pick the tokens worth training on, and the order of data across a run changes the final model.',
+          minutes: 14,
+          objectives: [
+            'Describe a classifier-based quality filter and how to train it.',
+            'Explain the annealing phase and why it uses high-quality data.',
+            'Compare a fixed mixture with a curriculum on a small experiment.',
+            'Choose a context length schedule for a long-context model.',
+          ],
+          keyTerms: ['quality filter', 'curriculum', 'annealing', 'perplexity', 'context length', 'classifier'],
+          body: `
+## What this lesson covers
+
+This lesson covers two decisions after deduplication. The first is quality filtering, the step that scores each document and drops the worst. The second is curriculum, the order in which the model sees data over a run. You will see how an annealing phase at the end of training raises benchmark scores.
+
+## Why it matters
+
+A trillion raw web tokens contain a large fraction of spam, navigation text, and broken markup. A good filter removes most of it and keeps the tokens that teach. Teams that report large gains from "better data" usually mean a better filter. Curriculum is newer. A short phase of high-quality data at the end of a run is now standard practice.
+
+## The idea with an example
+
+Take a 100 billion token run. Compare two plans:
+
+| Plan | Tokens 0 to 90 B | Tokens 90 B to 100 B |
+| --- | --- | --- |
+| Fixed | Web mixture | Web mixture |
+| Annealed | Web mixture | 50 percent web, 50 percent curated |
+
+The curated set holds textbooks, high-quality code, and reasoning data. In the annealed plan the learning rate also decays to near zero over the final 10 billion tokens. The Llama 3 team used this pattern and reported gains of several points on reasoning benchmarks. The model is most sensitive to data during the decay, so the data it sees then leaves a strong mark.
+
+Quality filtering happens earlier, before the run starts. A simple filter uses rules: drop documents with fewer than 50 words, drop documents where more than 30 percent of lines end without punctuation, and drop documents with a high ratio of symbols to words. A stronger filter trains a classifier. Take 100,000 documents from a trusted source, such as reference articles, as positives. Take 100,000 random web documents as negatives. Train a fast linear model on word features. Score every document in the corpus and keep the top 20 to 40 percent.
+
+## How it works
+
+A filter assigns each document a score and a decision:
+
+$$\\text{keep}(d) = \\mathbf{1}\\big[s(d) > \\tau\\big]$$
+
+$d$ is a document. $s(d)$ is the score from rules or a classifier. $\\tau$ is a threshold. $\\mathbf{1}$ is the indicator function, which is 1 when the condition holds and 0 otherwise.
+
+To build and test a classifier filter:
+
+1. Collect positive examples from a trusted source and negatives from the raw corpus.
+2. Train a fast classifier on word or character features.
+3. Score the corpus and pick a threshold that keeps the token count you need.
+4. Train two small models, one on filtered data and one on unfiltered data, for the same token count.
+5. Compare loss on held-out sets and benchmark scores.
+
+A curriculum changes the data distribution over time. Three curricula are common:
+
+- Annealing: shift to high-quality data during the learning rate decay.
+- Context length: train on short sequences first, then extend to long sequences in the last few percent of the run.
+- Difficulty: start with simple text and add harder domains such as mathematics later.
+
+The context length schedule saves compute. Attention cost grows with the square of the sequence length. Training 95 percent of the run at 8,000 tokens and 5 percent at 128,000 tokens costs much less than the full run at 128,000 tokens, and the long-context quality is close.
+
+Caution: a filter trained on one source teaches the model that source's style. Check that the filtered corpus still covers the domains you need.
+
+## Common mistakes
+
+- Mistake: you set the threshold to keep only the top 5 percent. Fix: check that enough tokens remain for the run, and relax the threshold if not.
+- Mistake: you anneal on data the evaluation set overlaps with. Fix: deduplicate the curated set against every benchmark first.
+- Mistake: you extend context length at the start of training. Fix: extend it at the end, after the model learns short-range structure.
+- Mistake: you judge a filter by eye. Fix: train two small models and compare them.
+
+## Check your understanding
+
+- When does the annealing phase happen? During the learning rate decay at the end of the run.
+- What do you need to train a classifier filter? Trusted positives and random negatives from the corpus.
+- Why train on short sequences first? Attention cost grows with the square of the length, and short-range structure comes first.
+
+## Go further
+
+The FineWeb paper describes rule filters and a classifier filter with ablations for each step. The Phi paper shows what a strongly filtered corpus achieves. The Llama 3 report documents the annealing phase and the context length schedule. The RefinedWeb paper gives a full pipeline from crawl to corpus.
+`,
+          links: [
+            { label: 'The FineWeb Datasets (2024)', url: 'https://arxiv.org/abs/2406.17557', kind: 'paper' },
+            { label: 'Textbooks Are All You Need (Gunasekar et al., 2023)', url: 'https://arxiv.org/abs/2306.11644', kind: 'paper' },
+            { label: 'The Llama 3 Herd of Models (2024)', url: 'https://arxiv.org/abs/2407.21783', kind: 'paper' },
+            { label: 'The RefinedWeb Dataset for Falcon LLM (Penedo et al., 2023)', url: 'https://arxiv.org/abs/2306.01116', kind: 'paper' },
+            { label: 'Hugging Face datasets documentation', url: 'https://huggingface.co/docs/datasets', kind: 'docs' },
+          ],
+        },
+      ],
+    },
+    {
+      slug: 'architectures-beyond',
+      title: 'Architectures beyond the dense transformer',
+      description: 'Mixture of experts, state space models, and the methods that make long context work.',
+      lessons: [
+        {
+          slug: 'mixture-of-experts',
+          title: 'Mixture of experts',
+          summary: 'A sparse model keeps many feed-forward experts but runs only a few per token, so weights grow faster than compute.',
+          minutes: 17,
+          objectives: [
+            'Compute active and total weights for a mixture of experts (MoE) layer.',
+            'Trace one token through a top-2 router by hand.',
+            'Explain why a load-balancing loss is needed.',
+            'State the memory and serving costs that MoE does not reduce.',
+          ],
+          keyTerms: ['mixture of experts', 'expert', 'router', 'top-k gating', 'load balancing', 'active weights', 'feed-forward network'],
+          body: `
+## What this lesson covers
+
+This lesson explains the mixture of experts (MoE) layer. An MoE layer replaces one feed-forward network with several, called experts, and a router that picks a few experts per token. You will trace a token through the router and count the weights.
+
+## Why it matters
+
+Mixtral, DeepSeek-V3, and several frontier models use MoE. The design lets a model hold hundreds of billions of weights while spending the compute of a much smaller model per token. The cost moves from compute to memory. If you serve or train these models, you need to understand where that cost went.
+
+## The idea with an example
+
+Take a dense transformer block with width $d = 4$ and a feed-forward network with hidden width 16. The feed-forward network has $4 \\times 16 + 16 \\times 4 = 128$ weights. Replace it with 8 experts of the same shape. The layer now has $8 \\times 128 = 1{,}024$ weights.
+
+A router decides which experts a token uses. The router is a small matrix of shape $4 \\times 8$. It maps the token vector to 8 scores. Suppose a token produces the scores:
+
+| Expert | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Score | 0.1 | 2.0 | 0.3 | 1.5 | 0.0 | 0.2 | 0.4 | 0.1 |
+
+With top-2 gating, the router keeps experts 2 and 4. It applies softmax to their two scores: $e^{2.0} / (e^{2.0} + e^{1.5}) \\approx 0.62$ and $0.38$. The token goes through expert 2 and expert 4 only. The output is $0.62 \\times \\text{expert}_2(x) + 0.38 \\times \\text{expert}_4(x)$.
+
+Count the cost. The token used $2 \\times 128 = 256$ expert weights plus the 32 router weights. The layer holds 1,024 weights. The active weights are about a quarter of the total. Compute per token grew by two times compared with the dense block, but capacity grew by eight times.
+
+## How it works
+
+The MoE layer computes:
+
+$$y = \\sum_{i \\in \\mathrm{TopK}(g(x))} \\frac{e^{g_i(x)}}{\\sum_{j \\in \\mathrm{TopK}} e^{g_j(x)}}\\, E_i(x)$$
+
+$x$ is the token vector. $g(x) = x W_g$ is the router output, one score per expert. $\\mathrm{TopK}$ selects the $k$ highest scores. $E_i$ is expert $i$, a feed-forward network. $y$ is the layer output.
+
+Routing creates a balance problem. If the router sends most tokens to expert 2, that expert learns and the others do not. The router then sends even more tokens to expert 2. A load-balancing loss prevents this:
+
+$$\\mathcal{L}_{\\text{bal}} = \\alpha\\, N \\sum_{i=1}^{N} f_i\\, P_i$$
+
+$N$ is the number of experts. $f_i$ is the fraction of tokens routed to expert $i$. $P_i$ is the mean router probability for expert $i$. $\\alpha$ is a small weight, often 0.01. The loss is lowest when every expert receives the same share.
+
+To size an MoE model:
+
+1. Choose the number of experts $N$ and the number of active experts $k$.
+2. Compute the total weights: attention weights plus $N$ times the expert size per layer.
+3. Compute the active weights: attention weights plus $k$ times the expert size per layer.
+4. Use the active weights for compute estimates and the total weights for memory.
+
+Mixtral 8x7B has 47 billion total weights and 13 billion active weights per token. It runs at the speed of a 13 billion weight model and needs the memory of a 47 billion weight model.
+
+Caution: during serving, every expert must sit in GPU memory, because any token might call it. MoE cuts compute per token, not memory per token.
+
+## Common mistakes
+
+- Mistake: you quote total weights as a proxy for cost. Fix: report both total and active weights.
+- Mistake: you train with no balancing loss. Fix: add it, and track the token share per expert.
+- Mistake: you place all experts on one device. Fix: use expert parallelism to spread experts across devices.
+- Mistake: you set $k$ equal to $N$. Fix: that is a dense model with extra routing cost.
+
+## Check your understanding
+
+- A layer has 16 experts and top-2 routing. What fraction of expert weights does each token use? One eighth.
+- What does the load-balancing loss reward? An equal share of tokens across experts.
+- Which cost does MoE not reduce? Memory, because all experts must be loaded.
+
+## Go further
+
+The Shazeer paper introduced sparse gating with the balancing loss. The Switch Transformer paper simplified routing to top-1 and scaled it. The Mixtral paper reports a modern open MoE with its design choices. The Hugging Face blog post on MoE is a clear overview with diagrams.
+`,
+          links: [
+            { label: 'Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer (Shazeer et al., 2017)', url: 'https://arxiv.org/abs/1701.06538', kind: 'paper' },
+            { label: 'Switch Transformers (Fedus et al., 2021)', url: 'https://arxiv.org/abs/2101.03961', kind: 'paper' },
+            { label: 'Mixtral of Experts (Jiang et al., 2024)', url: 'https://arxiv.org/abs/2401.04088', kind: 'paper' },
+            { label: 'Mixture of Experts Explained (Hugging Face)', url: 'https://huggingface.co/blog/moe', kind: 'article' },
+          ],
+        },
+        {
+          slug: 'state-space-models',
+          title: 'State space models and Mamba',
+          summary: 'A state space model updates a fixed-size state at each token, so it costs constant memory per step.',
+          minutes: 18,
+          objectives: [
+            'Run a scalar state space recurrence by hand for a 4-token sequence.',
+            'Explain why a linear recurrence can run as a convolution in training.',
+            'Describe the selection mechanism that Mamba adds.',
+            'Compare the inference cost of a state space model and a transformer.',
+          ],
+          keyTerms: ['state space model', 'Mamba', 'recurrence', 'hidden state', 'selective scan', 'KV cache', 'linear time'],
+          body: `
+## What this lesson covers
+
+This lesson explains state space models (SSMs), a family of sequence layers with a fixed-size state. It covers the basic recurrence, the trick that trains it in parallel, and the selection mechanism from Mamba. You will run a tiny recurrence by hand and compare the costs with attention.
+
+## Why it matters
+
+Attention stores a key and a value for every past token. At 1 million tokens of context, that cache is tens of gigabytes. A state space model stores one state vector of fixed size, no matter how long the input is. Mamba matched transformers on language modelling at small scale with linear cost in sequence length. Hybrid models now mix both layer types.
+
+## The idea with an example
+
+A state space model keeps a state $h_t$ and updates it at each step:
+
+$$h_t = a\\, h_{t-1} + b\\, x_t, \\qquad y_t = c\\, h_t$$
+
+Set $a = 0.5$, $b = 1$, $c = 1$, and $h_0 = 0$. Feed the sequence $x = [1, 0, 0, 2]$:
+
+| Step $t$ | $x_t$ | $h_t = 0.5 h_{t-1} + x_t$ | $y_t$ |
+| --- | --- | --- | --- |
+| 1 | 1 | 0.5 × 0 + 1 = 1.0 | 1.0 |
+| 2 | 0 | 0.5 × 1.0 + 0 = 0.5 | 0.5 |
+| 3 | 0 | 0.5 × 0.5 + 0 = 0.25 | 0.25 |
+| 4 | 2 | 0.5 × 0.25 + 2 = 2.125 | 2.125 |
+
+The state remembers the input from step 1 with a weight that halves each step. The output at step 4 contains $0.125$ from step 1 plus $2$ from step 4. This is a weighted sum over the past with weights $a^{t-s}$. Because the weights only depend on the distance $t - s$, the whole output is a convolution of the input with the kernel $[1, 0.5, 0.25, 0.125]$. A convolution runs in parallel on a GPU. So the model trains as a convolution and runs as a recurrence.
+
+The constant $a$ is the weakness. The model forgets every input at the same rate. It cannot choose to remember the word "not" longer than the word "the". Mamba fixes this by letting $a$, $b$, and $c$ depend on the current input. The model now decides at each token how much to keep and how much to write. This is the selection mechanism.
+
+## How it works
+
+The general discrete state space layer is:
+
+$$h_t = \\bar{A}\\, h_{t-1} + \\bar{B}\\, x_t, \\qquad y_t = C\\, h_t$$
+
+$h_t$ is the state vector of size $N$. $x_t$ is the input at step $t$. $\\bar{A}$ is an $N \\times N$ matrix that decays the state. $\\bar{B}$ writes the input into the state. $C$ reads the output from the state. In S4 and Mamba, $\\bar{A}$ is diagonal, so the update is cheap.
+
+Mamba computes $\\bar{B}$, $C$, and a step size $\\Delta$ from $x_t$ with small linear layers. The step size scales the decay: a large $\\Delta$ resets the state, and a small $\\Delta$ keeps it. Because the parameters change per token, the convolution trick no longer applies. Mamba uses a parallel scan instead, an algorithm that computes all $h_t$ in $O(T \\log T)$ parallel work with the recurrence kept in fast on-chip memory.
+
+To compare costs for a sequence of $T$ tokens with state size $N$ and model width $d$:
+
+| Cost | Attention | State space model |
+| --- | --- | --- |
+| Training compute | $O(T^2 d)$ | $O(T N d)$ |
+| Inference memory per layer | $O(T d)$ | $O(N d)$ |
+| Compute per generated token | $O(T d)$ | $O(N d)$ |
+
+With $N = 16$ and $T = 100{,}000$, the state space model is thousands of times cheaper per generated token.
+
+Note: fixed state size is also a limit. The model cannot recall an exact token from 50,000 steps ago unless the state kept it. Transformers do this with no effort. Hybrid models place one attention layer per several state space layers to get both.
+
+## Common mistakes
+
+- Mistake: you expect a state space model to copy a long random string. Fix: use a hybrid with attention for exact recall.
+- Mistake: you train the selective model with a plain convolution. Fix: the parameters vary per token, so use the scan.
+- Mistake: you compare models at different training token counts. Fix: match the token budget and the weight count.
+- Mistake: you ignore hardware. Fix: the scan needs a fused kernel to be fast.
+
+## Check your understanding
+
+- In the example, what weight does input 1 have at step 4? $0.5^3 = 0.125$.
+- Why can a fixed state space model train as a convolution? The weights depend only on distance, so the output is a fixed kernel applied to the input.
+- What does Mamba make input-dependent? The write matrix, the read matrix, and the step size.
+
+## Go further
+
+The Mamba paper introduces selection and the hardware-aware scan. The S4 paper gives the structured state space foundation. The Mamba-2 paper connects state space models to a form of linear attention. The Annotated S4 walks through the mathematics with code. The Mamba repository has the reference implementation.
+`,
+          links: [
+            { label: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces (Gu and Dao, 2023)', url: 'https://arxiv.org/abs/2312.00752', kind: 'paper' },
+            { label: 'Efficiently Modeling Long Sequences with Structured State Spaces (Gu et al., 2021)', url: 'https://arxiv.org/abs/2111.00396', kind: 'paper' },
+            { label: 'Transformers are SSMs: Mamba-2 (Dao and Gu, 2024)', url: 'https://arxiv.org/abs/2405.21060', kind: 'paper' },
+            { label: 'The Annotated S4', url: 'https://srush.github.io/annotated-s4/', kind: 'article' },
+            { label: 'Mamba repository', url: 'https://github.com/state-spaces/mamba', kind: 'repo' },
+          ],
+        },
+        {
+          slug: 'long-context',
+          title: 'Long context: cost, extension, and evaluation',
+          summary: 'Long context needs a cheaper attention kernel, a position extension, and a test that measures real recall.',
+          minutes: 16,
+          objectives: [
+            'Compute the KV cache size for a given context length and model.',
+            'Explain how flash attention removes the full score matrix from memory.',
+            'Describe ring attention and how it spreads a sequence across devices.',
+            'Design a needle-in-a-haystack test and state its limits.',
+          ],
+          keyTerms: ['context length', 'KV cache', 'flash attention', 'ring attention', 'needle in a haystack', 'lost in the middle', 'RoPE'],
+          body: `
+## What this lesson covers
+
+This lesson covers the three problems of long context. The first is memory and compute for attention over many tokens. The second is the position encoding, which must extend past the training length. The third is evaluation, because a model can accept a long input and still fail to use it.
+
+## Why it matters
+
+Models now accept 128,000 to 1 million tokens. Users put whole codebases and books in one prompt. The cost of serving those prompts and the quality of answers about the middle of the prompt are open research problems. A team that ships long context without the right test ships a model that forgets the middle.
+
+## The idea with an example
+
+Take a model with 32 layers, 8 key-value heads, head width 128, and 16-bit numbers. Each token stores one key and one value per layer per head. The size per token is:
+
+$$2 \\times 32 \\times 8 \\times 128 \\times 2\\ \\text{bytes} = 131{,}072\\ \\text{bytes}$$
+
+That is 128 kilobytes per token. A 128,000 token prompt needs 16 gigabytes of KV cache for one request. The weights of an 8 billion weight model in 16-bit take another 16 gigabytes. One long request fills a 40 gigabyte GPU.
+
+Now the score matrix. Naive attention writes all $T \\times T$ scores to memory before softmax. At $T = 128{,}000$, one head has 16 billion scores. Flash attention never writes this matrix. It processes keys in blocks of a few hundred, keeps a running maximum and a running sum for the softmax, and updates the output block by block. The memory for scores drops from $O(T^2)$ to $O(T)$, and the compute stays the same but runs faster because it stays on-chip.
+
+For sequences longer than one device can hold, ring attention splits the sequence across devices. Each device holds one block of queries and passes its keys and values around a ring. After a full rotation, every query has seen every key.
+
+## How it works
+
+The online softmax that flash attention uses keeps three values per query row: the running maximum $m$, the running sum $\\ell$, and the running output $o$. For each new block of scores $s$:
+
+1. Compute the new maximum $m' = \\max(m, \\max s)$.
+2. Rescale the old sum and output by $e^{m - m'}$.
+3. Add $\\sum e^{s - m'}$ to the sum and $\\sum e^{s - m'} v$ to the output.
+4. Set $m = m'$.
+5. After the last block, divide the output by the sum.
+
+The result equals full softmax attention to within rounding error.
+
+Extension of the position encoding uses the methods from the positional encoding lesson. Scale the RoPE frequencies, then fine-tune on a small set of long documents. Llama 3 extended from 8,000 to 128,000 tokens in six stages at the end of pretraining.
+
+To evaluate long context:
+
+1. Build a long document of filler text.
+2. Insert one fact, the needle, at a chosen depth.
+3. Ask a question that the needle answers.
+4. Repeat for many depths and lengths. Plot accuracy as a grid.
+
+The needle test is necessary but weak. A model can pass it and still fail to combine two facts from different places. Stronger tests ask for multiple needles, for counting, or for reasoning over the whole input. The lost-in-the-middle study found that models use facts at the start and the end of a prompt more than facts in the middle.
+
+Caution: a model with a 128,000 token window and a 4,000 token training length for most of its run has seen few long examples. Check the recall grid before you trust it.
+
+## Common mistakes
+
+- Mistake: you size the cache by weights alone. Fix: compute bytes per token times the context length.
+- Mistake: you run naive attention at long length and run out of memory. Fix: use a flash attention kernel.
+- Mistake: you test only at the end of the prompt. Fix: test every depth and look for the dip in the middle.
+- Mistake: you extend context with no fine-tune. Fix: fine-tune on long documents after scaling the positions.
+
+## Check your understanding
+
+- A model stores 64 kilobytes per token. How much cache does a 100,000 token prompt need? About 6.4 gigabytes.
+- What does flash attention avoid writing to memory? The full $T \\times T$ score matrix.
+- What does the lost-in-the-middle result show? Models use facts in the middle of a long prompt less than facts at the edges.
+
+## Go further
+
+The flash attention paper describes the blocked kernel and the online softmax. The ring attention paper extends the idea across devices. The lost-in-the-middle paper is the key evaluation result. The YaRN paper covers the position extension. The Llama 3 report describes a full long-context training schedule.
+`,
+          links: [
+            { label: 'FlashAttention (Dao et al., 2022)', url: 'https://arxiv.org/abs/2205.14135', kind: 'paper' },
+            { label: 'Ring Attention with Blockwise Transformers (Liu et al., 2023)', url: 'https://arxiv.org/abs/2310.01889', kind: 'paper' },
+            { label: 'Lost in the Middle (Liu et al., 2023)', url: 'https://arxiv.org/abs/2307.03172', kind: 'paper' },
+            { label: 'YaRN: Efficient context window extension', url: 'https://arxiv.org/abs/2309.00071', kind: 'paper' },
+            { label: 'The Llama 3 Herd of Models (2024)', url: 'https://arxiv.org/abs/2407.21783', kind: 'paper' },
+          ],
+        },
+      ],
+    },
+    {
+      slug: 'reasoning',
+      title: 'Reasoning models',
+      description: 'Chain of thought, process rewards, reinforcement learning on verifiable tasks, and spending compute at test time.',
+      lessons: [
+        {
+          slug: 'chain-of-thought',
+          title: 'Chain of thought and self-consistency',
+          summary: 'A model that writes its steps before its answer solves more problems, and voting over several chains helps more.',
+          minutes: 15,
+          objectives: [
+            'Explain why intermediate tokens increase the compute a model spends on a problem.',
+            'Write a chain-of-thought prompt for a word problem.',
+            'Compute a majority vote over sampled chains.',
+            'State where chain of thought fails to help.',
+          ],
+          keyTerms: ['chain of thought', 'self-consistency', 'majority vote', 'in-context learning', 'temperature', 'reasoning trace'],
+          body: `
+## What this lesson covers
+
+This lesson explains chain of thought, the practice of asking a model to write its reasoning steps before its final answer. It covers the zero-shot form, the few-shot form, and self-consistency, which samples several chains and votes. You will work one problem both ways.
+
+## Why it matters
+
+Chain of thought was the first method that let language models solve multi-step arithmetic and logic. It is also the base of every reasoning model. Models such as OpenAI o1 and DeepSeek-R1 are trained to produce long chains. The lessons that follow build on the idea in this one.
+
+## The idea with an example
+
+Take the problem: "A shop has 23 apples. It uses 20 for lunch and buys 6 more. How many apples does it have?"
+
+A direct prompt asks for the answer alone. A small model often outputs 29 or 3, because it must do two steps in one token. A chain-of-thought prompt adds "Let's think step by step" or shows a worked example first. The model writes: "The shop starts with 23 apples. After lunch it has 23 minus 20, which is 3. It buys 6 more, so it has 3 plus 6, which is 9. The answer is 9."
+
+Each step is a short computation. Each generated token gives the model one more forward pass of compute. The chain turns one hard prediction into several easy ones.
+
+Self-consistency samples several chains with a temperature above zero. Suppose you sample five chains and get the answers 9, 9, 3, 9, and 29. The majority answer is 9 with 3 votes. A single chain is right about 60 percent of the time on this kind of problem. The vote over five chains is right more often, because errors in different chains tend to disagree with each other and the correct answer tends to repeat.
+
+## How it works
+
+A chain of thought changes the probability the model computes. Without a chain, the model estimates $P(\\text{answer} \\mid \\text{question})$ in one step. With a chain, it estimates:
+
+$$P(\\text{answer} \\mid \\text{question}) = \\sum_{\\text{chain}} P(\\text{answer} \\mid \\text{chain}, \\text{question})\\, P(\\text{chain} \\mid \\text{question})$$
+
+The sum runs over all possible chains. Each term is easier for the model than the direct estimate. Sampling one chain takes one term. Self-consistency approximates the sum with several samples and a vote.
+
+To apply self-consistency:
+
+1. Write a prompt with a few worked examples, each with steps and a final answer in a fixed format.
+2. Sample $n$ chains with temperature between 0.5 and 0.8.
+3. Extract the final answer from each chain with a regular expression.
+4. Return the answer with the most votes.
+
+The number of samples trades cost for accuracy. Gains flatten after 10 to 40 samples on most benchmarks.
+
+Chain of thought helps on tasks with a clear sequence of steps: arithmetic, symbolic logic, and multi-hop questions. It helps little on tasks that need a fact the model does not know, or on tasks that a single lookup solves. Small models below a few billion weights often produce chains with fluent but wrong steps, and the chain hurts.
+
+Note: a chain is not a transcript of the computation inside the model. The chain can give one reason while the model used another. Treat it as a tool, not an explanation.
+
+## Common mistakes
+
+- Mistake: you vote over chains sampled at temperature zero. Fix: raise the temperature, or all chains are identical.
+- Mistake: you vote over the full chain text. Fix: vote over the extracted final answer.
+- Mistake: you use chain of thought for a one-fact question. Fix: it adds cost and no accuracy.
+- Mistake: you trust the chain as the model's true reasoning. Fix: test the answer, not the story.
+
+## Check your understanding
+
+- Why does a chain help a model with arithmetic? Each step is one easy prediction instead of one hard prediction.
+- Five chains answer 7, 7, 8, 7, 2. What does self-consistency return? Seven.
+- What temperature setting breaks self-consistency? Zero, because every chain is the same.
+
+## Go further
+
+The chain-of-thought paper shows the few-shot method and the scale at which it starts to work. The zero-shot paper introduced the step-by-step instruction. The self-consistency paper gives the voting method and its gains. The GSM8K paper describes the grade-school mathematics benchmark used in all three.
+`,
+          links: [
+            { label: 'Chain-of-Thought Prompting Elicits Reasoning (Wei et al., 2022)', url: 'https://arxiv.org/abs/2201.11903', kind: 'paper' },
+            { label: 'Large Language Models are Zero-Shot Reasoners (Kojima et al., 2022)', url: 'https://arxiv.org/abs/2205.11916', kind: 'paper' },
+            { label: 'Self-Consistency Improves Chain of Thought Reasoning (Wang et al., 2022)', url: 'https://arxiv.org/abs/2203.11171', kind: 'paper' },
+            { label: 'Training Verifiers to Solve Math Word Problems (Cobbe et al., 2021)', url: 'https://arxiv.org/abs/2110.14168', kind: 'paper' },
+          ],
+        },
+        {
+          slug: 'process-reward-models',
+          title: 'Outcome and process reward models',
+          summary: 'An outcome reward scores the final answer, and a process reward scores each step, which gives better search and fewer lucky guesses.',
+          minutes: 16,
+          objectives: [
+            'Distinguish an outcome reward model (ORM) from a process reward model (PRM).',
+            'Score a 4-step solution with a process reward and combine the step scores.',
+            'Describe how to label steps with human raters or with rollouts.',
+            'Explain why best-of-n selection with a PRM beats majority vote.',
+          ],
+          keyTerms: ['outcome reward model', 'process reward model', 'verifier', 'best-of-n', 'step label', 'reward model'],
+          body: `
+## What this lesson covers
+
+This lesson explains verifiers for reasoning. An outcome reward model (ORM) scores a whole solution by its final answer. A process reward model (PRM) scores each step. You will score a short solution with each and see how the scores pick the best of several samples.
+
+## Why it matters
+
+A model that samples 100 solutions needs a way to pick one. Majority vote works only when the correct answer repeats. A verifier can pick a correct answer that appears once. Process rewards also give a training signal for every step, which is what reinforcement learning on reasoning uses. The choice between outcome and process rewards is a live research question.
+
+## The idea with an example
+
+Take the problem "What is 15 percent of 240, plus 7?" and a 4-step solution:
+
+1. "10 percent of 240 is 24."
+2. "5 percent of 240 is 12."
+3. "So 15 percent of 240 is 24 plus 12, which is 38."
+4. "Adding 7 gives 45."
+
+Step 3 contains an arithmetic error: 24 plus 12 is 36. An outcome reward model sees the final answer 45, compares it with the correct answer 43, and gives the solution a low score. It says nothing about where the error is.
+
+A process reward model gives each step a probability of being correct:
+
+| Step | PRM score |
+| --- | --- |
+| 1 | 0.98 |
+| 2 | 0.97 |
+| 3 | 0.05 |
+| 4 | 0.90 |
+
+The model marks step 3 as the failure. To get one score for the whole solution, take the product or the minimum of the step scores. The product is $0.98 \\times 0.97 \\times 0.05 \\times 0.90 \\approx 0.04$. The minimum is 0.05. Either way, the solution scores low, and the score points at the broken step.
+
+Now sample 10 solutions and score each. Pick the one with the highest score. This is best-of-n selection. A solution with the right answer reached by a wrong step gets a low PRM score. A majority vote would accept it.
+
+## How it works
+
+Both reward models are classifiers on top of a language model. The ORM reads the problem and the full solution and outputs one probability. The PRM reads the problem and the solution up to step $k$ and outputs a probability for step $k$. The solution score is:
+
+$$s(\\text{solution}) = \\prod_{k=1}^{K} p_k \\quad \\text{or} \\quad \\min_k p_k$$
+
+$K$ is the number of steps. $p_k$ is the PRM probability that step $k$ is correct.
+
+To train a PRM you need step labels. Two methods exist:
+
+1. Human labels: raters mark each step as correct, incorrect, or neutral. The PRM800K dataset has 800,000 such labels.
+2. Automatic labels: from each step, sample several continuations to the end. Label the step by the fraction of continuations that reach the correct final answer. Math-Shepherd introduced this method.
+
+The automatic method needs only final answers, so it scales. The label measures whether the step keeps the solution on track, not whether the step is correct by itself.
+
+To use a verifier at test time:
+
+1. Sample $n$ solutions from the policy at a temperature above zero.
+2. Score each solution with the verifier.
+3. Return the solution with the best score, or group by final answer and sum scores per answer.
+
+The second option, weighted voting, combines the verifier with the vote and often wins.
+
+Caution: a verifier is a reward model and can be hacked. If you train the policy against it, watch for solutions that score high and read wrong.
+
+## Common mistakes
+
+- Mistake: you train the PRM with only final-answer labels. Fix: label steps, by raters or by rollouts.
+- Mistake: you average step scores. Fix: use the product or minimum, so one bad step sinks the solution.
+- Mistake: you pick the best of 100 with an ORM and expect the answer to be sound. Fix: the ORM accepts lucky guesses; a PRM checks the path.
+- Mistake: you sample at temperature zero. Fix: diversity is what best-of-n needs.
+
+## Check your understanding
+
+- What does a PRM output? One probability per step.
+- Why can a PRM reject a solution with the correct final answer? Because a step along the way is wrong.
+- How does Math-Shepherd label a step without humans? By the fraction of rollouts from that step that reach the correct answer.
+
+## Go further
+
+The Let's Verify Step by Step paper compares ORMs and PRMs with human step labels. The Uesato paper gives the earlier comparison on GSM8K. The Math-Shepherd paper introduces automatic step labels. The original verifier paper trained the first ORM on grade-school mathematics.
+`,
+          links: [
+            { label: "Let's Verify Step by Step (Lightman et al., 2023)", url: 'https://arxiv.org/abs/2305.20050', kind: 'paper' },
+            { label: 'Solving math word problems with process- and outcome-based feedback (Uesato et al., 2022)', url: 'https://arxiv.org/abs/2211.14275', kind: 'paper' },
+            { label: 'Math-Shepherd (Wang et al., 2023)', url: 'https://arxiv.org/abs/2312.08935', kind: 'paper' },
+            { label: 'Training Verifiers to Solve Math Word Problems (Cobbe et al., 2021)', url: 'https://arxiv.org/abs/2110.14168', kind: 'paper' },
+          ],
+        },
+        {
+          slug: 'rl-verifiable-rewards',
+          title: 'Reinforcement learning on verifiable rewards',
+          summary: 'When a checker can grade the answer, the model can learn long reasoning from the grade alone, with no reward model.',
+          minutes: 18,
+          objectives: [
+            'Define a verifiable reward and give three examples.',
+            'Compute a group-relative advantage for a batch of sampled solutions.',
+            'Explain why response length grows during training and what it means.',
+            'Describe the DeepSeek-R1 recipe in order.',
+          ],
+          keyTerms: ['verifiable reward', 'GRPO', 'advantage', 'policy', 'KL divergence', 'reasoning trace', 'reward hacking'],
+          body: `
+## What this lesson covers
+
+This lesson explains reinforcement learning with verifiable rewards (RLVR). A verifiable reward comes from a program that checks the answer: a unit test, an exact match, or a proof checker. It covers the group relative policy optimisation (GRPO) algorithm and the DeepSeek-R1 recipe. You will compute one advantage by hand.
+
+## Why it matters
+
+RLHF needs a reward model, and a reward model can be hacked. A checker cannot be hacked in the same way. A unit test either passes or fails. DeepSeek-R1 showed that a base model trained with checkers alone learns to write long chains, to check its own work, and to backtrack. This result changed how labs build reasoning models.
+
+## The idea with an example
+
+Take the problem "Find the smallest prime greater than 90." The checker is a function that returns 1 if the final answer is 97 and 0 otherwise. Sample 4 solutions from the policy:
+
+| Sample | Final answer | Reward |
+| --- | --- | --- |
+| 1 | 91 | 0 |
+| 2 | 97 | 1 |
+| 3 | 93 | 0 |
+| 4 | 97 | 1 |
+
+GRPO compares each sample with the others in its group. The group mean reward is 0.5. The standard deviation is 0.5. The advantage of each sample is its reward minus the mean, divided by the standard deviation. Samples 2 and 4 get advantage $+1$. Samples 1 and 3 get advantage $-1$.
+
+The update raises the probability of every token in samples 2 and 4. It lowers the probability of every token in samples 1 and 3. The model learns whatever those correct samples did: perhaps they listed primes, perhaps they checked divisibility by 7. Over many problems, the useful behaviours survive and the useless ones fade.
+
+Nothing in this loop needs a reward model or a human label. It needs problems with checkable answers.
+
+## How it works
+
+The GRPO advantage for sample $i$ in a group of $G$ samples is:
+
+$$A_i = \\frac{r_i - \\mathrm{mean}(r_1, \\dots, r_G)}{\\mathrm{std}(r_1, \\dots, r_G)}$$
+
+$r_i$ is the reward of sample $i$. The mean and standard deviation are over the group. The group replaces the value network that PPO uses, which saves a full model copy.
+
+The objective is the PPO clipped objective with this advantage, plus a KL penalty to a reference model:
+
+$$\\mathcal{L} = -\\mathbb{E}\\left[\\min\\big(\\rho_i A_i,\\ \\mathrm{clip}(\\rho_i, 1 - \\epsilon, 1 + \\epsilon) A_i\\big)\\right] + \\beta\\, \\mathrm{KL}(\\pi_\\theta \\,\\|\\, \\pi_{\\text{ref}})$$
+
+$\\rho_i$ is the ratio of the new policy probability to the old policy probability for the sample. $\\epsilon$ is the clip range, often 0.2. $\\beta$ is the KL weight.
+
+The DeepSeek-R1 recipe in order:
+
+1. Start from the base model. Run GRPO on mathematics and code with checkers only. This is R1-Zero. The chains grow long and the model learns to reflect, but the text is hard to read.
+2. Collect a few thousand clean long chains. Fine-tune the base model on them as a cold start.
+3. Run GRPO again on verifiable tasks, with a small reward for a consistent language.
+4. Sample a large set of solutions, filter by the checker, and fine-tune on them together with general data.
+5. Run a final RLHF stage for helpfulness and safety.
+
+Response length grows during step 1. The model finds that more steps give more chances to check its work. The length curve is a useful signal: a sudden drop means the policy found a shortcut in the checker.
+
+Caution: a checker with a hole becomes a reward to hack. A test suite that only checks one case teaches the model to print that case.
+
+## Common mistakes
+
+- Mistake: you use a checker that matches the answer as a string. Fix: normalise formats, or the model learns formats and not mathematics.
+- Mistake: you set the group size to 2. Fix: use 8 to 64 samples so the mean and standard deviation are stable.
+- Mistake: you remove the KL penalty for speed. Fix: keep a small penalty, or the model drifts into unreadable text.
+- Mistake: you train only on problems the model already solves. Fix: pick problems with a pass rate between 20 and 80 percent, so the group has both outcomes.
+
+## Check your understanding
+
+- What is the advantage of a correct sample in a group where 1 of 4 is correct? The mean is 0.25, the standard deviation is about 0.43, so the advantage is about 1.7.
+- What does GRPO remove compared with PPO? The value network.
+- Why does response length rise during training? Longer chains give the model more chances to check and correct its work.
+
+## Go further
+
+The DeepSeek-R1 paper gives the full recipe and the R1-Zero result. The DeepSeekMath paper introduces GRPO. The STaR paper is the earlier idea of fine-tuning on self-generated correct chains. The OpenAI o1 post describes the first production reasoning model. The TRL documentation includes a GRPO trainer.
+`,
+          links: [
+            { label: 'DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via RL (2025)', url: 'https://arxiv.org/abs/2501.12948', kind: 'paper' },
+            { label: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning (2024)', url: 'https://arxiv.org/abs/2402.03300', kind: 'paper' },
+            { label: 'STaR: Bootstrapping Reasoning With Reasoning (Zelikman et al., 2022)', url: 'https://arxiv.org/abs/2203.14465', kind: 'paper' },
+            { label: 'Learning to reason with LLMs (OpenAI)', url: 'https://openai.com/index/learning-to-reason-with-llms/', kind: 'article' },
+            { label: 'TRL documentation', url: 'https://huggingface.co/docs/trl', kind: 'docs' },
+          ],
+        },
+        {
+          slug: 'test-time-compute',
+          title: 'Scaling test-time compute',
+          summary: 'Spending more compute per question at inference can beat spending it on a bigger model, within limits.',
+          minutes: 15,
+          objectives: [
+            'Compare three ways to spend inference compute on one question.',
+            'Compute the coverage of a sampling budget from a per-sample pass rate.',
+            'Explain when test-time compute beats a larger model and when it does not.',
+            'Describe the budget-forcing method from the s1 paper.',
+          ],
+          keyTerms: ['test-time compute', 'best-of-n', 'coverage', 'tree search', 'budget forcing', 'compute-optimal'],
+          body: `
+## What this lesson covers
+
+This lesson covers test-time compute, the compute a model spends on one question at inference time. It compares three methods: longer chains, parallel sampling with a verifier, and search over steps. You will compute how many samples a problem needs and see the trade-off against training a larger model.
+
+## Why it matters
+
+A trained model has a fixed quality per forward pass. Test-time methods raise that quality on demand. Reasoning models now expose a "thinking budget". Serving teams must price it, and research teams must decide whether a budget is better spent on training or on inference. The scaling curves in this lesson decide that.
+
+## The idea with an example
+
+Suppose a model solves a hard problem on 10 percent of single samples. Sample once and the chance of at least one correct answer is 0.10. Sample 10 times and the chance is $1 - 0.9^{10} \\approx 0.65$. Sample 100 times and it is $1 - 0.9^{100} \\approx 1.0$. This quantity is coverage. Coverage says a correct answer is in the set. It does not say you can find it.
+
+Three ways to use the samples:
+
+| Method | Finds the answer when | Cost |
+| --- | --- | --- |
+| Majority vote | the correct answer is the most common | $n$ samples |
+| Best-of-n with a verifier | the verifier ranks a correct sample first | $n$ samples plus $n$ verifier calls |
+| Step search with a PRM | the PRM steers each step | fewer full samples, more partial ones |
+
+For a problem at 10 percent pass rate, majority vote fails, because wrong answers outnumber the right one. A verifier can still pick the correct sample. For a problem at 70 percent pass rate, majority vote is enough and the verifier adds little.
+
+A longer chain is the serial option. The model spends more tokens on one attempt instead of several attempts. The s1 paper forced longer chains by appending the word "Wait" when the model tried to stop. Accuracy rose with each extension, up to a limit.
+
+## How it works
+
+Coverage for $n$ independent samples with pass rate $p$ is:
+
+$$c(n) = 1 - (1 - p)^{n}$$
+
+$c(n)$ is the probability that at least one sample is correct. $p$ is the single-sample pass rate. The Large Language Monkeys study found that measured coverage follows this curve across several orders of magnitude of $n$.
+
+To choose a test-time strategy for a given problem distribution:
+
+1. Measure the single-sample pass rate on a sample of problems.
+2. For easy problems with $p > 0.5$, use majority vote with a small $n$.
+3. For medium problems, use best-of-n with a verifier.
+4. For hard problems with $p < 0.1$, use step search or a longer chain, and accept a lower ceiling.
+5. Record accuracy against compute for each method and keep the frontier.
+
+The Snell study compared test-time compute with pretraining compute. For easy and medium problems, a small model with search matched a model 14 times larger. For the hardest problems, the larger model won, because no amount of sampling helps a model that cannot produce one correct step.
+
+Budget forcing controls the serial chain. Set a maximum token count and cut the chain there. Set a minimum and append a continuation prompt until the chain reaches it. The s1 paper trained on 1,000 curated chains and used this control to trace a clean accuracy curve against thinking tokens.
+
+Note: the cost of a long chain is paid in KV cache memory and latency, not only in FLOPs. A 30,000 token chain holds a 30,000 token cache for the whole request.
+
+## Common mistakes
+
+- Mistake: you report coverage as accuracy. Fix: coverage is an upper bound; report the accuracy of the selection method.
+- Mistake: you use majority vote on hard problems. Fix: wrong answers outnumber the right one; use a verifier.
+- Mistake: you assume test-time compute always beats a bigger model. Fix: it loses on the hardest problems.
+- Mistake: you extend the chain without a cap. Fix: accuracy flattens, and cost does not.
+
+## Check your understanding
+
+- A model has a 20 percent pass rate. What is the coverage with 10 samples? About 89 percent.
+- Which selection method works when the correct answer appears once in 100 samples? A verifier with best-of-n.
+- What does budget forcing control? The length of the reasoning chain.
+
+## Go further
+
+The Snell paper gives the compute-optimal comparison between test-time and pretraining compute. The Large Language Monkeys paper measures coverage curves. The s1 paper describes budget forcing with a small fine-tune. The Tree of Thoughts paper is the first step search method.
+`,
+          links: [
+            { label: 'Scaling LLM Test-Time Compute Optimally (Snell et al., 2024)', url: 'https://arxiv.org/abs/2408.03314', kind: 'paper' },
+            { label: 'Large Language Monkeys: Scaling Inference Compute with Repeated Sampling (Brown et al., 2024)', url: 'https://arxiv.org/abs/2407.21787', kind: 'paper' },
+            { label: 's1: Simple test-time scaling (Muennighoff et al., 2025)', url: 'https://arxiv.org/abs/2501.19393', kind: 'paper' },
+            { label: 'Tree of Thoughts (Yao et al., 2023)', url: 'https://arxiv.org/abs/2305.10601', kind: 'paper' },
+          ],
+        },
+      ],
+    },
+    {
+      slug: 'research-practice',
+      title: 'Research practice',
+      description: 'How to read a paper, reproduce a result, run ablations, and write up what you found.',
+      lessons: [
+        {
+          slug: 'read-a-paper',
+          title: 'How to read a paper',
+          summary: 'Read in three passes, write the claim in one sentence, and check the evidence before you believe it.',
+          minutes: 14,
+          objectives: [
+            'Apply the three-pass method to a machine learning paper.',
+            'Write the main claim of a paper in one sentence with its conditions.',
+            'Check whether the experiments support the claim.',
+            'Keep a reading log that you can search later.',
+          ],
+          keyTerms: ['three-pass method', 'claim', 'baseline', 'ablation', 'reading log', 'related work'],
+          body: `
+## What this lesson covers
+
+This lesson gives a procedure for reading a research paper. It uses the three-pass method and adds checks that fit machine learning papers. You will apply it to one paper and produce a one-paragraph note.
+
+## Why it matters
+
+The field publishes thousands of papers each month. A researcher cannot read them all in full. A fixed procedure lets you decide in 10 minutes whether a paper deserves an hour. It also protects you from a common error: accepting a claim because the abstract states it with confidence.
+
+## The idea with an example
+
+Take the Chinchilla paper as the example. Apply the three passes.
+
+Pass one takes 10 minutes. Read the title, the abstract, the section headings, and every figure caption. Read the conclusion. Write the claim in one sentence: "For a fixed compute budget, loss is lowest when weights and tokens grow at the same rate, so most 2022 models were too large for their data." Note the conditions: one model family, one data mix, loss measured on held-out text.
+
+Pass two takes about an hour. Read the full text but skip the proofs. Study each figure. For Chinchilla, figure 1 shows three fitting methods and their agreement. Look at the axes: are they log-scaled, and what range do they cover? Check the baselines: the paper compares with Gopher, a model from the same lab with the same data. Write down every question you cannot answer.
+
+Pass three takes several hours and is for papers you will build on. Re-derive the key result. For Chinchilla, fit the loss equation to the data in the appendix and check the exponents. Try to break the argument. The learning rate schedule difference with Kaplan is the key detail. Would the result hold with a different tokeniser? The paper does not say.
+
+The note at the end of pass two for this paper is one paragraph: the claim, the conditions, the strongest evidence, the weakest point, and what you would test next.
+
+## How it works
+
+The three passes are:
+
+1. Pass one: title, abstract, headings, figures, conclusion. Decide whether to continue.
+2. Pass two: full text without proofs. Note every unanswered question.
+3. Pass three: re-derive and reproduce. Attack the argument.
+
+For a machine learning paper, add these checks during pass two:
+
+- Find the baseline. Ask whether the baseline was tuned as hard as the new method.
+- Find the ablation table. Ask which component the gain depends on.
+- Find the number of runs. Ask whether the gap is larger than the variation between seeds.
+- Find the evaluation data. Ask whether the training data could contain it.
+- Find the compute. Ask whether the comparison holds compute equal.
+
+Write the claim as: "Under conditions C, method M beats baseline B on metric X by amount D." If you cannot fill every slot, the paper has not told you enough.
+
+Keep a reading log. One entry per paper, with the one-sentence claim, the conditions, one figure that carries the evidence, and your open questions. Use plain text so you can search it. After a year the log is worth more than any single paper.
+
+Note: a paper from a well-known lab needs the same checks as any other paper. The Kaplan paper came from a strong lab and was still corrected by Chinchilla.
+
+## Common mistakes
+
+- Mistake: you read every paper start to finish. Fix: stop after pass one for most papers.
+- Mistake: you believe the abstract. Fix: find the figure that supports the claim and read its axes.
+- Mistake: you skip the appendix. Fix: the hyperparameters and the failure cases live there.
+- Mistake: you remember the claim and forget the conditions. Fix: write both in the log.
+
+## Check your understanding
+
+- What do you read in pass one? Title, abstract, headings, figures, and conclusion.
+- What question do you ask about a baseline? Whether it was tuned as hard as the new method.
+- What makes a claim complete? Conditions, method, baseline, metric, and the size of the gain.
+
+## Go further
+
+Keshav's short guide is the source of the three-pass method. The troubling trends paper lists the ways papers mislead, with examples. Hamming's talk on research explains how to pick what to read and what to work on. The Chinchilla paper is a good first subject for the full procedure.
+`,
+          links: [
+            { label: 'How to Read a Paper (Keshav)', url: 'https://web.stanford.edu/class/ee384m/Handouts/HowtoReadPaper.pdf', kind: 'article' },
+            { label: 'Troubling Trends in Machine Learning Scholarship (Lipton and Steinhardt, 2018)', url: 'https://arxiv.org/abs/1807.03341', kind: 'paper' },
+            { label: 'You and Your Research (Hamming)', url: 'https://www.cs.virginia.edu/~robins/YouAndYourResearch.html', kind: 'article' },
+            { label: 'Training Compute-Optimal Large Language Models (Hoffmann et al., 2022)', url: 'https://arxiv.org/abs/2203.15556', kind: 'paper' },
+          ],
+        },
+        {
+          slug: 'reproduce-a-result',
+          title: 'Reproduce a result',
+          summary: 'A reproduction starts from the smallest run that shows the effect, matches the baseline first, and logs everything.',
+          minutes: 16,
+          objectives: [
+            'Choose the smallest experiment that tests the main claim of a paper.',
+            'Match a published baseline number before you change anything.',
+            'Track seeds, configurations, and metrics so a run can be repeated.',
+            'Decide when a gap between your number and the paper is real.',
+          ],
+          keyTerms: ['reproduction', 'baseline', 'seed', 'variance', 'configuration', 'experiment tracking'],
+          body: `
+## What this lesson covers
+
+This lesson gives a procedure for reproducing a published result. It covers how to scale the experiment down, how to match the baseline, how to log the work, and how to judge a gap. You will plan a reproduction of a small claim.
+
+## Why it matters
+
+Reproduction is the fastest way to learn a method and the only way to trust it. Many published gains shrink or vanish when another team runs them. A researcher who can reproduce results in a week is more valuable than one who can only read them. Every new project should start with a reproduction of its strongest baseline.
+
+## The idea with an example
+
+Take the claim "chain-of-thought prompting raises accuracy on grade-school mathematics". The paper reports a gain for a model with over 100 billion weights. You do not have that model. Plan a small version.
+
+Step one: pick the smallest setting where the effect should appear. The paper's own figure shows gains from about 10 billion weights. Choose an open model of that size. Choose 500 problems from the test set instead of all 1,319.
+
+Step two: match the baseline. Run the direct prompt and record accuracy. The paper reports a number for a similar model. Suppose the paper reports 10 percent and you get 9 percent. The gap of 1 point on 500 problems is within the noise. Move on. If you got 25 percent, stop and find the difference, because something in your setup differs from the paper.
+
+Step three: run the method. Use the exact few-shot examples from the paper's appendix. Record accuracy. Suppose you get 32 percent and the paper reports 35 percent. The gap is 3 points with a standard error of about 2 points. The effect reproduces.
+
+Step four: write it up in one page with the configuration, the numbers, and the gap.
+
+## How it works
+
+A reproduction is itself an experiment with a hypothesis: "the published number holds in my setup". Treat it with the same care.
+
+The procedure:
+
+1. Write the claim with its conditions, from the reading lesson.
+2. Identify the smallest scale that the paper itself shows the effect at.
+3. Fix a configuration file with every setting: model, data, prompt, seed, tokeniser, evaluation script.
+4. Run the baseline. Compare with the paper. Resolve any large gap before you continue.
+5. Run the method with at least 3 seeds.
+6. Compute the mean and standard error. Compare with the paper.
+7. Save the configuration, the logs, and the outputs with a version identifier.
+
+The standard error of an accuracy estimate is:
+
+$$\\mathrm{SE} = \\sqrt{\\frac{p(1 - p)}{n}}$$
+
+$p$ is the measured accuracy. $n$ is the number of test problems. For $p = 0.3$ and $n = 500$, the standard error is about 0.02. A gap smaller than two standard errors is not evidence of a difference.
+
+A gap is real when it is larger than the seed variation and the sampling error, and when it survives a check of the configuration. Common causes of a false gap are a different tokeniser, a different prompt format, a different evaluation parser, and a different data split. Check those four first.
+
+Caution: a result that reproduces only with the authors' exact seed is not a result. Run several seeds.
+
+## Common mistakes
+
+- Mistake: you start at full scale. Fix: start at the smallest scale that shows the effect.
+- Mistake: you change the method before the baseline matches. Fix: match the baseline first.
+- Mistake: you run one seed. Fix: run at least three and report the spread.
+- Mistake: you keep settings in your shell history. Fix: put every setting in a versioned configuration file.
+
+## Check your understanding
+
+- What do you do before you run the new method? Match the published baseline.
+- With accuracy 0.5 on 200 problems, what is the standard error? About 0.035.
+- Name two common causes of a false gap. A different prompt format and a different evaluation parser.
+
+## Go further
+
+The Pineau paper gives a reproducibility checklist that conference reviewers use. The releasing-research-code repository lists what a code release should include. The Weights and Biases documentation shows how to track configurations and metrics. Karpathy's recipe post is a field guide to debugging a training run.
+`,
+          links: [
+            { label: 'Improving Reproducibility in Machine Learning Research (Pineau et al., 2020)', url: 'https://arxiv.org/abs/2003.12206', kind: 'paper' },
+            { label: 'ML Code Completeness Checklist', url: 'https://github.com/paperswithcode/releasing-research-code', kind: 'repo' },
+            { label: 'Weights and Biases documentation', url: 'https://docs.wandb.ai', kind: 'docs' },
+            { label: 'A Recipe for Training Neural Networks (Karpathy)', url: 'https://karpathy.github.io/2019/04/25/recipe/', kind: 'article' },
+          ],
+        },
+        {
+          slug: 'run-ablations',
+          title: 'Run ablations',
+          summary: 'An ablation removes one part at a time, holds everything else fixed, and shows which part carries the gain.',
+          minutes: 15,
+          objectives: [
+            'Design an ablation table for a method with three components.',
+            'Hold compute and data fixed across ablation runs.',
+            'Read an ablation table and identify the component that matters.',
+            'Report seed variance next to every ablation number.',
+          ],
+          keyTerms: ['ablation', 'control', 'confound', 'seed variance', 'baseline', 'hyperparameter sweep'],
+          body: `
+## What this lesson covers
+
+This lesson explains ablations, the experiments that show which part of a method causes its gain. It covers how to design the table, how to keep the comparison fair, and how to read the result. You will design an ablation for a method with three parts.
+
+## Why it matters
+
+A method is often a bundle: a new loss, a new data filter, and a longer schedule. The paper reports a gain for the bundle. The reader needs to know which part to adopt. Reviewers ask for ablations for this reason. In your own work, ablations stop you from shipping a part that does nothing.
+
+## The idea with an example
+
+Suppose your method for fine-tuning has three parts: a new loss term, a data filter, and a learning rate warmup that is twice as long. The full method scores 72 on a benchmark. The baseline scores 65.
+
+Design a table with one row per removed part:
+
+| Configuration | Loss term | Filter | Long warmup | Score |
+| --- | --- | --- | --- | --- |
+| Baseline | no | no | no | 65.0 ± 0.8 |
+| Full method | yes | yes | yes | 72.1 ± 0.6 |
+| Without loss term | no | yes | yes | 71.8 ± 0.7 |
+| Without filter | yes | no | yes | 66.2 ± 0.9 |
+| Without long warmup | yes | yes | no | 71.5 ± 0.6 |
+
+Read the table. Removing the loss term costs 0.3 points, inside the seed spread. Removing the filter costs 5.9 points. Removing the warmup costs 0.6 points. The filter carries the gain. The loss term, the part you spent the most time on, does nothing you can measure.
+
+Now the honest paper says: "the gain comes from the data filter". The method shrinks to one part. That is a better result, because it is simpler and it is true.
+
+## How it works
+
+An ablation holds everything fixed except one part. The things to hold fixed are:
+
+- Training compute in FLOPs or steps.
+- Training data and its order, through a fixed seed.
+- Evaluation data and the evaluation script.
+- All hyperparameters not under test.
+
+To run an ablation study:
+
+1. List the parts of the method.
+2. Write the full configuration and the baseline configuration.
+3. For each part, write a configuration with that part removed and nothing else changed.
+4. Run every configuration with the same 3 seeds.
+5. Report mean and standard deviation per configuration.
+6. Mark a part as important only when removing it costs more than two standard deviations.
+
+A confound is a change that rides along with the part under test. If the filter also shrinks the dataset, the ablation measures the filter and the smaller dataset together. To separate them, add a row with a random subset of the same size. If the new loss needs a different learning rate, sweep the learning rate for both the full method and the ablation, or the comparison favours the one you tuned.
+
+A full factorial design tests every combination of parts. For three parts that is 8 runs. It shows interactions: a part that helps only when another part is present. Use it when the parts could interact and the runs are cheap.
+
+Note: an ablation that removes a part and replaces it with nothing can be unfair. Replace a new loss term with the standard term, not with zero.
+
+## Common mistakes
+
+- Mistake: you ablate with one seed. Fix: a 0.5 point gap with one seed is noise.
+- Mistake: you remove a part and keep its hyperparameters. Fix: re-tune the settings that the part affects.
+- Mistake: you compare at different step counts. Fix: fix the compute budget across rows.
+- Mistake: you drop the rows that embarrass the method. Fix: report every row you ran.
+
+## Check your understanding
+
+- In the example, which part carries the gain? The data filter.
+- What does a full factorial design reveal that a one-at-a-time table does not? Interactions between parts.
+- When is a part important? When removing it costs more than the seed variation.
+
+## Go further
+
+The ablation studies paper surveys the practice and its history. The deep learning tuning playbook gives a full method for fair hyperparameter comparison. The troubling trends paper shows what happens when ablations are missing. The Weights and Biases documentation covers sweeps for the tuning step.
+`,
+          links: [
+            { label: 'Ablation Studies in Artificial Neural Networks (Meyes et al., 2019)', url: 'https://arxiv.org/abs/1901.08644', kind: 'paper' },
+            { label: 'Deep Learning Tuning Playbook', url: 'https://github.com/google-research/tuning_playbook', kind: 'repo' },
+            { label: 'Troubling Trends in Machine Learning Scholarship (Lipton and Steinhardt, 2018)', url: 'https://arxiv.org/abs/1807.03341', kind: 'paper' },
+            { label: 'Weights and Biases documentation', url: 'https://docs.wandb.ai', kind: 'docs' },
+          ],
+        },
+        {
+          slug: 'write-up',
+          title: 'Write up a result',
+          summary: 'A good write-up states one claim, shows the figure that proves it, and gives the reader what they need to repeat it.',
+          minutes: 14,
+          objectives: [
+            'Write a one-sentence claim and build the paper around it.',
+            'Design the main figure before you write the text.',
+            'Structure a research write-up in the standard sections.',
+            'List the details a reader needs to reproduce the result.',
+          ],
+          keyTerms: ['claim', 'main figure', 'abstract', 'related work', 'limitations', 'reproducibility'],
+          body: `
+## What this lesson covers
+
+This lesson gives a procedure for writing up a result. It covers the claim, the main figure, the section structure, and the reproducibility details. The output can be a workshop paper, a blog post, or an internal report. The procedure is the same.
+
+## Why it matters
+
+A result that no one can read is a result that no one uses. Reviewers read hundreds of papers and give each one minutes. A clear claim and a clear figure survive that. The write-up is also the last check on the work: a claim you cannot state in one sentence is a claim you have not finished testing.
+
+## The idea with an example
+
+Take the ablation result from the previous lesson. The data filter gave a 6 point gain, and the loss term did nothing. Build the write-up from that.
+
+The claim: "A classifier-based data filter raises fine-tuning accuracy on benchmark X by 6 points at equal compute, and a new loss term adds nothing on top." One sentence, with the condition, the method, the metric, and the size.
+
+The main figure: a bar chart with four bars, baseline, filter only, loss term only, and both, with error bars from three seeds. A reader who sees only this figure learns the whole result. Draw it on paper before you write a word of text.
+
+The abstract, in four sentences: the problem, the method, the main number, and the limitation. For example: "Fine-tuning on noisy data wastes compute. We train a fast classifier to filter the data and compare it with a new loss term. The filter gives 6 points at equal compute; the loss term gives none. The result holds for one model family and one benchmark."
+
+The rest of the paper supports those four sentences.
+
+## How it works
+
+The standard structure, with the question each section answers:
+
+1. Abstract: what did you find?
+2. Introduction: why does it matter, and what is the claim?
+3. Related work: what did others do, and how does this differ?
+4. Method: what exactly did you do, with enough detail to repeat?
+5. Experiments: what is the evidence, with the main figure first?
+6. Ablations: which part carries the gain?
+7. Limitations: where does the claim stop?
+8. Conclusion: what is the one thing to remember?
+
+Write the sections in this order: main figure, method, experiments, introduction, abstract, related work, limitations. The abstract comes late because it summarises what the figures show.
+
+The reproducibility section lists:
+
+- Model, size, and source.
+- Data, size, and the filter or split.
+- Every hyperparameter, in a table.
+- Number of seeds and how the error bars were computed.
+- Compute in GPU hours.
+- A link to the code and the configuration files.
+
+Write the limitations in plain statements. "We tested one model family" is a limitation. "Future work could test more models" is not. State what you did not test and what could change the result.
+
+Note: use the same word for the same thing throughout. If the method is "the filter" in the abstract, it is "the filter" in every section.
+
+## Common mistakes
+
+- Mistake: you write the introduction first. Fix: write the main figure first and let it set the claim.
+- Mistake: you claim more than the figure shows. Fix: match the claim to the strongest figure and no further.
+- Mistake: you hide the negative result. Fix: the loss term that did nothing is a finding; report it.
+- Mistake: you omit the hyperparameter table. Fix: no reader can reproduce a result without it.
+
+## Check your understanding
+
+- Which part of the write-up do you make first? The main figure.
+- What four things does the abstract state? The problem, the method, the main number, and the limitation.
+- What does a limitations section contain? Plain statements of what you did not test.
+
+## Go further
+
+The troubling trends paper describes the writing habits that mislead readers. The Pineau checklist lists what to include for reproducibility. The releasing-research-code repository covers the code release. Overleaf's guides cover the mechanics of a LaTeX paper.
+`,
+          links: [
+            { label: 'Troubling Trends in Machine Learning Scholarship (Lipton and Steinhardt, 2018)', url: 'https://arxiv.org/abs/1807.03341', kind: 'paper' },
+            { label: 'Improving Reproducibility in Machine Learning Research (Pineau et al., 2020)', url: 'https://arxiv.org/abs/2003.12206', kind: 'paper' },
+            { label: 'ML Code Completeness Checklist', url: 'https://github.com/paperswithcode/releasing-research-code', kind: 'repo' },
+            { label: 'Overleaf guides', url: 'https://www.overleaf.com/learn', kind: 'docs' },
+          ],
+        },
+      ],
+    },
+  ],
+}

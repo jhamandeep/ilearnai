@@ -4,6 +4,13 @@ import { KvCacheLab } from '../labs/KvCacheLab'
 import { AgentControlRoom } from '../labs/AgentControlRoom'
 import { CapacityLab } from '../labs/CapacityLab'
 import { SamplingLab } from '../labs/SamplingLab'
+import { GradientDescentLab } from '../labs/GradientDescentLab'
+import { AttentionLab } from '../labs/AttentionLab'
+import { TokenizerLab } from '../labs/TokenizerLab'
+import { TransformerFlowLab } from '../labs/TransformerFlowLab'
+import { ParetoRouterLab } from '../labs/ParetoRouterLab'
+import { TimeoutArchitectLab } from '../labs/TimeoutArchitectLab'
+import { SteCheckerLab } from '../labs/SteCheckerLab'
 import { NotFound } from './NotFound'
 import type { ComponentType } from 'react'
 
@@ -12,6 +19,13 @@ const registry: Record<string, ComponentType> = {
   'agent-control-room': AgentControlRoom,
   capacity: CapacityLab,
   sampling: SamplingLab,
+  'gradient-descent': GradientDescentLab,
+  attention: AttentionLab,
+  tokenizer: TokenizerLab,
+  'transformer-flow': TransformerFlowLab,
+  'pareto-router': ParetoRouterLab,
+  'timeout-architect': TimeoutArchitectLab,
+  'ste-checker': SteCheckerLab,
 }
 
 export function Labs() {
@@ -19,7 +33,7 @@ export function Labs() {
     <>
       <header className="page-head">
         <h1>Labs</h1>
-        <p className="lede">Browser-local calculators and simulations. Inputs never leave your machine.</p>
+        <p className="lede">Browser-local calculators, animations and simulations. Inputs never leave your machine. All free.</p>
       </header>
       <div className="grid">
         {labs.map((l) => (

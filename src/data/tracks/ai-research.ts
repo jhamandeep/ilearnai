@@ -8,11 +8,17 @@ export const track: Track = {
     'A guided path through the foundational literature of modern deep learning: transformers, scaling laws, alignment, pretraining data, sparse and recurrent architectures, reasoning models, and the practice of research itself.',
   accent: 'var(--accent-research)',
   status: 'live',
+  level: 'advanced',
+  order: 9,
+  audience: 'Researchers and engineers who want to read frontier papers and model reports critically.',
+  outcome: 'Derive the transformer, scaling laws, RLHF and DPO by hand, and read a 2025 reasoning paper and say what it changed.',
+  prerequisites: ['ai-foundations', 'ml-math'],
   modules: [
     {
       slug: 'transformers',
       title: 'Transformers from first principles',
       description: 'The architecture behind every frontier model, built piece by piece with small worked examples.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'why-attention',
@@ -34,6 +40,11 @@ This lesson explains the problem with recurrent networks on long text. It then i
 ## Why it matters
 
 Every large language model today uses attention as its core operation. The cost of attention sets the cost of inference. The key-value (KV) cache, grouped-query attention, and flash attention all exist to make this one operation cheaper. If you understand the equation, you understand most of the inference engineering track.
+
+:::video
+id: eMlx5fFNoYc
+why: Watch the first 15 minutes. It animates the query, key and value vectors and the score grid that this lesson computes by hand for 3 tokens.
+:::
 
 ## The idea with an example
 
@@ -133,6 +144,67 @@ sat: 0.2, 0.5, 0.3, 0
 down: 0.1, 0.4, 0.2, 0.3
 :::
 
+The code below runs the 3-token example from this lesson in plain Python. Change the query vector and watch the weights move.
+
+:::code
+lang: python
+import math
+
+def softmax(xs):
+    m = max(xs)
+    es = [math.exp(x - m) for x in xs]
+    s = sum(es)
+    return [e / s for e in es]
+
+def attention(q, keys, values):
+    d = len(q)
+    scores = [sum(a * b for a, b in zip(q, k)) / math.sqrt(d) for k in keys]
+    w = softmax(scores)
+    width = len(values[0])
+    out = [sum(w[i] * values[i][j] for i in range(len(values))) for j in range(width)]
+    return scores, w, out
+
+keys = [[1, 0], [0, 1], [1, 1]]
+values = [[1, 0], [0, 1], [1, 1]]
+scores, w, out = attention([1, 0], keys, values)
+print("scaled scores", [round(s, 2) for s in scores])
+print("weights", [round(x, 2) for x in w])
+print("output", [round(x, 2) for x in out])
+:::
+
+The output is:
+
+:::code
+lang: text
+scaled scores [0.71, 0.0, 0.71]
+weights [0.4, 0.2, 0.4]
+output [0.8, 0.6]
+:::
+
+## Try it
+
+:::exercise
+title: Attention for token 2
+task: Use the keys k1 = [1, 0], k2 = [0, 1], k3 = [1, 1] and the values v1 = [1, 0], v2 = [0, 1], v3 = [1, 1] from the lesson. Compute the attention output for token 2, whose query is q2 = [0, 1]. Do it on paper first, then check with the code from the lesson. Give the three weights and the output vector to 2 decimals.
+hint: The dot products are 0, 1 and 1. Divide by the square root of 2 before the softmax. The output is the weighted sum of the three value vectors.
+lang: python
+solution:
+import math
+
+def softmax(xs):
+    es = [math.exp(x) for x in xs]
+    return [e / sum(es) for e in es]
+
+keys = [[1, 0], [0, 1], [1, 1]]
+values = [[1, 0], [0, 1], [1, 1]]
+q = [0, 1]
+scores = [sum(a * b for a, b in zip(q, k)) / math.sqrt(2) for k in keys]
+w = softmax(scores)
+out = [sum(w[i] * values[i][j] for i in range(3)) for j in range(2)]
+print([round(x, 2) for x in w])   # [0.2, 0.4, 0.4]
+print([round(x, 2) for x in out]) # [0.6, 0.8]
+:::
+
 ## Common mistakes
 
 - Mistake: you forget the scale factor and training stalls. Fix: always divide by $\\sqrt{d_k}$ before softmax.
@@ -142,9 +214,41 @@ down: 0.1, 0.4, 0.2, 0.3
 
 ## Check your understanding
 
-- Why does an RNN forget early tokens? The information must survive a long chain of updates, and the gradient through that chain vanishes.
-- What is the shape of $QK^\\top$ for 10 tokens? It is 10 by 10.
-- What does the scale factor prevent? It prevents large scores that saturate softmax and kill the gradient.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: attention
+q: Why does a recurrent network lose information about early tokens in a long sequence?
+- The hidden vector grows with every token until it overflows
+* The information must survive a long chain of updates and the gradient through that chain vanishes or explodes
+- The network reads the sequence backwards
+- Softmax removes small values
+why: An RNN carries the past in one hidden vector through hundreds of updates, and the gradient through that chain shrinks to zero or grows without bound.
+q: A sequence has 10 tokens and each key has width 64. What is the shape of the score matrix Q K transposed?
+- 10 by 64
+- 64 by 64
+* 10 by 10
+- 1 by 10
+why: The score matrix compares every token with every token, so it has one row and one column per token.
+q: The query of token 3 is [1, 0] and the keys are k1 = [1, 0], k2 = [0, 1], k3 = [1, 1]. Which weight vector does scaled attention produce, to 2 decimals?
+- [0.33, 0.33, 0.33]
+* [0.40, 0.20, 0.40]
+- [0.50, 0.00, 0.50]
+- [0.20, 0.40, 0.40]
+why: The scaled scores are [0.71, 0, 0.71], and the softmax of those scores is about [0.40, 0.20, 0.40].
+q: What goes wrong if you remove the division by the square root of d k?
+- The weights no longer sum to one
+* Large scores saturate the softmax, so the gradients are close to zero and training stalls
+- The model can no longer see later tokens
+- The KV cache doubles in size
+why: Dot products grow with d k, and without the scale factor the softmax puts almost all weight on one token where the gradient is tiny.
+q: The sequence length grows from 4,000 tokens to 16,000 tokens. By what factor does the number of attention scores per head grow?
+- 4
+- 8
+* 16
+- 256
+why: The score count grows with the square of the sequence length, and 4 squared is 16.
+:::
 
 ## Go further
 
@@ -177,6 +281,12 @@ This lesson explains multi-head attention. One attention head computes one patte
 ## Why it matters
 
 Heads are the unit that inference engineers prune, share, and cache. Grouped-query attention shares keys and values across heads to shrink the KV cache. Interpretability researchers study single heads to understand what a model does. If you know how heads split the model width, you can read both kinds of paper.
+
+:::video
+id: eMlx5fFNoYc
+start: 1150
+why: Watch from about minute 19, where the video adds more heads and the output matrix. Compare its picture with the split-and-concat flow in this lesson.
+:::
 
 ## The idea with an example
 
@@ -264,6 +374,73 @@ The table lists the head sizes of three public models.
 | Llama 3 8B | 4,096 | 32 | 128 | 8 |
 | Llama 3 70B | 8,192 | 64 | 128 | 8 |
 
+The code below splits a width of 8 into 2 heads of width 4, runs attention in each head, and concatenates the outputs. It uses the sentence from the lesson with random weights.
+
+:::code
+lang: python
+import math, random
+
+random.seed(0)
+d_model, h = 8, 2
+d_k = d_model // h
+tokens = ["the", "cat", "sat", "down"]
+X = [[random.uniform(-1, 1) for _ in range(d_model)] for _ in tokens]
+
+def matmul(A, B):
+    return [[sum(a * b for a, b in zip(row, col)) for col in zip(*B)] for row in A]
+
+def rand_matrix(rows, cols):
+    return [[random.uniform(-0.5, 0.5) for _ in range(cols)] for _ in range(rows)]
+
+def softmax(xs):
+    m = max(xs)
+    es = [math.exp(x - m) for x in xs]
+    return [e / sum(es) for e in es]
+
+def head(X):
+    Q, K, V = (matmul(X, rand_matrix(d_model, d_k)) for _ in range(3))
+    out = []
+    for i, q in enumerate(Q):
+        scores = [sum(a * b for a, b in zip(q, k)) / math.sqrt(d_k) for k in K[: i + 1]]
+        w = softmax(scores)
+        out.append([sum(w[j] * V[j][c] for j in range(i + 1)) for c in range(d_k)])
+    return out
+
+heads = [head(X) for _ in range(h)]
+concat = [sum((hd[i] for hd in heads), []) for i in range(len(tokens))]
+Y = matmul(concat, rand_matrix(d_model, d_model))
+print("head width", d_k)
+print("concat width", len(concat[0]))
+print("output width", len(Y[0]), "rows", len(Y))
+:::
+
+The output is:
+
+:::code
+lang: text
+head width 4
+concat width 8
+output width 8 rows 4
+:::
+
+## Try it
+
+:::exercise
+title: Size the heads of Llama 3 8B
+task: Llama 3 8B has width 4,096, 32 query heads, 8 key-value heads and head width 128. Compute three numbers: the head width from the model width and the number of query heads, the number of key and value numbers the cache stores per token per layer under grouped-query attention, and the same count under full multi-head attention with 32 key-value heads. State the factor by which grouped-query attention shrinks the cache.
+hint: Head width is model width divided by query heads. Per token per layer, the cache stores one key and one value of head width for each key-value head.
+lang: python
+solution:
+d_model, q_heads, kv_heads = 4096, 32, 8
+d_k = d_model // q_heads
+gqa = 2 * kv_heads * d_k
+mha = 2 * q_heads * d_k
+print("head width", d_k)              # 128
+print("GQA numbers per token per layer", gqa)   # 2048
+print("MHA numbers per token per layer", mha)   # 8192
+print("cache shrinks by", mha // gqa)  # 4
+:::
+
 ## Common mistakes
 
 - Mistake: you think more heads cost more compute. Fix: for a fixed model width, the compute is the same, because each head is narrower.
@@ -273,9 +450,41 @@ The table lists the head sizes of three public models.
 
 ## Check your understanding
 
-- A model has width 4096 and 32 heads. What is the head width? It is 128.
-- Why does multi-head attention cost the same as one wide head? The dot-product work splits across heads with no extra total.
-- What does an induction head do? It finds an earlier copy of the current token and attends to the token that followed it.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: multi-head attention
+q: A model has width 4,096 and 32 heads. What is the head width?
+- 32
+- 64
+* 128
+- 256
+why: The head width is the model width divided by the number of heads, and 4,096 divided by 32 is 128.
+q: Why does multi-head attention cost about the same compute as one head of the full width?
+* Each head is narrower, so the dot-product work splits across heads with no extra total
+- The heads share one set of weights
+- Only one head runs per token
+- The output projection is skipped
+why: For a fixed model width, h heads of width d over h do the same total multiplications as one head of width d.
+q: What does an induction head do?
+- It attends to the previous token only
+- It attends to the subject of the sentence
+* It finds an earlier copy of the current token and attends to the token that followed it
+- It sets all weights to the same value
+why: Induction heads copy patterns from the prompt, which is the mechanism behind in-context learning.
+q: A model has 32 query heads. Under grouped-query attention with 4 query heads per group, how many key-value heads does each layer store?
+- 32
+- 16
+* 8
+- 1
+why: Each group of 4 query heads shares one key head and one value head, so 32 divided by 4 gives 8.
+q: What happens if you remove the output projection W O?
+- The model trains faster with the same quality
+* The heads never mix, so each head only sees its own subspace
+- The KV cache doubles
+- The head width becomes zero
+why: The output projection is the only place where the heads combine, so without it each head stays in its own subspace.
+:::
 
 ## Go further
 
@@ -400,6 +609,75 @@ Models fail past their training length because they never saw the large angles. 
 
 Caution: a model that reads a 128,000-token prompt still needs a KV cache for all 128,000 tokens. Position scaling solves the encoding problem, not the memory problem.
 
+The code below computes the sinusoidal table from the lesson and then checks the RoPE property with a 2-dimensional rotation: the score for positions 5 and 2 equals the score for positions 15 and 12.
+
+:::code
+lang: python
+import math
+
+def sinusoid(pos, d=4):
+    out = []
+    for i in range(d // 2):
+        freq = 1.0 / (10000 ** (2 * i / d))
+        out += [math.sin(pos * freq), math.cos(pos * freq)]
+    return out
+
+for p in range(4):
+    print("pos", p, [round(x, 2) for x in sinusoid(p)])
+
+def rotate(v, angle):
+    x, y = v
+    return [x * math.cos(angle) - y * math.sin(angle), x * math.sin(angle) + y * math.cos(angle)]
+
+def rope_score(q, k, m, n, theta=0.1):
+    qr, kr = rotate(q, m * theta), rotate(k, n * theta)
+    return qr[0] * kr[0] + qr[1] * kr[1]
+
+q, k = [1.0, 0.5], [0.3, 0.8]
+print("positions 5 and 2 ", round(rope_score(q, k, 5, 2), 4))
+print("positions 15 and 12", round(rope_score(q, k, 15, 12), 4))
+print("positions 5 and 4 ", round(rope_score(q, k, 5, 4), 4))
+:::
+
+The output is:
+
+:::code
+lang: text
+pos 0 [0.0, 1.0, 0.0, 1.0]
+pos 1 [0.84, 0.54, 0.01, 1.0]
+pos 2 [0.91, -0.42, 0.02, 1.0]
+pos 3 [0.14, -0.99, 0.03, 1.0]
+positions 5 and 2  0.8608
+positions 15 and 12 0.8608
+positions 5 and 4  0.7614
+:::
+
+## Try it
+
+:::exercise
+title: Sinusoid for position 3 and a RoPE check
+task: Compute the width-4 sinusoidal vector for position 3 by hand with the two frequencies 1 and 1 over 100. Then take the query q = [1, 0] and the key k = [1, 0], set theta to 0.1 radians, and compute the RoPE score for the query at position 7 and the key at position 3. Predict the score for positions 27 and 23 without computing it, then check with the code from the lesson.
+hint: Position 3 gives sin 3 = 0.14 and cos 3 = -0.99 for the fast pair. For RoPE, only the difference of 4 positions matters, so the score is cos of 0.4 radians.
+lang: python
+solution:
+import math
+
+p = 3
+fast = [math.sin(p), math.cos(p)]
+slow = [math.sin(p / 100), math.cos(p / 100)]
+print([round(x, 2) for x in fast + slow])   # [0.14, -0.99, 0.03, 1.0]
+
+def rotate(v, a):
+    return [v[0] * math.cos(a) - v[1] * math.sin(a), v[0] * math.sin(a) + v[1] * math.cos(a)]
+
+def score(m, n, theta=0.1):
+    qr, kr = rotate([1, 0], m * theta), rotate([1, 0], n * theta)
+    return qr[0] * kr[0] + qr[1] * kr[1]
+
+print(round(score(7, 3), 4))     # 0.9211, which is cos(0.4)
+print(round(score(27, 23), 4))   # 0.9211, the same
+:::
+
 ## Common mistakes
 
 - Mistake: you add RoPE to the value vectors. Fix: rotate only queries and keys.
@@ -409,9 +687,41 @@ Caution: a model that reads a 128,000-token prompt still needs a KV cache for al
 
 ## Check your understanding
 
-- What happens to attention output if you shuffle the tokens and use no position signal? The output rows shuffle the same way and nothing else changes.
-- In RoPE, what does the score between two tokens depend on? It depends on the difference of their positions.
-- Why does a RoPE model fail at long lengths? The rotation angles exceed the range seen in training.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: positional encodings
+q: You shuffle the input tokens of a transformer that has no position signal. What happens to the attention output?
+- The output is unchanged in every row
+* The output rows shuffle in the same way and nothing else changes
+- The output becomes all zeros
+- The model raises an error
+why: Attention is a set operation, so a permutation of the inputs gives the same permutation of the outputs.
+q: In RoPE, a query sits at position 9 and a key at position 4 with theta equal to 0.1 radians. Which angle decides their score?
+- 0.9 radians
+- 1.3 radians
+* 0.5 radians
+- 0.4 radians
+why: Only the difference of the positions survives the dot product, and 9 minus 4 is 5, so the angle is 5 times 0.1.
+q: Why does a RoPE model fail when you run it at twice its training length with no change?
+- The KV cache runs out
+- The sinusoids repeat and positions collide
+* The rotation angles exceed the range the model saw in training
+- The value vectors are rotated too far
+why: The model never learned to read the large angles that long positions produce, so scores become meaningless.
+q: How does ALiBi encode position?
+- It adds a sinusoid to each embedding
+- It rotates the queries and keys
+* It subtracts a penalty from each score that grows with the distance between query and key
+- It learns one vector per position
+why: ALiBi adds no vectors at all; a linear bias on the scores favours close tokens.
+q: Which vectors does RoPE rotate?
+- Queries, keys and values
+* Queries and keys only
+- Values only
+- The residual stream
+why: The rotation must act on the two vectors whose dot product forms the score, and the values carry content and are left alone.
+:::
 
 ## Go further
 
@@ -444,6 +754,11 @@ This lesson assembles a full transformer block from its parts. The parts are att
 ## Why it matters
 
 The block is the repeated unit of every language model. A 32-layer model is 32 copies of this block. The weight count of a block decides memory use. The feed-forward network holds about two thirds of the weights, and that is where mixture of experts applies. The residual stream is the object that interpretability research reads and edits.
+
+:::video
+id: 9-Jl0dxWQs8
+why: Watch the whole video, about 22 minutes. It shows why the feed-forward network, the part with two thirds of the weights, is where a model stores facts.
+:::
 
 ## The idea with an example
 
@@ -531,6 +846,68 @@ Normalisation: 0.008
 
 Note: the original Transformer applied normalisation after the residual add. Modern models apply it before, which is more stable at depth.
 
+The code below runs one pre-norm block on the vector x = [1, 2, 0, 1] from the lesson with small fixed weights, and counts the weights for width 4,096.
+
+:::code
+lang: python
+import math
+
+def layer_norm(x, eps=1e-5):
+    mean = sum(x) / len(x)
+    var = sum((v - mean) ** 2 for v in x) / len(x)
+    return [(v - mean) / math.sqrt(var + eps) for v in x]
+
+def gelu(v):
+    return 0.5 * v * (1 + math.tanh(math.sqrt(2 / math.pi) * (v + 0.044715 * v ** 3)))
+
+def matvec(W, x):
+    return [sum(w * v for w, v in zip(row, x)) for row in W]
+
+d = 4
+x = [1.0, 2.0, 0.0, 1.0]
+W1 = [[0.1 * ((i + j) % 3 - 1) for j in range(d)] for i in range(4 * d)]
+W2 = [[0.1 * ((i * j) % 3 - 1) for j in range(4 * d)] for i in range(d)]
+
+def attention_update(z):
+    return [0.5, 0.0, 0.5, 0.0]   # stands in for the attention sub-layer
+
+x1 = [a + b for a, b in zip(x, attention_update(layer_norm(x)))]
+f = matvec(W2, [gelu(v) for v in matvec(W1, layer_norm(x1))])
+x2 = [a + b for a, b in zip(x1, f)]
+print("after attention", x1)
+print("after FFN", [round(v, 3) for v in x2])
+
+width = 4096
+print("weights per block", 12 * width * width / 1e6, "million")
+:::
+
+The output is:
+
+:::code
+lang: text
+after attention [1.5, 2.0, 0.5, 1.0]
+after FFN [1.485, 2.006, 0.617, 0.985]
+weights per block 201.326592 million
+:::
+
+## Try it
+
+:::exercise
+title: Count the weights of GPT-2 small
+task: GPT-2 small has width 768 and 12 blocks. Use the rule from the lesson to count the weights in one block and in all 12 blocks. Then add the embedding table for a vocabulary of 50,257 units, which GPT-2 ties to the output layer. Compare your total with the published 124 million.
+hint: One block holds about 12 times d squared weights. The embedding table holds vocabulary times width.
+lang: python
+solution:
+d, layers, vocab = 768, 12, 50257
+per_block = 12 * d * d
+blocks = layers * per_block
+embed = vocab * d
+print("one block", per_block / 1e6, "million")      # 7.08
+print("all blocks", blocks / 1e6, "million")        # 84.9
+print("embedding", embed / 1e6, "million")          # 38.6
+print("total", (blocks + embed) / 1e6, "million")   # 123.5, close to 124
+:::
+
 ## Common mistakes
 
 - Mistake: you replace the stream instead of adding to it. Fix: always write $x + f(x)$, never $f(x)$ alone.
@@ -540,9 +917,41 @@ Note: the original Transformer applied normalisation after the residual add. Mod
 
 ## Check your understanding
 
-- What does a block add to the stream when it has learned nothing? It adds zero, and the input passes through unchanged.
-- Which part of the block holds most of the weights? The feed-forward network.
-- Where does pre-norm place layer normalisation? Before each sub-layer, inside the residual branch.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: the transformer block
+q: A block has learned nothing and adds zero at both sub-layers. What leaves the block?
+- A vector of zeros
+- The normalised input
+* The input, unchanged
+- The input scaled by two
+why: Each sub-layer only adds to the residual stream, so a zero update passes the input through.
+q: Which part of a block holds most of the weights?
+- The attention matrices
+* The feed-forward network
+- The normalisation gains
+- The causal mask
+why: The two feed-forward matrices hold 8 of the 12 d squared weights in a block.
+q: A model has width 2,048. About how many weights does one block hold?
+- 4 million
+- 25 million
+* 50 million
+- 200 million
+why: Twelve times 2,048 squared is about 50 million.
+q: Where does a pre-norm block apply layer normalisation?
+- After the residual add, on the stream
+* Before each sub-layer, inside the branch, so the skip path stays unnormalised
+- Only once, at the output of the model
+- Across the batch dimension
+why: Pre-norm normalises the input to attention and to the feed-forward network and leaves the skip path untouched, which is stable at depth.
+q: Layer normalisation on the vector [1, 2, 0, 1] rescales it to which mean and variance?
+- Mean 1 and variance 1
+* Mean 0 and variance 1
+- Mean 0 and variance 0.5
+- Mean 1 and variance 0
+why: Layer normalisation subtracts the mean of the row and divides by its standard deviation, so the result has mean 0 and unit variance.
+:::
 
 ## Go further
 
@@ -562,6 +971,7 @@ The Transformer paper gives the original post-norm block in section 3. The layer
       slug: 'scaling',
       title: 'Scaling laws and compute-optimal training',
       description: 'How loss falls with model size, data, and compute, and how to spend a fixed budget.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'kaplan-to-chinchilla',
@@ -583,6 +993,11 @@ This lesson explains scaling laws, the empirical rules that link loss to model s
 ## Why it matters
 
 A frontier training run costs tens of millions of dollars. Scaling laws let a team predict the loss of a large run from small runs. They also decide how to split a budget between a bigger model and more data. Every modern model card reports its weight count and token count, and the ratio between them comes from this work.
+
+:::video
+id: 9vM4p9NN0Ts
+why: This lecture opens on YouTube. Watch the scaling laws part, about 20 minutes in the middle. Note how the speaker uses small runs to predict a large one, which is the method of this lesson.
+:::
 
 ## The idea with an example
 
@@ -665,6 +1080,57 @@ Chinchilla schedule: cosine decay to zero at step 4000 @200-4000
 
 Note: the exact ratio depends on the data and the tokeniser. Treat 20 as a starting point, not a constant.
 
+The code below computes the loss table from the lesson and plans a compute-optimal run for a budget you choose.
+
+:::code
+lang: python
+import math
+
+def loss(N, E=2.0, A=400, alpha=0.34):
+    return E + A / N ** alpha
+
+for N in [1e8, 1e9, 1e10]:
+    print("N =", N, "loss =", round(loss(N), 2))
+
+def plan(C, ratio=20):
+    N = math.sqrt(C / (6 * ratio))
+    return N, ratio * N
+
+for C in [1e21, 1e23]:
+    N, D = plan(C)
+    print("budget", C, "weights", round(N / 1e9, 1), "B", "tokens", round(D / 1e9), "B")
+:::
+
+The output is:
+
+:::code
+lang: text
+N = 100000000.0 loss = 2.76
+N = 1000000000.0 loss = 2.35
+N = 10000000000.0 loss = 2.16
+budget 1e+21 weights 2.9 B tokens 58 B
+budget 1e+23 weights 28.9 B tokens 577 B
+:::
+
+## Try it
+
+:::exercise
+title: Plan a run for 10 to the power 23 FLOPs
+task: Use the rule C = 6 N D and D = 20 N to plan a compute-optimal run for a budget of 10 to the power 23 FLOPs. Give the weight count and the token count. Then compute the loss of that model with the fit L = 2.0 + 400 over N to the power 0.34, and compare it with the 2.9 billion weight model from the lesson.
+hint: Solve 120 N squared = C, so N is the square root of C over 120. The token count is 20 N.
+lang: python
+solution:
+import math
+
+C = 1e23
+N = math.sqrt(C / 120)
+D = 20 * N
+print("weights", round(N / 1e9, 1), "billion")   # 28.9
+print("tokens", round(D / 1e9), "billion")       # 577
+for n in [2.9e9, N]:
+    print("loss", round(2.0 + 400 / n ** 0.34, 3))   # 2.243 then 2.111
+:::
+
 ## Common mistakes
 
 - Mistake: you compare runs with mismatched learning rate schedules. Fix: decay the learning rate to the end of each run.
@@ -674,9 +1140,41 @@ Note: the exact ratio depends on the data and the tokeniser. Treat 20 as a start
 
 ## Check your understanding
 
-- With the rule $D = 20N$, how many tokens does a 7 billion weight model need? About 140 billion tokens.
-- What does $E$ represent in the Chinchilla fit? The irreducible loss of the data.
-- Why did Kaplan favour larger models over more data? The learning rate schedule penalised short runs.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: scaling laws
+q: With the rule D = 20 N, how many tokens does a 7 billion weight model need?
+- 7 billion
+- 70 billion
+* 140 billion
+- 1.4 trillion
+why: Twenty tokens per weight times 7 billion weights is 140 billion tokens.
+q: What does the constant E represent in the Chinchilla fit?
+- The learning rate
+- The cost of one token
+* The irreducible loss that no model size can go below
+- The number of epochs
+why: Natural text has randomness that no model can predict, and E is the floor that the power law terms sit on top of.
+q: Why did the Kaplan paper favour larger models over more data?
+- It used a different tokeniser
+* It reused one long learning rate schedule, so short runs ended before their rate decayed
+- It measured loss on training data
+- It trained only on code
+why: Chinchilla tuned the schedule to each run length, and with that fair comparison the balanced split won.
+q: Training compute for a 1 billion weight model on 20 billion tokens is about how many FLOPs?
+- 2 times 10 to the power 19
+* 1.2 times 10 to the power 20
+- 6 times 10 to the power 20
+- 1.2 times 10 to the power 22
+why: C is about 6 N D, and 6 times 10 to the power 9 times 2 times 10 to the power 10 is 1.2 times 10 to the power 20.
+q: A team fits a power law from two model sizes. What is the main problem?
+- Two points cannot be plotted on a log axis
+* Two points always fit a line, so the fit tells you nothing about whether the law holds
+- The floor E is always zero
+- Power laws need at least one trillion tokens
+why: A power law is a line on log axes, and any two points lie on some line, so you need at least five sizes across two orders of magnitude.
+:::
 
 ## Go further
 
@@ -787,6 +1285,50 @@ Data supply is the other bound. Plan B needs 800 billion tokens of good data. Th
 
 Caution: inference FLOPs are not the only serving cost. Memory bandwidth for the KV cache often dominates at long context. Include it in a real estimate.
 
+The code below reproduces the cost grid from the lesson and finds the serving volume at which Plan B becomes cheaper than Plan A.
+
+:::code
+lang: python
+def total(N, D_train, D_infer):
+    return 6 * N * D_train + 2 * N * D_infer
+
+plans = {"A": (10e9, 200e9), "B": (5e9, 800e9)}
+for served in [1e12, 3e12, 10e12]:
+    row = [round(total(N, D, served) / 1e22, 1) for N, D in plans.values()]
+    print("served", served / 1e12, "T tokens  A, B =", row)
+
+served = 0.0
+while total(*plans["B"], served) > total(*plans["A"], served):
+    served += 1e10
+print("break-even at about", served / 1e12, "trillion served tokens")
+:::
+
+The output is:
+
+:::code
+lang: text
+served 1.0 T tokens  A, B = [3.2, 3.4]
+served 3.0 T tokens  A, B = [7.2, 5.4]
+served 10.0 T tokens  A, B = [21.2, 12.4]
+break-even at about 1.2 trillion served tokens
+:::
+
+## Try it
+
+:::exercise
+title: Find the break-even point
+task: Plan A trains 10 billion weights on 200 billion tokens. Plan B trains 5 billion weights on 800 billion tokens. Write the total cost of each plan as a function of the served token count D infer, set the two totals equal, and solve for D infer by hand. Then check the answer with the code from the lesson.
+hint: Plan A costs 1.2 times 10 to the power 22 plus 2 times 10 to the power 10 times D infer. Plan B costs 2.4 times 10 to the power 22 plus 1 times 10 to the power 10 times D infer.
+lang: python
+solution:
+train_A = 6 * 10e9 * 200e9
+train_B = 6 * 5e9 * 800e9
+per_token_A = 2 * 10e9
+per_token_B = 2 * 5e9
+D = (train_B - train_A) / (per_token_A - per_token_B)
+print(D / 1e12, "trillion served tokens")   # 1.2
+:::
+
 ## Common mistakes
 
 - Mistake: you plan with training cost only. Fix: add $2ND_{\\text{infer}}$ to the budget.
@@ -796,9 +1338,41 @@ Caution: inference FLOPs are not the only serving cost. Memory bandwidth for the
 
 ## Check your understanding
 
-- What is the serving cost per token for a 5 billion weight model? About 10 billion FLOPs.
-- Why does the small model win at high serving volume? Its cheaper per-token cost repays the extra training.
-- What stops you from overtraining without limit? The loss floor for that size and the supply of good data.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: inference-aware scaling
+q: What is the serving cost per generated token for a 5 billion weight model?
+- 5 billion FLOPs
+* 10 billion FLOPs
+- 30 billion FLOPs
+- 100 billion FLOPs
+why: Each generated token costs about 2 N FLOPs, and 2 times 5 billion is 10 billion.
+q: Why does the smaller, overtrained model win at a high serving volume?
+- It reaches a lower loss floor
+* Its cheaper cost per served token repays the extra training cost
+- It needs fewer training tokens
+- Its KV cache is free
+why: The extra training is paid once, and the saving per token is paid back on every one of trillions of requests.
+q: Plan A and Plan B from the lesson have served 1 trillion tokens. Which plan is cheaper in total, and by how much?
+* Plan A, by 0.2 times 10 to the power 22 FLOPs
+- Plan B, by 0.2 times 10 to the power 22 FLOPs
+- Plan B, by 8.8 times 10 to the power 22 FLOPs
+- They cost the same
+why: Plan A totals 3.2 and Plan B totals 3.4 in units of 10 to the power 22, so Plan A is still ahead at 1 trillion served tokens.
+q: What stops a team from overtraining a tiny model without limit?
+- The learning rate
+* The loss floor for that size and the supply of good data
+- The number of GPUs
+- The KL penalty
+why: The term A over N to the power alpha sets a floor for each size, and the extra tokens must exist and be good.
+q: Which serving cost does the FLOP count in this lesson leave out?
+- The cost of training the tokeniser
+- The cost of the reward model
+* Memory traffic for the KV cache, which often dominates at long context
+- The cost of the embedding table
+why: On real hardware, reading the KV cache from memory sets latency at long context, and FLOPs alone miss it.
+:::
 
 ## Go further
 
@@ -916,6 +1490,54 @@ Synthetic data changes the budget. A model generates text that matches a target 
 
 Note: repeated epochs help less for a large model than for a small one. Large models memorise sooner.
 
+The code below computes the effective data for a fixed supply of unique tokens at several epoch counts, with R star equal to 15.
+
+:::code
+lang: python
+import math
+
+def effective_tokens(U, epochs, R_star=15):
+    R_D = epochs - 1
+    return U + U * R_star * (1 - math.exp(-R_D / R_star))
+
+U = 100e9
+for epochs in [1, 2, 4, 8, 16]:
+    seen = U * epochs
+    eff = effective_tokens(U, epochs)
+    print("epochs", epochs, "seen", round(seen / 1e9), "B", "worth", round(eff / 1e9), "B", "value per token", round(eff / seen, 2))
+:::
+
+The output is:
+
+:::code
+lang: text
+epochs 1 seen 100 B worth 100 B value per token 1.0
+epochs 2 seen 200 B worth 197 B value per token 0.98
+epochs 4 seen 400 B worth 372 B value per token 0.93
+epochs 8 seen 800 B worth 659 B value per token 0.82
+epochs 16 seen 1600 B worth 1048 B value per token 0.66
+:::
+
+## Try it
+
+:::exercise
+title: Is a 16-epoch run worth it?
+task: You have 100 billion unique good tokens and a plan to see 1.6 trillion tokens, which is 16 epochs. Use the effective data formula with R star equal to 15 to compute how many fresh tokens the run is worth. Then compute the same for 8 epochs. State the value per seen token in each case and decide which run you would fund.
+hint: R D is the number of repeats, so 16 epochs means R D equals 15 and 8 epochs means R D equals 7. Divide the effective tokens by the tokens seen to get the value per token.
+lang: python
+solution:
+import math
+
+U = 100e9
+for epochs in [8, 16]:
+    R_D = epochs - 1
+    eff = U + U * 15 * (1 - math.exp(-R_D / 15))
+    print(epochs, "epochs worth", round(eff / 1e9), "B tokens",
+          "value per token", round(eff / (U * epochs), 2))
+# 8 epochs: about 660 B, 0.83 per token
+# 16 epochs: about 1048 B, 0.65 per token. The second 800 B tokens add only 388 B.
+:::
+
 ## Common mistakes
 
 - Mistake: you train for 20 epochs on a small dataset. Fix: stop near 4 epochs and look for more data.
@@ -925,9 +1547,41 @@ Note: repeated epochs help less for a large model than for a small one. Large mo
 
 ## Check your understanding
 
-- How many epochs of good data are close to free in the study? About 4.
-- What is $R_D$ for a run that sees the data 3 times? It is 2.
-- What does synthetic data trade for collection cost? Generation and filtering cost.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: data-constrained scaling
+q: About how many epochs over good data are close to free in the Muennighoff study?
+- 1
+* 4
+- 16
+- 40
+why: Up to about 4 epochs each repeated token is worth almost as much as a fresh one, and past that the value falls fast.
+q: A run sees its data 3 times. What is R D in the effective data formula?
+- 3
+* 2
+- 1
+- 0
+why: R D counts repeats, not passes, so three passes means two repeats.
+q: You have 50 billion unique tokens and want to train a 10 billion weight model to the Chinchilla target. Which option matches the lesson's rule?
+- Train for 1 epoch and stop
+* Train for 4 epochs, since 200 billion tokens equals 4 times the supply
+- Train for 20 epochs
+- Train a 100 billion weight model instead
+why: The target is 20 times 10 billion, which is 200 billion tokens, and that is exactly 4 U, the safe limit.
+q: What does synthetic data trade for the cost of collection?
+- Nothing, it is free
+- A larger vocabulary
+* The cost of generation and of filtering the outputs
+- A lower loss floor
+why: A model must generate the text and a filter must keep the best samples, so the cost moves rather than disappears.
+q: Why do repeated epochs help a large model less than a small one?
+* Large models memorise the data sooner
+- Large models use a smaller learning rate
+- Large models have a smaller vocabulary
+- Large models cannot shuffle data
+why: A model with more weights fits the repeated tokens faster, so the extra passes turn into memorisation instead of learning.
+:::
 
 ## Go further
 
@@ -946,6 +1600,7 @@ The Muennighoff paper gives the full data-constrained fit and the epoch experime
       slug: 'alignment',
       title: 'Alignment: SFT, RLHF, DPO',
       description: 'How a base model becomes an assistant through demonstrations, preferences, and reinforcement learning.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'rlhf-pipeline',
@@ -967,6 +1622,11 @@ This lesson explains reinforcement learning from human feedback (RLHF), the reci
 ## Why it matters
 
 A base model predicts the next token of web text. Ask it a question and it may continue with more questions. RLHF teaches the model to answer, to refuse unsafe requests, and to follow a format. Every chat model you have used went through a version of this pipeline. The cost and the failure modes of alignment come from these three stages.
+
+:::video
+id: zjkBMFhNj_g
+why: Watch the first 35 minutes. The part on training the assistant compares pretraining with fine-tuning on labeler-written conversations and comparison labels, which is the pipeline of this lesson in pictures.
+:::
 
 ## The idea with an example
 
@@ -1069,6 +1729,62 @@ The table lists the data each stage needs.
 
 Caution: the reward model is a proxy. Optimise it too hard and the policy finds answers that score high but read badly. This is reward hacking.
 
+The code below computes the Bradley-Terry loss for the pair from the lesson and for a few other score gaps.
+
+:::code
+lang: python
+import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def reward_model_loss(score_chosen, score_rejected):
+    return -math.log(sigmoid(score_chosen - score_rejected))
+
+print("chosen 1.0, rejected 0.5:", round(reward_model_loss(1.0, 0.5), 2))
+print("chosen 0.5, rejected 1.0:", round(reward_model_loss(0.5, 1.0), 2))
+print("equal scores:", round(reward_model_loss(0.7, 0.7), 2))
+for gap in [-2, -1, 0, 1, 2, 4]:
+    print("gap", gap, "loss", round(reward_model_loss(gap, 0), 3))
+:::
+
+The output is:
+
+:::code
+lang: text
+chosen 1.0, rejected 0.5: 0.47
+chosen 0.5, rejected 1.0: 0.97
+equal scores: 0.69
+gap -2 loss 2.127
+gap -1 loss 1.313
+gap 0 loss 0.693
+gap 1 loss 0.313
+gap 2 loss 0.127
+gap 4 loss 0.018
+:::
+
+## Try it
+
+:::exercise
+title: Loss and gradient for one preference pair
+task: The reward model scores the chosen answer at 2.0 and the rejected answer at 0.0. Compute the Bradley-Terry loss by hand. Then compute the gradient of the loss with respect to the gap, which is minus one plus the sigmoid of the gap, for gaps of 2.0, 0.0 and -2.0. Explain in one sentence which pair pushes the model hardest.
+hint: The sigmoid of 2 is 0.88. The loss is minus the log of that. The gradient has size 1 minus the sigmoid of the gap.
+lang: python
+solution:
+import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+for gap in [2.0, 0.0, -2.0]:
+    loss = -math.log(sigmoid(gap))
+    grad = -(1 - sigmoid(gap))
+    print("gap", gap, "loss", round(loss, 3), "gradient", round(grad, 3))
+# gap 2.0: loss 0.127, gradient -0.119
+# gap 0.0: loss 0.693, gradient -0.5
+# gap -2.0: loss 2.127, gradient -0.881. The pair the model gets wrong pushes hardest.
+:::
+
 ## Common mistakes
 
 - Mistake: you set $\\beta = 0$ to get higher rewards. Fix: keep the KL penalty and watch the KL value during training.
@@ -1078,9 +1794,41 @@ Caution: the reward model is a proxy. Optimise it too hard and the policy finds 
 
 ## Check your understanding
 
-- What does the SFT stage need as data? Prompts with written answers.
-- What is the reward model loss when both answers score the same? $-\\log 0.5 \\approx 0.69$.
-- What does the KL penalty prevent? Drift of the policy away from the SFT model into reward hacking.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: the RLHF pipeline
+q: What data does the supervised fine-tuning stage need?
+* Prompts with answers written by labelers
+- Two answers per prompt with a labeler choice
+- Prompts only
+- A reward model
+why: SFT trains the model to reproduce good answers token by token, so it needs written answers.
+q: The reward model gives both answers in a pair the same score. What is the loss for that pair?
+- 0
+- 0.5
+* About 0.69
+- 1
+why: The gap is zero, the sigmoid of zero is 0.5, and minus the log of 0.5 is about 0.69.
+q: The reward model scores the chosen answer at 0.5 and the rejected answer at 1.0. Which statement is true?
+- The loss is 0.47 and the gradient is small
+* The loss is about 0.97 and the gradient pushes the chosen score up and the rejected score down
+- The loss is zero because the scores differ
+- The loss is negative
+why: With a gap of minus 0.5 the sigmoid is 0.38, the loss is about 0.97, and the update works to reverse the order.
+q: What does the KL penalty in the RL objective prevent?
+- The reward model from training
+* The policy from drifting far from the SFT model into answers that score high but read badly
+- The labelers from disagreeing
+- The learning rate from decaying
+why: Without the penalty the policy exploits the reward model, and the KL term keeps it close to a sensible starting distribution.
+q: How should you judge the final policy?
+- By its average reward model score
+- By its training loss
+* By ratings from fresh labelers on held-out prompts
+- By its KL value alone
+why: The reward model is a proxy that the policy was optimised against, so only new human ratings measure real quality.
+:::
 
 ## Go further
 
@@ -1197,6 +1945,66 @@ The table compares the two methods.
 | Reward model | separate, trained first | implicit, inside the policy |
 | Main hyperparameters | beta, clip range, batch, PPO epochs | beta |
 
+The code below runs the tiny world from the lesson: it computes the optimal policy, recovers the implicit rewards, and evaluates the DPO loss for the pair A over B.
+
+:::code
+lang: python
+import math
+
+ref = {"A": 0.5, "B": 0.5}
+reward = {"A": 1.0, "B": 0.0}
+beta = 1.0
+
+unnorm = {y: ref[y] * math.exp(reward[y] / beta) for y in ref}
+Z = sum(unnorm.values())
+policy = {y: unnorm[y] / Z for y in ref}
+print("Z", round(Z, 2), "policy", {y: round(p, 2) for y, p in policy.items()})
+
+implicit = {y: beta * math.log(policy[y] / ref[y]) for y in ref}
+print("implicit rewards", {y: round(r, 2) for y, r in implicit.items()})
+print("difference", round(implicit["A"] - implicit["B"], 2))
+
+def dpo_loss(pi, ref, chosen, rejected, beta=1.0):
+    margin = beta * math.log(pi[chosen] / ref[chosen]) - beta * math.log(pi[rejected] / ref[rejected])
+    return -math.log(1 / (1 + math.exp(-margin)))
+
+print("DPO loss at the reference", round(dpo_loss(ref, ref, "A", "B"), 3))
+print("DPO loss at the optimal policy", round(dpo_loss(policy, ref, "A", "B"), 3))
+:::
+
+The output is:
+
+:::code
+lang: text
+Z 1.86 policy {'A': 0.73, 'B': 0.27}
+implicit rewards {'A': 0.38, 'B': -0.62}
+difference 1.0
+DPO loss at the reference 0.693
+DPO loss at the optimal policy 0.313
+:::
+
+## Try it
+
+:::exercise
+title: A three-answer world
+task: Extend the tiny world to three answers A, B and C. The reference gives each probability 1 over 3. The rewards are 1.0, 0.0 and -1.0. Set beta to 1. Compute the partition function, the optimal policy, and the implicit reward of each answer. Check that the implicit reward differences A minus B and B minus C both equal 1.0.
+hint: Multiply each reference probability by e to the power of the reward, add the three results to get Z, divide to get the policy, then take beta times the log of policy over reference.
+lang: python
+solution:
+import math
+
+ref = 1 / 3
+rewards = {"A": 1.0, "B": 0.0, "C": -1.0}
+unnorm = {y: ref * math.exp(r) for y, r in rewards.items()}
+Z = sum(unnorm.values())
+policy = {y: u / Z for y, u in unnorm.items()}
+implicit = {y: math.log(policy[y] / ref) for y in policy}
+print("Z", round(Z, 3))                                        # 1.362
+print({y: round(p, 3) for y, p in policy.items()})            # A 0.665, B 0.245, C 0.090
+print({y: round(r, 3) for y, r in implicit.items()})          # 0.691, -0.309, -1.309
+print(round(implicit["A"] - implicit["B"], 3), round(implicit["B"] - implicit["C"], 3))   # 1.0 1.0
+:::
+
 ## Common mistakes
 
 - Mistake: you let the reference model update. Fix: freeze it, or the log ratios lose their meaning.
@@ -1206,9 +2014,41 @@ The table compares the two methods.
 
 ## Check your understanding
 
-- Why can DPO ignore the partition function? It is the same for both answers to one prompt and cancels in the difference.
-- What plays the role of the reward in a DPO model? $\\beta$ times the log ratio of policy to reference.
-- How many model copies does DPO need in memory? Two: the policy and the frozen reference.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: DPO
+q: Why can DPO ignore the partition function Z?
+- Z is always equal to 1
+- Z is learned by the reward model
+* Z depends only on the prompt, so it is the same for both answers and cancels in the difference
+- Z is set to zero by the KL penalty
+why: Both answers in a pair share one prompt, and the term beta log Z appears in both rewards and drops out when you subtract.
+q: What plays the role of the reward in a trained DPO model?
+- The log probability of the answer
+* Beta times the log ratio of the policy probability to the reference probability
+- The sigmoid of the answer length
+- The partition function
+why: Inverting the optimal policy gives the reward as beta log of policy over reference, up to a constant.
+q: In the tiny world, the reference gives A and B probability 0.5 each, the reward of A is 1.0 and of B is 0.0, and beta is 1. What probability does the optimal policy give A?
+- 0.50
+- 0.62
+* 0.73
+- 1.00
+why: The unnormalised values are 1.36 and 0.5, the sum is 1.86, and 1.36 over 1.86 is 0.73.
+q: How many model copies does DPO keep in memory during training?
+- 1
+* 2, the policy and a frozen reference
+- 3
+- 4, the policy, the reference, the reward model and the value model
+why: DPO removes the reward model and the value model, so only the policy and the frozen reference remain.
+q: A team lets the reference model update along with the policy. What breaks?
+- The partition function becomes negative
+* The log ratios lose their meaning as implicit rewards, so the loss no longer matches the derivation
+- The chosen answers become shorter
+- Nothing, DPO still works
+why: The derivation assumes a fixed reference, and the implicit reward is measured against it.
+:::
 
 ## Go further
 
@@ -1241,6 +2081,11 @@ This lesson covers two topics that follow from the RLHF pipeline. The first is r
 ## Why it matters
 
 Reward hacking is the most common way an alignment run goes wrong. The reward curve rises, the demo looks worse, and the team loses a week. AI feedback is the main way labs scale preference data past what labelers can produce. A researcher needs to know both the failure and the fix.
+
+:::video
+id: 7xTGNNLPyMI
+why: Use the chapter list and watch the reinforcement learning from human feedback chapter near the end, about 15 minutes. It shows a policy that fools a reward model with nonsense, which is the failure this lesson explains.
+:::
 
 ## The idea with an example
 
@@ -1320,6 +2165,59 @@ AI feedback works best for criteria a model can judge, such as harmlessness or f
 
 Note: the judge model has its own biases. Many judges prefer their own style and longer answers.
 
+The code below scans the overoptimisation curve from the lesson for one set of constants and reports the KL at which true quality peaks, so you can set a KL budget before a run.
+
+:::code
+lang: python
+import math
+
+def true_reward(kl, alpha=0.6, beta=0.3):
+    d = math.sqrt(kl)
+    return d * (alpha - beta * math.log(d)) if d > 0 else 0.0
+
+best_kl, best_r = 0, 0
+for step in range(1, 400):
+    kl = step * 0.1
+    r = true_reward(kl)
+    if r > best_r:
+        best_kl, best_r = kl, r
+    if step % 50 == 0:
+        print("KL", round(kl, 1), "true reward", round(r, 3))
+print("peak at KL", round(best_kl, 1), "nats, true reward", round(best_r, 3))
+:::
+
+The output is:
+
+:::code
+lang: text
+KL 5.0 true reward 0.802
+KL 10.0 true reward 0.805
+KL 15.0 true reward 0.751
+KL 20.0 true reward 0.674
+KL 25.0 true reward 0.586
+KL 30.0 true reward 0.492
+KL 35.0 true reward 0.395
+peak at KL 7.4 nats, true reward 0.815
+:::
+
+## Try it
+
+:::exercise
+title: Set a KL budget from the curve
+task: Take the curve R true of d equal to d times alpha minus beta log d, with alpha equal to 0.6 and beta equal to 0.3. Find the value of d where the curve peaks by setting its derivative to zero, then convert d to a KL value, since d is the square root of the KL. Compare your answer with the budget of 5 to 20 nats in the lesson. Then repeat with alpha equal to 0.9 and say in one sentence what a bigger alpha means for the budget.
+hint: The derivative is alpha minus beta log d minus beta. Set it to zero to get log d equal to alpha over beta minus 1.
+lang: python
+solution:
+import math
+
+for alpha in [0.6, 0.9]:
+    beta = 0.3
+    d = math.exp(alpha / beta - 1)
+    print("alpha", alpha, "peak d", round(d, 2), "KL budget", round(d * d, 1), "nats")
+# alpha 0.6: d 2.72, KL 7.4 nats, inside the 5 to 20 range
+# alpha 0.9: d 7.39, KL 54.6 nats. A larger alpha, from a bigger reward model and more data, moves the peak later.
+:::
+
 ## Common mistakes
 
 - Mistake: you train PPO until the reward stops rising. Fix: stop on a KL budget and pick the checkpoint with the best human rating.
@@ -1329,9 +2227,41 @@ Note: the judge model has its own biases. Many judges prefer their own style and
 
 ## Check your understanding
 
-- What signal warns of reward hacking before a human sees it? The KL distance from the SFT model.
-- Why does a reward model ensemble help? The policy must fool several models at once.
-- What replaces the labeler in constitutional AI? A written principle that the model applies as a critic.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: reward hacking and AI feedback
+q: Which signal warns of reward hacking before any person reads an answer?
+- The training loss of the reward model
+* The KL distance from the SFT model
+- The number of labelers
+- The learning rate
+why: True quality rises and then falls as the KL grows, so a KL past the budget means the policy has drifted into exploits.
+q: In the lesson's PPO trace, which checkpoint should the team ship?
+- Step 0, because the KL is zero
+* Step 500, where the human rating peaks at 6.8
+- Step 1,000, where the reward is highest
+- None, the run failed
+why: The reward keeps rising to step 1,000 but the human rating falls to 5.1, and step 500 has the best rating.
+q: Why does an ensemble of reward models limit the damage?
+- It trains faster than one model
+* The policy must fool several models at once, and the minimum score punishes exploits that only one model rewards
+- It removes the need for a KL penalty
+- It makes answers shorter
+why: Different seeds learn different quirks, so an answer that games one model usually scores low on another.
+q: What replaces the labeler in constitutional AI?
+- A larger reward model
+- A unit test
+* A written principle that the model applies as a critic to its own answer
+- A length penalty
+why: The model critiques and rewrites its answer against a principle, and the pairs train the reward model.
+q: For which criterion is AI feedback the weakest choice?
+- Harmlessness
+- Answer format
+* Hard mathematics that the judge model cannot solve
+- Politeness
+why: A judge can only grade what it can do, so skills the judge lacks need human labels or a verifiable check.
+:::
 
 ## Go further
 
@@ -1350,6 +2280,7 @@ The reward model overoptimisation paper fits the curve and tests ensembles. The 
       slug: 'pretraining-data',
       title: 'Pretraining data',
       description: 'Tokenisation, data mixtures, deduplication, and curriculum: the work that decides what a model learns.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'tokenisation',
@@ -1372,37 +2303,43 @@ This lesson explains how a tokeniser turns text into tokens. It covers byte-pair
 
 The model never sees characters. It sees token identifiers. A bad tokeniser makes arithmetic hard, makes some languages three times more expensive, and wastes context. Every token count in a scaling law, an API bill, or a KV cache estimate depends on the tokeniser. Research on data starts here.
 
+:::video
+id: zduSFxRajkE
+why: Watch the first 40 minutes. It builds byte-pair encoding from scratch in Python and explains the failure modes with digits and other languages that this lesson lists.
+:::
+
 ## The idea with an example
 
 Take a corpus with three words and their counts: "low" appears 5 times, "lower" appears 2 times, and "newest" appears 6 times. Start with a vocabulary of single characters. Write each word as a sequence of characters with an end marker: l o w _, l o w e r _, n e w e s t _.
 
 BPE finds the most frequent pair of adjacent units and merges them into one unit. Count the pairs:
 
-| Pair | Count |
-| --- | --- |
-| l o | 7 |
-| o w | 7 |
-| e s | 6 |
-| s t | 6 |
-| t _ | 6 |
+| Pair | Where it appears | Count |
+| --- | --- | --- |
+| w e | lower (2) and newest (6) | 8 |
+| l o | low (5) and lower (2) | 7 |
+| o w | low (5) and lower (2) | 7 |
+| n e, e w, e s, s t, t _ | newest (6) | 6 each |
+| w _ | low (5) | 5 |
+| e r, r _ | lower (2) | 2 each |
 
-The pair "l o" ties with "o w" at 7. Merge "l o" into "lo". Now "lo w" appears 7 times, so merge it into "low". Next, "e s" appears 6 times, so merge it into "es". After three merges the vocabulary has three new units: "lo", "low", and "es". The word "lower" now tokenises as "low", "e", "r", "_". Repeat until the vocabulary reaches a target size, often 32,000 to 128,000 units.
+The pair "w e" has the highest count, 8, because it appears in both "lower" and "newest". Merge "w e" into "we". Now the words read l o w _, l o we r _, and n e we s t _. Count again: "l o" appears 7 times, so merge it into "lo". Count again: five pairs tie at 6 ("n e", "e we", "we s", "s t", "t _"). The code below breaks ties in alphabetical order, so it merges "e we" into "ewe". After three merges the vocabulary has three new units: "we", "lo", and "ewe". The word "lower" now tokenises as "lo", "we", "r", "_", and "newest" as "n", "ewe", "s", "t", "_". Repeat until the vocabulary reaches a target size, often 32,000 to 128,000 units.
 
 Press Next to run the three merges and watch the token lists change.
 
 :::scenario
 title: Three BPE merges on low, lower, newest
 state: vocabulary=characters only, low=l o w _, lower=l o w e r _, newest=n e w e s t _
-step: Count every adjacent pair. The pairs l o and o w both appear 7 times.
-state: top pair=l o (7)
-step: Merge l o into lo. Rewrite every word.
-state: vocabulary=characters + lo, low=lo w _, lower=lo w e r _, top pair=lo w (7)
-step: Merge lo w into low.
-state: vocabulary=characters + lo + low, low=low _, lower=low e r _, top pair=e s (6)
-step: Merge e s into es. The word newest changes.
-state: vocabulary=characters + lo + low + es, newest=n e w es t _, top pair=es t (6)
-step: Stop after three merges. The word lower now tokenises as low, e, r, and the end marker.
-state: lower tokens=low e r _
+step: Count every adjacent pair across all three words, weighted by word count. The pair w e appears 2 + 6 = 8 times.
+state: top pair=w e (8)
+step: Merge w e into we. Rewrite every word that contains it.
+state: vocabulary=characters + we, lower=l o we r _, newest=n e we s t _, top pair=l o (7)
+step: Merge l o into lo. The words low and lower change.
+state: vocabulary=characters + we + lo, low=lo w _, lower=lo we r _, top pair=e we (6, tie broken alphabetically)
+step: Merge e we into ewe. Only newest changes.
+state: vocabulary=characters + we + lo + ewe, newest=n ewe s t _
+step: Stop after three merges. The word lower now tokenises as lo, we, r, and the end marker.
+state: lower tokens=lo we r _, newest tokens=n ewe s t _
 :::
 
 A larger vocabulary makes sequences shorter. The sentence "the newest lower" might take 7 tokens with a vocabulary of 100 and 3 tokens with a vocabulary of 50,000. Shorter sequences cost less attention. The price is a larger embedding table and a larger output layer.
@@ -1459,6 +2396,75 @@ Two failure modes come from the tokeniser. Numbers split in odd places, so "1234
 
 Note: the embedding table has one row per vocabulary unit. With a vocabulary of 128,000 and a width of 4,096, the table holds 524 million weights.
 
+The code below runs byte-pair encoding on the three-word corpus from the lesson and prints each merge. Its three merges match the pair table and the scenario above: w e, then l o, then e we.
+
+:::code
+lang: python
+from collections import Counter
+
+corpus = {"low": 5, "lower": 2, "newest": 6}
+words = {tuple(w) + ("_",): n for w, n in corpus.items()}
+
+def pair_counts(words):
+    counts = Counter()
+    for symbols, n in words.items():
+        for a, b in zip(symbols, symbols[1:]):
+            counts[(a, b)] += n
+    return counts
+
+def merge(words, pair):
+    out = {}
+    for symbols, n in words.items():
+        new, i = [], 0
+        while i < len(symbols):
+            if i + 1 < len(symbols) and (symbols[i], symbols[i + 1]) == pair:
+                new.append(symbols[i] + symbols[i + 1])
+                i += 2
+            else:
+                new.append(symbols[i])
+                i += 1
+        out[tuple(new)] = n
+    return out
+
+for step in range(3):
+    counts = pair_counts(words)
+    best = min(counts, key=lambda p: (-counts[p], p))   # highest count, ties in alphabetical order
+    words = merge(words, best)
+    print("merge", step + 1, best, "count", counts[best])
+for symbols in words:
+    print(" ".join(symbols))
+:::
+
+The output is:
+
+:::code
+lang: text
+merge 1 ('w', 'e') count 8
+merge 2 ('l', 'o') count 7
+merge 3 ('e', 'we') count 6
+lo w _
+lo we r _
+n ewe s t _
+:::
+
+## Try it
+
+:::exercise
+title: Run five merges, then change the corpus
+task: Run the code from the lesson and check that the first three merges match the table. Then change the loop to run 5 merges and write down how newest and lower tokenise at the end. Finally raise the count of lower from 2 to 6 and predict, before you run it, which pair wins the first merge.
+hint: After three merges the live pairs in newest are n ewe, ewe s, s t and t _. Ties break in alphabetical order in this code. For the second part, count l o and w e again with the new word counts.
+lang: text
+solution:
+With 5 merges the code prints:
+merge 1 (w, e) count 8
+merge 2 (l, o) count 7
+merge 3 (e, we) count 6
+merge 4 (ewe, s) count 6
+merge 5 (ewes, t) count 6
+newest tokenises as n ewest _ and lower as lo we r _.
+The lesson's sequence l o, lo w, e s is what you get if you only count the pairs in its table.
+:::
+
 ## Common mistakes
 
 - Mistake: you count words to estimate cost. Fix: run the tokeniser and count tokens.
@@ -1468,9 +2474,41 @@ Note: the embedding table has one row per vocabulary unit. With a vocabulary of 
 
 ## Check your understanding
 
-- After the merges "l o" and "lo w", how does "lower" tokenise? As "low", "e", "r", and the end marker.
-- What does a larger vocabulary cost? A larger embedding table and output layer.
-- Why does the same text cost more tokens in some languages? The vocabulary holds fewer merges for those languages.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: tokenisation
+q: After the merges l o and lo w, how does the word lower tokenise?
+- l o w e r _
+* low e r _
+- lo w e r _
+- lower _
+why: The two merges turn l o w into one unit, and the rest of the word stays as single characters.
+q: What does a larger vocabulary cost?
+- Longer sequences
+* A larger embedding table and output layer
+- Fewer merges
+- A slower pre-tokeniser
+why: Each vocabulary unit is a row in the embedding table and a column in the output layer.
+q: An English-trained tokeniser gives 4 bytes per token on English and 1.5 bytes per token on Thai. A Thai text of 6,000 bytes costs about how many tokens?
+- 1,500
+- 2,400
+* 4,000
+- 9,000
+why: Tokens equal bytes divided by bytes per token, and 6,000 divided by 1.5 is 4,000, almost three times the 1,500 that English would cost.
+q: A vocabulary has 128,000 units and the model width is 4,096. How many weights does the embedding table hold?
+- 128,000
+- 4 million
+- 131 million
+* About 524 million
+why: The table has one row of width 4,096 per unit, and 128,000 times 4,096 is about 524 million.
+q: Why is it a problem to change the tokeniser after pretraining?
+- The pre-tokeniser needs retraining
+* The embeddings are tied to the old vocabulary, so the new units have no trained rows
+- The compression ratio becomes negative
+- Merges cannot be recorded twice
+why: Every token id maps to a learned embedding row, and a new vocabulary breaks that mapping.
+:::
 
 ## Go further
 
@@ -1584,6 +2622,65 @@ To test a mixture by hand:
 
 Caution: the best mixture at 100 million weights is not always the best at 10 billion weights. Confirm the top two candidates at a larger scale before committing a big run.
 
+The code below computes the tokens per source and the epochs for the mixture in the lesson, and flags any source that would repeat more than 4 times.
+
+:::code
+lang: python
+sources = {
+    "web":    {"available": 10e12,  "weight": 0.70},
+    "code":   {"available": 500e9,  "weight": 0.15},
+    "books":  {"available": 100e9,  "weight": 0.10},
+    "papers": {"available": 20e9,   "weight": 0.05},
+}
+run_tokens = 1e12
+
+def report(sources, run_tokens, limit=4):
+    assert abs(sum(s["weight"] for s in sources.values()) - 1) < 1e-9
+    for name, s in sources.items():
+        tokens = s["weight"] * run_tokens
+        epochs = tokens / s["available"]
+        flag = "  TOO MANY EPOCHS" if epochs > limit else ""
+        print(name, "tokens", round(tokens / 1e9), "B", "epochs", round(epochs, 2), flag)
+
+report(sources, run_tokens)
+print("--- papers raised to 0.30, web lowered to 0.45")
+sources["papers"]["weight"], sources["web"]["weight"] = 0.30, 0.45
+report(sources, run_tokens)
+:::
+
+The output is:
+
+:::code
+lang: text
+web tokens 700 B epochs 0.07 
+code tokens 150 B epochs 0.3 
+books tokens 100 B epochs 1.0 
+papers tokens 50 B epochs 2.5 
+--- papers raised to 0.30, web lowered to 0.45
+web tokens 450 B epochs 0.04 
+code tokens 150 B epochs 0.3 
+books tokens 100 B epochs 1.0 
+papers tokens 300 B epochs 15.0   TOO MANY EPOCHS
+:::
+
+## Try it
+
+:::exercise
+title: Scale the run to 2 trillion tokens
+task: Keep the four sources from the lesson with the weights web 0.55, code 0.30, books 0.10 and papers 0.05, and plan a 2 trillion token run. Compute the tokens and the epochs for each source. Find every source that passes 4 epochs and propose one change of weights that fixes it while the weights still sum to 1.
+hint: Tokens per source equal weight times 2 trillion. Papers has only 20 billion tokens available.
+lang: python
+solution:
+avail = {"web": 10e12, "code": 500e9, "books": 100e9, "papers": 20e9}
+weights = {"web": 0.55, "code": 0.30, "books": 0.10, "papers": 0.05}
+run = 2e12
+for name in avail:
+    tokens = weights[name] * run
+    print(name, round(tokens / 1e9), "B", "epochs", round(tokens / avail[name], 2))
+# web 0.11, code 1.2, books 2.0, papers 5.0 which is past the limit.
+# One fix: papers 0.03 and web 0.57 gives papers 3 epochs.
+:::
+
 ## Common mistakes
 
 - Mistake: you set weights from available supply alone. Fix: weight by value per token, and cap by the epoch limit.
@@ -1593,9 +2690,41 @@ Caution: the best mixture at 100 million weights is not always the best at 10 bi
 
 ## Check your understanding
 
-- A source has 50 billion tokens and weight 0.2 in a 1 trillion token run. How many epochs? Four.
-- What does DoReMi raise the weight of? Domains where the proxy lags the reference the most.
-- Why does a small-scale mixture test need a per-domain held-out set? A single average loss hides trade-offs between domains.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: data mixtures
+q: A source has 50 billion tokens and weight 0.2 in a 1 trillion token run. How many epochs does it run?
+- 0.4
+- 2
+* 4
+- 10
+why: The source supplies 200 billion tokens, and 200 billion divided by 50 billion is 4.
+q: Which domains does DoReMi give more weight to?
+- The largest domains
+- The domains with the lowest loss
+* The domains where the proxy model lags the reference model the most
+- The domains with the most duplicates
+why: DoReMi raises the weight of domains that are hard but learnable, which the gap to the reference reveals.
+q: Why does a mixture test need a held-out set per domain?
+- A single set is too small
+* One average loss can hide a gain in one domain and a loss in another
+- Domains have different tokenisers
+- The proxy model cannot read mixed data
+why: Mixture changes trade quality between domains, and only per-domain losses show the trade.
+q: You raise the weight of a 20 billion token source to 0.30 in a 1 trillion token run. What is the main problem?
+- The source is too small to matter
+* The source would repeat 15 times, far past the useful epoch limit
+- The web weight becomes negative
+- The embedding table grows
+why: Weight 0.30 means 300 billion tokens drawn from 20 billion available, which is 15 epochs.
+q: A team compares two mixtures at different total token counts. Why is the comparison invalid?
+- Different tokenisers were used
+* More tokens lower loss on their own, so the mixture effect cannot be separated from the budget effect
+- Mixtures only matter above 1 trillion tokens
+- DoReMi requires equal weights
+why: Holding the total budget fixed is the only way to attribute a loss difference to the weights.
+:::
 
 ## Go further
 
@@ -1720,6 +2849,66 @@ The table lists the effect of three thresholds.
 
 Note: the Lee study also removed repeated substrings of 50 tokens across documents with a suffix array. That catches licence text and headers that MinHash misses.
 
+The code below computes the Jaccard similarity of the two documents from the lesson, then estimates it with 100 MinHash values.
+
+:::code
+lang: python
+import hashlib
+
+def shingles(text, k=3):
+    words = text.lower().split()
+    return {" ".join(words[i : i + k]) for i in range(len(words) - k + 1)}
+
+def jaccard(a, b):
+    return len(a & b) / len(a | b)
+
+def h(s, seed):
+    return int(hashlib.md5(f"{seed}:{s}".encode()).hexdigest(), 16)
+
+def minhash(shingle_set, n=100):
+    return [min(h(s, seed) for s in shingle_set) for seed in range(n)]
+
+def estimate(sig_a, sig_b):
+    return sum(x == y for x, y in zip(sig_a, sig_b)) / len(sig_a)
+
+A = shingles("the cat sat on the mat")
+B = shingles("the cat sat on a mat")
+print("shingles A", sorted(A))
+print("shingles B", sorted(B))
+print("exact Jaccard", round(jaccard(A, B), 3))
+print("MinHash estimate", estimate(minhash(A), minhash(B)))
+:::
+
+The output is:
+
+:::code
+lang: text
+shingles A ['cat sat on', 'on the mat', 'sat on the', 'the cat sat']
+shingles B ['cat sat on', 'on a mat', 'sat on a', 'the cat sat']
+exact Jaccard 0.333
+MinHash estimate 0.33
+:::
+
+## Try it
+
+:::exercise
+title: Shorter shingles, higher similarity
+task: Repeat the lesson's computation for Document A, the cat sat on the mat, and Document B, the cat sat on a mat, with shingles of 2 words instead of 3. Write out both shingle sets, count the shared and the distinct shingles, and compute the Jaccard similarity by hand. Then check it with the code from the lesson and explain in one sentence why the similarity rose.
+hint: Document A has 5 two-word shingles and Document B has 5. Three of them appear in both.
+lang: python
+solution:
+def shingles(text, k):
+    w = text.split()
+    return {" ".join(w[i:i + k]) for i in range(len(w) - k + 1)}
+
+A = shingles("the cat sat on the mat", 2)
+B = shingles("the cat sat on a mat", 2)
+print(sorted(A))            # the cat, cat sat, sat on, on the, the mat
+print(sorted(B))            # the cat, cat sat, sat on, on a, a mat
+print(len(A & B), len(A | B), round(len(A & B) / len(A | B), 2))   # 3 7 0.43
+# Shorter shingles are less specific, so one changed word breaks fewer of them.
+:::
+
 ## Common mistakes
 
 - Mistake: you only remove exact duplicates. Fix: add MinHash for near-duplicates.
@@ -1729,9 +2918,41 @@ Note: the Lee study also removed repeated substrings of 50 tokens across documen
 
 ## Check your understanding
 
-- Two documents share 4 shingles and have 10 distinct shingles in total. What is their Jaccard similarity? It is 0.4.
-- What does one MinHash value tell you? Whether two documents share the smallest hash, which happens with probability equal to their similarity.
-- Why group signatures into bands? To compare only likely pairs instead of every pair.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: deduplication
+q: Two documents share 4 shingles and have 10 distinct shingles in total. What is their Jaccard similarity?
+- 0.25
+* 0.4
+- 0.6
+- 2.5
+why: Jaccard is the size of the intersection over the size of the union, and 4 over 10 is 0.4.
+q: What does one MinHash value tell you about two documents?
+- Their exact Jaccard similarity
+* Whether they share the smallest hash, which happens with probability equal to their similarity
+- Whether they are exact copies
+- The number of shared words
+why: One hash function gives one coin flip whose chance of a match equals the Jaccard similarity, and 100 flips give an estimate.
+q: Why group the signature values into bands?
+- To make the signature shorter
+- To compress the documents
+* To compare only pairs that land in a shared bucket instead of every pair
+- To remove exact duplicates
+why: Locality-sensitive hashing uses bands so that similar pairs collide in a bucket and dissimilar pairs almost never do.
+q: Two documents have Jaccard similarity 0.5. With 20 bands of 5 values, about how likely are they to share at least one bucket?
+- 0.05
+* About 0.47
+- 0.97
+- 1.0
+why: The chance that one band of 5 values matches is 0.5 to the power 5, about 0.03, and the chance that at least one of 20 bands matches is about 0.47.
+q: Which duplicates does exact hashing miss?
+- Mirrored pages with identical text
+* Pages that differ by one word
+- Pages in a different source
+- Pages shorter than 50 words
+why: A full-text hash changes if any character changes, so near-duplicates need MinHash.
+:::
 
 ## Go further
 
@@ -1764,6 +2985,11 @@ This lesson covers two decisions after deduplication. The first is quality filte
 ## Why it matters
 
 A trillion raw web tokens contain a large fraction of spam, navigation text, and broken markup. A good filter removes most of it and keeps the tokens that teach. Teams that report large gains from "better data" usually mean a better filter. Curriculum is newer. A short phase of high-quality data at the end of a run is now standard practice.
+
+:::video
+id: 7xTGNNLPyMI
+why: Watch the first 20 minutes, which walk through the FineWeb pipeline from raw crawl to filtered text. Match each stage to the rule and classifier filters in this lesson.
+:::
 
 ## The idea with an example
 
@@ -1850,6 +3076,64 @@ All steps at 128,000 tokens: 16
 
 Caution: a filter trained on one source teaches the model that source's style. Check that the filtered corpus still covers the domains you need.
 
+The code below applies the three rule filters from the lesson to a few documents and reports which ones survive.
+
+:::code
+lang: python
+docs = {
+    "article": "The mitochondrion is the part of the cell that produces energy. " * 12,
+    "nav": "Home | About | Contact | Login | Cart",
+    "symbols": "@@@ ### $$$ %%% ^^^ &&& *** ((( ))) +++ === ~~~ ||| " * 5,
+    "list": (chr(10).join(["item one", "item two", "item three", "item four", "item five"]) + chr(10)) * 10,
+}
+
+def keep(text):
+    words = text.split()
+    if len(words) < 50:
+        return False, "fewer than 50 words"
+    symbols = sum(1 for w in words if not any(c.isalnum() for c in w))
+    if symbols / len(words) > 0.1:
+        return False, "too many symbols"
+    lines = [l for l in text.splitlines() if l.strip()]
+    no_punct = sum(1 for l in lines if l.strip()[-1] not in ".!?")
+    if no_punct / len(lines) > 0.3:
+        return False, "too many lines without punctuation"
+    return True, "kept"
+
+for name, text in docs.items():
+    ok, reason = keep(text)
+    print(name, "->", reason)
+:::
+
+The output is:
+
+:::code
+lang: text
+article -> kept
+nav -> fewer than 50 words
+symbols -> too many symbols
+list -> too many lines without punctuation
+:::
+
+## Try it
+
+:::exercise
+title: Pick a threshold that keeps enough tokens
+task: A classifier scored a 1 trillion token corpus. The score bands hold these token counts: scores above 0.9 hold 50 billion, 0.8 to 0.9 hold 150 billion, 0.7 to 0.8 hold 200 billion, 0.6 to 0.7 hold 200 billion, and below 0.6 hold 400 billion. Your run needs 300 billion tokens at no more than 1 epoch. Find the highest threshold that supplies enough tokens. Then say what changes if you allow 4 epochs.
+hint: Add the bands from the top down until the sum reaches 300 billion. With 4 epochs you only need 75 billion unique tokens.
+lang: python
+solution:
+bands = [(0.9, 50e9), (0.8, 150e9), (0.7, 200e9), (0.6, 200e9), (0.0, 400e9)]
+for need in [300e9, 75e9]:
+    total = 0
+    for threshold, tokens in bands:
+        total += tokens
+        if total >= need:
+            print("need", need / 1e9, "B  threshold", threshold, "supplies", total / 1e9, "B")
+            break
+# 1 epoch: threshold 0.7 gives 400 B. 4 epochs: threshold 0.8 gives 200 B, so the filter can be stricter.
+:::
+
 ## Common mistakes
 
 - Mistake: you set the threshold to keep only the top 5 percent. Fix: check that enough tokens remain for the run, and relax the threshold if not.
@@ -1859,9 +3143,41 @@ Caution: a filter trained on one source teaches the model that source's style. C
 
 ## Check your understanding
 
-- When does the annealing phase happen? During the learning rate decay at the end of the run.
-- What do you need to train a classifier filter? Trusted positives and random negatives from the corpus.
-- Why train on short sequences first? Attention cost grows with the square of the length, and short-range structure comes first.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: filtering and curriculum
+q: When does the annealing phase happen?
+- During the warmup at the start of the run
+* During the learning rate decay at the end of the run
+- Halfway through the run
+- After training, during evaluation
+why: The model is most sensitive to data while the learning rate decays, so the curated data goes there.
+q: What do you need to train a classifier filter?
+- A reward model
+* Positive examples from a trusted source and random negatives from the raw corpus
+- A deduplicated test set
+- The full training run
+why: The classifier learns to tell trusted text from typical web text, and then scores every document.
+q: A run trains 95 percent of its steps at 8,000 tokens and 5 percent at 128,000 tokens. Relative to a run entirely at 8,000 tokens, what is its attention compute per token?
+- 1.05 times
+* 1.75 times
+- 8 times
+- 16 times
+why: Attention cost grows with the square of the length, so the long phase costs 16 times per token, and 0.95 plus 0.05 times 16 is 1.75.
+q: Why train on short sequences first and extend the context at the end?
+- Long sequences need a different tokeniser
+* Attention cost grows with the square of the length, and short-range structure is learned first
+- Long sequences cannot be shuffled
+- The learning rate must be zero for long sequences
+why: Most of the run at short length is cheap, and a short long-context phase at the end recovers most of the quality.
+q: A filter keeps only the top 5 percent of a 1 trillion token corpus for a 400 billion token run. What is the problem?
+- The classifier is too slow
+* Only 50 billion tokens remain, so the run would repeat them 8 times
+- The positives are too clean
+- The annealing phase becomes too long
+why: Five percent of 1 trillion is 50 billion tokens, and 400 billion over 50 billion is 8 epochs, past the useful limit.
+:::
 
 ## Go further
 
@@ -1881,6 +3197,7 @@ The FineWeb paper describes rule filters and a classifier filter with ablations 
       slug: 'architectures-beyond',
       title: 'Architectures beyond the dense transformer',
       description: 'Mixture of experts, state space models, and the methods that make long context work.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'mixture-of-experts',
@@ -1982,6 +3299,65 @@ Dense 13B total: 13
 
 Caution: during serving, every expert must sit in GPU memory, because any token might call it. MoE cuts compute per token, not memory per token.
 
+The code below runs the top-2 router on the 8 scores from the lesson and counts the active weights.
+
+:::code
+lang: python
+import math
+
+scores = [0.1, 2.0, 0.3, 1.5, 0.0, 0.2, 0.4, 0.1]
+d, hidden, n_experts, k = 4, 16, 8, 2
+
+def top_k_gates(scores, k):
+    chosen = sorted(range(len(scores)), key=lambda i: -scores[i])[:k]
+    es = [math.exp(scores[i]) for i in chosen]
+    gates = [e / sum(es) for e in es]
+    return list(zip(chosen, gates))
+
+for expert, gate in top_k_gates(scores, k):
+    print("expert", expert + 1, "gate", round(gate, 2))
+
+expert_weights = d * hidden + hidden * d
+router_weights = d * n_experts
+total = n_experts * expert_weights + router_weights
+active = k * expert_weights + router_weights
+print("total weights", total, "active weights", active, "fraction", round(active / total, 2))
+:::
+
+The output is:
+
+:::code
+lang: text
+expert 2 gate 0.62
+expert 4 gate 0.38
+total weights 1056 active weights 288 fraction 0.27
+:::
+
+## Try it
+
+:::exercise
+title: Top-3 routing and Mixtral's weights
+task: Use the 8 router scores from the lesson and switch to top-3 gating. Name the three chosen experts, compute their gate values to 2 decimals, and count the active weights out of the 1,056 total. Then size Mixtral 8x7B: 32 layers, width 4,096, expert hidden width 14,336, 3 matrices per expert, 8 experts, top-2 routing, 46.7 billion total weights. Compute the weights per expert across all layers, the shared weights, and the active weights per token. Explain in one sentence why the active count is not simply total over 4.
+hint: The third highest score is 0.4 for expert 7. One expert across 32 layers holds 32 times 3 times 4,096 times 14,336 weights. Attention and embeddings are shared, so they count in both totals.
+lang: python
+solution:
+import math
+
+scores = [0.1, 2.0, 0.3, 1.5, 0.0, 0.2, 0.4, 0.1]
+chosen = sorted(range(8), key=lambda i: -scores[i])[:3]
+es = [math.exp(scores[i]) for i in chosen]
+print([(i + 1, round(e / sum(es), 2)) for i, e in zip(chosen, es)])   # (2, 0.55) (4, 0.34) (7, 0.11)
+print("active", 3 * 128 + 32, "of", 8 * 128 + 32)                     # 416 of 1056
+
+per_expert = 32 * 3 * 4096 * 14336
+shared = 46.7e9 - 8 * per_expert
+active = shared + 2 * per_expert
+print(round(per_expert / 1e9, 2), "B per expert")   # 5.64
+print(round(shared / 1e9, 1), "B shared")           # 1.6
+print(round(active / 1e9, 1), "B active")           # 12.9, the reported 13 B
+# The shared attention and embedding weights run for every token, so active is more than a quarter of total.
+:::
+
 ## Common mistakes
 
 - Mistake: you quote total weights as a proxy for cost. Fix: report both total and active weights.
@@ -1991,9 +3367,41 @@ Caution: during serving, every expert must sit in GPU memory, because any token 
 
 ## Check your understanding
 
-- A layer has 16 experts and top-2 routing. What fraction of expert weights does each token use? One eighth.
-- What does the load-balancing loss reward? An equal share of tokens across experts.
-- Which cost does MoE not reduce? Memory, because all experts must be loaded.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: mixture of experts
+q: A layer has 16 experts and top-2 routing. What fraction of the expert weights does one token use?
+- One half
+- One quarter
+* One eighth
+- One sixteenth
+why: Each token runs 2 of the 16 experts, and 2 over 16 is one eighth.
+q: The router keeps scores 2.0 and 1.5 for the two chosen experts. What gate does the first expert get, to 2 decimals?
+- 0.50
+- 0.57
+* 0.62
+- 0.88
+why: The softmax over the two kept scores gives e to the 2.0 over the sum of e to the 2.0 and e to the 1.5, which is 0.62.
+q: What does the load-balancing loss reward?
+- Sending every token to the best expert
+* An equal share of tokens across experts
+- A smaller router matrix
+- Fewer active experts per token
+why: Without it the busiest expert keeps winning, and the loss is lowest when every expert receives the same share.
+q: Which cost does a mixture of experts not reduce?
+- Compute per token
+* Memory, because every expert must sit in GPU memory
+- Router cost
+- Training tokens
+why: Any token might call any expert, so all experts stay loaded even though only a few run.
+q: A team sets the number of active experts equal to the number of experts. What have they built?
+- A faster sparse model
+* A dense model with extra routing cost
+- A model with no feed-forward network
+- A model with a larger KV cache
+why: If every expert runs on every token, the layer is a wide dense feed-forward network plus a router that does nothing useful.
+:::
 
 ## Go further
 
@@ -2105,6 +3513,57 @@ State space model with N equal to 16: 16
 
 Note: fixed state size is also a limit. The model cannot recall an exact token from 50,000 steps ago unless the state kept it. Transformers do this with no effort. Hybrid models place one attention layer per several state space layers to get both.
 
+The code below runs the scalar recurrence from the lesson, then computes the same outputs as a convolution with the kernel of powers of a, and checks that they match.
+
+:::code
+lang: python
+def recurrence(x, a=0.5, b=1.0, c=1.0):
+    h, ys = 0.0, []
+    for xt in x:
+        h = a * h + b * xt
+        ys.append(c * h)
+    return ys
+
+def convolution(x, a=0.5, b=1.0, c=1.0):
+    kernel = [c * b * a ** i for i in range(len(x))]
+    return [sum(kernel[t - s] * x[s] for s in range(t + 1)) for t in range(len(x))]
+
+x = [1, 0, 0, 2]
+print("recurrence ", recurrence(x))
+print("convolution", convolution(x))
+print("kernel", [0.5 ** i for i in range(4)])
+
+T, N, d = 100000, 16, 4096
+print("attention per token", T * d, "SSM per token", N * d, "ratio", T // N)
+:::
+
+The output is:
+
+:::code
+lang: text
+recurrence  [1.0, 0.5, 0.25, 2.125]
+convolution [1.0, 0.5, 0.25, 2.125]
+kernel [1.0, 0.5, 0.25, 0.125]
+attention per token 409600000 SSM per token 65536 ratio 6250
+:::
+
+## Try it
+
+:::exercise
+title: A slower forgetting rate
+task: Run the recurrence from the lesson on x = [1, 0, 0, 2] with a equal to 0.9 instead of 0.5. Fill in the four states by hand. Then write the convolution kernel for a equal to 0.9 and say what weight the input from step 1 has in the output at step 4. Explain in one sentence why Mamba lets a change per token.
+hint: Each step multiplies the old state by 0.9 and adds the input. The weight of input s in output t is 0.9 to the power t minus s.
+lang: python
+solution:
+h, a = 0.0, 0.9
+for xt in [1, 0, 0, 2]:
+    h = a * h + xt
+    print(round(h, 3))        # 1.0, 0.9, 0.81, 2.729
+print([round(a ** i, 3) for i in range(4)])   # 1.0, 0.9, 0.81, 0.729
+# Input 1 has weight 0.729 at step 4. A fixed a forgets every input at the same rate,
+# so Mamba computes a, b and c from the current token and can keep some inputs longer.
+:::
+
 ## Common mistakes
 
 - Mistake: you expect a state space model to copy a long random string. Fix: use a hybrid with attention for exact recall.
@@ -2114,9 +3573,41 @@ Note: fixed state size is also a limit. The model cannot recall an exact token f
 
 ## Check your understanding
 
-- In the example, what weight does input 1 have at step 4? $0.5^3 = 0.125$.
-- Why can a fixed state space model train as a convolution? The weights depend only on distance, so the output is a fixed kernel applied to the input.
-- What does Mamba make input-dependent? The write matrix, the read matrix, and the step size.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: state space models
+q: In the lesson example with a equal to 0.5, what weight does the input from step 1 have in the output at step 4?
+- 0.5
+- 0.25
+* 0.125
+- 0.0625
+why: The weight is a to the power of the distance, and 0.5 to the power 3 is 0.125.
+q: Why can a state space model with fixed a, b and c train as a convolution?
+- The state is always zero
+* The weights depend only on the distance between positions, so the output is a fixed kernel applied to the input
+- The sequence is short
+- The GPU converts recurrences automatically
+why: A weighted sum over the past with weights that depend only on t minus s is by definition a convolution.
+q: Which parts does Mamba make depend on the current input?
+- The state size N
+* The write matrix, the read matrix and the step size
+- The sequence length
+- The vocabulary
+why: Selection lets the model decide per token how much to keep and how much to write, which a fixed a cannot do.
+q: A state space layer has state size 16 and the model width is 4,096. A transformer layer at 100,000 tokens stores a cache of 100,000 times the width. By what factor is the state space layer cheaper per generated token?
+- 16
+- 100
+* About 6,250
+- 100,000
+why: The attention cost is proportional to 100,000 and the state space cost to 16, and 100,000 over 16 is 6,250.
+q: What task does a pure state space model do worse than a transformer?
+- Predicting the next word in a sentence
+* Copying an exact long random string from far back in the context
+- Running on a GPU
+- Training in parallel
+why: A fixed-size state cannot hold every past token, while attention can look up any past token directly.
+:::
 
 ## Go further
 
@@ -2249,6 +3740,60 @@ The table compares three long-context tests.
 
 Caution: a model with a 128,000 token window and a 4,000 token training length for most of its run has seen few long examples. Check the recall grid before you trust it.
 
+The code below sizes the KV cache for the model from the lesson, then runs the online softmax over three blocks of scores and checks it against the full softmax.
+
+:::code
+lang: python
+import math
+
+def kv_bytes_per_token(layers, kv_heads, head_dim, bytes_per_number=2):
+    return 2 * layers * kv_heads * head_dim * bytes_per_number
+
+per_token = kv_bytes_per_token(32, 8, 128)
+print("bytes per token", per_token, "=", per_token // 1024, "KB")
+print("cache for 128k tokens", round(per_token * 128000 / 2**30, 1), "GB")
+
+scores = [1.0, 3.0, 0.5, 2.0, 2.5, 1.5]
+values = [1, 2, 3, 4, 5, 6]
+m, l, o = -math.inf, 0.0, 0.0
+for start in range(0, len(scores), 2):
+    s, v = scores[start : start + 2], values[start : start + 2]
+    m_new = max(m, max(s))
+    scale = math.exp(m - m_new)
+    l = l * scale + sum(math.exp(x - m_new) for x in s)
+    o = o * scale + sum(math.exp(x - m_new) * vv for x, vv in zip(s, v))
+    m = m_new
+print("online softmax output", round(o / l, 4))
+es = [math.exp(x) for x in scores]
+print("full softmax output  ", round(sum(e * v for e, v in zip(es, values)) / sum(es), 4))
+:::
+
+The output is:
+
+:::code
+lang: text
+bytes per token 131072 = 128 KB
+cache for 128k tokens 15.6 GB
+online softmax output 3.4057
+full softmax output   3.4057
+:::
+
+## Try it
+
+:::exercise
+title: Size the cache for Llama 3 70B
+task: Llama 3 70B has 80 layers, 8 key-value heads and head width 128, stored in 16-bit numbers. Compute the KV cache bytes per token and the cache for one 128,000 token request in gigabytes. Then compute how many such requests fit next to the 140 gigabytes of weights on a server with 640 gigabytes of GPU memory.
+hint: Bytes per token equal 2 times layers times key-value heads times head width times 2 bytes. Divide the free memory by the cache per request.
+lang: python
+solution:
+per_token = 2 * 80 * 8 * 128 * 2
+cache = per_token * 128000
+print("bytes per token", per_token)                      # 327680, which is 320 KB
+print("GB per request", round(cache / 2**30, 1))        # 39.1
+free = 640 - 140
+print("requests that fit", int(free // (cache / 2**30)))   # 12
+:::
+
 ## Common mistakes
 
 - Mistake: you size the cache by weights alone. Fix: compute bytes per token times the context length.
@@ -2258,9 +3803,41 @@ Caution: a model with a 128,000 token window and a 4,000 token training length f
 
 ## Check your understanding
 
-- A model stores 64 kilobytes per token. How much cache does a 100,000 token prompt need? About 6.4 gigabytes.
-- What does flash attention avoid writing to memory? The full $T \\times T$ score matrix.
-- What does the lost-in-the-middle result show? Models use facts in the middle of a long prompt less than facts at the edges.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: long context
+q: A model stores 64 kilobytes of cache per token. About how much cache does a 100,000 token prompt need?
+- 640 megabytes
+* 6.4 gigabytes
+- 64 gigabytes
+- 640 gigabytes
+why: 64 kilobytes times 100,000 tokens is 6.4 billion bytes, about 6.4 gigabytes.
+q: What does flash attention avoid writing to GPU memory?
+- The query vectors
+- The value vectors
+* The full T by T score matrix
+- The KV cache
+why: It processes keys in blocks with a running maximum and sum, so the scores never leave on-chip memory.
+q: Which three running values does the online softmax keep per query row?
+- The mean, the variance and the output
+* The running maximum, the running sum and the running output
+- The first key, the last key and the output
+- The block size, the step size and the output
+why: Each new block rescales the old sum and output by the change in the maximum, then adds its own terms.
+q: What did the lost-in-the-middle study show?
+- Models cannot read past 4,000 tokens
+* Models use facts in the middle of a long prompt less than facts at the start and the end
+- Models forget the start of a prompt first
+- Models ignore the end of a prompt
+why: Accuracy dips when the needle sits in the middle, which is why a long-context test must cover every depth.
+q: Why is a single needle-in-a-haystack pass a weak test?
+- It is too expensive
+* A model can recall one fact without any reasoning across the input
+- It only tests the first 1,000 tokens
+- It requires a fine-tune
+why: The test checks recall of one planted fact, so a model can pass it and still fail to combine facts.
+:::
 
 ## Go further
 
@@ -2280,6 +3857,7 @@ The flash attention paper describes the blocked kernel and the online softmax. T
       slug: 'reasoning',
       title: 'Reasoning models',
       description: 'Chain of thought, process rewards, reinforcement learning on verifiable tasks, and spending compute at test time.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'chain-of-thought',
@@ -2301,6 +3879,11 @@ This lesson explains chain of thought, the practice of asking a model to write i
 ## Why it matters
 
 Chain of thought was the first method that let language models solve multi-step arithmetic and logic. It is also the base of every reasoning model. Models such as OpenAI o1 and DeepSeek-R1 are trained to produce long chains. The lessons that follow build on the idea in this one.
+
+:::video
+id: 7xTGNNLPyMI
+why: Use the chapter list and watch the chapter on models needing tokens to think, about 10 minutes. It explains why each generated token adds compute, which is the mechanism behind chain of thought.
+:::
 
 ## The idea with an example
 
@@ -2381,6 +3964,60 @@ Chain of thought helps on tasks with a clear sequence of steps: arithmetic, symb
 
 Note: a chain is not a transcript of the computation inside the model. The chain can give one reason while the model used another. Treat it as a tool, not an explanation.
 
+The code below extracts the final answer from five sampled chains and returns the majority vote, as self-consistency does.
+
+:::code
+lang: python
+from collections import Counter
+
+chains = [
+    "23 minus 20 is 3. 3 plus 6 is 9. The answer is 9.",
+    "Start with 23. Use 20, leaving 3. Buy 6, giving 9. The answer is 9.",
+    "23 minus 20 is 3. The answer is 3.",
+    "23 - 20 + 6 = 9. The answer is 9.",
+    "23 plus 6 is 29. The answer is 29.",
+]
+
+def extract_answer(chain):
+    marker = "The answer is "
+    tail = chain[chain.rfind(marker) + len(marker):]
+    return tail.strip().rstrip(".")
+
+answers = [extract_answer(c) for c in chains]
+votes = Counter(answers)
+print("answers", answers)
+print("votes", dict(votes))
+print("self-consistency returns", votes.most_common(1)[0][0])
+:::
+
+The output is:
+
+:::code
+lang: text
+answers ['9', '9', '3', '9', '29']
+votes {'9': 3, '3': 1, '29': 1}
+self-consistency returns 9
+:::
+
+## Try it
+
+:::exercise
+title: When does the vote beat one chain?
+task: A single chain answers the apple problem correctly with probability 0.6, and each wrong chain gives a random wrong answer that rarely repeats. Compute the probability that a majority vote over 5 chains returns the right answer, which happens when at least 3 of the 5 chains are correct. Then compute it for 3 chains and for 9 chains. Say in one sentence why the gains flatten.
+hint: Use the binomial formula. For 5 chains, add the probabilities of exactly 3, 4 and 5 correct chains.
+lang: python
+solution:
+from math import comb
+
+def vote_accuracy(n, p=0.6):
+    need = n // 2 + 1
+    return sum(comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(need, n + 1))
+
+for n in [1, 3, 5, 9, 41]:
+    print(n, "chains", round(vote_accuracy(n), 3))
+# 1: 0.6, 3: 0.648, 5: 0.683, 9: 0.733, 41: 0.90. Each extra chain adds less than the one before.
+:::
+
 ## Common mistakes
 
 - Mistake: you vote over chains sampled at temperature zero. Fix: raise the temperature, or all chains are identical.
@@ -2390,9 +4027,41 @@ Note: a chain is not a transcript of the computation inside the model. The chain
 
 ## Check your understanding
 
-- Why does a chain help a model with arithmetic? Each step is one easy prediction instead of one hard prediction.
-- Five chains answer 7, 7, 8, 7, 2. What does self-consistency return? Seven.
-- What temperature setting breaks self-consistency? Zero, because every chain is the same.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: chain of thought
+q: Why does a chain of thought help a model with arithmetic?
+- It makes the model larger
+* Each step is one easy prediction, and each generated token adds a forward pass of compute
+- It removes the need for a tokeniser
+- It lowers the temperature
+why: The chain turns one hard prediction into several easy ones, and the model spends compute on every token it writes.
+q: Five chains answer 7, 7, 8, 7, 2. What does self-consistency return?
+- 2
+* 7
+- 8
+- The average, 6.2
+why: Self-consistency votes over the extracted final answers, and 7 has three of the five votes.
+q: Which temperature setting breaks self-consistency?
+* Zero, because every chain is identical
+- 0.5
+- 0.7
+- 1.0
+why: Voting needs different chains, and at temperature zero the sampler returns the same chain every time.
+q: One chain costs about 50 generated tokens. A vote over 20 chains costs about how many tokens per question?
+- 50
+- 70
+* 1,000
+- 2,500
+why: Twenty chains at 50 tokens each is 1,000 tokens, which is the price of the accuracy gain.
+q: For which task does chain of thought add cost and no accuracy?
+- A three-step word problem
+- A multi-hop question
+* A question that one fact lookup answers
+- A symbolic logic puzzle
+why: There are no intermediate steps to write, so the chain only adds tokens.
+:::
 
 ## Go further
 
@@ -2517,6 +4186,67 @@ Verifier -> Best answer: pick solution 2
 
 Caution: a verifier is a reward model and can be hacked. If you train the policy against it, watch for solutions that score high and read wrong.
 
+The code below scores the 4-step solution from the lesson with the product and the minimum rules, then runs best-of-n selection and weighted voting over three sampled solutions.
+
+:::code
+lang: python
+from collections import defaultdict
+
+solutions = [
+    {"answer": 45, "steps": [0.98, 0.97, 0.05, 0.90]},
+    {"answer": 43, "steps": [0.98, 0.97, 0.96, 0.98]},
+    {"answer": 43, "steps": [0.90, 0.15, 0.95, 0.93]},
+]
+
+def product(xs):
+    out = 1.0
+    for x in xs:
+        out *= x
+    return out
+
+for s in solutions:
+    s["score"] = product(s["steps"])
+    print("answer", s["answer"], "product", round(s["score"], 3), "min", min(s["steps"]))
+
+best = max(solutions, key=lambda s: s["score"])
+print("best-of-n picks answer", best["answer"])
+
+weighted = defaultdict(float)
+for s in solutions:
+    weighted[s["answer"]] += s["score"]
+print("weighted vote", {a: round(w, 3) for a, w in weighted.items()})
+:::
+
+The output is:
+
+:::code
+lang: text
+answer 45 product 0.043 min 0.05
+answer 43 product 0.894 min 0.96
+answer 43 product 0.119 min 0.15
+best-of-n picks answer 43
+weighted vote {45: 0.043, 43: 1.014}
+:::
+
+## Try it
+
+:::exercise
+title: Label a step with rollouts
+task: Use the Math-Shepherd method to label step 3 of the lesson's solution, the step that writes 24 plus 12 as 38. From that step you sample 8 continuations to a final answer. Six of them end at 45 and two end at 43, and the correct answer is 43. Compute the label for step 3. Then do the same for step 2, where 8 continuations give 7 answers of 43 and 1 of 45. Explain in one sentence why the step 3 label is not zero even though the step is wrong.
+hint: The label is the fraction of rollouts that reach the correct final answer.
+lang: python
+solution:
+def label(rollout_answers, correct):
+    return sum(a == correct for a in rollout_answers) / len(rollout_answers)
+
+step3 = [45] * 6 + [43] * 2
+step2 = [43] * 7 + [45]
+print("step 3 label", label(step3, 43))   # 0.25
+print("step 2 label", label(step2, 43))   # 0.875
+# Two rollouts recovered from the error later, so the label measures whether the
+# solution can still reach the answer from here, not whether the step is correct.
+:::
+
 ## Common mistakes
 
 - Mistake: you train the PRM with only final-answer labels. Fix: label steps, by raters or by rollouts.
@@ -2526,9 +4256,41 @@ Caution: a verifier is a reward model and can be hacked. If you train the policy
 
 ## Check your understanding
 
-- What does a PRM output? One probability per step.
-- Why can a PRM reject a solution with the correct final answer? Because a step along the way is wrong.
-- How does Math-Shepherd label a step without humans? By the fraction of rollouts from that step that reach the correct answer.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: outcome and process rewards
+q: What does a process reward model output?
+- One score for the final answer
+* One probability per step
+- A rewritten solution
+- The number of steps
+why: The PRM reads the solution up to step k and gives a probability that step k is correct.
+q: A solution has step scores 0.9, 0.8, 0.5 and 1.0. What is its score under the product rule, and under the minimum rule?
+- 0.8 and 0.5
+* 0.36 and 0.5
+- 0.36 and 0.8
+- 0.5 and 0.36
+why: The product of the four scores is 0.36, and the smallest score is 0.5.
+q: Why can a PRM reject a solution whose final answer is correct?
+- The PRM never sees the final answer
+* A step along the way is wrong, so the answer was a lucky guess
+- The PRM only scores the first step
+- The answer is too long
+why: The step scores catch a broken step even when a later error cancels it out.
+q: How does Math-Shepherd label a step without human raters?
+- It asks a larger model to grade the step
+* It samples several continuations from the step and uses the fraction that reach the correct final answer
+- It compares the step with the textbook
+- It counts the tokens in the step
+why: The label needs only final answers, which makes it cheap to scale.
+q: Why does best-of-n with a verifier beat majority vote on hard problems?
+- It needs fewer samples
+* It can pick a correct answer that appears only once among many wrong ones
+- It uses temperature zero
+- It does not need a policy
+why: Majority vote requires the correct answer to repeat, while a verifier can rank a single correct sample first.
+:::
 
 ## Go further
 
@@ -2561,6 +4323,11 @@ This lesson explains reinforcement learning with verifiable rewards (RLVR). A ve
 ## Why it matters
 
 RLHF needs a reward model, and a reward model can be hacked. A checker cannot be hacked in the same way. A unit test either passes or fails. DeepSeek-R1 showed that a base model trained with checkers alone learns to write long chains, to check its own work, and to backtrack. This result changed how labs build reasoning models.
+
+:::video
+id: 7xTGNNLPyMI
+why: Use the chapter list and watch the reinforcement learning chapter and the DeepSeek-R1 part that follows it, about 25 minutes. It shows the response length growing and the model learning to check its own work, which is step 1 of the recipe in this lesson.
+:::
 
 ## The idea with an example
 
@@ -2646,6 +4413,61 @@ Response length grows during step 1. The model finds that more steps give more c
 
 Caution: a checker with a hole becomes a reward to hack. A test suite that only checks one case teaches the model to print that case.
 
+The code below grades four sampled answers with a checker and computes the group-relative advantages from the lesson.
+
+:::code
+lang: python
+import math
+
+def checker(answer):
+    return 1.0 if answer == 97 else 0.0
+
+def advantages(rewards):
+    mean = sum(rewards) / len(rewards)
+    var = sum((r - mean) ** 2 for r in rewards) / len(rewards)
+    std = math.sqrt(var)
+    if std == 0:
+        return [0.0 for _ in rewards]
+    return [(r - mean) / std for r in rewards]
+
+samples = [91, 97, 93, 97]
+rewards = [checker(a) for a in samples]
+print("rewards", rewards)
+print("advantages", [round(a, 2) for a in advantages(rewards)])
+
+print("group of 8 with 3 correct:", [round(a, 2) for a in advantages([1, 1, 1, 0, 0, 0, 0, 0])])
+print("group where all fail:", advantages([0, 0, 0, 0]))
+:::
+
+The output is:
+
+:::code
+lang: text
+rewards [0.0, 1.0, 0.0, 1.0]
+advantages [-1.0, 1.0, -1.0, 1.0]
+group of 8 with 3 correct: [1.29, 1.29, 1.29, -0.77, -0.77, -0.77, -0.77, -0.77]
+group where all fail: [0.0, 0.0, 0.0, 0.0]
+:::
+
+## Try it
+
+:::exercise
+title: Advantages for a group of 8
+task: A group has 8 samples and 3 of them pass the checker. Compute the mean reward, the standard deviation, and the advantage of a correct sample and of a wrong sample by hand. Then say what happens to the advantages when all 8 samples fail, and why the lesson recommends problems with a pass rate between 20 and 80 percent.
+hint: For rewards of 0 and 1, the variance is p times 1 minus p where p is the pass rate. The standard deviation is its square root.
+lang: python
+solution:
+import math
+
+p = 3 / 8
+std = math.sqrt(p * (1 - p))
+print("mean", p, "std", round(std, 3))                  # 0.375, 0.484
+print("correct", round((1 - p) / std, 2))               # 1.29
+print("wrong", round((0 - p) / std, 2))                 # -0.77
+# If all 8 fail, every reward equals the mean, the standard deviation is 0,
+# and every advantage is 0, so the group gives no learning signal.
+:::
+
 ## Common mistakes
 
 - Mistake: you use a checker that matches the answer as a string. Fix: normalise formats, or the model learns formats and not mathematics.
@@ -2655,9 +4477,41 @@ Caution: a checker with a hole becomes a reward to hack. A test suite that only 
 
 ## Check your understanding
 
-- What is the advantage of a correct sample in a group where 1 of 4 is correct? The mean is 0.25, the standard deviation is about 0.43, so the advantage is about 1.7.
-- What does GRPO remove compared with PPO? The value network.
-- Why does response length rise during training? Longer chains give the model more chances to check and correct its work.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: verifiable rewards
+q: In a group of 4 samples, 1 is correct. What is the advantage of the correct sample?
+- 0.25
+- 1.0
+* About 1.7
+- 4.0
+why: The mean is 0.25 and the standard deviation is about 0.43, so the advantage is 0.75 over 0.43, about 1.7.
+q: What does GRPO remove compared with PPO?
+- The KL penalty
+- The policy
+* The value network, replaced by the group mean
+- The clip range
+why: The group of samples provides the baseline that the value network would estimate, which saves a model copy.
+q: Why does the response length grow during the first stage of the DeepSeek-R1 recipe?
+- The KL penalty forces longer text
+* Longer chains give the model more chances to check and correct its work, and the checker rewards that
+- The tokeniser changes
+- The learning rate grows
+why: Nothing tells the model to write more; it discovers that reflection and backtracking raise its pass rate.
+q: A checker compares the final answer to the string 97. The model learns to always write 97 in the required format and nothing else. What went wrong?
+- The group size was too large
+* The checker has a hole, so it became a reward to hack
+- The KL penalty was too strong
+- The problems were too hard
+why: A checker that only matches one case teaches the model to print that case, which is reward hacking on a program.
+q: Why avoid training only on problems the model already solves?
+- They cost more tokens
+* Every sample gets the same reward, so the advantages are all zero and there is no signal
+- The checker cannot grade them
+- The KL penalty becomes negative
+why: GRPO learns from differences inside a group, and a group with all the same outcome has none.
+:::
 
 ## Go further
 
@@ -2766,6 +4620,54 @@ Budget forcing controls the serial chain. Set a maximum token count and cut the 
 
 Note: the cost of a long chain is paid in KV cache memory and latency, not only in FLOPs. A 30,000 token chain holds a 30,000 token cache for the whole request.
 
+The code below computes coverage for several pass rates and sample counts, and finds the sample count that reaches a target coverage.
+
+:::code
+lang: python
+import math
+
+def coverage(p, n):
+    return 1 - (1 - p) ** n
+
+for p in [0.01, 0.1, 0.3]:
+    print("p =", p, [round(coverage(p, n), 2) for n in [1, 10, 100, 1000]])
+
+def samples_needed(p, target=0.95):
+    return math.ceil(math.log(1 - target) / math.log(1 - p))
+
+for p in [0.01, 0.1, 0.3]:
+    print("p =", p, "samples for 95 percent coverage:", samples_needed(p))
+:::
+
+The output is:
+
+:::code
+lang: text
+p = 0.01 [0.01, 0.1, 0.63, 1.0]
+p = 0.1 [0.1, 0.65, 1.0, 1.0]
+p = 0.3 [0.3, 0.97, 1.0, 1.0]
+p = 0.01 samples for 95 percent coverage: 299
+p = 0.1 samples for 95 percent coverage: 29
+p = 0.3 samples for 95 percent coverage: 9
+:::
+
+## Try it
+
+:::exercise
+title: Budget the samples
+task: A problem set has a single-sample pass rate of 0.1. Compute by hand how many samples you need for a coverage of 0.95, using the logarithm of 0.05 divided by the logarithm of 0.9. Then compute the coverage with 20 samples for a pass rate of 0.2. Finally, each sample costs 500 tokens; say how many tokens the 95 percent budget costs and whether majority vote or a verifier should select the answer.
+hint: The logarithm of 0.05 is about -3.0 and the logarithm of 0.9 is about -0.105.
+lang: python
+solution:
+import math
+
+n = math.ceil(math.log(0.05) / math.log(0.9))
+print("samples for 0.95 coverage at p 0.1:", n)         # 29
+print("coverage with 20 samples at p 0.2:", round(1 - 0.8 ** 20, 3))   # 0.988
+print("tokens:", n * 500)                                 # 14500
+# At a 10 percent pass rate wrong answers outnumber the right one, so use a verifier.
+:::
+
 ## Common mistakes
 
 - Mistake: you report coverage as accuracy. Fix: coverage is an upper bound; report the accuracy of the selection method.
@@ -2775,9 +4677,41 @@ Note: the cost of a long chain is paid in KV cache memory and latency, not only 
 
 ## Check your understanding
 
-- A model has a 20 percent pass rate. What is the coverage with 10 samples? About 89 percent.
-- Which selection method works when the correct answer appears once in 100 samples? A verifier with best-of-n.
-- What does budget forcing control? The length of the reasoning chain.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: test-time compute
+q: A model has a 20 percent pass rate. What is the coverage with 10 samples?
+- 20 percent
+- 65 percent
+* About 89 percent
+- 100 percent
+why: Coverage is 1 minus 0.8 to the power 10, and 0.8 to the power 10 is about 0.11.
+q: The correct answer appears once in 100 samples. Which method can still return it?
+- Majority vote
+* Best-of-n with a verifier
+- A lower temperature
+- A shorter chain
+why: A vote needs the right answer to be common, but a verifier can rank a single correct sample first.
+q: What does budget forcing control?
+- The number of parallel samples
+* The length of the reasoning chain, with a cap and a forced minimum
+- The size of the model
+- The verifier threshold
+why: The s1 paper cut the chain at a maximum and appended a continuation word to extend it to a minimum.
+q: What is the difference between coverage and accuracy?
+- They are the same number
+* Coverage says a correct answer is in the set; accuracy says the selection method returned it
+- Accuracy is always higher than coverage
+- Coverage only applies to code tasks
+why: Coverage is an upper bound on what any selection method can achieve.
+q: On which problems did the larger model beat a small model with search in the Snell study?
+- Easy problems
+- Medium problems
+* The hardest problems, where the small model cannot produce one correct step
+- All problems
+why: Sampling only helps when a correct sample is possible, and on the hardest problems the small model never produces one.
+:::
 
 ## Go further
 
@@ -2796,6 +4730,7 @@ The Snell paper gives the compute-optimal comparison between test-time and pretr
       slug: 'research-practice',
       title: 'Research practice',
       description: 'How to read a paper, reproduce a result, run ablations, and write up what you found.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'read-a-paper',
@@ -2906,6 +4841,58 @@ Keep a reading log. One entry per paper, with the one-sentence claim, the condit
 
 Note: a paper from a well-known lab needs the same checks as any other paper. The Kaplan paper came from a strong lab and was still corrected by Chinchilla.
 
+The code below keeps a reading log in a plain-text file, one entry per paper, and searches it. Run it twice: once to add the Chinchilla entry and once to search.
+
+:::code
+lang: python
+import json, sys
+from pathlib import Path
+
+LOG = Path("reading_log.jsonl")
+
+def add(entry):
+    with LOG.open("a") as f:
+        f.write(json.dumps(entry) + chr(10))
+
+def search(word):
+    for line in LOG.read_text().splitlines():
+        e = json.loads(line)
+        if word.lower() in json.dumps(e).lower():
+            print(e["title"], "->", e["claim"])
+
+add({
+    "title": "Training Compute-Optimal Large Language Models",
+    "claim": "For a fixed compute budget, loss is lowest when weights and tokens grow at the same rate.",
+    "conditions": ["one model family", "one data mix", "loss on held-out text"],
+    "figure": "Figure 1, three fitting methods agree",
+    "weakest": "the result may depend on the tokeniser, which the paper does not test",
+})
+search("tokeniser")
+:::
+
+The output is:
+
+:::code
+lang: text
+Training Compute-Optimal Large Language Models -> For a fixed compute budget, loss is lowest when weights and tokens grow at the same rate.
+:::
+
+## Try it
+
+:::exercise
+title: Pass one on the DPO paper
+task: Open the DPO paper from the alignment module. Spend 10 minutes on pass one only: title, abstract, headings, figure captions and conclusion. Write the claim in the template Under conditions C, method M beats baseline B on metric X by amount D. Then write one condition the abstract leaves out and one question you cannot answer without pass two.
+hint: The baseline is PPO-based RLHF. Look for the summarisation and dialogue experiments in the figure captions for the metric and the size of the gain.
+lang: text
+solution:
+Claim: Under the condition of preference data sampled from a fixed reference model, DPO
+matches or beats PPO-based RLHF on win rate against a reference answer, judged by GPT-4,
+on summarisation and single-turn dialogue, with no reward model and no sampling loop.
+Condition left out: the judge is a model, not a person, for most comparisons.
+Open question for pass two: how sensitive is the result to beta and to the length of the
+chosen answers? The ablation table and the appendix should say.
+:::
+
 ## Common mistakes
 
 - Mistake: you read every paper start to finish. Fix: stop after pass one for most papers.
@@ -2915,9 +4902,41 @@ Note: a paper from a well-known lab needs the same checks as any other paper. Th
 
 ## Check your understanding
 
-- What do you read in pass one? Title, abstract, headings, figures, and conclusion.
-- What question do you ask about a baseline? Whether it was tuned as hard as the new method.
-- What makes a claim complete? Conditions, method, baseline, metric, and the size of the gain.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: reading a paper
+q: What do you read in pass one?
+- The full text without proofs
+* The title, abstract, headings, figure captions and conclusion
+- The appendix and the code
+- The related work section only
+why: Pass one takes 10 minutes and decides whether the paper deserves an hour.
+q: Which question do you ask about the baseline?
+- Whether it is from the same lab
+* Whether it was tuned as hard as the new method
+- Whether it uses the same tokeniser
+- Whether it has a GitHub repository
+why: A weak baseline inflates the gain, and the experiments section and appendix show how much tuning each side got.
+q: A paper reports a gain of 0.8 points with one run per setting. What check does this fail?
+- The compute check
+* The runs check, because the gap may be smaller than the variation between seeds
+- The evaluation data check
+- The ablation check
+why: Without several seeds you cannot tell a real gain from noise.
+q: A reader writes the claim as the method works much better. Which slots of the claim template are missing?
+- Only the amount
+* The conditions, the baseline, the metric and the amount
+- Only the metric
+- None, the claim is complete
+why: A complete claim names the conditions, the method, the baseline, the metric and the size of the gain.
+q: Why keep a reading log in plain text?
+- Papers are plain text
+* You can search it later, and after a year it is worth more than any single paper
+- Reviewers require it
+- It replaces pass three
+why: A searchable log of claims, conditions and open questions turns reading into something you can build on.
+:::
 
 ## Go further
 
@@ -2950,6 +4969,11 @@ This lesson gives a procedure for reproducing a published result. It covers how 
 ## Why it matters
 
 Reproduction is the fastest way to learn a method and the only way to trust it. Many published gains shrink or vanish when another team runs them. A researcher who can reproduce results in a week is more valuable than one who can only read them. Every new project should start with a reproduction of its strongest baseline.
+
+:::video
+id: l8pRSuU81PU
+why: Watch the first 30 minutes. It starts a reproduction of GPT-2 by matching the published model and its loss before changing anything, which is the baseline-first rule of this lesson.
+:::
 
 ## The idea with an example
 
@@ -3037,6 +5061,57 @@ The table lists the four causes with a symptom and a check for each.
 
 Caution: a result that reproduces only with the authors' exact seed is not a result. Run several seeds.
 
+The code below checks a reproduction gap with the standard error formula from the lesson. Change the numbers to your own run.
+
+:::code
+lang: python
+import math
+
+def standard_error(p, n):
+    return math.sqrt(p * (1 - p) / n)
+
+def verdict(ours, paper, n):
+    se = standard_error(ours, n)
+    gap = abs(ours - paper)
+    status = "reproduces" if gap <= 2 * se else "real gap, investigate"
+    print(f"ours {ours:.2f} paper {paper:.2f} n {n} SE {se:.3f} gap {gap:.2f} -> {status}")
+
+verdict(0.09, 0.10, 500)   # baseline
+verdict(0.32, 0.35, 500)   # chain of thought
+verdict(0.28, 0.35, 500)   # a gap that needs a look
+verdict(0.50, 0.55, 200)
+:::
+
+The output is:
+
+:::code
+lang: text
+ours 0.09 paper 0.10 n 500 SE 0.013 gap 0.01 -> reproduces
+ours 0.32 paper 0.35 n 500 SE 0.021 gap 0.03 -> reproduces
+ours 0.28 paper 0.35 n 500 SE 0.020 gap 0.07 -> real gap, investigate
+ours 0.50 paper 0.55 n 200 SE 0.035 gap 0.05 -> reproduces
+:::
+
+## Try it
+
+:::exercise
+title: Judge a gap
+task: You repeat the chain-of-thought reproduction from the lesson on 500 problems and get 28 percent against the paper's 35 percent. Compute the standard error by hand and decide whether the gap is real. Then list the four causes of a false gap from the lesson in the order you would check them, with one sentence on why that order.
+hint: The standard error is the square root of p times 1 minus p over n. Compare the gap with two standard errors.
+lang: python
+solution:
+import math
+
+p, n, paper = 0.28, 500, 0.35
+se = math.sqrt(p * (1 - p) / n)
+print(round(se, 3), "gap", round(paper - p, 2), "limit", round(2 * se, 3))   # 0.02, 0.07, 0.04
+# The gap of 7 points is beyond two standard errors, so it is real. Check in this order:
+# 1 prompt format, since a copied appendix prompt is the fastest check
+# 2 evaluation parser, by reading 20 parsed outputs
+# 3 tokeniser, by comparing token counts on one example
+# 4 data split, by confirming the split and its size
+:::
+
 ## Common mistakes
 
 - Mistake: you start at full scale. Fix: start at the smallest scale that shows the effect.
@@ -3046,9 +5121,41 @@ Caution: a result that reproduces only with the authors' exact seed is not a res
 
 ## Check your understanding
 
-- What do you do before you run the new method? Match the published baseline.
-- With accuracy 0.5 on 200 problems, what is the standard error? About 0.035.
-- Name two common causes of a false gap. A different prompt format and a different evaluation parser.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: reproducing a result
+q: What do you do before you run the new method?
+- Tune the learning rate
+* Match the published baseline number
+- Write the paper
+- Change the prompt
+why: A baseline that does not match means the setup differs, and every later number inherits that difference.
+q: With accuracy 0.5 on 200 problems, what is the standard error?
+- 0.0025
+- 0.01
+* About 0.035
+- 0.25
+why: The square root of 0.5 times 0.5 over 200 is about 0.035.
+q: Your number is 32 percent and the paper reports 35 percent on 500 problems. What is the verdict?
+- The gap is real
+* The gap of 3 points is within two standard errors of about 2 points each, so the effect reproduces
+- The paper is wrong
+- You need 10 more seeds
+why: A gap smaller than two standard errors is not evidence of a difference.
+q: A reproduction matches only with the authors' exact random seed. What does that show?
+- The method is robust
+* The result is not a result, because it does not survive seed variation
+- The baseline was too strong
+- The tokeniser differs
+why: A real effect is larger than the variation between seeds, so run several and report the spread.
+q: Which cause of a false gap do you check by reading 20 parsed outputs by hand?
+- A different tokeniser
+- A different data split
+* A different evaluation parser that marks right answers wrong
+- A different model size
+why: Parser errors show up as correct answers scored as wrong, and only inspection catches them.
+:::
 
 ## Go further
 
@@ -3162,6 +5269,52 @@ loss term: 66.2, 72.1
 
 Note: an ablation that removes a part and replaces it with nothing can be unfair. Replace a new loss term with the standard term, not with zero.
 
+The code below reads the ablation table from the lesson and flags each part whose removal costs more than two standard deviations.
+
+:::code
+lang: python
+full = (72.1, 0.6)
+rows = {
+    "loss term":   (71.8, 0.7),
+    "filter":      (66.2, 0.9),
+    "long warmup": (71.5, 0.6),
+}
+baseline = (65.0, 0.8)
+
+print("full method", full[0], "baseline", baseline[0], "gain", round(full[0] - baseline[0], 1))
+for part, (score, sd) in rows.items():
+    drop = full[0] - score
+    limit = 2 * max(sd, full[1])
+    verdict = "carries the gain" if drop > limit else "inside seed spread"
+    print(f"without {part:12s} drop {drop:4.1f}  limit {limit:3.1f}  {verdict}")
+:::
+
+The output is:
+
+:::code
+lang: text
+full method 72.1 baseline 65.0 gain 7.1
+without loss term    drop  0.3  limit 1.4  inside seed spread
+without filter       drop  5.9  limit 1.8  carries the gain
+without long warmup  drop  0.6  limit 1.2  inside seed spread
+:::
+
+## Try it
+
+:::exercise
+title: Add a confound row
+task: The filter in the lesson keeps 60 percent of the data, so the full method also trains on a smaller dataset. Design one extra row that separates the filter from the smaller dataset. Say what the row trains on, and predict its score under two hypotheses: the filter picks good data, or any 60 percent subset works as well. Then write the rule you would use to decide between the hypotheses from the row's score and the seed spread.
+hint: The row keeps everything from the full method but replaces the filtered subset with a random subset of the same size.
+lang: text
+solution:
+Row: random 60 percent subset, loss term on, long warmup on, same seeds, same steps.
+If the filter picks good data, this row scores near the no-filter row, about 66.
+If any subset works, it scores near the full method, about 72.
+Rule: the filter is real if the full method beats the random-subset row by more than
+two standard deviations, about 1.4 points. Otherwise the gain came from the smaller
+dataset, and the write-up must say so.
+:::
+
 ## Common mistakes
 
 - Mistake: you ablate with one seed. Fix: a 0.5 point gap with one seed is noise.
@@ -3171,9 +5324,41 @@ Note: an ablation that removes a part and replaces it with nothing can be unfair
 
 ## Check your understanding
 
-- In the example, which part carries the gain? The data filter.
-- What does a full factorial design reveal that a one-at-a-time table does not? Interactions between parts.
-- When is a part important? When removing it costs more than the seed variation.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: ablations
+q: In the lesson's table, which part carries the gain?
+- The new loss term
+* The data filter
+- The long warmup
+- All three equally
+why: Removing the filter costs 5.9 points, while removing either other part costs less than the seed spread.
+q: Removing a part drops the score from 72.1 to 71.5 with a standard deviation of 0.6. Is the part important?
+- Yes, any drop counts
+* No, the drop of 0.6 is inside two standard deviations, about 1.2
+- Yes, because 0.6 equals the standard deviation
+- It cannot be decided without a factorial design
+why: A part counts only when removing it costs more than two standard deviations.
+q: What does a full factorial design reveal that a one-at-a-time table does not?
+- The seed variance
+* Interactions, where a part helps only when another part is present
+- The compute budget
+- The baseline score
+why: Testing every combination shows whether parts depend on each other.
+q: A new loss term needs a different learning rate from the baseline. What is the fair ablation?
+- Use the baseline learning rate for both
+- Use the new learning rate for both
+* Sweep the learning rate for both the full method and the ablation
+- Skip the ablation
+why: Otherwise the comparison favours whichever setting you tuned.
+q: A method has 3 parts. How many runs does a full factorial design need per seed?
+- 3
+- 4
+* 8
+- 9
+why: Each part is on or off, and 2 to the power 3 is 8 combinations.
+:::
 
 ## Go further
 
@@ -3297,6 +5482,45 @@ Write the limitations in plain statements. "We tested one model family" is a lim
 
 Note: use the same word for the same thing throughout. If the method is "the filter" in the abstract, it is "the filter" in every section.
 
+The code below draws the main figure from the lesson with error bars from three seeds. It needs the matplotlib library, which you can install with pip.
+
+:::code
+lang: python
+import matplotlib.pyplot as plt
+
+configs = ["Baseline", "Filter only", "Loss term only", "Filter and loss term"]
+means = [65.0, 71.8, 66.2, 72.1]
+sds = [0.8, 0.7, 0.9, 0.6]
+
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.bar(configs, means, yerr=sds, capsize=4, color="#4a7ebb")
+ax.set_ylim(60, 75)
+ax.set_ylabel("Accuracy on benchmark X")
+ax.set_title("Filter gives 6 points at equal compute; loss term adds nothing")
+for i, m in enumerate(means):
+    ax.text(i, m + 1.0, f"{m:.1f}", ha="center")
+plt.tight_layout()
+plt.savefig("main_figure.png", dpi=150)
+print("saved main_figure.png")
+:::
+
+## Try it
+
+:::exercise
+title: Write the abstract for the reproduction
+task: Take the chain-of-thought reproduction from the lesson on reproducing a result: a 10 billion weight open model, 500 grade-school problems, 9 percent with a direct prompt and 32 percent with the few-shot chain prompt, against the paper's 10 and 35 percent. Write the one-sentence claim in the template from the reading lesson. Then write the four-sentence abstract: problem, method, main number, limitation.
+hint: The condition is the model size and the problem set. The metric is accuracy. The limitation is one model and one benchmark.
+lang: text
+solution:
+Claim: On 500 GSM8K problems with a 10 billion weight open model, few-shot chain-of-thought
+prompting beats a direct prompt on accuracy by 23 points, from 9 to 32 percent.
+Abstract: Published chain-of-thought gains were measured on models most teams cannot run.
+We repeat the few-shot chain-of-thought experiment with a 10 billion weight open model on
+500 grade-school problems, with three seeds and the paper's own prompts. Chain-of-thought
+raises accuracy from 9 to 32 percent, within two standard errors of the paper's 35 percent.
+The result covers one model family and one benchmark.
+:::
+
 ## Common mistakes
 
 - Mistake: you write the introduction first. Fix: write the main figure first and let it set the claim.
@@ -3306,9 +5530,41 @@ Note: use the same word for the same thing throughout. If the method is "the fil
 
 ## Check your understanding
 
-- Which part of the write-up do you make first? The main figure.
-- What four things does the abstract state? The problem, the method, the main number, and the limitation.
-- What does a limitations section contain? Plain statements of what you did not test.
+Answer these questions before you move on.
+
+:::quiz
+title: Check: writing up a result
+q: Which part of the write-up do you make first?
+- The abstract
+- The related work
+* The main figure
+- The limitations
+why: The figure sets the claim, and every section then supports what the figure shows.
+q: What four things does the abstract state?
+- The authors, the lab, the date and the venue
+* The problem, the method, the main number and the limitation
+- The claim, the figure, the code and the data
+- The baseline, the metric, the seeds and the compute
+why: Four sentences, one per item, tell a reader in a minute what was found and where it stops.
+q: The ablation found that the loss term adds nothing. What should the write-up do with it?
+- Remove it to keep the paper short
+* Report it, because a part that does nothing is a finding
+- Move it to future work
+- Claim a small gain anyway
+why: Hiding a negative result misleads the reader, and the simpler method is the stronger result.
+q: Which sentence belongs in a limitations section?
+- Future work could test more models
+* We tested one model family and one benchmark
+- Our method is state of the art
+- The code will be released later
+why: A limitation is a plain statement of what you did not test, not a promise.
+q: A reader wants to repeat the result. Which item must the write-up include?
+- The names of the reviewers
+- The conference deadline
+* A table of every hyperparameter, the seed count and the compute used
+- A longer introduction
+why: Without the configuration and the compute, no reader can reproduce the number.
+:::
 
 ## Go further
 

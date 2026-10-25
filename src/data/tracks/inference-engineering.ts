@@ -8,11 +8,17 @@ export const track: Track = {
       'KV caches, batching, quantisation, speculative decoding, attention kernels, parallelism, the serving stack, and the measurements that decide what fits on a GPU.',
     accent: 'var(--accent-inference)',
     status: 'live',
+    level: 'advanced',
+    order: 8,
+    audience: 'Engineers who serve models and need to make them faster and cheaper on real hardware.',
+    outcome: 'Size a GPU fleet, tune a serving stack, and explain every millisecond of latency.',
+    prerequisites: ['ai-engineering', 'ml-math'],
     modules: [
       {
         slug: 'memory',
         title: 'Memory arithmetic',
         description: 'Count the bytes for weights, the KV cache, and activations before you buy a GPU.',
+        level: 'advanced',
         lessons: [
           {
             slug: 'kv-cache',
@@ -41,6 +47,11 @@ This lesson explains the key-value (KV) cache. You compute its size by hand. You
 ## Why it matters
 
 Weights are a fixed cost. The KV cache grows with every token in every active sequence. On a busy server the cache is often larger than the weights. If you size the cache wrong, the server refuses requests or runs out of memory.
+
+:::video
+id: kCc8FmEb1nY
+why: Watch the self-attention chapter, about 20 minutes. Every token produces one key and one value vector. Those vectors are exactly what the cache stores.
+:::
 
 ## The idea with an example
 
@@ -152,6 +163,52 @@ To size a server, use this procedure:
 
 Note: most sequences are shorter than the maximum, so a real engine holds more sequences than this worst case.
 
+
+This script computes the numbers from the example. Change the settings to match your own model.
+
+:::code
+lang: python
+file: kv_cache.py
+def kv_cache_bytes(layers, kv_heads, head_dim, tokens, bytes_per_elem=2):
+    return 2 * layers * kv_heads * head_dim * tokens * bytes_per_elem
+
+GB = 1e9
+per_token = kv_cache_bytes(80, 8, 128, 1)
+per_seq = kv_cache_bytes(80, 8, 128, 8192)
+print("bytes per token:", per_token)
+print("cache per 8k sequence:", round(per_seq / GB, 2), "GB")
+print("full sequences in 16 GB:", int(16 * GB // per_seq))
+:::
+
+:::code
+lang: text
+bytes per token: 327680
+cache per 8k sequence: 2.68 GB
+full sequences in 16 GB: 5
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Size the cache for an 8B model
+task: Use the kv_cache_bytes function from above for an 8B model with 32 layers, 8 key-value heads and a head size of 128 in FP16. Print the cache per 8,192-token sequence and per 32,768-token sequence. Then print how many full sequences of each length fit in 16 GB of free memory.
+hint: Only the layer count changes from the 70B example. The 32k case is 4 times the 8k case.
+lang: python
+solution:
+def kv_cache_bytes(layers, kv_heads, head_dim, tokens, bytes_per_elem=2):
+    return 2 * layers * kv_heads * head_dim * tokens * bytes_per_elem
+
+GB = 1e9
+for tokens in (8192, 32768):
+    per_seq = kv_cache_bytes(32, 8, 128, tokens)
+    print(tokens, "tokens:", round(per_seq / GB, 2), "GB,",
+          int(16 * GB // per_seq), "sequences in 16 GB")
+# 8192 tokens: 1.07 GB, 14 sequences
+# 32768 tokens: 4.29 GB, 3 sequences
+:::
+
 ## Common mistakes
 
 - Mistake: use the number of query heads in the formula. Fix: use the number of key-value heads, which GQA makes much smaller.
@@ -160,9 +217,41 @@ Note: most sequences are shorter than the maximum, so a real engine holds more s
 
 ## Check your understanding
 
-- Question: what is the cache per token for a model with $L = 32$, $H_{kv} = 8$, $d_{head} = 128$ in FP16? Answer: $2 \\times 32 \\times 8 \\times 128 \\times 2 = 131{,}072$ bytes, about 0.13 MB.
-- Question: a model with 32 query heads and 4 key-value heads uses which number in the formula? Answer: 4, the number of key-value heads.
-- Question: a 24 GB GPU has 8 GB free and each sequence needs 1.34 GB of cache. How many fit? Answer: 5, because $8 / 1.34 = 5.97$ rounds down.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: the KV cache
+q: What is the cache per token for a model with 32 layers, 8 key-value heads and a head size of 128 in FP16?
+- 65,536 bytes
+* 131,072 bytes
+- 262,144 bytes
+- 327,680 bytes
+why: Multiply 2 (keys and values) by 32 layers, 8 heads, 128 elements and 2 bytes to get 131,072 bytes.
+q: A model has 32 query heads and 4 key-value heads. Which number enters the cache formula?
+- 32, the number of query heads
+* 4, the number of key-value heads
+- 8, the ratio of the two
+- 36, the sum of the two
+why: Only keys and values are cached, so only the key-value head count matters.
+q: A GPU has 8 GB free and each sequence needs 1.34 GB of cache. How many full sequences fit?
+- 4
+* 5
+- 6
+- 8
+why: 8 divided by 1.34 is 5.97, and the scheduler rounds down to 5.
+q: Why does the engine store keys and values instead of recomputing them at every decode step?
+* Each step needs the keys and values of every earlier token, so recomputation would cost a full prefill per token.
+- The keys and values change at every step and must be saved to stay in sync.
+- Storing them lets the engine skip the attention layers for old tokens.
+- The weights are too large to read twice.
+why: Attention compares the new token with all earlier tokens, so without a cache every step repeats all earlier work.
+q: You switch the cache from FP16 to FP8 and keep everything else the same. What happens to the cache per sequence?
+- It stays the same
+* It halves
+- It drops by a factor of 4
+- It doubles
+why: Bytes per element falls from 2 to 1, and the cache size is proportional to that factor.
+:::
 
 ## Go further
 
@@ -197,6 +286,11 @@ This lesson explains how much memory the weights of a model need. You quantise f
 ## Why it matters
 
 Quantisation stores each weight in fewer bits. A 70B model needs 140 GB in 16-bit floating point (FP16), which needs two 80 GB graphics processing units (GPUs). In 4-bit integer (INT4) form it needs 35 GB and fits on one GPU. That change halves the hardware bill.
+
+:::video
+id: WxYC9-hBM_g
+why: Watch the part where Ollama pulls a model, about 5 minutes in. The file sizes on screen are INT4 weights, about 0.5 to 0.6 bytes per weight including the scales.
+:::
 
 ## The idea with an example
 
@@ -295,6 +389,64 @@ Quality drops in three situations:
 
 Caution: a quantised model can pass a perplexity test and still fail your task. Run your own evaluation before you ship.
 
+
+This script quantises the four weights from the example and prints the error on each one.
+
+:::code
+lang: python
+file: int4.py
+def quantise_int4(values):
+    scale = max(abs(v) for v in values) / 7
+    stored = [max(-8, min(7, round(v / scale))) for v in values]
+    restored = [q * scale for q in stored]
+    return scale, stored, restored
+
+weights = [0.8, -1.2, 0.3, 2.1]
+scale, stored, restored = quantise_int4(weights)
+print("scale:", round(scale, 3))
+print("stored:", stored)
+for w, r in zip(weights, restored):
+    print(w, "->", round(r, 2), " error", round(abs(w - r), 2))
+
+for params_b in (7, 13, 70):
+    print(params_b, "B weights:", params_b * 2, "GB FP16,", params_b, "GB INT8,", params_b * 0.5, "GB INT4")
+:::
+
+:::code
+lang: text
+scale: 0.3
+stored: [3, -4, 1, 7]
+0.8 -> 0.9  error 0.1
+-1.2 -> -1.2  error 0.0
+0.3 -> 0.3  error 0.0
+2.1 -> 2.1  error 0.0
+7 B weights: 14 GB FP16, 7 GB INT8, 3.5 GB INT4
+13 B weights: 26 GB FP16, 13 GB INT8, 6.5 GB INT4
+70 B weights: 140 GB FP16, 70 GB INT8, 35.0 GB INT4
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Watch an outlier destroy a group
+task: Use quantise_int4 on the group [10.0, 0.05, 0.05, 0.05]. Print the stored integers and the restored values. Then quantise the three small values alone as their own group and print the result again. Explain in one sentence why group-wise quantisation helps.
+hint: The scale comes from the largest absolute value. A scale of 1.43 rounds every value below 0.71 to zero.
+lang: python
+solution:
+def quantise_int4(values):
+    scale = max(abs(v) for v in values) / 7
+    stored = [max(-8, min(7, round(v / scale))) for v in values]
+    return scale, stored, [q * scale for q in stored]
+
+print(quantise_int4([10.0, 0.05, 0.05, 0.05]))
+# scale 1.43, stored [7, 0, 0, 0]: the three small weights become 0
+print(quantise_int4([0.05, 0.05, 0.05]))
+# scale 0.007, stored [7, 7, 7]: the small weights keep their value
+# A smaller group means one outlier damages fewer neighbours.
+:::
+
 ## Common mistakes
 
 - Mistake: quantise a 1B model to INT4 and expect the same quality as a 70B at INT4. Fix: keep small models at INT8 or FP16.
@@ -304,9 +456,41 @@ Caution: a quantised model can pass a perplexity test and still fail your task. 
 
 ## Check your understanding
 
-- Question: how much memory do the weights of a 13B model need in INT8? Answer: $13 \\times 10^9 \\times 1 = 13$ GB.
-- Question: a group of 128 weights holds one value of 10 and 127 values below 0.1. What goes wrong? Answer: the scale becomes $10 / 7 = 1.43$ and the 127 small values all round to zero.
-- Question: why does weight-only INT4 help decode but not prefill? Answer: decode reads the weights from memory for every token; prefill is limited by arithmetic, not by reads.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: weight memory and quantisation
+q: How much memory do the weights of a 13B model need in INT8?
+- 6.5 GB
+* 13 GB
+- 26 GB
+- 52 GB
+why: INT8 stores 1 byte per weight, so 13 billion weights need 13 GB.
+q: The largest absolute value in a group is 1.4. What is the symmetric INT4 scale?
+- 0.1
+* 0.2
+- 0.7
+- 1.4
+why: The scale is the largest absolute value divided by 7, the largest INT4 integer, so 1.4 / 7 = 0.2.
+q: A group of 128 weights holds one value of 10 and 127 values below 0.1. What goes wrong?
+- The large value overflows and becomes -8
+* The scale becomes 1.43 and the 127 small values all round to zero
+- The scale becomes too small and the large value is clipped
+- Nothing; INT4 holds all 128 values exactly
+why: One outlier sets a large scale, and every value below half the scale rounds to zero.
+q: Why does weight-only INT4 speed up decode but not prefill?
+* Decode reads every weight for each token, so fewer bytes help; prefill is limited by arithmetic, which INT4 does not reduce.
+- Prefill does not use the weight matrices.
+- INT4 arithmetic is slower than FP16 arithmetic on every GPU.
+- Decode runs on the CPU, where INT4 is faster.
+why: Weight-only INT4 cuts bytes read, which is the decode limit, but the multiply still runs in FP16.
+q: You quantise a 1B model to INT4 and quality drops a lot more than for a 70B model. Why?
+- The 1B model has more outlier channels
+* A small model has few redundant weights, so each rounding error matters more
+- INT4 only works for models above 30B weights
+- The scales take more memory in a small model
+why: Large models have redundancy that absorbs rounding error; small models do not.
+:::
 
 ## Go further
 
@@ -340,6 +524,11 @@ This lesson joins the two earlier calculations into one budget. You add the weig
 ## Why it matters
 
 An inference engine fails in one of two ways when memory is short. It raises an out-of-memory error at startup, or it serves two sequences and the GPU sits idle. A ten-minute budget on paper prevents both.
+
+:::video
+id: WxYC9-hBM_g
+why: Watch the part where a model loads and the memory use appears, about 8 minutes in. Compare the number on screen with the weight memory you compute in this lesson.
+:::
 
 ## The idea with an example
 
@@ -436,6 +625,57 @@ Tensor parallelism splits every weight matrix across the GPUs. Each GPU holds on
 
 Caution: a mixture-of-experts (MoE) model counts all experts in its weight memory, not only the active ones. Mixtral 8x7B has 47B weights and needs 94 GB in FP16.
 
+
+This script runs the budget procedure for the example. Change the first line to your own GPU.
+
+:::code
+lang: python
+file: budget.py
+def cache_budget_gb(gpu_gb, weights_gb, overhead_gb, workspace_gb, util=0.9):
+    return gpu_gb * util - weights_gb - overhead_gb - workspace_gb
+
+budget = cache_budget_gb(80, 35, 3, 2)
+per_seq_8k = 2.68
+print("cache budget:", round(budget, 1), "GB")
+print("full 8k sequences:", int(budget // per_seq_8k))
+print("average 2k sequences:", int(budget // (per_seq_8k / 4)))
+
+for name, weights in (("1 GPU, 70B INT4", 35), ("2 GPUs, 70B FP8", 70), ("2 GPUs, 70B FP16", 140)):
+    gpus = 2 if "2 GPUs" in name else 1
+    total = sum(cache_budget_gb(80, weights / gpus, 3, 2) for _ in range(gpus))
+    print(name, "cache budget:", max(0, round(total)), "GB")
+:::
+
+:::code
+lang: text
+cache budget: 32.0 GB
+full 8k sequences: 11
+average 2k sequences: 47
+1 GPU, 70B INT4 cache budget: 32 GB
+2 GPUs, 70B FP8 cache budget: 64 GB
+2 GPUs, 70B FP16 cache budget: 0 GB
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Budget a 24 GB GPU
+task: A 24 GB GPU runs a 7B model. Use cache_budget_gb with 3 GB overhead, 1 GB workspace and utilisation 0.9. Compute the cache budget for the INT4 weights (3.5 GB) and for the FP16 weights (14 GB). Each 4k-token sequence needs 0.5 GB of cache. Print how many sequences fit in each case.
+hint: 24 times 0.9 is 21.6 GB. Subtract the three parts, then divide by 0.5 and round down.
+lang: python
+solution:
+def cache_budget_gb(gpu_gb, weights_gb, overhead_gb, workspace_gb, util=0.9):
+    return gpu_gb * util - weights_gb - overhead_gb - workspace_gb
+
+for name, weights in (("INT4", 3.5), ("FP16", 14)):
+    budget = cache_budget_gb(24, weights, 3, 1)
+    print(name, "budget", round(budget, 1), "GB,", int(budget // 0.5), "sequences")
+# INT4 budget 14.1 GB, 28 sequences
+# FP16 budget 3.6 GB, 7 sequences
+:::
+
 ## Common mistakes
 
 - Mistake: subtract the weights from the full GPU memory. Fix: multiply by the utilisation fraction first.
@@ -445,9 +685,41 @@ Caution: a mixture-of-experts (MoE) model counts all experts in its weight memor
 
 ## Check your understanding
 
-- Question: a 24 GB GPU runs a 7B INT4 model with 3 GB overhead and 1 GB workspace at utilisation 0.9. What is the cache budget? Answer: $0.9 \\times 24 - 3.5 - 3 - 1 = 14.1$ GB.
-- Question: that model needs 0.5 GB of cache per 4k sequence. How many fit? Answer: 28, because $14.1 / 0.5 = 28.2$.
-- Question: why does a 70B FP16 model not fit on two 80 GB GPUs? Answer: the weights take 140 GB of a usable 144 GB, which leaves nothing for the cache.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: the memory budget
+q: A 24 GB GPU runs a 7B INT4 model with 3 GB overhead and 1 GB workspace at utilisation 0.9. What is the cache budget?
+- 16.5 GB
+* 14.1 GB
+- 20.5 GB
+- 11.7 GB
+why: 0.9 times 24 is 21.6; subtract 3.5, 3 and 1 to get 14.1 GB.
+q: That model needs 0.5 GB of cache per 4k sequence. How many fit in the 14.1 GB budget?
+- 14
+- 24
+* 28
+- 29
+why: 14.1 divided by 0.5 is 28.2, which rounds down to 28.
+q: Why does a 70B FP16 model not fit on two 80 GB GPUs?
+- Tensor parallelism cannot split 70B weights across two GPUs
+* The weights take 140 GB of a usable 144 GB, which leaves nothing for overhead and cache
+- FP16 is not supported on two GPUs at once
+- The activation workspace needs 80 GB on its own
+why: After the utilisation fraction the two GPUs offer 144 GB, and 140 GB of weights leaves no room for the cache.
+q: What does the gpu-memory-utilization setting of vLLM control?
+- The fraction of time the GPU must stay busy
+* The fraction of GPU memory the engine may use for weights, cache and workspace
+- The fraction of the cache that each sequence may take
+- The clock speed of the GPU memory
+why: The setting caps the memory the engine claims, and the rest stays free for the driver and fragmentation.
+q: Mixtral 8x7B activates 2 experts per token. How much weight memory does it need in FP16?
+- 14 GB, for the 2 active experts
+- 28 GB
+* 94 GB, for all 47B weights
+- 112 GB
+why: Every expert stays in GPU memory, so the budget counts all 47B weights at 2 bytes each.
+:::
 
 ## Go further
 
@@ -460,6 +732,7 @@ The vLLM documentation describes the gpu-memory-utilization setting and the rela
         slug: 'throughput',
         title: 'Batching and throughput',
         description: 'Keep the GPU busy with batching, speculative decoding, and separate prefill and decode pools.',
+        level: 'advanced',
         lessons: [
           {
             slug: 'prefill-vs-decode',
@@ -488,6 +761,11 @@ This lesson splits text generation into two phases: prefill and decode. You lear
 ## Why it matters
 
 Decode is where a server spends most of its time. A server that decodes one sequence at a time uses less than 1 percent of the arithmetic units of the GPU. The cost per token is then 50 to 100 times higher than it needs to be. Every throughput technique in this track exists to fix this one problem.
+
+:::video
+id: SQ3fZ1sAqXI
+why: Watch the part of the overview on efficiency and resource accounting. The course counts FLOPs and bytes in the same way this lesson does, and lists the systems topics that follow.
+:::
 
 ## The idea with an example
 
@@ -579,6 +857,63 @@ To estimate the decode floor for any model and GPU:
 
 Prefill needs the opposite treatment. A 1,000-token prompt already has intensity $2 \\times 1000 = 2000$. Larger batches do not help prefill, and they delay the decode steps of other sequences. A later lesson on disaggregation handles this conflict.
 
+
+This script computes the ridge point, the decode floor and the batch size where decode becomes compute-bound.
+
+:::code
+lang: python
+file: ridge.py
+peak_tflops = 990
+bandwidth_tbs = 3.35
+weights_gb = 140
+
+ridge = peak_tflops / bandwidth_tbs
+floor_ms = weights_gb / (bandwidth_tbs * 1000) * 1000
+print("ridge point:", int(ridge), "FLOPs per byte")
+print("decode floor at batch 1:", round(floor_ms, 1), "ms")
+print("batch where decode becomes compute-bound:", round(ridge / 2))
+
+for batch in (1, 8, 32, 128, 256):
+    intensity = 2 * batch
+    bound = "memory-bound" if intensity < ridge else "compute-bound"
+    tokens_per_s = batch / (floor_ms / 1000)
+    print("batch", batch, "intensity", intensity, bound, "about", round(tokens_per_s), "tokens/s")
+:::
+
+:::code
+lang: text
+ridge point: 295 FLOPs per byte
+decode floor at batch 1: 41.8 ms
+batch where decode becomes compute-bound: 148
+batch 1 intensity 2 memory-bound about 24 tokens/s
+batch 8 intensity 16 memory-bound about 191 tokens/s
+batch 32 intensity 64 memory-bound about 766 tokens/s
+batch 128 intensity 256 memory-bound about 3063 tokens/s
+batch 256 intensity 512 compute-bound about 6126 tokens/s
+:::
+
+Note: the last line overstates the tokens per second at batch 256. Above the ridge point the step time grows with the batch, so the real number is closer to 3,900.
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Find the floor of a smaller GPU
+task: A GPU performs 400 TFLOPS in FP16 and moves 2 TB per second. It serves a 7B model in FP16. Change the three settings in ridge.py and print the ridge point, the decode floor at batch 1, and the batch size at which decode becomes compute-bound.
+hint: The 7B model has 14 GB of weights. The floor is 14 GB divided by 2,000 GB per second.
+lang: python
+solution:
+peak_tflops = 400
+bandwidth_tbs = 2.0
+weights_gb = 14
+ridge = peak_tflops / bandwidth_tbs
+floor_ms = weights_gb / (bandwidth_tbs * 1000) * 1000
+print("ridge point:", round(ridge), "FLOPs per byte")       # 200
+print("decode floor at batch 1:", round(floor_ms, 1), "ms")  # 7.0
+print("compute-bound above batch", round(ridge / 2))          # 100
+:::
+
 ## Common mistakes
 
 - Mistake: measure tokens per second at batch size 1 and call it the server capacity. Fix: measure at the batch size you plan to run.
@@ -588,9 +923,41 @@ Prefill needs the opposite treatment. A 1,000-token prompt already has intensity
 
 ## Check your understanding
 
-- Question: a GPU does 400 TFLOPS and moves 2 TB per second. What is its ridge point? Answer: $400 / 2 = 200$ FLOPs per byte.
-- Question: a 7B FP16 model decodes on that GPU. What is the shortest step time at batch 1? Answer: $14 / 2000 = 7$ ms.
-- Question: at what batch size does that model cross the ridge point? Answer: $200 / 2 = 100$ sequences.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: prefill and decode
+q: A GPU does 400 TFLOPS and moves 2 TB per second. What is its ridge point?
+- 100 FLOPs per byte
+* 200 FLOPs per byte
+- 400 FLOPs per byte
+- 800 FLOPs per byte
+why: The ridge point is peak FLOPS divided by bandwidth, so 400 / 2 = 200.
+q: A 7B FP16 model decodes on that GPU at batch size 1. What is the shortest possible step time?
+- 3.5 ms
+* 7 ms
+- 14 ms
+- 28 ms
+why: The step reads 14 GB of weights at 2,000 GB per second, which takes 7 ms.
+q: At what batch size does that model cross the ridge point?
+- 50
+* 100
+- 200
+- 400
+why: Each sequence adds 2 FLOPs per byte, so the intensity reaches 200 at batch 100.
+q: You serve decode and must pick one GPU specification to compare. Which one?
+- Peak FLOPS
+* Memory bandwidth
+- Number of streaming multiprocessors
+- Clock speed
+why: Decode reads all the weights per token and is memory-bound, so bandwidth sets the step time.
+q: A 1,000-token prompt runs prefill at batch size 1. What is its arithmetic intensity and which limit applies?
+- 2 FLOPs per byte, memory-bound
+- 1,000 FLOPs per byte, memory-bound
+* 2,000 FLOPs per byte, compute-bound
+- 295 FLOPs per byte, at the ridge
+why: Each weight is read once and used 1,000 times at 2 FLOPs each, which is far above the ridge point.
+:::
 
 ## Go further
 
@@ -722,6 +1089,59 @@ Chunk 1,024 tokens: 75 (4 times)
 Chunk 512 tokens: 40 (8 times)
 :::
 
+
+This script counts the slots for the four requests under static and continuous batching.
+
+:::code
+lang: python
+file: slots.py
+def static_batch(lengths):
+    steps = max(lengths)
+    slots = len(lengths) * steps
+    useful = sum(lengths)
+    return slots, useful, slots - useful
+
+def continuous_batch(lengths, queue):
+    steps = max(lengths)
+    useful = 0
+    for used in lengths:
+        useful += used
+        while used < steps and queue:
+            take = min(queue.pop(0), steps - used)
+            useful += take
+            used += take
+    return len(lengths) * steps, useful
+
+lengths = [10, 50, 100, 200]
+print("static: slots, useful, wasted =", static_batch(lengths))
+print("continuous, empty queue:", continuous_batch(lengths, []))
+print("continuous, full queue:", continuous_batch(lengths, [300, 300, 300]))
+:::
+
+:::code
+lang: text
+static: slots, useful, wasted = (800, 360, 440)
+continuous, empty queue: (800, 360)
+continuous, full queue: (800, 800)
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Count the waste for three requests
+task: Three requests need 20, 40 and 100 output tokens and the batch has 3 slots. Use the two functions from slots.py to print the wasted slots under static batching, and the useful slots under continuous batching with a queue of two 100-token requests. Then compute the chunked prefill steps for a 2,000-token prompt with a chunk size of 512.
+hint: Static batching runs 100 steps with 3 slots. A 2,000-token prompt needs 2000 / 512 = 3.9 chunks, so round up.
+lang: python
+solution:
+lengths = [20, 40, 100]
+print(static_batch(lengths))                        # (300, 160, 140)
+print(continuous_batch(lengths, [100, 100]))        # (300, 300)
+import math
+print("prefill steps:", math.ceil(2000 / 512))      # 4
+:::
+
 ## Common mistakes
 
 - Mistake: set max_num_seqs far above the cache budget. Fix: compute the sequences that fit, then set the limit a little above that number.
@@ -731,9 +1151,41 @@ Chunk 512 tokens: 40 (8 times)
 
 ## Check your understanding
 
-- Question: three requests need 20, 40 and 100 tokens and the batch has 3 slots. How many slots does static batching waste? Answer: $300 - 160 = 140$ slots.
-- Question: what event frees a slot in continuous batching? Answer: a sequence produces its end token or reaches its length limit.
-- Question: why does chunked prefill lower the delay for decode sequences? Answer: it spreads the prompt work over many steps instead of one long step.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: continuous batching
+q: Three requests need 20, 40 and 100 tokens and the batch has 3 slots. How many slots does static batching waste?
+- 60
+- 100
+* 140
+- 160
+why: Static batching uses 3 times 100 = 300 slots, and only 160 do useful work.
+q: What event frees a slot in continuous batching?
+- The scheduler reaches the end of a fixed batch window
+* A sequence produces its end token or reaches its length limit
+- The KV cache fills up
+- A new request arrives in the queue
+why: The scheduler checks after every step, and a finished sequence frees its slot at once.
+q: Why does chunked prefill lower the delay for decode sequences?
+- It skips the prefill for short prompts
+* It spreads the prompt work over many steps instead of one long step
+- It runs the prefill on a second GPU
+- It reduces the number of prompt tokens
+why: A 4,000-token prompt in chunks of 512 adds about 40 ms to 8 steps instead of 300 ms to one.
+q: When does continuous batching give no gain over static batching?
+- When requests have different lengths
+- When the batch size is above 32
+* When the queue is empty, so freed slots stay empty
+- When chunked prefill is enabled
+why: The gain comes from refilling freed slots, which needs waiting requests.
+q: The engine logs several preemptions every second. What is the right response?
+- Raise max_num_seqs so more sequences run at once
+* Lower max_num_seqs or add cache memory, because the cache pool is too small for the load
+- Disable chunked prefill
+- Shorten the chunk size
+why: Preemption means the scheduler admitted more sequences than the cache can hold, and recomputation wastes GPU time.
+:::
 
 ## Go further
 
@@ -851,6 +1303,60 @@ The method loses in two cases. At high batch size the target model is already co
 
 Two variants remove the separate draft model. Medusa adds extra output heads to the target model, and each head predicts one future token. EAGLE predicts the next hidden state of the target model with a small head and decodes drafts from it, which gives higher acceptance.
 
+
+This script computes the expected tokens per step and the speed-up from the acceptance rate. It also applies the acceptance rule to one draft token.
+
+:::code
+lang: python
+file: speculative.py
+import random
+
+def expected_tokens(alpha, k):
+    return (1 - alpha ** (k + 1)) / (1 - alpha)
+
+def speedup(alpha, k, draft_cost=0.015):
+    return expected_tokens(alpha, k) / (1 + k * draft_cost)
+
+def accept(p_target, q_draft):
+    return random.random() < min(1.0, p_target / q_draft)
+
+for alpha in (0.5, 0.7, 0.8, 0.9):
+    print("alpha", alpha, "tokens per step", round(expected_tokens(alpha, 4), 2),
+          "speed-up", round(speedup(alpha, 4), 1), "x")
+
+random.seed(1)
+trials = 10000
+rate = sum(accept(0.4, 0.5) for _ in range(trials)) / trials
+print("accept rate for p=0.4, q=0.5 over", trials, "draws:", round(rate, 2))
+:::
+
+:::code
+lang: text
+alpha 0.5 tokens per step 1.94 speed-up 1.8 x
+alpha 0.7 tokens per step 2.77 speed-up 2.6 x
+alpha 0.8 tokens per step 3.36 speed-up 3.2 x
+alpha 0.9 tokens per step 4.1 speed-up 3.9 x
+accept rate for p=0.4, q=0.5 over 10000 draws: 0.8
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Find where more draft tokens stop helping
+task: Use expected_tokens with alpha = 0.8 and print the result for k from 1 to 10. Then print the speed-up for the same k values with the 1.5 percent draft cost. Find the k after which each extra draft token adds less than 0.1 to the speed-up.
+hint: Each extra draft token adds alpha to the power of k, which shrinks fast, while the draft cost grows in a straight line.
+lang: python
+solution:
+for k in range(1, 11):
+    e = expected_tokens(0.8, k)
+    print(k, round(e, 2), round(speedup(0.8, k), 2))
+# tokens per step: 1.8, 2.44, 2.95, 3.36, 3.69, 3.95, 4.16, 4.33, 4.46, 4.57
+# speed-up: 1.77, 2.37, 2.82, 3.17, 3.43, 3.63, 3.77, 3.87, 3.93, 3.97
+# after k = 7 each extra token adds less than 0.1, so k of 4 to 6 is the usual choice
+:::
+
 ## Common mistakes
 
 - Mistake: pick a draft model with a different tokenizer. Fix: use a draft that shares the exact vocabulary of the target.
@@ -860,9 +1366,41 @@ Two variants remove the separate draft model. Medusa adds extra output heads to 
 
 ## Check your understanding
 
-- Question: what is the expected number of tokens per step with $\\alpha = 0.6$ and $k = 3$? Answer: $(1 - 0.6^4) / 0.4 = 2.18$.
-- Question: a draft token has $q = 0.5$ and the target gives $p = 0.2$. What is the acceptance probability? Answer: $\\min(1, 0.2 / 0.5) = 0.4$.
-- Question: why does the gain vanish at high batch size? Answer: the target pass becomes compute-bound, so verifying $k$ tokens costs $k$ times more.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: speculative decoding
+q: What is the expected number of tokens per step with an acceptance rate of 0.6 and k = 3?
+- 1.80
+* 2.18
+- 2.40
+- 3.00
+why: (1 - 0.6 to the power 4) / (1 - 0.6) = (1 - 0.1296) / 0.4 = 2.18.
+q: A draft token has q = 0.5 and the target gives p = 0.2. What is the acceptance probability?
+- 0.2
+* 0.4
+- 0.5
+- 1.0
+why: The rule accepts with probability min(1, p / q) = 0.2 / 0.5 = 0.4.
+q: Why does the gain vanish at high batch size?
+- The draft model runs out of memory
+* The target pass is already compute-bound, so verifying k tokens costs k times more
+- The acceptance rate drops with batch size
+- The KV cache cannot hold draft tokens
+why: Speculative decoding wins only while the target pass is memory-bound and extra tokens are nearly free.
+q: Which draft model is a valid choice for a 70B target?
+- Any model smaller than 7B
+- A model trained on the same data but with a larger vocabulary
+* A small model that shares the exact tokenizer and vocabulary of the target
+- The same 70B model in INT4
+why: Verification compares probabilities per token id, so both models must use the same token ids.
+q: An engineer accepts every draft token to save the verification step. What happens?
+- Nothing; the draft model is accurate enough
+- The output is identical but slower
+* The output now follows the draft distribution instead of the target distribution
+- The step produces fewer tokens
+why: The rejection rule is what makes the combined procedure sample from the target model exactly.
+:::
 
 ## Go further
 
@@ -988,6 +1526,54 @@ $N_p$ is the number of prefill GPUs and $N_d$ the number of decode GPUs. For eve
 
 Note: DistServe and Splitwise both report 2 to 4 times more requests per GPU than a shared engine at the same latency targets.
 
+
+This script computes the cache copy time over each link and the ratio of prefill to decode GPUs.
+
+:::code
+lang: python
+file: disaggregate.py
+def copy_ms(tokens, mb_per_token, link_gb_per_s):
+    gb = tokens * mb_per_token / 1000
+    return gb / link_gb_per_s * 1000
+
+links = (("NVLink", 400), ("PCIe 5 x16", 64), ("400 Gb Ethernet", 50), ("100 Gb Ethernet", 12.5))
+for name, bandwidth in links:
+    print(name, round(copy_ms(4000, 0.33, bandwidth), 1), "ms")
+
+def pool_ratio(prompt_tokens, answer_tokens, prefill_rate, decode_rate):
+    return (prompt_tokens / prefill_rate) / (answer_tokens / decode_rate)
+
+ratio = pool_ratio(2000, 300, 20000, 2000)
+print("prefill GPUs per decode GPU:", round(ratio, 2))
+print("for 12 decode GPUs you need", round(12 * ratio), "prefill GPUs")
+:::
+
+:::code
+lang: text
+NVLink 3.3 ms
+PCIe 5 x16 20.6 ms
+400 Gb Ethernet 26.4 ms
+100 Gb Ethernet 105.6 ms
+prefill GPUs per decode GPU: 0.67
+for 12 decode GPUs you need 8 prefill GPUs
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Size the pools for your own traffic
+task: Requests have a 1,000-token prompt and a 100-token answer. A prefill GPU sustains 10,000 prompt tokens per second and a decode GPU sustains 1,000 output tokens per second. Compute the GPU ratio. Then compute the copy time for a 10,000-token prompt at 0.13 MB per token over NVLink and over 100 Gb Ethernet. Decide whether disaggregation across the Ethernet link is acceptable when prefill takes 750 ms.
+hint: Use pool_ratio and copy_ms from above. Compare each copy time with the 750 ms prefill.
+lang: python
+solution:
+print(pool_ratio(1000, 100, 10000, 1000))            # 1.0, one prefill GPU per decode GPU
+print(round(copy_ms(10000, 0.13, 400), 1), "ms")      # 3.2 ms over NVLink
+print(round(copy_ms(10000, 0.13, 12.5), 1), "ms")     # 104 ms over 100 Gb Ethernet
+# 104 ms is 14 percent of the 750 ms prefill: usable but not free.
+:::
+
 ## Common mistakes
 
 - Mistake: disaggregate across a 10 Gb network. Fix: keep the two pools inside one node or on a fast fabric.
@@ -997,9 +1583,41 @@ Note: DistServe and Splitwise both report 2 to 4 times more requests per GPU tha
 
 ## Check your understanding
 
-- Question: a prompt has 10,000 tokens at 0.13 MB of cache per token. How long does the copy take at 400 GB/s? Answer: 1.3 GB divided by 400 GB/s is about 3 ms.
-- Question: why does a single long prefill step hurt the other sequences? Answer: all sequences share one step, so every stream waits for the prefill to finish.
-- Question: a decode GPU sustains 1,000 tokens per second and a prefill GPU 10,000. Requests have 1,000 prompt tokens and 100 answer tokens. What is the GPU ratio? Answer: $(1000/10000)/(100/1000) = 1$, one prefill GPU per decode GPU.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: disaggregated serving
+q: A prompt has 10,000 tokens at 0.13 MB of cache per token. How long does the cache copy take at 400 GB per second?
+- 0.3 ms
+* about 3 ms
+- about 30 ms
+- about 300 ms
+why: The cache is 1.3 GB, and 1.3 divided by 400 is 0.00325 seconds.
+q: Why does a single long prefill step hurt the other sequences in a shared engine?
+- The prefill evicts their cache blocks
+* All sequences share one step, so every stream waits for the prefill to finish
+- The prefill lowers the GPU clock
+- The sampler runs once per prompt token
+why: One forward pass covers all sequences in the batch, so a 300 ms prefill delays every decode token by 300 ms.
+q: A decode GPU sustains 1,000 tokens per second and a prefill GPU 10,000. Requests have 1,000 prompt tokens and 100 answer tokens. What is the ratio of prefill to decode GPUs?
+- 0.1
+- 0.5
+* 1
+- 10
+why: (1000 / 10000) / (100 / 1000) = 0.1 / 0.1 = 1, so the pools are equal.
+q: Which pool benefits from a larger batch and a larger cache budget?
+- The prefill pool, because it is compute-bound
+* The decode pool, because it is memory-bound
+- Both pools equally
+- Neither; batch size only matters in a shared engine
+why: Decode reads the weights once per step, so more sequences per step raise its intensity.
+q: A server handles chat turns with 200-token prompts. Which change should come first?
+* Enable chunked prefill in the shared engine
+- Disaggregate across two nodes over 10 Gb Ethernet
+- Double the prefill pool
+- Lower the decode batch size
+why: Disaggregation pays off with long prompts; short prompts stall decode little, and chunking is enough.
+:::
 
 ## Go further
 
@@ -1012,6 +1630,7 @@ DistServe gives the full model for the ratio of pools and the placement of the c
         slug: 'attention-kernels',
         title: 'Attention kernels',
         description: 'The three kernel ideas that make attention fit in memory and run fast.',
+        level: 'advanced',
         lessons: [
           {
             slug: 'flash-attention',
@@ -1041,6 +1660,11 @@ This lesson explains why standard attention runs out of memory on long sequences
 ## Why it matters
 
 Attention compares every token with every other token. For a sequence of $T$ tokens, that comparison produces a score matrix with $T \\times T$ entries. At 8,192 tokens, one head needs 134 MB for that matrix in FP16 (16-bit floating point). A model with 64 heads needs 8.6 GB for one layer. The matrix also moves between the graphics processing unit (GPU) and its high-bandwidth memory (HBM) several times. HBM is large but slow compared with the on-chip static random-access memory (SRAM). FlashAttention removes the matrix and most of the HBM traffic.
+
+:::video
+id: l8pRSuU81PU
+why: Use the chapter list to find the flash attention section, about 90 minutes in. Watch the switch to scaled_dot_product_attention and the speed-up it gives for the same output.
+:::
 
 ## The idea with an example
 
@@ -1122,6 +1746,71 @@ Note: FlashAttention changes the order of the arithmetic, not the result. The ou
 
 FlashAttention-2 reorders the loops and the work split across GPU threads, and about doubles the speed. FlashAttention-3 uses the asynchronous memory and FP8 features of the Hopper GPUs for another large gain. In PyTorch, call torch.nn.functional.scaled_dot_product_attention and the library selects a fused kernel when the shapes allow it.
 
+
+This script runs the online softmax over the four scores in two blocks and checks the result against the direct sum.
+
+:::code
+lang: python
+file: online_softmax.py
+import math
+
+def online_softmax_sum(scores, block=2):
+    m = -math.inf
+    total = 0.0
+    for i in range(0, len(scores), block):
+        chunk = scores[i:i + block]
+        new_m = max(m, max(chunk))
+        total = total * math.exp(m - new_m) + sum(math.exp(s - new_m) for s in chunk)
+        m = new_m
+        print("after block", i // block + 1, "max", m, "sum", round(total, 3))
+    return m, total
+
+scores = [1, 3, 2, 4]
+m, total = online_softmax_sum(scores)
+direct = sum(math.exp(s - max(scores)) for s in scores)
+print("online sum", round(total, 3), " direct sum", round(direct, 3))
+
+T, heads = 8192, 64
+print("score matrix for one layer in FP16:", round(T * T * heads * 2 / 1e9, 1), "GB")
+:::
+
+:::code
+lang: text
+after block 1 max 3 sum 1.135
+after block 2 max 4 sum 1.553
+online sum 1.553  direct sum 1.553
+score matrix for one layer in FP16: 8.6 GB
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Carry the running output as well
+task: Extend online_softmax_sum so it also keeps a running weighted sum of values. Use the scores [1, 3, 2, 4] and the values [10, 20, 30, 40]. Rescale the running output with the same factor as the running sum. At the end divide the output by the sum and compare with the direct attention output.
+hint: The rescale factor exp(old max - new max) applies to both running numbers. The direct answer is the sum of weight times value divided by the sum of weights.
+lang: python
+solution:
+import math
+
+def online_attention(scores, values, block=2):
+    m, total, out = -math.inf, 0.0, 0.0
+    for i in range(0, len(scores), block):
+        s, v = scores[i:i + block], values[i:i + block]
+        new_m = max(m, max(s))
+        scale = math.exp(m - new_m)
+        total = total * scale + sum(math.exp(x - new_m) for x in s)
+        out = out * scale + sum(math.exp(x - new_m) * y for x, y in zip(s, v))
+        m = new_m
+    return out / total
+
+scores, values = [1, 3, 2, 4], [10, 20, 30, 40]
+weights = [math.exp(x - 4) for x in scores]
+direct = sum(w * y for w, y in zip(weights, values)) / sum(weights)
+print(round(online_attention(scores, values), 4), round(direct, 4))   # both 33.4291
+:::
+
 ## Common mistakes
 
 - Mistake: you call FlashAttention an approximation. Fix: it is exact; the online softmax rescale makes the result identical in exact arithmetic.
@@ -1130,9 +1819,41 @@ FlashAttention-2 reorders the loops and the work split across GPU threads, and a
 
 ## Check your understanding
 
-- How many bytes does the score matrix for one head use at $T = 4,096$ in FP16? Answer: $4096^2 \\times 2 = 33.5$ MB.
-- Which two running values does the online softmax keep? Answer: the running maximum and the running sum of exponentials.
-- Why does the kernel rescale the old sum when a new block arrives? Answer: the maximum can rise, and all old exponentials must use the new maximum.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: FlashAttention
+q: How many bytes does the score matrix for one head use at T = 4,096 in FP16?
+- 8.4 MB
+- 16.8 MB
+* 33.5 MB
+- 67 MB
+why: 4,096 squared is 16.8 million entries, and each entry takes 2 bytes.
+q: Which two running values does the online softmax keep between blocks?
+- The running mean and the running variance
+* The running maximum and the running sum of exponentials
+- The first score and the last score
+- The block count and the block size
+why: Both values are enough to rescale earlier work when a later block raises the maximum.
+q: Why does the kernel rescale the old sum when a new block arrives?
+- To keep the sum below 1
+* Because the maximum can rise, and all old exponentials must use the new maximum
+- To convert the sum from FP16 to FP32
+- Because the new block has a different length
+why: The exponentials were computed relative to the old maximum, so a factor exp(old max - new max) corrects them.
+q: After block 1 the running sum is 1.135 with maximum 3. Block 2 raises the maximum to 4. What is the rescaled old sum before the new block is added?
+- 1.135
+* 0.418
+- 3.085
+- 0.135
+why: Multiply 1.135 by exp(3 - 4) = 0.368 to get 0.418.
+q: Is FlashAttention an approximation of standard attention?
+- Yes, it drops the smallest scores in each block
+- Yes, it rounds the softmax to FP8
+* No, it changes the order of the arithmetic and gives the same result up to rounding
+- No, but only for sequences under 2,048 tokens
+why: The online softmax is exact in exact arithmetic; the gain comes from avoiding HBM traffic, not from dropping work.
+:::
 
 ## Go further
 
@@ -1241,6 +1962,69 @@ When memory runs out, the engine evicts. The scheduler picks a sequence, frees a
 2. Multiply by the block size $B$ to get bytes per block.
 3. Divide the free GPU memory after weights by bytes per block to get the block count.
 
+
+This script allocates blocks for the 70-token sequence, looks up position 37 through the block table, and compares the waste of the two layouts.
+
+:::code
+lang: python
+file: block_table.py
+BLOCK = 16
+
+def blocks_needed(tokens):
+    return -(-tokens // BLOCK)
+
+def lookup(block_table, position):
+    index, offset = divmod(position, BLOCK)
+    return block_table[index], offset
+
+tokens = 70
+table = [17, 3, 42, 8, 25]
+slots = blocks_needed(tokens) * BLOCK
+print("blocks:", blocks_needed(tokens), " empty slots:", slots - tokens)
+physical, offset = lookup(table, 37)
+print("key 37 lives in physical block", physical, "at offset", offset)
+
+waste_contiguous = (2048 - tokens) / 2048 * 100
+waste_paged = (slots - tokens) / slots * 100
+print("waste contiguous:", round(waste_contiguous, 1), "%  paged:", round(waste_paged, 1), "%")
+
+bytes_per_token = 2 * 80 * 8 * 128 * 2
+print("bytes per block for the 70B model:", bytes_per_token * BLOCK)
+print("blocks in 40 GB:", int(40e9 // (bytes_per_token * BLOCK)))
+:::
+
+:::code
+lang: text
+blocks: 5  empty slots: 10
+key 37 lives in physical block 42 at offset 5
+waste contiguous: 96.6 %  paged: 12.5 %
+bytes per block for the 70B model: 5242880
+blocks in 40 GB: 7629
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Grow a sequence block by block
+task: Start with a 100-token prompt and a free list of physical blocks [9, 4, 31, 12, 50, 7, 22, 61, 2]. Allocate blocks from the free list as the sequence grows one token at a time to 130 tokens. Print the block table and the number of empty slots after the prompt and again at 130 tokens.
+hint: A new block is needed whenever the token count passes a multiple of 16. Take blocks from the front of the free list.
+lang: python
+solution:
+BLOCK = 16
+free = [9, 4, 31, 12, 50, 7, 22, 61, 2]
+table = []
+tokens = 0
+for tokens in range(1, 131):
+    if tokens > len(table) * BLOCK:
+        table.append(free.pop(0))
+    if tokens in (100, 130):
+        print(tokens, "tokens, table", table, "empty slots", len(table) * BLOCK - tokens)
+# 100 tokens: 7 blocks, 12 empty slots
+# 130 tokens: 9 blocks, 14 empty slots
+:::
+
 ## Common mistakes
 
 - Mistake: you set a very small block size to reduce waste. Fix: tiny blocks increase table lookups and kernel overhead; 16 is a good default.
@@ -1249,9 +2033,41 @@ When memory runs out, the engine evicts. The scheduler picks a sequence, frees a
 
 ## Check your understanding
 
-- How many blocks of size 16 does a 100-token sequence need, and how many slots are empty? Answer: 7 blocks, 12 empty slots.
-- Which kind of fragmentation does paged attention remove completely? Answer: external fragmentation.
-- When does copy-on-write copy a block? Answer: when a sequence writes into a block that other sequences still share.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: paged attention
+q: How many blocks of size 16 does a 100-token sequence need, and how many slots stay empty?
+- 6 blocks, 4 empty slots
+* 7 blocks, 12 empty slots
+- 7 blocks, 4 empty slots
+- 8 blocks, 28 empty slots
+why: 100 / 16 = 6.25 rounds up to 7 blocks, which hold 112 slots, and 112 - 100 = 12.
+q: Which kind of fragmentation does paged attention remove completely?
+- Internal fragmentation
+* External fragmentation
+- Both kinds
+- Neither kind
+why: Every free block has the same size and fits any request, so free memory never splits into useless pieces.
+q: When does copy-on-write copy a block?
+- When a sequence reads a block that another sequence owns
+* When a sequence writes into a block that other sequences still share
+- When the block table grows past 32 entries
+- When the engine evicts a sequence
+why: Shared prompt blocks stay shared for reads; the first write by one sequence triggers a private copy.
+q: With a block size of 16, where does the kernel find key position 37 in the block table [17, 3, 42, 8, 25]?
+- Block 3, offset 7
+- Block 17, offset 5
+* Block 42, offset 5
+- Block 8, offset 5
+why: 37 divided by 16 is 2 with remainder 5, and entry 2 of the table is physical block 42.
+q: An engineer sets the block size to 1 to remove all internal fragmentation. What goes wrong?
+- Sequences can no longer share a prefix
+* The kernel performs one table lookup per token, and the overhead slows every step
+- The cache no longer fits in memory
+- Copy-on-write stops working
+why: Tiny blocks multiply the lookups and the kernel overhead, which is why engines use 8 to 32 tokens per block.
+:::
 
 ## Go further
 
@@ -1285,6 +2101,11 @@ This lesson compares three ways to lay out the attention heads. It computes the 
 ## Why it matters
 
 During decode the model produces one token per step. For each step it reads the full KV cache from high-bandwidth memory (HBM). The cache size therefore sets both the memory you need and the time each step takes. Multi-head attention (MHA) stores one key and one value vector per head per token. Grouped-query attention (GQA) and multi-query attention (MQA) store far fewer.
+
+:::video
+id: kCc8FmEb1nY
+why: Watch the multi-head attention chapter. Every head gets its own key and value projection, which is the MHA layout. This lesson removes most of those key and value heads.
+:::
 
 ## The idea with an example
 
@@ -1371,6 +2192,47 @@ You do not have to train a GQA model from scratch. The procedure to convert an M
 
 The GQA paper calls this uptraining, and it recovers nearly all of the quality.
 
+
+This script computes the cache, the read time per step and the sequence count for the three layouts.
+
+:::code
+lang: python
+file: layouts.py
+def kv_cache_gb(layers, kv_heads, head_dim, tokens, bytes_per_elem=2):
+    return 2 * layers * kv_heads * head_dim * tokens * bytes_per_elem / 1e9
+
+bandwidth_gb_per_s = 3350
+free_gb = 40
+for name, kv_heads in (("MHA", 64), ("GQA, 8 groups", 8), ("MQA", 1)):
+    gb = kv_cache_gb(80, kv_heads, 128, 8192)
+    read_ms = gb / bandwidth_gb_per_s * 1000
+    print(name + ":", round(gb, 2), "GB per sequence,", round(read_ms, 1), "ms read per step,",
+          int(free_gb // gb), "sequences in 40 GB")
+:::
+
+:::code
+lang: text
+MHA: 21.47 GB per sequence, 6.4 ms read per step, 1 sequences in 40 GB
+GQA, 8 groups: 2.68 GB per sequence, 0.8 ms read per step, 14 sequences in 40 GB
+MQA: 0.34 GB per sequence, 0.1 ms read per step, 119 sequences in 40 GB
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Compare layouts for an 8B model
+task: An 8B model has 32 layers, 32 query heads and a head size of 128. Use kv_cache_gb to compute the cache per 8,192-token sequence in FP16 for MHA (32 KV heads), GQA with 8 groups and GQA with 4 groups. Print the factor by which each layout shrinks the cache compared with MHA.
+hint: Only the KV head count changes. The factor is the query head count divided by the KV head count.
+lang: python
+solution:
+for name, kv_heads in (("MHA", 32), ("GQA 8", 8), ("GQA 4", 4)):
+    gb = kv_cache_gb(32, kv_heads, 128, 8192)
+    print(name, round(gb, 2), "GB, factor", 32 // kv_heads)
+# MHA 4.29 GB factor 1; GQA 8 1.07 GB factor 4; GQA 4 0.54 GB factor 8
+:::
+
 ## Common mistakes
 
 - Mistake: you size the cache with the number of query heads. Fix: use the number of KV heads from the model configuration file.
@@ -1379,9 +2241,41 @@ The GQA paper calls this uptraining, and it recovers nearly all of the quality.
 
 ## Check your understanding
 
-- A model has 32 query heads and 4 KV heads. By what factor is the cache smaller than MHA? Answer: 8 times.
-- Why does GQA speed up decode even though the compute is the same? Answer: the step reads fewer bytes from HBM, and decode is bandwidth-bound.
-- How does uptraining build the GQA key heads from the MHA checkpoint? Answer: it takes the mean of the key projection weights within each group.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: GQA and MQA
+q: A model has 32 query heads and 4 KV heads. By what factor is its cache smaller than with MHA?
+- 4 times
+* 8 times
+- 28 times
+- 32 times
+why: MHA would use 32 KV heads; 32 divided by 4 is 8.
+q: Why does GQA speed up decode even though the attention compute is the same?
+- GQA skips half of the attention layers
+* The step reads fewer bytes from HBM, and decode is bandwidth-bound
+- GQA uses a smaller head size
+- GQA lowers the number of query heads
+why: Each decode step reads the whole cache, so a smaller cache means a shorter memory read.
+q: How does uptraining build the GQA key heads from an MHA checkpoint?
+- It keeps the first key head of each group and deletes the rest
+* It takes the mean of the key projection weights within each group
+- It trains new key heads from random values
+- It copies the query heads into the key heads
+why: The GQA paper averages the projections in each group and then continues training briefly.
+q: A 70B-class model with MHA has a 21.5 GB cache at 8,192 tokens. The read takes 6.4 ms at 3.35 TB per second. What is the read time with 8 KV heads?
+- 6.4 ms
+- 3.2 ms
+* 0.8 ms
+- 0.1 ms
+why: 8 KV heads cut the cache by 64 / 8 = 8 times, so 6.4 / 8 = 0.8 ms.
+q: An engineer sets tensor parallelism to 16 on a model with 8 KV heads. What happens?
+- The engine refuses to start
+* The engine copies KV heads across GPUs, so the cache per GPU stops shrinking
+- The cache per GPU shrinks by 16 times
+- The query heads are merged into 8 groups
+why: With fewer KV heads than GPUs, each head must be duplicated, which wastes cache memory.
+:::
 
 ## Go further
 
@@ -1394,6 +2288,7 @@ The GQA paper gives the uptraining procedure and the quality curves against the 
         slug: 'parallelism',
         title: 'Parallelism',
         description: 'How to split a model and its work across many GPUs.',
+        level: 'advanced',
         lessons: [
           {
             slug: 'tensor-parallelism',
@@ -1512,6 +2407,55 @@ The procedure to set tensor parallelism in a serving engine is:
 
 Caution: a TP degree that does not divide the number of KV heads forces the engine to copy KV heads. The cache per GPU then stops shrinking.
 
+
+This script runs the column and row split on the CPU with PyTorch. The sum of the four partial products equals the full result, which is what the all-reduce computes across GPUs.
+
+:::code
+lang: python
+file: tp_mlp.py
+import torch
+gelu = torch.nn.functional.gelu
+torch.manual_seed(0)
+
+X = torch.randn(32, 64)     # 32 tokens, hidden size 64
+A = torch.randn(64, 256)    # first MLP matrix
+B = torch.randn(256, 64)    # second MLP matrix
+full = gelu(X @ A) @ B
+
+tp = 4
+A_cols = A.chunk(tp, dim=1)  # column split: each GPU gets 64 of 256 columns
+B_rows = B.chunk(tp, dim=0)  # row split: each GPU gets 64 of 256 rows
+partials = [gelu(X @ A_cols[i]) @ B_rows[i] for i in range(tp)]
+all_reduce = sum(partials)   # the sum NCCL computes across the 4 GPUs
+
+print("max difference:", (full - all_reduce).abs().max().item())
+print("bytes per all-reduce at d=8192, batch 32, FP16:", 2 * 32 * 8192 * 2)
+print("all-reduce steps per token for 80 layers:", 2 * 80)
+:::
+
+The first line prints a number near 1e-5. That is floating-point rounding, not a real difference.
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Pick the TP degree for a model
+task: Write a function tp_degree(weights_gb, gpu_gb, kv_heads) that returns the smallest TP degree from (1, 2, 4, 8) that leaves at least a third of each GPU free and divides the KV head count. Test it for a 70B FP16 model (140 GB) with 8 KV heads on 80 GB GPUs, and for a 7B FP16 model (14 GB) with 32 KV heads on 24 GB GPUs. Then print the all-reduce latency floor for 160 steps at 20 microseconds each.
+hint: Weights per GPU must be at most two thirds of the GPU memory, so at most 53.3 GB on an 80 GB GPU.
+lang: python
+solution:
+def tp_degree(weights_gb, gpu_gb, kv_heads):
+    for tp in (1, 2, 4, 8):
+        if weights_gb / tp <= gpu_gb * 2 / 3 and kv_heads % tp == 0:
+            return tp
+    return None
+
+print(tp_degree(140, 80, 8))    # 4: 35 GB per GPU
+print(tp_degree(14, 24, 32))    # 1: 14 GB fits with 10 GB free
+print("latency floor:", 160 * 20 / 1000, "ms")   # 3.2 ms
+:::
+
 ## Common mistakes
 
 - Mistake: you run tensor parallelism across two servers over Ethernet. Fix: keep TP inside a node and use pipeline parallelism across nodes.
@@ -1520,9 +2464,41 @@ Caution: a TP degree that does not divide the number of KV heads forces the engi
 
 ## Check your understanding
 
-- How much weight memory does each GPU hold for a 70B FP16 model at TP = 8? Answer: 17.5 GB.
-- How many all-reduce steps happen per token in a 32-layer model? Answer: 64.
-- Why does the MLP need only one all-reduce? Answer: the column split of the first matrix needs no communication, and the row split of the second needs one sum.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: tensor parallelism
+q: How much weight memory does each GPU hold for a 70B FP16 model at TP = 8?
+- 8.75 GB
+* 17.5 GB
+- 35 GB
+- 70 GB
+why: 140 GB of weights divided by 8 GPUs is 17.5 GB per GPU.
+q: How many all-reduce steps happen per token in a 32-layer model?
+- 32
+* 64
+- 128
+- 2
+why: Each layer performs two all-reduce steps, one after attention and one after the MLP.
+q: Why does the MLP block need only one all-reduce?
+- Because GeLU is applied after the all-reduce
+* Because the column split of the first matrix needs no communication, and the row split of the second needs one sum
+- Because the MLP has only one weight matrix
+- Because the all-reduce is merged with the attention one
+why: The activation function works per element on each column block, so only the final partial sums must be added.
+q: A decode step has batch 32, hidden size 8,192 and FP16 elements. About how many bytes does one all-reduce move per GPU?
+- 0.5 MB
+* 1 MB
+- 8 MB
+- 160 MB
+why: 2 phases times 32 tokens times 8,192 elements times 2 bytes is about 1 MB.
+q: An engineer runs TP = 8 across two servers connected by Ethernet. What is the main cost?
+- The weights no longer fit
+* Each of the 160 all-reduce steps pays about 200 microseconds of latency instead of 20, so the step time grows by tens of milliseconds
+- The KV cache must be copied to every GPU
+- GeLU cannot run across servers
+why: The all-reduce count does not change, but the latency per step grows about ten times on Ethernet.
+:::
 
 ## Go further
 
@@ -1652,6 +2628,62 @@ For serving there is no backward pass. The engine fills the pipeline with differ
 
 Note: the latency of one request is the sum of the stage times plus the transfer times. Pipeline parallelism raises throughput but does not cut the latency of a single request.
 
+
+This script computes the bubble fraction and prints the schedule for 4 stages and 4 micro-batches.
+
+:::code
+lang: python
+file: pipeline.py
+def bubble(stages, micro_batches):
+    return (stages - 1) / (micro_batches + stages - 1)
+
+for m in (4, 8, 32):
+    print("4 stages,", m, "micro-batches:", round(bubble(4, m) * 100, 1), "% idle")
+
+def schedule(stages, micro_batches):
+    for step in range(stages + micro_batches - 1):
+        row = []
+        for s in range(stages):
+            mb = step - s + 1
+            row.append("mb" + str(mb) if 1 <= mb <= micro_batches else "---")
+        print("step", step + 1, " ".join(row))
+
+schedule(4, 4)
+:::
+
+:::code
+lang: text
+4 stages, 4 micro-batches: 42.9 % idle
+4 stages, 8 micro-batches: 27.3 % idle
+4 stages, 32 micro-batches: 8.6 % idle
+step 1 mb1 --- --- ---
+step 2 mb2 mb1 --- ---
+step 3 mb3 mb2 mb1 ---
+step 4 mb4 mb3 mb2 mb1
+step 5 --- mb4 mb3 mb2
+step 6 --- --- mb4 mb3
+step 7 --- --- --- mb4
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Find the micro-batch count for a target bubble
+task: Use the bubble function to compute the idle fraction for 8 stages and 56 micro-batches. Then find the smallest number of micro-batches that brings the bubble below 5 percent for 4 stages, and again for 8 stages. Print the schedule for 2 stages and 3 micro-batches and count the idle cells.
+hint: Loop over micro-batch counts from 1 upward and stop at the first value below 0.05.
+lang: python
+solution:
+print(round(bubble(8, 56) * 100, 1), "%")            # 11.1 %
+for stages in (4, 8):
+    m = 1
+    while bubble(stages, m) >= 0.05:
+        m += 1
+    print(stages, "stages need", m, "micro-batches")  # 58 and 134
+schedule(2, 3)                                        # 4 steps, 2 idle cells
+:::
+
 ## Common mistakes
 
 - Mistake: you use one micro-batch and see a 75 percent idle rate on 4 stages. Fix: raise the number of micro-batches until the bubble is below 10 percent.
@@ -1660,9 +2692,41 @@ Note: the latency of one request is the sum of the stage times plus the transfer
 
 ## Check your understanding
 
-- What is the bubble fraction for 8 stages and 56 micro-batches? Answer: $7 / 63 = 11$ percent.
-- What crosses the link between two pipeline stages? Answer: the activation tensor of one micro-batch, not the weights.
-- Why does 1F1B use less memory than GPipe? Answer: it frees the activations of each micro-batch as soon as its backward pass is done.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: pipeline parallelism
+q: What is the bubble fraction for 8 stages and 56 micro-batches?
+- 7 percent
+* 11 percent
+- 14 percent
+- 25 percent
+why: (8 - 1) / (56 + 8 - 1) = 7 / 63 = 0.111.
+q: What crosses the link between two pipeline stages?
+- The weights of the next stage
+* The activation tensor of one micro-batch
+- The gradients of all micro-batches
+- The KV cache of every sequence
+why: Each stage holds its own weights; only the activations of a micro-batch travel to the next stage.
+q: Why does 1F1B use less memory than GPipe?
+- It uses fewer micro-batches
+* It frees the activations of each micro-batch as soon as its backward pass is done
+- It stores activations in FP8
+- It skips the backward pass for the first stage
+why: GPipe keeps all M micro-batch activations until the backward passes start; 1F1B holds at most S.
+q: A 4-stage pipeline runs with one micro-batch. What fraction of the time is each GPU idle?
+- 25 percent
+- 50 percent
+* 75 percent
+- 0 percent
+why: Only one stage works at any moment, so each of the 4 GPUs is busy a quarter of the time.
+q: Which statement about latency and pipeline parallelism is correct?
+- Pipeline parallelism cuts the latency of one request by the stage count
+* Pipeline parallelism raises throughput but does not cut the latency of a single request
+- Pipeline parallelism cuts latency only when combined with tensor parallelism
+- Latency falls because each stage holds fewer layers
+why: One request still passes through every layer in order, plus the transfers, so its latency does not fall.
+:::
 
 ## Go further
 
@@ -1697,6 +2761,11 @@ This lesson explains data parallelism (DP), the simplest way to use many graphic
 ## Why it matters
 
 Data parallelism gives every GPU a full copy of the model. Each copy processes different data, and the GPUs average their gradients. But a full copy of the training state is large. A 7B model needs 112 GB per copy with a standard optimizer, which does not fit in an 80 GB GPU. ZeRO (Zero Redundancy Optimizer) removes the duplication and makes data parallelism work at that size.
+
+:::video
+id: PziYflu8cB8
+why: Watch all 100 seconds. Serving with data parallelism means replicas behind a load balancer, and Kubernetes is the tool that starts, counts and replaces those replicas.
+:::
 
 ## The idea with an example
 
@@ -1777,6 +2846,57 @@ For serving, data parallelism means independent replicas. Each replica is a full
 2. Measure its throughput at the target latency.
 3. Divide the required load by that throughput to get the replica count.
 
+
+This script computes the bytes per weight and the memory per GPU for each ZeRO stage.
+
+:::code
+lang: python
+file: zero.py
+def bytes_per_weight(stage, n_gpus):
+    weights, grads, optim = 2.0, 2.0, 12.0
+    if stage >= 1:
+        optim = optim / n_gpus
+    if stage >= 2:
+        grads = grads / n_gpus
+    if stage >= 3:
+        weights = weights / n_gpus
+    return weights + grads + optim
+
+params = 7e9
+for stage in (0, 1, 2, 3):
+    b = bytes_per_weight(stage, 8)
+    name = "plain DP" if stage == 0 else "ZeRO stage " + str(stage)
+    print(name + ":", round(b, 2), "bytes per weight,", round(params * b / 1e9, 2), "GB per GPU")
+:::
+
+:::code
+lang: text
+plain DP: 16.0 bytes per weight, 112.0 GB per GPU
+ZeRO stage 1: 5.5 bytes per weight, 38.5 GB per GPU
+ZeRO stage 2: 3.75 bytes per weight, 26.25 GB per GPU
+ZeRO stage 3: 2.0 bytes per weight, 14.0 GB per GPU
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Find the GPU count for a 70B training run
+task: Use bytes_per_weight to compute the memory per GPU for a 70B model at ZeRO stage 3 on 16, 32 and 64 GPUs. Then find the smallest GPU count at which stage 3 fits under 60 GB per GPU, which leaves room for activations on an 80 GB GPU.
+hint: At stage 3 the bytes per weight are 16 divided by the GPU count. The model has 70 billion weights.
+lang: python
+solution:
+params = 70e9
+for n in (16, 32, 64):
+    print(n, "GPUs:", params * bytes_per_weight(3, n) / 1e9, "GB per GPU")
+# 70, 35 and 17.5 GB
+n = 1
+while params * bytes_per_weight(3, n) / 1e9 > 60:
+    n += 1
+print("smallest GPU count under 60 GB:", n)   # 19
+:::
+
 ## Common mistakes
 
 - Mistake: you count only the 2 bytes of FP16 weights when you size training. Fix: count all 16 bytes, including the optimizer state.
@@ -1785,9 +2905,41 @@ For serving, data parallelism means independent replicas. Each replica is a full
 
 ## Check your understanding
 
-- How many bytes per weight does ZeRO stage 3 need on 16 GPUs? Answer: 1 byte.
-- Which tensor does stage 2 shard that stage 1 does not? Answer: the gradients.
-- Why does stage 3 cost more communication? Answer: it all-gathers the weights of every layer in both the forward and backward passes.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: data parallelism and ZeRO
+q: How many bytes per weight does ZeRO stage 3 need on 16 GPUs?
+- 0.5 bytes
+* 1 byte
+- 2 bytes
+- 4 bytes
+why: Stage 3 shards all 16 bytes across the GPUs, so 16 / 16 = 1 byte per weight.
+q: Which tensor does stage 2 shard that stage 1 does not?
+- The FP16 weights
+* The gradients
+- The Adam moments
+- The activations
+why: Stage 1 shards the optimizer state only; stage 2 adds the gradients; stage 3 adds the weights.
+q: Why does stage 3 cost more communication than stages 1 and 2?
+- It sends the optimizer state to every GPU each step
+* It all-gathers the weights of every layer in both the forward and the backward pass
+- It uses FP32 for the all-reduce
+- It runs an extra reduce-scatter per micro-batch
+why: Each GPU holds only a shard of each layer, so it must gather the full layer before it can use it, twice per step.
+q: A 7B model trains with mixed precision and Adam on plain data parallelism. How much memory does each GPU need for the training state?
+- 14 GB
+- 28 GB
+- 56 GB
+* 112 GB
+why: Each weight needs 16 bytes: 2 for the FP16 copy, 2 for the gradient and 12 for the optimizer state.
+q: For a serving system, what does data parallelism mean?
+- Each GPU holds a shard of the KV cache
+* Independent replicas of the whole engine behind a load balancer
+- Each GPU holds a slice of every weight matrix
+- Consecutive layers on different GPUs
+why: A serving replica is a full engine, and a load balancer sends each request to one of them.
+:::
 
 ## Go further
 
@@ -1906,6 +3058,57 @@ Ethernet, 50 GB/s: 21
 
 Mixture-of-experts (MoE) models add expert parallelism (EP). An MoE layer has many expert MLPs, and each token visits only a few of them. Expert parallelism places different experts on different GPUs and routes each token to the GPU that holds its expert with an all-to-all exchange.
 
+
+This script searches for the smallest layout that fits a model with a third of each GPU free.
+
+:::code
+lang: python
+file: layout.py
+def layout(params_b, bytes_per_weight, gpu_gb=80, min_free=1 / 3):
+    weights = params_b * bytes_per_weight
+    for pp in (1, 2, 4):
+        for tp in (1, 2, 4, 8):
+            per_gpu = weights / (tp * pp)
+            if per_gpu <= gpu_gb * (1 - min_free):
+                free = tp * pp * gpu_gb - weights
+                return {"tp": tp, "pp": pp, "per_gpu_gb": round(per_gpu, 1), "free_gb": round(free, 1)}
+    return None
+
+print("405B FP16:", layout(405, 2))
+print("405B FP8: ", layout(405, 1))
+print("70B FP16: ", layout(70, 2))
+
+L_, N, d, b = 126, 64, 16384, 2
+traffic_gb = 2 * L_ * 2 * N * d * b / 1e9
+print("all-reduce traffic per step:", round(traffic_gb, 2), "GB")
+print("NVLink:", round(traffic_gb / 900 * 1000, 1), "ms  Ethernet:", round(traffic_gb / 50 * 1000, 1), "ms")
+:::
+
+:::code
+lang: text
+405B FP16: {'tp': 8, 'pp': 2, 'per_gpu_gb': 50.6, 'free_gb': 470}
+405B FP8:  {'tp': 8, 'pp': 1, 'per_gpu_gb': 50.6, 'free_gb': 235}
+70B FP16:  {'tp': 4, 'pp': 1, 'per_gpu_gb': 35.0, 'free_gb': 180}
+all-reduce traffic per step: 1.06 GB
+NVLink: 1.2 ms  Ethernet: 21.1 ms
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Lay out a 70B model three ways
+task: Use the layout function for a 70B model in FP8 (1 byte per weight) and in INT4 (0.5 bytes per weight) on 80 GB GPUs. Then run the FP16 case again on 40 GB GPUs. For each result print the TP and PP degrees and the memory free for the cache. Decide which result crosses a node boundary.
+hint: Call layout with gpu_gb=40 for the third case. A layout with pp above 1 crosses nodes.
+lang: python
+solution:
+print(layout(70, 1))            # tp 2, pp 1, 35 GB per GPU, 90 GB free
+print(layout(70, 0.5))          # tp 1, pp 1, 35 GB per GPU, 45 GB free
+print(layout(70, 2, gpu_gb=40)) # tp 8, pp 1, 17.5 GB per GPU, 180 GB free
+# None of the three needs PP, so none crosses a node.
+:::
+
 ## Common mistakes
 
 - Mistake: you raise TP across nodes because PP looks harder to configure. Fix: cross-node TP multiplies the per-layer latency; use PP across nodes.
@@ -1914,9 +3117,41 @@ Mixture-of-experts (MoE) models add expert parallelism (EP). An MoE layer has ma
 
 ## Check your understanding
 
-- A 70B FP16 model on 80 GB GPUs: what is the smallest TP that leaves a third of the memory free? Answer: TP = 4 (35 GB weights, 45 GB free).
-- Which layout gives the lowest latency for the 405B example? Answer: FP8 with TP = 8 on one node.
-- What communication pattern does expert parallelism use? Answer: an all-to-all exchange of tokens between GPUs.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: combining parallelism
+q: A 70B FP16 model runs on 80 GB GPUs. What is the smallest TP degree that leaves a third of each GPU free?
+- TP = 2
+* TP = 4
+- TP = 8
+- TP = 16
+why: TP = 4 puts 35 GB of weights on each GPU and leaves 45 GB, while TP = 2 leaves only 10 GB.
+q: Which layout gives the lowest latency for the 405B example?
+- FP16 with TP = 8 and PP = 2
+* FP8 with TP = 8 on one node
+- FP8 with TP = 8 and PP = 2
+- FP16 with TP = 16 across two nodes
+why: No request crosses a node, and all communication is NVLink all-reduce.
+q: What communication pattern does expert parallelism use?
+- An all-reduce after every expert
+- A ring all-gather of the expert weights
+* An all-to-all exchange of tokens between GPUs
+- A broadcast of the router weights
+why: Each token travels to the GPU that holds its expert and the result travels back.
+q: A TP group has 126 layers, 64 tokens per step, hidden size 16,384 and FP16 elements. About how much all-reduce traffic moves per step?
+- 0.26 GB
+- 0.53 GB
+* 1.06 GB
+- 4.2 GB
+why: 2 all-reduce steps per layer times 2 phases times 126 times 64 times 16,384 times 2 bytes is about 1.06 GB.
+q: A team runs TP = 16 across two nodes over Ethernet because PP looked harder to configure. What is the cost?
+- The weights no longer fit
+* Every layer pays Ethernet latency twice, so the per-token latency rises about ten times
+- The KV cache doubles
+- Expert parallelism stops working
+why: Tensor parallelism communicates inside every layer, so a slow link multiplies the step time.
+:::
 
 ## Go further
 
@@ -1929,6 +3164,7 @@ The Megatron-LM paper on efficient large-scale training is the standard referenc
         slug: 'serving-stack',
         title: 'The serving stack',
         description: 'The layers of an inference engine, from the HTTP server to the sampler, and how the scheduler fills each step.',
+        level: 'advanced',
         lessons: [
           {
             slug: 'engine-architecture-and-scheduler',
@@ -1958,6 +3194,11 @@ This lesson describes the layers of an inference engine such as vLLM or SGLang. 
 ## Why it matters
 
 Every serving system makes the same decisions each step: which requests to admit, how many tokens to process, and which requests to pause. The scheduler makes these decisions. If you know the layers, you can read engine logs, tune the token budget, and explain why a request waits.
+
+:::video
+id: Gjnup-PuquQ
+why: Watch all 100 seconds. The engines in this lesson ship as container images, and the commands below start one with Docker.
+:::
 
 ## The idea with an example
 
@@ -2048,6 +3289,52 @@ When free blocks run out, the scheduler preempts a running sequence. There are t
 
 SGLang adds RadixAttention, which stores the KV cache in a radix tree so that many requests share a prefix. SGLang also offers a frontend language for programs with many model calls, such as branching and parallel generation.
 
+
+These commands start a vLLM engine with the scheduler limits from this lesson and send one request. The first command needs a GPU with the NVIDIA container toolkit.
+
+:::code
+lang: bash
+docker run --gpus all -p 8000:8000 vllm/vllm-openai:latest \\
+  --model Qwen/Qwen2.5-0.5B-Instruct \\
+  --max-num-seqs 64 --max-num-batched-tokens 2048 \\
+  --enable-chunked-prefill --gpu-memory-utilization 0.9
+
+curl http://localhost:8000/v1/completions -H "Content-Type: application/json" \\
+  -d '{"model": "Qwen/Qwen2.5-0.5B-Instruct", "prompt": "The KV cache", "max_tokens": 16}'
+
+curl http://localhost:8000/metrics | grep -E "num_requests_(running|waiting)|preemptions"
+:::
+
+The last command reads the engine metrics. The running and waiting counts show the scheduler state, and the preemption counter shows cache pressure.
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Build one scheduler step by hand
+task: Write a function schedule_step(running, waiting, budget, free_blocks, block=16) that follows the scheduler loop. Each running sequence takes 1 token and may need 1 block. Admit waiting prompts in order while both the budget and the blocks allow. Return the list of admitted prompts and the budget left. Test it with two running sequences, waiting prompts of 500, 1,200 and 300 tokens, a budget of 2,048 tokens and 40 free blocks.
+hint: A prompt of n tokens needs n of budget and ceil(n / 16) blocks. Decode tokens come first.
+lang: python
+solution:
+import math
+
+def schedule_step(running, waiting, budget, free_blocks, block=16):
+    budget -= len(running)
+    free_blocks -= len(running)
+    admitted = []
+    for prompt in waiting:
+        need = math.ceil(prompt / block)
+        if prompt <= budget and need <= free_blocks:
+            admitted.append(prompt)
+            budget -= prompt
+            free_blocks -= need
+    return admitted, budget, free_blocks
+
+print(schedule_step(["B", "C"], [500, 1200, 300], 2048, 40))
+# ([500], 1546, 6): the 1,200-token prompt needs 75 blocks and 300 needs 19, so both wait
+:::
+
 ## Common mistakes
 
 - Mistake: setting the token budget to the context length. Fix: set it to a few thousand tokens so decode requests do not wait for one long prefill.
@@ -2057,9 +3344,41 @@ SGLang adds RadixAttention, which stores the KV cache in a radix tree so that ma
 
 ## Check your understanding
 
-- Question: what does the scheduler check before it admits a new request? Answer: that enough free KV cache blocks and token budget remain for this step.
-- Question: in the example, why does request A need 32 blocks? Answer: 500 tokens divided by a block size of 16 is 31.25, so the engine rounds up to 32.
-- Question: what does preemption by recompute cost? Answer: the engine runs prefill again for the preempted sequence.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: the engine and the scheduler
+q: What does the scheduler check before it admits a new request?
+- That the request has fewer tokens than the longest running sequence
+* That enough free KV cache blocks and enough token budget remain for this step
+- That the tokenizer has finished for all running requests
+- That the client supports streaming
+why: Both limits bound the step: the token budget caps the forward pass and the blocks cap the cache.
+q: In the example, why does request A need 32 blocks?
+- Because the token budget is 2,048 and 2048 / 64 = 32
+* Because 500 tokens divided by a block size of 16 is 31.25, which rounds up to 32
+- Because the engine reserves 32 blocks for every new request
+- Because A will generate 32 tokens
+why: The cache allocates whole blocks, so a partial block counts as one more block.
+q: What does preemption by recompute cost?
+- PCIe bandwidth to copy the blocks to CPU memory
+* GPU time to run the prefill again for the preempted sequence
+- Nothing; the blocks stay in place
+- One extra all-reduce per layer
+why: The engine drops the blocks and must rebuild the cache from the prompt later.
+q: The scheduler has a budget of 2,048 tokens, 2 running decode sequences and a waiting prompt of 2,100 tokens. Chunked prefill is on with chunks of 512. What runs this step?
+- Nothing; the prompt is larger than the budget
+- The two decode tokens only
+* The two decode tokens and one 512-token chunk of the prompt
+- The two decode tokens and the full 2,100-token prompt
+why: Chunked prefill adds one chunk per step, and 2 + 512 is within the budget.
+q: Why does the model runner use CUDA graphs for decode steps?
+- To store the KV cache on the CPU
+* To replay a recorded sequence of kernels and remove the launch cost of many small kernels
+- To compress the weights
+- To skip the sampler
+why: A decode step launches many tiny kernels, and the launch overhead can dominate without a recorded graph.
+:::
 
 ## Go further
 
@@ -2093,6 +3412,11 @@ Many requests to a model start with the same tokens. This lesson explains how an
 ## Why it matters
 
 A system prompt, a set of few-shot examples, or the earlier turns of a chat can be thousands of tokens. Without prefix caching the engine runs prefill over all of them for every request. This costs GPU time and raises the time to first token. With prefix caching the engine runs prefill only on the new part of the prompt.
+
+:::video
+id: G1rOthIU-uo
+why: Watch all 100 seconds. Note the key lookup and the eviction of old entries. The prefix cache uses the same two ideas with block hashes as keys.
+:::
 
 ## The idea with an example
 
@@ -2169,6 +3493,72 @@ SGLang stores the cache as a radix tree. A radix tree is a tree in which each ed
 
 Caution: a change at the start of the prompt changes the first hash, and the chain breaks for every later block. A timestamp or a user name at the top of the system prompt disables the cache for the whole prefix.
 
+
+This script builds the chained block hashes for two requests that share the system prompt and counts the matched blocks.
+
+:::code
+lang: python
+file: prefix.py
+import hashlib
+
+BLOCK = 16
+
+def block_hashes(tokens):
+    hashes, prev = [], ""
+    full = len(tokens) - len(tokens) % BLOCK
+    for i in range(0, full, BLOCK):
+        chunk = tokens[i:i + BLOCK]
+        prev = hashlib.sha256((prev + str(chunk)).encode()).hexdigest()[:12]
+        hashes.append(prev)
+    return hashes
+
+system = list(range(1200))                  # 1,200 system prompt tokens
+first = system + list(range(5000, 5200))    # plus a 200-token user message
+second = system + list(range(6000, 6200))   # a different user message
+
+table = set(block_hashes(first))
+matched = 0
+for h in block_hashes(second):
+    if h not in table:
+        break
+    matched += 1
+print("blocks matched:", matched, " tokens skipped:", matched * BLOCK)
+print("tokens to prefill:", len(second) - matched * BLOCK)
+:::
+
+:::code
+lang: text
+blocks matched: 75  tokens skipped: 1200
+tokens to prefill: 200
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Break the cache with a timestamp, then fix it
+task: Build a third request that puts a 3-token date in front of the system prompt, and a fourth request that puts the same 3 tokens after the user message. Count the matched blocks for each against the table from prefix.py. Then compute how many tokens the engine skips for a shared prefix of 1,000 tokens with a block size of 16.
+hint: The chain of hashes starts at block 1. Any change before a block changes every hash after it.
+lang: python
+solution:
+date = [9001, 9002, 9003]
+third = date + system + list(range(6000, 6200))
+fourth = system + list(range(6000, 6200)) + date
+
+def matched_blocks(tokens):
+    n = 0
+    for h in block_hashes(tokens):
+        if h not in table:
+            break
+        n += 1
+    return n
+
+print(matched_blocks(third))     # 0: the date shifts every block
+print(matched_blocks(fourth))    # 75: the prefix is unchanged
+print(1000 - 1000 % 16)          # 992 tokens skipped
+:::
+
 ## Common mistakes
 
 - Mistake: putting the date or the user name at the start of the system prompt. Fix: put variable content after the fixed content.
@@ -2178,9 +3568,41 @@ Caution: a change at the start of the prompt changes the first hash, and the cha
 
 ## Check your understanding
 
-- Question: why does the hash of a block include the hash of the previous block? Answer: so that a block matches only when the whole prefix before it matches.
-- Question: a shared prefix is 1,000 tokens and the block size is 16. How many tokens does the engine skip? Answer: 992 tokens, because 62 full blocks cover 992 tokens and the last 8 tokens form a partial block.
-- Question: which blocks can the engine evict? Answer: blocks with a reference count of zero, starting with the least recently used.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: prefix caching
+q: Why does the hash of a block include the hash of the previous block?
+- To make the hash shorter
+* So that a block matches only when the whole prefix before it matches
+- To let blocks be evicted in order
+- To store the block size in the hash
+why: Keys and values of a block depend on every earlier token, so the hash must cover the whole prefix.
+q: A shared prefix is 1,000 tokens and the block size is 16. How many tokens does the engine skip?
+- 1,000
+* 992
+- 984
+- 62
+why: 62 full blocks cover 992 tokens, and the last 8 tokens sit in a partial block that the engine still computes.
+q: Which blocks can the engine evict?
+- Any block, starting with the largest
+* Blocks with a reference count of zero, starting with the least recently used
+- Only blocks of finished requests from the last minute
+- Only the blocks of the system prompt
+why: A block in use by a running request cannot be freed, and LRU picks among the rest.
+q: A product has a 1,200-token system prompt and 100,000 requests per day. About how many prefill tokens does prefix caching save per day?
+- 1.2 million
+- 12 million
+* 120 million
+- 1.2 billion
+why: Every request after the first skips 1,200 tokens, and 99,999 times 1,200 is about 120 million.
+q: An engineer puts the current date at the top of the system prompt. What happens to the hit rate?
+- It stays the same, because the date is short
+- It falls by one block per request
+* It drops to zero for the whole prefix, because the first hash changes and the chain breaks
+- It rises, because the date is the same for all requests on one day
+why: The date changes the first block, and every later hash depends on it.
+:::
 
 ## Go further
 
@@ -2214,6 +3636,11 @@ This lesson explains how an engine streams tokens to a client while it still gen
 ## Why it matters
 
 A full answer of 300 tokens can take 9 seconds. A user who waits 9 seconds for a blank screen leaves. A user who sees the first word after half a second stays. Streaming also lets a client stop a bad answer early, which saves GPU time.
+
+:::video
+id: zduSFxRajkE
+why: Watch the part on UTF-8 and byte-level encoding in the first 30 minutes. It explains why one character can span two tokens, which is the case the detokenizer must hold.
+:::
 
 ## The idea with an example
 
@@ -2310,6 +3737,76 @@ Caution: a missing cancel path wastes GPU time on every abandoned request. Test 
 
 A tool call is a JSON object the model writes instead of prose. Engines stream it in fragments, one delta per event, with the same SSE format. The client appends the fragments and parses the JSON only after the final event, because a partial JSON string does not parse.
 
+
+This script shows the detokenizer rule. It holds bytes until they form a complete UTF-8 character.
+
+:::code
+lang: python
+file: detokenizer.py
+class Detokenizer:
+    def __init__(self):
+        self.held = b""
+
+    def feed(self, token_bytes):
+        self.held += token_bytes
+        try:
+            text = self.held.decode("utf-8")
+        except UnicodeDecodeError:
+            return ""              # wait for the rest of the character
+        self.held = b""
+        return text
+
+d = Detokenizer()
+tokens = [b"caf", bytes.fromhex("c3"), bytes.fromhex("a9"), b" ok"]
+for t in tokens:
+    out = d.feed(t)
+    print(t, "->", repr(out) if out else "(held)")
+
+ttft_ms, tpot_ms, n = 400, 30, 300
+print("total time:", (ttft_ms + (n - 1) * tpot_ms) / 1000, "s")
+:::
+
+:::code
+lang: text
+b'caf' -> 'caf'
+b'\\xc3' -> (held)
+b'\\xa9' -> 'é'
+b' ok' -> ' ok'
+total time: 9.37 s
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Parse a server-sent event stream
+task: Write a function that takes the text of an SSE stream, finds every line that starts with data:, stops at [DONE], parses each JSON payload and returns the joined content. Test it on the four events from this lesson. The result is the text "The cache holds".
+hint: Split the stream on newlines. Strip the data: prefix, skip empty lines, and use json.loads on the rest.
+lang: python
+solution:
+import json
+
+def join_stream(stream):
+    parts = []
+    for line in stream.splitlines():
+        if not line.startswith("data: "):
+            continue
+        payload = line[len("data: "):]
+        if payload == "[DONE]":
+            break
+        parts.append(json.loads(payload)["choices"][0]["delta"]["content"])
+    return "".join(parts)
+
+events = [
+    'data: {"choices":[{"delta":{"content":"The"}}]}',
+    'data: {"choices":[{"delta":{"content":" cache"}}]}',
+    'data: {"choices":[{"delta":{"content":" holds"}}]}',
+    "data: [DONE]",
+]
+print(join_stream(chr(10).join(events)))   # The cache holds
+:::
+
 ## Common mistakes
 
 - Mistake: buffering the whole response in a proxy between the engine and the client. Fix: disable response buffering in the proxy for the streaming route.
@@ -2319,9 +3816,41 @@ A tool call is a JSON object the model writes instead of prose. Engines stream i
 
 ## Check your understanding
 
-- Question: a response has 200 tokens, TTFT is 300 ms, and TPOT is 25 ms. What is the total time? Answer: 300 ms + 199 × 25 ms = 5.275 s.
-- Question: why does the detokenizer sometimes emit nothing for a token? Answer: the token bytes do not yet form a complete UTF-8 character.
-- Question: what must the server do when a client disconnects mid-stream? Answer: cancel the request in the scheduler so the engine frees the KV cache blocks.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: streaming
+q: A response has 200 tokens, TTFT is 300 ms and TPOT is 25 ms. What is the total time?
+- 5.0 s
+* 5.275 s
+- 5.3 s
+- 8.0 s
+why: 300 ms plus 199 steps of 25 ms is 300 + 4,975 = 5,275 ms.
+q: Why does the detokenizer sometimes emit nothing for a token?
+- The token is a stop token
+* The token bytes do not yet form a complete UTF-8 character
+- The client has not acknowledged the previous event
+- The sampler returned the same token twice
+why: A multi-byte character can span two tokens, and half a character is not valid text.
+q: What must the server do when a client disconnects mid-stream?
+- Finish the response and store it for later
+* Cancel the request in the scheduler so the engine frees the KV cache blocks
+- Lower the batch size
+- Resend the last event
+why: Without a cancel path the engine decodes to the end for a client that is gone and holds its cache.
+q: Which line ends a stream in the OpenAI-style SSE format?
+- An empty data: line
+- A line with status: 200
+* A line with data: [DONE]
+- The closing of the HTTP connection only
+why: The server sends data: [DONE] as the final event, and the client stops reading there.
+q: A client parses each SSE event of a tool call as complete JSON. What happens?
+- It works because each event is a full object
+* It fails, because each event holds a fragment and only the joined fragments parse
+- It works only for short tool calls
+- The server rejects the request
+why: Tool-call output streams in deltas, so the client must join them and parse once after the final event.
+:::
 
 ## Go further
 
@@ -2334,6 +3863,7 @@ Read the MDN page for the exact SSE wire format and the client-side event source
         slug: 'measurement',
         title: 'Measurement',
         description: 'The latency, throughput, and utilisation numbers that tell you whether a serving system is fast, and how to collect them.',
+        level: 'advanced',
         lessons: [
           {
             slug: 'ttft-and-tpot',
@@ -2450,6 +3980,55 @@ A person reads about 5 tokens per second, so a TPOT of 200 ms matches reading sp
 
 Note: the inter-token latency is not constant. A step that includes a large prefill chunk for another request makes every decode token in that step late. Report the p99 of the inter-token latency to catch these stalls.
 
+
+This script computes the latency of the three request shapes and shows why a percentile differs from the mean.
+
+:::code
+lang: python
+file: latency.py
+def latency_ms(input_tokens, output_tokens, prefill_rate=10000, tpot_ms=25, queue_ms=0):
+    ttft = input_tokens / prefill_rate * 1000 + queue_ms
+    decode = (output_tokens - 1) * tpot_ms
+    return ttft, decode, ttft + decode
+
+shapes = (("chat turn", 200, 150), ("retrieval prompt", 4000, 300), ("long summary", 20000, 100))
+for name, inp, out in shapes:
+    ttft, decode, total = latency_ms(inp, out)
+    print(name + ": TTFT", ttft, "ms, decode", decode / 1000, "s, end-to-end", round(total / 1000, 3), "s")
+
+def percentile(values, p):
+    values = sorted(values)
+    return values[min(len(values) - 1, int(p / 100 * len(values)))]
+
+ttfts = [180, 190, 200, 210, 220, 230, 250, 300, 900, 2100]
+print("p50", percentile(ttfts, 50), "ms  p99", percentile(ttfts, 99), "ms  mean", sum(ttfts) / len(ttfts), "ms")
+:::
+
+:::code
+lang: text
+chat turn: TTFT 20.0 ms, decode 3.725 s, end-to-end 3.745 s
+retrieval prompt: TTFT 400.0 ms, decode 7.475 s, end-to-end 7.875 s
+long summary: TTFT 2000.0 ms, decode 2.475 s, end-to-end 4.475 s
+p50 230 ms  p99 2100 ms  mean 478.0 ms
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Add a queue and watch the tail move
+task: Use latency_ms to compute the end-to-end latency of a 5,000-token prompt with a 101-token answer at TPOT 40 ms, first with no queue and then with a 500 ms queue. Then take the ten TTFT samples from latency.py, add 500 ms to the slowest two, and print the new p50 and p99. Say in one sentence which number moved.
+hint: Only the TTFT part changes with the queue. The p50 looks at the middle of the sorted list, the p99 at the end.
+lang: python
+solution:
+print(latency_ms(5000, 101, tpot_ms=40))                 # (500.0, 4000, 4500.0)
+print(latency_ms(5000, 101, tpot_ms=40, queue_ms=500))   # (1000.0, 4000, 5000.0)
+ttfts = [180, 190, 200, 210, 220, 230, 250, 300, 1400, 2600]
+print(percentile(ttfts, 50), percentile(ttfts, 99))      # 230 and 2600
+# The p99 moved by 500 ms. The p50 did not move at all.
+:::
+
 ## Common mistakes
 
 - Mistake: reporting only the mean latency. Fix: report p50, p95, and p99, and look at the p99 first.
@@ -2459,9 +4038,41 @@ Note: the inter-token latency is not constant. A step that includes a large pref
 
 ## Check your understanding
 
-- Question: a prompt of 5,000 tokens runs prefill at 10,000 tokens per second with no queue. What is the TTFT? Answer: 500 ms.
-- Question: TTFT is 300 ms, TPOT is 40 ms, and the answer has 101 tokens. What is the end-to-end latency? Answer: 300 ms + 100 × 40 ms = 4.3 s.
-- Question: what does a p99 TTFT of 2 s tell you? Answer: one percent of requests wait 2 s or more for the first token.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: TTFT and TPOT
+q: A prompt of 5,000 tokens runs prefill at 10,000 tokens per second with no queue. What is the TTFT?
+- 50 ms
+* 500 ms
+- 2 s
+- 5 s
+why: 5,000 divided by 10,000 is 0.5 seconds.
+q: TTFT is 300 ms, TPOT is 40 ms, and the answer has 101 tokens. What is the end-to-end latency?
+- 4.04 s
+* 4.3 s
+- 4.34 s
+- 7.3 s
+why: 300 ms plus 100 remaining steps of 40 ms is 4,300 ms.
+q: What does a p99 TTFT of 2 s tell you?
+- The average request waits 2 s for the first token
+* One percent of requests wait 2 s or more for the first token
+- Every request waits at most 2 s
+- The slowest request waited 2 s
+why: The p99 is the value that 99 percent of requests stay under, so it describes the slowest one percent.
+q: Which phase of inference sets TTFT, and which sets TPOT?
+- Decode sets TTFT; prefill sets TPOT
+* Prefill plus queue time sets TTFT; decode sets TPOT
+- Both come from decode
+- Both come from the sampler
+why: The first token appears after the prompt is processed; every later token takes one decode step.
+q: The batch size rises from 1 to 32. What happens to TPOT and throughput?
+- Both rise about 32 times
+* TPOT rises a little; throughput rises almost 32 times
+- TPOT falls 32 times; throughput stays the same
+- Both stay the same
+why: Decode reads the weights once per step, so a larger batch adds tokens per step at a small cost in step time.
+:::
 
 ## Go further
 
@@ -2596,6 +4207,79 @@ Open-loop: request 5 @4-6
 
 Caution: a closed-loop test at low concurrency can hide a capacity problem. Production traffic is open-loop, and a burst above the knee builds a queue that does not drain.
 
+
+This script computes goodput for every row of the load test and finds the knee.
+
+:::code
+lang: python
+file: goodput.py
+SLO_TTFT_S, SLO_TPOT_MS = 1.0, 50
+rows = [  # concurrency, throughput req/s, TTFT p99 s, TPOT p99 ms, fraction inside SLO
+    (1, 0.5, 0.3, 25, 1.00),
+    (4, 1.9, 0.4, 28, 1.00),
+    (16, 6.5, 0.7, 38, 0.95),
+    (64, 14.0, 1.6, 65, 0.30),
+    (128, 15.0, 4.0, 120, 0.05),
+]
+knee = None
+for conc, throughput, ttft, tpot, inside in rows:
+    goodput = throughput * inside
+    p99_ok = ttft <= SLO_TTFT_S and tpot <= SLO_TPOT_MS
+    print("concurrency", conc, "throughput", throughput, "goodput", round(goodput, 2),
+          "p99 inside SLO" if p99_ok else "p99 over SLO")
+    if knee is None or goodput > knee[1]:
+        knee = (conc, goodput)
+print("knee at concurrency", knee[0], "with goodput", round(knee[1], 2), "req/s")
+:::
+
+:::code
+lang: text
+concurrency 1 throughput 0.5 goodput 0.5 p99 inside SLO
+concurrency 4 throughput 1.9 goodput 1.9 p99 inside SLO
+concurrency 16 throughput 6.5 goodput 6.17 p99 inside SLO
+concurrency 64 throughput 14.0 goodput 4.2 p99 over SLO
+concurrency 128 throughput 15.0 goodput 0.75 p99 over SLO
+knee at concurrency 16 with goodput 6.17 req/s
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Run a closed-loop load test against a local model
+task: Start a local OpenAI-compatible server (for example ollama serve with a small model, or vLLM on port 8000). Write a closed-loop load generator that sends streamed requests at concurrency 1, 2 and 4, records the TTFT and the TPOT of each request, and prints the p99 of both per level. Use only the standard library.
+hint: A thread pool with n workers is a closed-loop generator with concurrency n. Measure TTFT as the time to the first data: line and TPOT as the remaining time divided by the remaining events.
+lang: python
+solution:
+import json, time, urllib.request
+from concurrent.futures import ThreadPoolExecutor
+
+URL = "http://localhost:11434/v1/completions"   # Ollama; vLLM uses port 8000
+MODEL = "llama3.2"
+
+def one_request(_):
+    body = json.dumps({"model": MODEL, "prompt": "Explain the KV cache.",
+                       "max_tokens": 64, "stream": True}).encode()
+    req = urllib.request.Request(URL, data=body, headers={"Content-Type": "application/json"})
+    t0, first, n = time.time(), None, 0
+    with urllib.request.urlopen(req) as resp:
+        for line in resp:
+            if line.startswith(b"data: ") and b"[DONE]" not in line:
+                n += 1
+                if first is None:
+                    first = time.time() - t0
+    total = time.time() - t0
+    return first, (total - first) / max(1, n - 1)
+
+for conc in (1, 2, 4):
+    with ThreadPoolExecutor(conc) as pool:
+        results = list(pool.map(one_request, range(conc * 3)))
+    ttfts = sorted(r[0] for r in results)
+    tpots = sorted(r[1] for r in results)
+    print("concurrency", conc, "TTFT p99", round(ttfts[-1], 2), "s  TPOT p99", round(tpots[-1] * 1000), "ms")
+:::
+
 ## Common mistakes
 
 - Mistake: reporting throughput without an SLO. Fix: define the SLO first, then report goodput next to throughput.
@@ -2605,9 +4289,41 @@ Caution: a closed-loop test at low concurrency can hide a capacity problem. Prod
 
 ## Check your understanding
 
-- Question: throughput is 40 requests per second and 85 percent meet the SLO. What is the goodput? Answer: 34 requests per second.
-- Question: in the table, why does goodput fall at concurrency 64 while throughput rises? Answer: the larger batch and queue push TTFT and TPOT over the SLO for most requests.
-- Question: which generator shows what happens when arrivals exceed capacity? Answer: an open-loop generator, because it keeps sending at a fixed rate.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: goodput and load testing
+q: Throughput is 40 requests per second and 85 percent of requests meet the SLO. What is the goodput?
+- 6 req/s
+- 25 req/s
+* 34 req/s
+- 40 req/s
+why: Goodput is throughput times the fraction inside the SLO, so 40 times 0.85 = 34.
+q: In the table, why does goodput fall at concurrency 64 while throughput rises?
+- The engine preempts most sequences
+* The larger batch and queue push TTFT and TPOT over the SLO for most requests
+- The load generator cannot keep up
+- The KV cache is full, so requests fail
+why: Only 30 percent of requests stay inside the SLO, so 14 times 0.3 is less than 6.5 times 0.95.
+q: Which generator shows what happens when arrivals exceed capacity?
+- A closed-loop generator, because it waits for each response
+* An open-loop generator, because it keeps sending at a fixed rate
+- Either one, because both measure the same thing
+- Neither; only production traffic shows it
+why: An open-loop generator builds a queue when the system cannot keep up, as real users do.
+q: What is the first step of the load-test procedure?
+- Run at concurrency 128 to find the maximum throughput
+* Write the SLO down with a p99 for TTFT and a p99 for TPOT
+- Warm the engine with 100 requests
+- Pick the GPU
+why: Without an SLO you cannot compute goodput, so every later row would be meaningless.
+q: An autoscaler adds replicas when GPU utilisation passes 80 percent. Why is this a poor signal for an inference service?
+- GPU utilisation is always 0 during decode
+* The utilisation number stays high even when goodput has collapsed, so the scaler reacts too late or not at all
+- Utilisation drops when the queue grows
+- Replicas cannot be added while a batch runs
+why: Queue depth or the fraction of requests inside the SLO tracks user experience; utilisation does not.
+:::
 
 ## Go further
 
@@ -2641,6 +4357,11 @@ This lesson explains what the utilisation number from nvidia-smi measures and wh
 ## Why it matters
 
 Teams buy GPUs by the hour. A GPU that shows 100 percent utilisation and produces few tokens wastes that money. MFU and MBU tell you whether the arithmetic units or the memory system is the limit, and so which change raises throughput.
+
+:::video
+id: l8pRSuU81PU
+why: Use the chapter list to find where the tokens per second and MFU are computed, in the first hour. The speed-ups from bf16, torch.compile and flash attention each move the MFU in the way this lesson explains.
+:::
 
 ## The idea with an example
 
@@ -2728,6 +4449,64 @@ Use the PyTorch profiler to see the time of each kernel and the gaps between ker
 
 Note: the FP8 peak is twice the FP16 peak, so an FP8 MFU uses a different denominator.
 
+
+This script computes MBU and MFU for the two measurements in the example.
+
+:::code
+lang: python
+file: utilisation.py
+def mbu(bytes_moved_gb, step_ms, peak_tb_per_s=3.35):
+    achieved_tb_per_s = bytes_moved_gb / (step_ms / 1000) / 1000
+    return achieved_tb_per_s, achieved_tb_per_s / peak_tb_per_s
+
+def mfu(weights, tokens_in_step, step_ms, peak_tflops=990):
+    achieved_tflops = 2 * weights * tokens_in_step / (step_ms / 1000) / 1e12
+    return achieved_tflops, achieved_tflops / peak_tflops
+
+achieved, util = mbu(140, 60)
+print("MBU at batch 1, 60 ms:", round(achieved, 2), "TB/s,", round(util * 100), "%")
+achieved, util = mfu(70e9, 64, 25)
+print("MFU at batch 64, 25 ms:", round(achieved), "TFLOPS,", round(util * 100), "%")
+:::
+
+:::code
+lang: text
+MBU at batch 1, 60 ms: 2.33 TB/s, 70 %
+MFU at batch 64, 25 ms: 358 TFLOPS, 36 %
+:::
+
+## Try it
+
+Do this exercise before you read the common mistakes. It uses the numbers from this lesson.
+
+:::exercise
+title: Measure the bandwidth of your own device
+task: Write a PyTorch script that copies a 1 GB tensor ten times and reports the achieved bandwidth in GB per second. Run it on the GPU if you have one, or on the CPU. Then compute the MBU against the peak of your device (for example 3.35 TB/s for an H100, or the memory bandwidth from your CPU specification).
+hint: A copy reads 1 GB and writes 1 GB, so count 2 GB per copy. On a GPU call torch.cuda.synchronize before you read the clock.
+lang: python
+solution:
+import time, torch
+
+n = 256 * 1024 * 1024                     # 256 M FP32 elements = 1 GB
+device = "cuda" if torch.cuda.is_available() else "cpu"
+x = torch.empty(n, device=device, dtype=torch.float32)
+y = torch.empty_like(x)
+for _ in range(3):
+    y.copy_(x)                            # warm up
+if device == "cuda":
+    torch.cuda.synchronize()
+t0 = time.time()
+for _ in range(10):
+    y.copy_(x)
+if device == "cuda":
+    torch.cuda.synchronize()
+dt = (time.time() - t0) / 10
+achieved = 2 / dt
+print(device, "moves 2 GB per copy in", round(dt * 1000, 1), "ms:", round(achieved), "GB/s")
+peak = 3350 if device == "cuda" else 50   # replace with the peak of your device
+print("MBU:", round(achieved / peak * 100), "%")
+:::
+
 ## Common mistakes
 
 - Mistake: reading GPU-Util as a measure of efficiency. Fix: compute MBU for decode and MFU for prefill.
@@ -2736,9 +4515,41 @@ Note: the FP8 peak is twice the FP16 peak, so an FP8 MFU uses a different denomi
 
 ## Check your understanding
 
-- Question: a 16 GB model decodes at 6 ms per token on a GPU with 3.35 TB/s. What is the MBU? Answer: 16 / 0.006 = 2.67 TB/s, so about 80 percent.
-- Question: what does a high MBU with a low MFU tell you to do? Answer: raise the batch size or move fewer bytes, because memory bandwidth is the limit.
-- Question: why can nvidia-smi show 100 percent while the GPU does little work? Answer: it counts time with any kernel running, not how much of the chip the kernel uses.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: GPU utilisation
+q: A 16 GB model decodes at 6 ms per token on a GPU with 3.35 TB per second. What is the MBU?
+- 40 percent
+- 60 percent
+* about 80 percent
+- 100 percent
+why: 16 GB in 0.006 s is 2.67 TB/s, and 2.67 / 3.35 is 0.8.
+q: What does a high MBU with a low MFU tell you to do?
+- Use CUDA graphs to cut launch overhead
+* Raise the batch size or move fewer bytes, because memory bandwidth is the limit
+- Lower the batch size to free the arithmetic units
+- Switch to a faster attention kernel
+why: The memory system is saturated while the arithmetic units idle, so each byte read must serve more tokens.
+q: Why can nvidia-smi show 100 percent while the GPU does little work?
+- It reports the memory fill, not the compute
+* It counts time with any kernel running, not how much of the chip the kernel uses
+- It reports the CPU side of the driver
+- It averages over the last hour
+why: A kernel on one streaming multiprocessor out of 132 still counts the whole interval as busy.
+q: A batch of 64 tokens runs through a 70B model in 25 ms. The GPU peak is 990 TFLOPS. What is the MFU?
+- 14 percent
+* 36 percent
+- 72 percent
+- 99 percent
+why: 2 times 70 billion times 64 is 8.96 TFLOPs; divided by 0.025 s that is 358 TFLOPS, or 36 percent of 990.
+q: Both MBU and MFU are low on a decode server. Which fix matches?
+- Quantise the weights to INT4
+- Raise the batch size
+* Reduce overhead with CUDA graphs, fewer kernel launches or a faster scheduler
+- Add a second GPU with tensor parallelism
+why: Neither the memory system nor the arithmetic units is busy, so the time goes to gaps between kernels.
+:::
 
 ## Go further
 

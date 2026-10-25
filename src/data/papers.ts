@@ -10,6 +10,7 @@ export const papers: Paper[] = [
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/1706.03762',
     track: 'ai-research',
+    level: 'intermediate',
     tldr: 'The Transformer replaces recurrence with self-attention, and every large language model since uses this design.',
     notes: `
 ## What the paper does
@@ -49,6 +50,7 @@ BERT (day 10) kept the encoder. GPT-3 (day 9) kept the decoder. RoFormer (day 11
     venue: 'arXiv',
     url: 'https://arxiv.org/abs/2001.08361',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Test loss follows a smooth power law in model size, data size and compute over seven orders of magnitude.',
     notes: `
 ## What the paper does
@@ -88,6 +90,7 @@ Chinchilla (day 3) refit the law with better learning rate schedules. It found t
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2203.15556',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'For a fixed compute budget, grow the number of weights and the number of training tokens at the same rate, about 20 tokens per weight.',
     notes: `
 ## What the paper does
@@ -127,6 +130,7 @@ Llama 3 (day 18) trained a model with 8 billion weights on 15 trillion tokens. T
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2203.02155',
     track: 'ai-research',
+    level: 'intermediate',
     tldr: 'Supervised fine-tuning, a reward model and PPO turn GPT-3 into an assistant that follows instructions.',
     notes: `
 ## What the paper does
@@ -166,6 +170,7 @@ Direct Preference Optimization (day 7) removed the reward model and PPO. Constit
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2205.14135',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'Attention is limited by memory traffic, not by arithmetic. Tiling the computation removes the limit with no approximation.',
     notes: `
 ## What the paper does
@@ -203,6 +208,7 @@ FlashAttention-2 and FlashAttention-3 improved the work split across GPU threads
     venue: 'SOSP',
     url: 'https://arxiv.org/abs/2309.06180',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'Store the key-value cache in fixed-size blocks, like virtual memory pages, so no memory is wasted. This is the design of vLLM.',
     notes: `
 ## What the paper does
@@ -240,6 +246,7 @@ Prefix caching and continuous batching became standard in every serving engine. 
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2305.18290',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Train directly on preference pairs with a classification loss, with no reward model and no PPO.',
     notes: `
 ## What the paper does
@@ -279,6 +286,7 @@ Llama 3 (day 18) used DPO instead of PPO in its post-training rounds. DeepSeek-R
     venue: 'ICLR',
     url: 'https://arxiv.org/abs/2305.20050',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'A reward model that grades each reasoning step beats a reward model that grades only the final answer on the MATH benchmark.',
     notes: `
 ## What the paper does
@@ -316,6 +324,7 @@ DeepSeek-R1 (day 19) reported that process reward models did not help its reinfo
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2005.14165',
     track: 'ai-research',
+    level: 'intermediate',
     tldr: 'A decoder-only model with 175 billion weights learns a new task from examples in the prompt, with no weight updates.',
     notes: `
 ## What the paper does
@@ -354,6 +363,7 @@ Chain-of-thought prompting (day 15) extended in-context learning to reasoning. I
     venue: 'NAACL',
     url: 'https://arxiv.org/abs/1810.04805',
     track: 'ai-research',
+    level: 'intermediate',
     tldr: 'Masked language modelling trains an encoder that reads both directions, and a fine-tuned copy sets new scores on eleven tasks.',
     notes: `
 ## What the paper does
@@ -391,6 +401,7 @@ Decoder-only models won the generation race. Encoders remain the standard for em
     venue: 'Neurocomputing',
     url: 'https://arxiv.org/abs/2104.09864',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Rotate each query and key by an angle proportional to its position. The attention score then depends only on the distance between the two tokens.',
     notes: `
 ## What the paper does
@@ -430,6 +441,7 @@ Context-extension methods such as NTK scaling and YaRN change the base 10000. Ll
     venue: 'JMLR',
     url: 'https://arxiv.org/abs/2101.03961',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Send each token to one of many feed-forward experts, so the number of weights grows and the compute per token does not.',
     notes: `
 ## What the paper does
@@ -467,6 +479,7 @@ Mixtral, DeepSeek-V3 and many other models use top-2 or fine-grained routing. Th
     venue: 'EMNLP',
     url: 'https://arxiv.org/abs/2305.13245',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'Share one key-value head across a group of query heads. Quality stays near multi-head attention, and the cache shrinks toward multi-query size.',
     notes: `
 ## What the paper does
@@ -504,6 +517,7 @@ Most models since 2023 use GQA. DeepSeek-V2 introduced multi-head latent attenti
     venue: 'ICLR',
     url: 'https://arxiv.org/abs/2106.09685',
     track: 'ai-engineering',
+    level: 'intermediate',
     tldr: 'Freeze the weights and train a low-rank update $BA$ beside each weight matrix. It needs ten thousand times fewer trainable values and adds no inference cost.',
     notes: `
 ## What the paper does
@@ -543,6 +557,7 @@ QLoRA trains the adapter on a 4-bit base model. Practice has moved from the quer
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2201.11903',
     track: 'ai-research',
+    level: 'beginner',
     tldr: 'Show the model worked examples with intermediate steps, and accuracy on arithmetic rises, but only for models above about 100 billion weights.',
     notes: `
 ## What the paper does
@@ -580,6 +595,7 @@ Self-consistency samples many chains and takes a majority vote. ReAct (day 16) a
     venue: 'ICLR',
     url: 'https://arxiv.org/abs/2210.03629',
     track: 'ai-engineering',
+    level: 'intermediate',
     tldr: 'Alternate a reasoning step, a tool action and the tool result in one trajectory. Every agent framework implements this loop.',
     notes: `
 ## What the paper does
@@ -617,6 +633,7 @@ Toolformer (day 33) trained tool use into the weights instead of the prompt. Fun
     venue: 'arXiv',
     url: 'https://arxiv.org/abs/2212.08073',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Replace human labels for harmlessness with model critiques against a written set of principles, then run reinforcement learning from AI feedback.',
     notes: `
 ## What the paper does
@@ -654,6 +671,7 @@ RLAIF (day 36) measured AI feedback against human feedback directly. The same pa
     venue: 'arXiv',
     url: 'https://arxiv.org/abs/2407.21783',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'The most complete public description of how a frontier-scale dense model is trained, evaluated and served.',
     notes: `
 ## What the paper does
@@ -691,6 +709,7 @@ Llama 3.1 extended the context to 128K tokens. Llama 3.2 added vision and small 
     venue: 'arXiv',
     url: 'https://arxiv.org/abs/2501.12948',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Reinforcement learning with rule-based rewards only, and no process supervision, produces long chains of thought and self-correction.',
     notes: `
 ## What the paper does
@@ -728,6 +747,7 @@ Many open reproductions confirmed the result on small models. The method became 
     venue: 'COLM',
     url: 'https://arxiv.org/abs/2312.00752',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'A recurrent model with input-dependent state transitions and a hardware-aware scan. It trains as fast as attention and decodes in constant time per token.',
     notes: `
 ## What the paper does
@@ -767,6 +787,7 @@ Pure SSMs lag on tasks that need exact recall. Production models such as Jamba a
     venue: 'EMNLP',
     url: 'https://arxiv.org/abs/2004.04906',
     track: 'ai-engineering',
+    level: 'intermediate',
     tldr: 'Two BERT encoders, one for questions and one for passages, trained with in-batch negatives, beat BM25 on open-domain question answering.',
     notes: `
 ## What the paper does
@@ -806,6 +827,7 @@ ColBERT (day 34) keeps one vector per token instead of one per passage. HNSW (da
     venue: 'IEEE TPAMI',
     url: 'https://arxiv.org/abs/1603.09320',
     track: 'ai-engineering',
+    level: 'advanced',
     tldr: 'A proximity graph with sparse upper layers, searched greedily from the top, finds approximate nearest neighbours in logarithmic time.',
     notes: `
 ## What the paper does
@@ -843,6 +865,7 @@ The graph often takes 1.5 to 2 times the memory of the vectors. DiskANN moved th
     venue: 'USENIX ATC',
     url: 'https://raft.github.io/raft.pdf',
     track: 'system-design',
+    level: 'intermediate',
     tldr: 'Consensus split into leader election, log replication and safety, with the goal that engineers can implement it correctly.',
     notes: `
 ## What the paper does
@@ -880,6 +903,7 @@ Spanner (day 25) uses Paxos groups per shard for the same job. Most new distribu
     venue: 'SOSP',
     url: 'https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf',
     track: 'system-design',
+    level: 'advanced',
     tldr: 'Choose availability over consistency with consistent hashing, vector clocks, sloppy quorums and read repair.',
     notes: `
 ## What the paper does
@@ -917,6 +941,7 @@ Later Dynamo-style systems replaced vector clocks with last-writer-wins timestam
     venue: 'OSDI',
     url: 'https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf',
     track: 'system-design',
+    level: 'advanced',
     tldr: 'Transactions with external consistency across datacentres, made possible by a clock API that reports its own uncertainty.',
     notes: `
 ## What the paper does
@@ -955,6 +980,7 @@ Hybrid logical clocks gave a software-only approximation of TrueTime. Cloud Span
     venue: 'Acta Informatica',
     url: 'https://www.cs.umb.edu/~poneil/lsmtree.pdf',
     track: 'system-design',
+    level: 'intermediate',
     tldr: 'Buffer writes in memory, flush sorted runs to disk, and merge runs in the background, to trade read cost for write throughput.',
     notes: `
 ## What the paper does
@@ -992,6 +1018,7 @@ Bloom filters reduce read amplification. Levelled and size-tiered compaction are
     venue: 'ICLR',
     url: 'https://arxiv.org/abs/1412.6980',
     track: 'ml-math',
+    level: 'intermediate',
     tldr: 'A step size per weight, computed from running averages of the gradient and of its square, with a correction for the first steps.',
     notes: `
 ## What the paper does
@@ -1031,6 +1058,7 @@ AdamW moved weight decay out of the gradient. Language models use $\\beta_2 = 0.
     venue: 'JMLR',
     url: 'https://jmlr.org/papers/v15/srivastava14a.html',
     track: 'ml-math',
+    level: 'beginner',
     tldr: 'Set random activations to zero during training and use the full network at test time, to train an implicit ensemble.',
     notes: `
 ## What the paper does
@@ -1068,6 +1096,7 @@ Inverted dropout divides by $p$ during training instead, so inference needs no c
     venue: 'arXiv',
     url: 'https://arxiv.org/abs/1909.08053',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'Split each attention and feed-forward block across GPUs along the right axis, so each layer needs only two all-reduce operations.',
     notes: `
 ## What the paper does
@@ -1104,6 +1133,7 @@ Tensor parallelism stays inside a node, because it needs NVLink bandwidth. Pipel
     venue: 'SC20',
     url: 'https://arxiv.org/abs/1910.02054',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'Data parallelism keeps the full optimizer state on every GPU. Shard it, and the memory per GPU falls by the number of GPUs.',
     notes: `
 ## What the paper does
@@ -1141,6 +1171,7 @@ Fully sharded data parallelism (FSDP) in PyTorch is ZeRO stage 3. Production run
     venue: 'ICML',
     url: 'https://arxiv.org/abs/2211.17192',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'A small draft model proposes several tokens, and the large target model checks them in one forward pass, with the same output distribution.',
     notes: `
 ## What the paper does
@@ -1180,6 +1211,7 @@ The speedup falls at high batch load, because the spare compute disappears. Medu
     venue: 'ICML',
     url: 'https://arxiv.org/abs/2401.10774',
     track: 'inference-engineering',
+    level: 'advanced',
     tldr: 'Remove the draft model. Extra prediction heads on the target model propose a tree of candidates, and one forward pass checks the tree.',
     notes: `
 ## What the paper does
@@ -1217,6 +1249,7 @@ Medusa-1 can be added to a model you did not train. EAGLE drafts with a one-laye
     venue: 'NeurIPS',
     url: 'https://arxiv.org/abs/2302.04761',
     track: 'ai-engineering',
+    level: 'intermediate',
     tldr: 'A language model teaches itself when to call an API, by keeping only the calls that reduce its own loss on the next tokens.',
     notes: `
 ## What the paper does
@@ -1254,6 +1287,7 @@ Function calling became a standard feature of model APIs. Tool use is now traine
     venue: 'SIGIR',
     url: 'https://arxiv.org/abs/2004.12832',
     track: 'ai-engineering',
+    level: 'advanced',
     tldr: 'Keep one vector per token for both the query and the passage, and score with a sum of per-token maximum similarities.',
     notes: `
 ## What the paper does
@@ -1293,6 +1327,7 @@ ColBERTv2 compressed the token vectors to reduce storage. Late interaction is no
     venue: 'ICML',
     url: 'https://arxiv.org/abs/1502.03167',
     track: 'ml-math',
+    level: 'intermediate',
     tldr: 'Normalize each layer input to zero mean and unit variance over the minibatch, so deep networks train faster with higher learning rates.',
     notes: `
 ## What the paper does
@@ -1332,6 +1367,7 @@ Later work showed that the main effect is a smoother loss surface, not the remov
     venue: 'arXiv',
     url: 'https://arxiv.org/abs/2309.00267',
     track: 'ai-research',
+    level: 'advanced',
     tldr: 'Preference labels from a language model train a reward model as well as human labels do, at a fraction of the cost.',
     notes: `
 ## What the paper does
@@ -1359,6 +1395,405 @@ Constitutional AI (day 17) introduced the idea. RLAIF gave the controlled compar
 `,
     prereqs: ['instructgpt', 'constitutional-ai'],
     tags: ['alignment', 'rlaif', 'post-training'],
+  },
+  {
+    slug: 'a-few-useful-things-ml',
+    day: 37,
+    title: 'A Few Useful Things to Know About Machine Learning',
+    authors: 'Domingos',
+    year: 2012,
+    venue: 'CACM',
+    url: 'https://homes.cs.washington.edu/~pedrod/papers/cacm12.pdf',
+    track: 'ai-foundations',
+    level: 'beginner',
+    tldr: 'Twelve short lessons about learning from data: generalization is the goal, overfitting has many faces, and more data often beats a cleverer algorithm.',
+    notes: `
+## What the paper does
+
+The paper collects twelve lessons that machine learning researchers know but textbooks rarely state. Each lesson is one short section. The paper covers what a learner is made of (representation, evaluation and optimization), why generalization is the goal, why data alone is not enough, how overfitting happens, why intuition fails in high dimensions, and why more data often beats a cleverer algorithm.
+
+## Why it matters
+
+A beginner can run scikit-learn in five lines and get a number. The number means nothing without the ideas in this paper. The paper explains why you must hold out test data, why a model with a perfect training score can be useless, and why feature engineering takes most of the work on a real project. It is the shortest honest map of the field.
+
+## How to read it
+
+1. Read the first section. It splits every learner into three parts: representation, evaluation and optimization. Keep this split in mind for every model you meet.
+2. Read "It's generalization that counts" and "Overfitting has many faces" together. They explain the train/test split.
+3. Read "Intuition fails in high dimensions". This is the curse of dimensionality in plain words.
+4. Read "More data beats a cleverer algorithm" and "Feature engineering is the key". These two sections decide how you spend your time on a project.
+5. Skip "Theoretical guarantees are not what they seem" on the first pass.
+
+## Key equation or idea
+
+Generalization error splits into bias and variance. Bias is the error a learner makes when it is too simple for the data. Variance is the error it makes when it follows random noise in the training set. A linear model has high bias and low variance. A deep decision tree has low bias and high variance. Cross-validation measures the sum of the two on data the learner did not see.
+
+## What came after
+
+The three-part split explains every paper in this list. Hidden Technical Debt (day 43) describes what happens when these lessons meet a production system. The Deep Learning review (day 38) shows how neural networks learn their own features, which changes the feature engineering lesson but not the generalization lesson.
+`,
+    prereqs: [],
+    tags: ['foundations', 'generalization', 'overfitting'],
+  },
+  {
+    slug: 'deep-learning-review',
+    day: 38,
+    title: 'Deep Learning',
+    authors: 'LeCun, Bengio, Hinton',
+    year: 2015,
+    venue: 'Nature',
+    url: 'https://www.nature.com/articles/nature14539',
+    track: 'ai-foundations',
+    level: 'beginner',
+    tldr: 'A nine-page review of deep learning by the three people who built the field: layers learn features from raw data, and backpropagation trains them.',
+    notes: `
+## What the paper does
+
+The paper is a review, not an experiment. Three of the people who built the field explain deep learning in nine pages. It covers supervised learning, gradient descent and backpropagation, convolutional networks for images, distributed representations for words, and recurrent networks for sequences. It ends with a short list of open problems that later papers solved.
+
+## Why it matters
+
+Before deep learning, an engineer wrote the feature extractor by hand. A deep network learns the features from raw data. Each layer turns the output of the layer below into a slightly more abstract description. Pixels become edges, edges become parts, parts become objects. The paper states this idea in one place with clear figures. LeCun, Bengio and Hinton shared the 2018 Turing Award for the work it describes.
+
+## How to read it
+
+1. Read the first two pages for the representation learning idea.
+2. Read the box on backpropagation and Figure 1. The figure shows the forward pass and the backward pass on a small network. Draw it yourself.
+3. Read the section on convolutional networks. Note the four ideas: local connections, shared weights, pooling and many layers.
+4. Read the section on distributed representations and language. It links to word2vec (day 39).
+5. Read the last section, "The future of deep learning". Attention and memory are on the list.
+
+## Key equation or idea
+
+A layer computes $z = Wx + b$ and then $y = f(z)$, where $x$ is the input vector, $W$ is the weight matrix, $b$ is the bias vector and $f$ is a non-linear function such as ReLU, $f(z) = \\max(0, z)$. The network stacks many such layers. Backpropagation applies the chain rule from the output back to each weight, so one backward pass gives the gradient for every weight at once.
+
+## What came after
+
+Dropout (day 28) and Batch Normalization (day 35) made deep networks easier to train. The Transformer (day 1) replaced the recurrent networks in the sequence section. Every later paper in the beginner list assumes the ideas in this review.
+`,
+    prereqs: ['a-few-useful-things-ml'],
+    tags: ['foundations', 'neural-networks', 'backpropagation'],
+  },
+  {
+    slug: 'word2vec',
+    day: 39,
+    title: 'Efficient Estimation of Word Representations in Vector Space',
+    authors: 'Mikolov, Chen, Corrado, Dean',
+    year: 2013,
+    venue: 'arXiv',
+    url: 'https://arxiv.org/abs/1301.3781',
+    track: 'ai-foundations',
+    level: 'beginner',
+    tldr: 'Train a tiny network to predict a word from its neighbours, and the hidden layer becomes a vector for each word where similar words sit close together.',
+    notes: `
+## What the paper does
+
+The paper trains a small neural network to predict a word from its neighbours (CBOW) or the neighbours from the word (Skip-gram). The hidden layer of the network becomes a vector for each word. The vectors are a few hundred numbers long. The paper shows that these vectors capture meaning: words with similar use get similar vectors, and some relations become straight lines in the vector space.
+
+## Why it matters
+
+Before this paper, a word was a one-hot vector: a list of zeros with one 1. Every pair of words was equally far apart. After this paper, "king" and "queen" sit close together, and "king" minus "man" plus "woman" lands near "queen". The paper also showed that a simple model trained on a very large corpus beats a complex model trained on a small one. This is the idea behind every embedding model you will use for retrieval.
+
+## How to read it
+
+1. Read Section 3 for the two architectures. Figure 1 shows both. CBOW averages the context; Skip-gram predicts each context word.
+2. Read Section 4 for the analogy test. The test is "a is to b as c is to what?", answered by vector arithmetic.
+3. Read Table 3. More dimensions and more data both raise the accuracy.
+4. Skip the hierarchical softmax details on the first pass.
+
+## Key equation or idea
+
+Skip-gram maximises the average log probability of the context words:
+
+$$\\frac{1}{T} \\sum_{t=1}^{T} \\sum_{-c \\le j \\le c,\\, j \\ne 0} \\log p(w_{t+j} \\mid w_t)$$
+
+$T$ is the number of words in the corpus, $c$ is the window size, $w_t$ is the centre word and $w_{t+j}$ is a context word. Two words that appear in the same contexts get vectors that point in the same direction, so the dot product between them is large.
+
+## What came after
+
+GloVe computed similar vectors from co-occurrence counts. BERT (day 10) gave each word a different vector in each sentence. Sentence-BERT (day 44) made one vector for a whole sentence, which is what a RAG system (day 45) stores in its vector database.
+`,
+    prereqs: ['deep-learning-review'],
+    tags: ['embeddings', 'nlp', 'foundations'],
+  },
+  {
+    slug: 'gpt-2',
+    day: 40,
+    title: 'Language Models are Unsupervised Multitask Learners',
+    authors: 'Radford, Wu, Child, Luan, Amodei, Sutskever',
+    year: 2019,
+    venue: 'OpenAI',
+    url: 'https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf',
+    track: 'ai-foundations',
+    level: 'beginner',
+    tldr: 'A 1.5 billion weight Transformer trained only to predict the next token does summarisation, translation and question answering when the prompt describes the task.',
+    notes: `
+## What the paper does
+
+The paper trains a decoder-only Transformer with 1.5 billion weights on WebText, 40 gigabytes of web pages linked from Reddit. The only training task is to predict the next token. The paper then tests the model on reading comprehension, summarisation, translation and question answering with no fine-tuning. It writes the task as text, such as "TL;DR:" for a summary, and reads the model's continuation.
+
+## Why it matters
+
+GPT-2 showed that one model trained on one objective can do many tasks when the prompt describes the task. This is the zero-shot idea. It also showed that results keep rising with model size on a log scale, which led to the scaling laws (day 2) and to GPT-3 (day 9). The model is small enough to run on a laptop, so it is the first LLM many people train or fine-tune themselves.
+
+## How to read it
+
+1. Read Section 2 for the training data and the byte-pair encoding tokenizer. The tokenizer is still used today.
+2. Read Table 2 for the four model sizes, from 117 million to 1.5 billion weights.
+3. Read Section 3 and Figure 1. Every task score rises with model size, and none has flattened.
+4. Read Section 4 on memorisation. The authors check how much test data appears in the training set.
+
+## Key equation or idea
+
+A language model computes the probability of a text as a product of next-token probabilities:
+
+$$p(x) = \\prod_{i=1}^{n} p(s_i \\mid s_1, \\ldots, s_{i-1})$$
+
+$x$ is the text, $s_i$ is token $i$, and $n$ is the number of tokens. A task becomes $p(\\text{output} \\mid \\text{input}, \\text{task})$. The task is just more tokens in the context, so one model can do any task that can be written as text.
+
+## What came after
+
+GPT-3 (day 9) grew the model 100 times and added few-shot examples to the prompt. InstructGPT (day 4) added human feedback so the model follows instructions. The chain-of-thought paper (day 15) showed that the prompt can also ask for reasoning steps.
+`,
+    prereqs: ['attention-is-all-you-need'],
+    tags: ['language-models', 'pretraining', 'zero-shot'],
+  },
+  {
+    slug: 'datasheets-for-datasets',
+    day: 41,
+    title: 'Datasheets for Datasets',
+    authors: 'Gebru, Morgenstern, Vecchione, Vaughan, Wallach, Daumé III, Crawford',
+    year: 2018,
+    venue: 'arXiv',
+    url: 'https://arxiv.org/abs/1803.09010',
+    track: 'ai-foundations',
+    level: 'beginner',
+    tldr: 'Every dataset should ship with a short document that answers fixed questions about why it was made, what is in it, how it was collected and how it may be used.',
+    notes: `
+## What the paper does
+
+The paper proposes a datasheet, a short document that travels with every dataset. The datasheet answers questions in seven groups: motivation, composition, collection process, preprocessing, uses, distribution and maintenance. The idea comes from electronics, where every component ships with a datasheet that lists its operating conditions. The paper gives the full question list and worked examples.
+
+## Why it matters
+
+A model is only as good as its data. Many public datasets have no record of who collected them, what was removed, or which uses the authors meant. Teams then train on data that does not match their task, or that contains private information. A datasheet makes a dataset creator write these facts down once, and makes a dataset user read them before training. It is the first thing to write when you build a dataset of your own.
+
+## How to read it
+
+1. Read Section 1 for the electronics analogy and the two audiences: creators and consumers.
+2. Read Section 3 for the questions. Do not try to memorise them. Note that each group has a reason stated under it.
+3. Read the example datasheet in the appendix. It shows how an honest answer looks, including answers such as "unknown".
+4. Then open a dataset you use and try to answer the composition questions for it.
+
+## Key equation or idea
+
+There is no equation. The idea is a checklist with a fixed order. The order matters: motivation comes first, because the reason a dataset exists explains most of its gaps. Composition comes second, because it tells a user what each row is, how many rows there are, and whether the data is a sample or the whole population.
+
+## What came after
+
+Model Cards (day 42) applied the same idea to trained models. Hugging Face added a dataset card to every dataset on its hub, with fields taken from this paper. Hidden Technical Debt (day 43) explains why data dependencies are the most expensive part of a machine learning system.
+`,
+    prereqs: [],
+    tags: ['data', 'documentation', 'ethics'],
+  },
+  {
+    slug: 'model-cards',
+    day: 42,
+    title: 'Model Cards for Model Reporting',
+    authors: 'Mitchell, Wu, Zaldivar, Barnes, Vasserman, Hutchinson, Spitzer, Raji, Gebru',
+    year: 2018,
+    venue: 'arXiv',
+    url: 'https://arxiv.org/abs/1810.03993',
+    track: 'ai-foundations',
+    level: 'beginner',
+    tldr: 'Every trained model should ship with a one-page card that states its intended use, its evaluation data, and its scores broken down by group.',
+    notes: `
+## What the paper does
+
+The paper proposes a model card, a one or two page document that ships with a trained model. The card lists the model's details, its intended uses and the uses it is not meant for, the factors that change its behaviour, the metrics used, the evaluation data, the training data, and the results broken down by group. The paper shows two cards: one for a smile detector and one for a toxicity classifier.
+
+## Why it matters
+
+A single accuracy number hides a lot. A face model can score 95 percent overall and 70 percent on one skin tone. A model card forces the author to report the score per group, so the user sees the gap before deployment. The card also states the intended use, so a model built for one task is not quietly reused for another. Every model on the Hugging Face hub now has a card, and this paper set the format.
+
+## How to read it
+
+1. Read Section 1 for the motivation. It names the people who read a card: developers, policy makers, and the people the model affects.
+2. Read Section 4 for the nine sections of a card. The section on intended use is the most important and the most often skipped.
+3. Read Figure 2, the smile detector card. Note how the evaluation table splits by age, gender and skin type.
+4. Read Section 5 on disaggregated evaluation.
+
+## Key equation or idea
+
+Evaluate on every slice, not only on the whole. If the test set has groups $g_1, \\ldots, g_k$, report the metric for each $g_i$ and for every pair of groups when the groups cross, such as age with gender. Confidence intervals matter here, because a small group gives a noisy number. A gap between slices is a finding, not a footnote.
+
+## What came after
+
+Datasheets (day 41) covers the data side of the same problem. Llama 3 (day 18) and most open model releases now publish a model card with evaluation tables in this format. Your own fine-tuned model should ship with one.
+`,
+    prereqs: ['datasheets-for-datasets'],
+    tags: ['evaluation', 'documentation', 'ethics'],
+  },
+  {
+    slug: 'hidden-technical-debt',
+    day: 43,
+    title: 'Hidden Technical Debt in Machine Learning Systems',
+    authors: 'Sculley, Holt, Golovin, Davydov, Phillips, Ebner, Chaudhary, Young, Crespo, Dennison',
+    year: 2015,
+    venue: 'NeurIPS',
+    url: 'https://proceedings.neurips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html',
+    track: 'build-ai-ecosystem',
+    level: 'beginner',
+    tldr: 'The model is a small box in the middle of a large system, and the data pipelines, glue code and feedback loops around it are where the maintenance cost hides.',
+    notes: `
+## What the paper does
+
+The paper lists the ways a machine learning system costs more to maintain than a normal program. The authors work at Google and write from experience. The debt comes in groups: entanglement (changing one input changes everything), hidden feedback loops, undeclared consumers of model outputs, data dependencies that nobody tracks, glue code and pipeline jungles, configuration debt, and changes in the outside world. The paper gives one figure that every engineer has seen since: the model code is a small black box in the middle of a large diagram of infrastructure.
+
+## Why it matters
+
+Beginners think the model is the project. In a real system the model is about five percent of the code. The rest collects data, checks it, builds features, serves predictions, and watches the results. Each of these parts can break in a way that no test catches, because the model keeps returning numbers that look fine. This paper gives names to those failures, so a team can look for them.
+
+## How to read it
+
+1. Read Figure 1 first. It shows how small the model code is.
+2. Read Section 2 on entanglement. The rule "Changing Anything Changes Everything" explains why you cannot swap one feature freely.
+3. Read Section 4 on data dependencies. Unstable inputs and unused features are the two most common forms.
+4. Read Section 7, the list of questions to ask about your own system. Use it as a checklist.
+
+## Key equation or idea
+
+CACE: Changing Anything Changes Everything. A model learns the joint pattern of all its inputs. If you change the scale of one input, the weights for all the other inputs are now wrong too. No part of a learned model can be tested alone. This is why a machine learning system needs end-to-end checks on the data and on the predictions, not only unit tests on the code.
+
+## What came after
+
+Datasheets (day 41) and Model Cards (day 42) are documentation answers to the data dependency and undeclared consumer problems. The field of MLOps grew from this paper. The ship-it module of the project track teaches logging, tracing and alerts, which are the tools that make the debt visible.
+`,
+    prereqs: ['a-few-useful-things-ml'],
+    tags: ['mlops', 'systems', 'production'],
+  },
+  {
+    slug: 'sentence-bert',
+    day: 44,
+    title: 'Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks',
+    authors: 'Reimers, Gurevych',
+    year: 2019,
+    venue: 'EMNLP',
+    url: 'https://arxiv.org/abs/1908.10084',
+    track: 'build-ai-ecosystem',
+    level: 'intermediate',
+    tldr: 'Fine-tune BERT so each sentence becomes one fixed vector, and similarity search over thousands of sentences drops from hours to seconds.',
+    notes: `
+## What the paper does
+
+BERT (day 10) compares two sentences by feeding both into the network at once. That gives good scores, but finding the most similar pair in 10,000 sentences takes 50 million forward passes. Sentence-BERT (SBERT) fine-tunes BERT with a siamese setup: each sentence goes through the network alone and comes out as one fixed vector. Similar sentences get vectors with high cosine similarity. The 10,000-sentence search then takes 10,000 forward passes plus a fast vector comparison.
+
+## Why it matters
+
+This is the paper behind every embedding model you use in a RAG system (day 45). The sentence-transformers library that the authors released is still a standard way to turn text into vectors. The paper shows the trade: a small loss in accuracy against a cross-encoder, for a speed gain of about 65 hours down to 5 seconds on the clustering task.
+
+## How to read it
+
+1. Read Section 1 for the 50 million forward passes problem. This is the whole motivation.
+2. Read Section 3 and Figure 1 for the siamese network and the three loss functions. Mean pooling over the token outputs gives the sentence vector.
+3. Read Table 1. Plain BERT vectors without fine-tuning score worse than averaged GloVe vectors. Fine-tuning is what makes the vectors useful.
+4. Read Section 6 for the time comparison.
+
+## Key equation or idea
+
+Two sentences $a$ and $b$ get vectors $u$ and $v$. Their similarity is the cosine:
+
+$$\\cos(u, v) = \\frac{u \\cdot v}{\\|u\\| \\, \\|v\\|}$$
+
+The training loss pushes the cosine of sentence pairs with the same meaning towards 1 and the cosine of unrelated pairs towards 0. Because each vector depends on one sentence only, you can compute all the vectors once and store them.
+
+## What came after
+
+DPR (day 21) trained separate encoders for questions and passages for search. RAG (day 45) put the vectors in front of a generator. ColBERT (day 34) kept one vector per token instead of one per sentence for higher accuracy. Lost in the Middle (day 46) shows what happens after retrieval, when the passages reach the model.
+`,
+    prereqs: ['bert', 'word2vec'],
+    tags: ['embeddings', 'retrieval', 'nlp'],
+  },
+  {
+    slug: 'rag',
+    day: 45,
+    title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks',
+    authors: 'Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal, Küttler, Lewis, Yih, Rocktäschel, Riedel, Kiela',
+    year: 2020,
+    venue: 'NeurIPS',
+    url: 'https://arxiv.org/abs/2005.11401',
+    track: 'build-ai-ecosystem',
+    level: 'intermediate',
+    tldr: 'Join a dense retriever and a text generator: the model looks up passages in a document store before it answers, so facts live in an index you can update.',
+    notes: `
+## What the paper does
+
+The paper joins a retriever and a generator into one model. The retriever is DPR (day 21): it turns the question into a vector and finds the nearest passages in a Wikipedia index of 21 million chunks. The generator is BART, a sequence-to-sequence Transformer. It reads the question and the retrieved passages and writes the answer. The two parts train together, so the retriever learns which passages help the generator.
+
+## Why it matters
+
+A language model stores facts in its weights. The facts are fixed on the day training ends, and the model cannot show where a fact came from. RAG moves the facts into a document store that you can update and inspect. The answer comes with the passages that support it. This is the architecture of almost every "chat with your documents" product, and it is what the retrieval module of the project track builds.
+
+## How to read it
+
+1. Read Figure 1. It shows the question going to the retriever, the top passages going to the generator, and the answer coming out.
+2. Read Section 2 for the two variants. RAG-Sequence uses one passage for the whole answer; RAG-Token can switch passages per token.
+3. Read Section 4 and Table 1 for the open-domain question answering results.
+4. Read Section 4.5 on swapping the index. The authors replaced the 2016 Wikipedia with the 2018 one and the model's answers changed without retraining.
+
+## Key equation or idea
+
+RAG-Sequence marginalises over the top $k$ retrieved passages $z$:
+
+$$p(y \\mid x) \\approx \\sum_{z \\in \\text{top-}k} p_{\\eta}(z \\mid x) \\, p_{\\theta}(y \\mid x, z)$$
+
+$x$ is the question, $y$ is the answer, $p_{\\eta}(z \\mid x)$ is the retriever score and $p_{\\theta}(y \\mid x, z)$ is the generator. Most systems today skip the sum and simply paste the top passages into the prompt.
+
+## What came after
+
+Modern RAG systems use an instruction-tuned LLM as the generator and a vector database such as Chroma or FAISS as the index. Lost in the Middle (day 46) shows that the position of the right passage in the prompt changes the answer. ColBERT (day 34) and hybrid search improve the retrieval step.
+`,
+    prereqs: ['sentence-bert', 'dpr'],
+    tags: ['retrieval', 'rag', 'nlp'],
+  },
+  {
+    slug: 'lost-in-the-middle',
+    day: 46,
+    title: 'Lost in the Middle: How Language Models Use Long Contexts',
+    authors: 'Liu, Lin, Hewitt, Paranjape, Bevilacqua, Petroni, Liang',
+    year: 2023,
+    venue: 'TACL',
+    url: 'https://arxiv.org/abs/2307.03172',
+    track: 'build-ai-ecosystem',
+    level: 'beginner',
+    tldr: 'Put the right document in the middle of a long prompt and accuracy falls; put it first or last and accuracy rises. Order your retrieved chunks.',
+    notes: `
+## What the paper does
+
+The paper tests what a language model does with a long prompt. The task is question answering with 10, 20 or 30 retrieved documents in the context. Exactly one document holds the answer. The authors move that document to each position, from first to last, and measure accuracy. They repeat the test on a key-value lookup task that has no natural language at all.
+
+## Why it matters
+
+The result is a U-shaped curve. Accuracy is high when the answer is at the start of the prompt, high when it is at the end, and much lower when it is in the middle. In some runs the model with the answer in the middle scores lower than the same model with no documents at all. A RAG system (day 45) that pastes 20 chunks into a prompt in retrieval order can hide the best chunk in the worst place. The fix is cheap: put the top-ranked chunks first or last, and send fewer of them.
+
+## How to read it
+
+1. Read Figure 1. It shows the U curve for one model. The whole paper is in this figure.
+2. Read Section 2 for the multi-document question answering setup.
+3. Read Figure 5 for the result across models. Models with longer context windows show the same curve; a bigger window does not fix the middle.
+4. Read Section 3 for the key-value task. The curve appears even with no natural language, so it is a property of the model, not of the text.
+5. Read Section 5 for the retriever-reader trade-off: more documents raise recall but lower the final accuracy past a point.
+
+## Key equation or idea
+
+There is no equation. The idea is an experiment design: hold everything fixed and move one thing. The one thing is the position of the gold document. Because each position gets the same documents and the same question, any change in accuracy comes from position alone.
+
+## What came after
+
+Reranking became a standard step: retrieve 50 chunks, rerank, keep the top 5, and place them in order. Longer-context models of 2024 and 2025 reduced the dip but did not remove it. The evaluate-rag lesson of the project track measures this on your own documents.
+`,
+    prereqs: ['rag'],
+    tags: ['rag', 'context-window', 'evaluation'],
   },
 ]
 

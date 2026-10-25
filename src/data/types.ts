@@ -11,6 +11,8 @@ export interface Lesson {
   title: string
   summary: string
   minutes: number
+  level?: Level // overrides the module level when set
+  before?: { label: string; to: string }[] // internal links to read first
   objectives: string[] // what the reader can do after the lesson
   keyTerms: string[] // glossary slugs or plain terms used in the lesson
   body: string // markdown, supports $math$
@@ -21,6 +23,7 @@ export interface Module {
   slug: string
   title: string
   description: string
+  level: Level
   lessons: Lesson[]
 }
 
@@ -31,11 +34,17 @@ export interface Track {
   description: string
   accent: string
   status: 'live' | 'preview'
+  level: Level // the level most of the track sits at
+  order: number // position on the zero-to-ecosystem learning path
+  audience: string // who the track is for, in one sentence
+  outcome: string // what the reader can build or do at the end
+  prerequisites: string[] // track slugs to finish first
   modules: Module[]
 }
 
 export interface Video {
   id: string // YouTube video id, or '' when only a playlist/channel url is known
+  embeddable?: boolean // false when the owner disabled embedding; the site then links out
   url: string // canonical YouTube url (video, playlist or channel)
   title: string
   channel: string
@@ -56,6 +65,7 @@ export interface Paper {
   venue: string
   url: string
   track: string
+  level?: Level // how much background the paper needs; defaults to the track level
   tldr: string
   notes: string // markdown
   prereqs?: string[] // paper slugs to read first; defines the reading-order hierarchy
@@ -88,7 +98,16 @@ export interface BlogPost {
 }
 
 export type ResourceKind = 'course' | 'book' | 'lecture' | 'repo' | 'blog' | 'tool' | 'paper-list'
-export type Level = 'beginner' | 'intermediate' | 'advanced'
+export type Level = 'foundations' | 'beginner' | 'intermediate' | 'advanced'
+
+export const levelOrder: Level[] = ['foundations', 'beginner', 'intermediate', 'advanced']
+
+export const levelInfo: Record<Level, { label: string; short: string; who: string }> = {
+  foundations: { label: 'Foundations', short: 'Level 0', who: 'You have never written code and never studied AI. Start here.' },
+  beginner: { label: 'Beginner', short: 'Level 1', who: 'You can run a Python file and know what a model is. You want to build your first AI programs.' },
+  intermediate: { label: 'Intermediate', short: 'Level 2', who: 'You have built a small AI program. You want to understand how the parts work inside.' },
+  advanced: { label: 'Advanced', short: 'Level 3', who: 'You read papers and run experiments. You want depth on training, serving and research.' },
+}
 
 export interface Resource {
   title: string

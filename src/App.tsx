@@ -20,6 +20,11 @@ const Resources = lazy(() => import('./pages/Resources').then((m) => ({ default:
 const Roadmaps = lazy(() => import('./pages/Roadmaps').then((m) => ({ default: m.Roadmaps })))
 const Videos = lazy(() => import('./pages/Videos').then((m) => ({ default: m.Videos })))
 const StyleGuide = lazy(() => import('./pages/StyleGuide').then((m) => ({ default: m.StyleGuide })))
+const Hub = lazy(() => import('./pages/Hub').then((m) => ({ default: m.Hub })))
+const Path = lazy(() => import('./pages/Path').then((m) => ({ default: m.Path })))
+const Practice = lazy(() => import('./pages/Practice').then((m) => ({ default: m.Practice })))
+const PracticePaper = lazy(() => import('./pages/Practice').then((m) => ({ default: m.PracticePaper })))
+const Placement = lazy(() => import('./pages/Practice').then((m) => ({ default: m.Placement })))
 
 function Loading() {
   return <p className="meta">Loading…</p>
@@ -49,6 +54,11 @@ export default function App() {
               <Route path="/roadmaps" element={<Roadmaps />} />
               <Route path="/videos" element={<Videos />} />
               <Route path="/style" element={<StyleGuide />} />
+              <Route path="/path" element={<Path />} />
+              <Route path="/hub" element={<Hub />} />
+              <Route path="/practice" element={<Practice />} />
+              <Route path="/practice/placement" element={<Placement />} />
+              <Route path="/practice/:track/:paper" element={<PracticePaper />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

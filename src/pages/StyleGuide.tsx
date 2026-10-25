@@ -83,6 +83,80 @@ cat: 0.6, 0.4, 0
 sat: 0.2, 0.5, 0.3
 :::
 
+**Architecture.** Layers of boxes with an animated request path. Used whenever a lesson shows how the parts of a system fit together.
+
+:::arch
+title: A chat app with retrieval
+layer: Users | Browser
+layer: Service | API server, Prompt builder
+layer: Models | LLM API
+layer: Data | Vector database
+flow: Browser -> API server -> Vector database -> API server -> Prompt builder -> LLM API -> API server -> Browser
+note: Vector database = finds the 5 most similar chunks
+:::
+
+**Code.** Runnable code with a copy button; indentation is kept. A second block with lang text shows the expected output.
+
+:::code
+lang: python
+file: hello.py
+names = ["Ada", "Grace"]
+for name in names:
+    print("Hello,", name)
+:::
+
+:::code
+lang: text
+Hello, Ada
+Hello, Grace
+:::
+
+**Exercise.** A task with a hint and a hidden solution. The reader tries first.
+
+:::exercise
+title: Count the vowels
+task: Write a function count_vowels(text) that returns how many of a, e, i, o, u appear in text. Test it on the word banana. The answer is 3.
+hint: Loop over each character and check if it is in the string aeiou.
+lang: python
+solution:
+def count_vowels(text):
+    count = 0
+    for ch in text:
+        if ch in "aeiou":
+            count = count + 1
+    return count
+
+print(count_vowels("banana"))
+:::
+
+**Quiz.** Multiple choice with an explanation for every answer. Scores are saved in the browser and feed the practice papers.
+
+:::quiz
+title: Check: variables
+q: What does the line x = 5 do in Python?
+- Checks whether x equals 5
+* Stores the value 5 under the name x
+- Prints 5
+why: A single equals sign assigns a value to a name. Comparison uses two equals signs.
+q: After x = 5 and then x = x + 1, what is x?
+- 5
+* 6
+- 51
+why: The right side is computed first using the old x, then the result is stored back in x.
+q: Which value has the type bool?
+- 0
+- "True"
+* True
+why: True without quotes is a boolean. With quotes it is text.
+:::
+
+**Video.** A free lecture embedded in the lesson, with a note on what to watch for. Only verified ids from the video bank are allowed.
+
+:::video
+id: aircAruvnKk
+why: Watch the first ten minutes. It shows the layers that the lesson describes in words.
+:::
+
 **Table.** For any set of numbers or definitions.
 
 | Setting | Latency | Data loss on leader crash |

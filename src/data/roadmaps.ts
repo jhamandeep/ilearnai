@@ -275,3 +275,134 @@ export const roadmaps: Roadmap[] = [
 export function findRoadmap(track: string) {
   return roadmaps.find((r) => r.track === track)
 }
+
+// ---- Zero to AI ecosystem: the four new tracks as one staged route ----
+roadmaps.unshift(
+  {
+    track: 'start-here',
+    title: 'Start Here roadmap (Level 0)',
+    summary: 'From never having written code to running Python on real data, in about six weeks of evenings.',
+    stages: [
+      { title: 'Understand the machine', weeks: 1, goal: 'Explain what a computer, a file, a web request and a program are, in your own words.', items: [
+        { label: 'What a computer does', to: '/courses/start-here/how-a-computer-works/input-process-store-output' },
+        { label: 'How a web page reaches you', to: '/courses/start-here/how-a-computer-works/how-the-internet-works' },
+        { label: 'What a program is', to: '/courses/start-here/how-a-computer-works/what-a-program-is' },
+      ] },
+      { title: 'Write Python', weeks: 2, goal: 'Write a 30-line program with a loop, a function and a list, and run it from the terminal.', items: [
+        { label: 'Install Python and run your first file', to: '/courses/start-here/first-python/install-and-run' },
+        { label: 'Variables and types', to: '/courses/start-here/first-python/variables-and-types' },
+        { label: 'Loops', to: '/courses/start-here/first-python/loops' },
+        { label: 'Functions', to: '/courses/start-here/first-python/functions' },
+        { label: 'Practice: Kaggle Learn Python', to: '/hub?tab=practicals&track=start-here' },
+      ] },
+      { title: 'Work with data and tools', weeks: 2, goal: 'Load a CSV with pandas, commit your code to GitHub, and call a public API.', items: [
+        { label: 'Tables with pandas', to: '/courses/start-here/python-for-data/tables-with-pandas' },
+        { label: 'Git and GitHub', to: '/courses/start-here/builders-tools/git-and-github' },
+        { label: 'APIs and JSON', to: '/courses/start-here/builders-tools/apis-and-json' },
+        { label: 'Keys, secrets and environment variables', to: '/courses/start-here/builders-tools/secrets-and-env' },
+      ] },
+      { title: 'Understand data', weeks: 1, goal: 'Describe a data set by its rows, columns and labels, and clean a messy one.', items: [
+        { label: 'What data is', to: '/courses/start-here/data-the-raw-material/what-data-is' },
+        { label: 'Cleaning data', to: '/courses/start-here/data-the-raw-material/cleaning-data' },
+        { label: 'Practice paper', to: '/practice' },
+      ] },
+    ],
+  },
+  {
+    track: 'math-from-zero',
+    title: 'Mathematics from Zero roadmap (Level 0)',
+    summary: 'The four pieces of mathematics that every AI lesson uses, in about five weeks, with no prior algebra assumed.',
+    stages: [
+      { title: 'Numbers and functions', weeks: 1, goal: 'Read y = mx + b as a model and a log scale as a chart.', items: [
+        { label: 'Functions as machines', to: '/courses/math-from-zero/numbers-and-functions/functions-as-machines' },
+        { label: 'Lines and slopes', to: '/courses/math-from-zero/numbers-and-functions/lines-and-slopes' },
+        { label: 'Exponents and logarithms', to: '/courses/math-from-zero/numbers-and-functions/exponents-and-logs' },
+      ] },
+      { title: 'Vectors and matrices', weeks: 2, goal: 'Compute a dot product, a cosine similarity and a 2x2 matrix product by hand.', items: [
+        { label: 'A vector is a list of numbers', to: '/courses/math-from-zero/vectors-and-matrices/what-a-vector-is' },
+        { label: 'The dot product', to: '/courses/math-from-zero/vectors-and-matrices/dot-product' },
+        { label: 'Matrix multiplication by hand', to: '/courses/math-from-zero/vectors-and-matrices/matrix-multiplication' },
+        { label: 'Lab: Attention visualiser', to: '/labs/attention' },
+      ] },
+      { title: 'Change', weeks: 1, goal: 'Run three steps of gradient descent on a one-variable function by hand.', items: [
+        { label: 'Rate of change', to: '/courses/math-from-zero/change-and-gradients/rate-of-change' },
+        { label: 'Follow the slope', to: '/courses/math-from-zero/change-and-gradients/follow-the-slope' },
+        { label: 'Lab: Gradient descent playground', to: '/labs/gradient-descent' },
+      ] },
+      { title: 'Chance', weeks: 1, goal: 'Apply Bayes rule to the spam table and compute a cross-entropy in bits.', items: [
+        { label: 'Conditional probability and Bayes rule', to: '/courses/math-from-zero/chance/conditional-and-bayes' },
+        { label: 'Distributions you will meet', to: '/courses/math-from-zero/chance/distributions' },
+        { label: 'Surprise, entropy and cross-entropy', to: '/courses/math-from-zero/chance/entropy-and-cross-entropy' },
+      ] },
+    ],
+  },
+  {
+    track: 'ai-foundations',
+    title: 'AI Foundations roadmap (Level 1)',
+    summary: 'From the definition of machine learning to training a small network and understanding what a language model is, in about eight weeks.',
+    stages: [
+      { title: 'The map', weeks: 1, goal: 'Draw the learning loop and the AI ecosystem from memory.', items: [
+        { label: 'The learning loop', to: '/courses/ai-foundations/what-ai-is/the-learning-loop' },
+        { label: 'The AI ecosystem map', to: '/courses/ai-foundations/what-ai-is/the-ai-ecosystem-map' },
+      ] },
+      { title: 'Classic models', weeks: 2, goal: 'Fit and evaluate a regression and a classifier in scikit-learn on a Kaggle data set.', items: [
+        { label: 'Linear regression', to: '/courses/ai-foundations/first-models/linear-regression' },
+        { label: 'Classification', to: '/courses/ai-foundations/first-models/classification' },
+        { label: 'Overfitting and generalisation', to: '/courses/ai-foundations/first-models/overfitting-and-generalisation' },
+        { label: 'Data: Titanic on Kaggle', to: '/hub?tab=datasets&track=ai-foundations' },
+      ] },
+      { title: 'Neural networks', weeks: 2, goal: 'Compute a forward pass and one backpropagation step by hand, then train the same network in PyTorch.', items: [
+        { label: 'A neuron', to: '/courses/ai-foundations/neural-networks/a-neuron' },
+        { label: 'Backpropagation', to: '/courses/ai-foundations/neural-networks/backpropagation' },
+        { label: 'Training in PyTorch', to: '/courses/ai-foundations/neural-networks/training-in-pytorch' },
+        { label: 'Lab: Transformer block, animated', to: '/labs/transformer-flow' },
+      ] },
+      { title: 'Language models', weeks: 2, goal: 'Explain tokens, embeddings, attention and how an LLM is trained, and write a prompt that works.', items: [
+        { label: 'Tokens', to: '/courses/ai-foundations/language-as-numbers/tokens' },
+        { label: 'Attention and the transformer, gently', to: '/courses/ai-foundations/language-as-numbers/attention-gently' },
+        { label: 'How an LLM is made', to: '/courses/ai-foundations/language-as-numbers/how-an-llm-is-made' },
+        { label: 'Prompting that works', to: '/courses/ai-foundations/using-models/prompting' },
+        { label: 'Lab: Tokenizer trainer', to: '/labs/tokenizer' },
+      ] },
+      { title: 'Choose and judge models', weeks: 1, goal: 'Pick a model for a task with a decision table and evaluate it on your own 20-question test set.', items: [
+        { label: 'Choosing a model', to: '/courses/ai-foundations/using-models/choosing-a-model' },
+        { label: 'Evaluating a model and basic safety', to: '/courses/ai-foundations/using-models/evaluating-and-safety' },
+        { label: 'Paper: A Few Useful Things to Know About Machine Learning', to: '/papers' },
+      ] },
+    ],
+  },
+  {
+    track: 'build-ai-ecosystem',
+    title: 'Build the AI Ecosystem roadmap (Level 1)',
+    summary: 'One project, six modules: from an API key to a deployed, monitored AI service with retrieval, agents and a fine-tuned model, in about ten weeks.',
+    stages: [
+      { title: 'Workshop and first call', weeks: 1, goal: 'Call a model from Python three ways: Anthropic API, OpenAI-compatible endpoint, local Ollama.', items: [
+        { label: 'The project plan and architecture', to: '/courses/build-ai-ecosystem/set-up-your-workshop/the-project-plan' },
+        { label: 'Call a model', to: '/courses/build-ai-ecosystem/set-up-your-workshop/call-a-model' },
+      ] },
+      { title: 'Chat application', weeks: 2, goal: 'Ship a streaming chat with a web UI and validated JSON output.', items: [
+        { label: 'A chat loop in the terminal', to: '/courses/build-ai-ecosystem/chat-application/chat-loop' },
+        { label: 'Structured output', to: '/courses/build-ai-ecosystem/chat-application/structured-output' },
+        { label: 'A web UI', to: '/courses/build-ai-ecosystem/chat-application/web-ui' },
+      ] },
+      { title: 'Retrieval', weeks: 2, goal: 'Answer questions over your own documents with citations and a measured hit rate.', items: [
+        { label: 'Why models need your documents', to: '/courses/build-ai-ecosystem/retrieval-rag/why-rag' },
+        { label: 'Embeddings and a vector store', to: '/courses/build-ai-ecosystem/retrieval-rag/embed-and-store' },
+        { label: 'Evaluating RAG', to: '/courses/build-ai-ecosystem/retrieval-rag/evaluate-rag' },
+        { label: 'Lab: Model router and Pareto explorer', to: '/labs/pareto-router' },
+      ] },
+      { title: 'Agents', weeks: 2, goal: 'Run a tool-using agent with memory, an MCP server and guardrails.', items: [
+        { label: 'Tool calling', to: '/courses/build-ai-ecosystem/agents-and-tools/tool-calling' },
+        { label: 'The agent loop', to: '/courses/build-ai-ecosystem/agents-and-tools/the-agent-loop' },
+        { label: 'Guardrails', to: '/courses/build-ai-ecosystem/agents-and-tools/guardrails' },
+        { label: 'Lab: Agent Control Room', to: '/labs/agent-control-room' },
+      ] },
+      { title: 'Train and ship', weeks: 3, goal: 'Fine-tune a small model with LoRA, deploy the whole service in Docker with monitoring, and present the capstone.', items: [
+        { label: 'Fine-tune a small open model with LoRA', to: '/courses/build-ai-ecosystem/train-your-own/lora-fine-tune' },
+        { label: 'A Docker image for your service', to: '/courses/build-ai-ecosystem/ship-it/dockerise' },
+        { label: 'Observability', to: '/courses/build-ai-ecosystem/ship-it/observability' },
+        { label: 'Capstone: the full ecosystem', to: '/courses/build-ai-ecosystem/ship-it/capstone' },
+      ] },
+    ],
+  },
+)

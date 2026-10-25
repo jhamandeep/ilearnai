@@ -8,11 +8,17 @@ export const track: Track = {
     'Storage, replication, partitioning, caches, queues, and the reliability patterns behind them, with the arithmetic to size each one.',
   accent: 'var(--accent-systems)',
   status: 'live',
+  level: 'intermediate',
+  order: 7,
+  audience: 'Developers who can build a service and now need it to scale, stay up and stay consistent.',
+  outcome: 'Design a complete backend with caches, queues, databases and failure handling, and defend each choice.',
+  prerequisites: ['start-here'],
   modules: [
     {
       slug: 'fundamentals',
       title: 'Fundamentals',
       description: 'Latency, throughput, queueing, service levels, and back-of-the-envelope estimation.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'back-of-envelope',
@@ -128,6 +134,76 @@ A machine capacity reference: a modern server handles about 10,000 to 50,000 sim
 
 Note: round every number to one significant figure during the estimate. Precision does not help when inputs are guesses.
 
+The script below runs the whole estimate. Change the inputs at the top and run it with python3 estimate.py.
+
+:::code
+lang: python
+file: estimate.py
+users = 10_000_000
+requests_per_user = 20
+bytes_per_request = 10_000
+photos_per_user = 2
+photo_bytes = 2_000_000
+peak_factor = 3
+seconds_per_day = 86_400
+
+requests_per_day = users * requests_per_user
+avg_qps = requests_per_day / seconds_per_day
+peak_qps = avg_qps * peak_factor
+read_mb_per_s = peak_qps * bytes_per_request / 1e6
+storage_tb_per_day = users * photos_per_user * photo_bytes / 1e12
+storage_pb_per_year = storage_tb_per_day * 365 / 1000
+upload_qps = users * photos_per_user / seconds_per_day
+
+print(f"requests per day: {requests_per_day:,}")
+print(f"average QPS: {avg_qps:,.0f}")
+print(f"peak QPS: {peak_qps:,.0f}")
+print(f"peak read bandwidth: {read_mb_per_s:,.0f} MB per second")
+print(f"storage per day: {storage_tb_per_day:,.0f} TB")
+print(f"storage per year: {storage_pb_per_year:,.1f} PB")
+print(f"uploads per second at peak: {upload_qps * peak_factor:,.0f}")
+:::
+
+:::code
+lang: text
+requests per day: 200,000,000
+average QPS: 2,315
+peak QPS: 6,944
+peak read bandwidth: 69 MB per second
+storage per day: 40 TB
+storage per year: 14.6 PB
+uploads per second at peak: 694
+:::
+
+## Try it
+
+:::exercise
+title: Size a video service
+task: Repeat the six steps for a video service. It has 5 million daily active users. Each user makes 50 requests per day of 50 KB each, and uploads 1 video of 20 MB per day. Use a peak factor of 3. Compute the peak QPS, the peak read bandwidth in MB per second, and the storage per year in PB. Then answer: does one 10 gigabit link carry the reads?
+hint: Copy estimate.py and change the seven inputs at the top. One 10 gigabit link moves 1,250 MB per second.
+lang: python
+solution:
+users = 5_000_000
+requests_per_user = 50
+bytes_per_request = 50_000
+videos_per_user = 1
+video_bytes = 20_000_000
+peak_factor = 3
+seconds_per_day = 86_400
+
+requests_per_day = users * requests_per_user          # 250,000,000
+avg_qps = requests_per_day / seconds_per_day           # 2,894
+peak_qps = avg_qps * peak_factor                       # 8,681
+read_mb_per_s = peak_qps * bytes_per_request / 1e6     # 434 MB per second
+storage_tb_per_day = users * videos_per_user * video_bytes / 1e12   # 100 TB
+storage_pb_per_year = storage_tb_per_day * 365 / 1000               # 36.5 PB
+
+print(f"peak QPS {peak_qps:,.0f}")
+print(f"peak read bandwidth {read_mb_per_s:,.0f} MB per second, link has 1,250")
+print(f"storage per year {storage_pb_per_year:.1f} PB")
+# One link carries the reads (434 of 1,250 MB per second). The storage does not fit one machine.
+:::
+
 ## Common mistakes
 
 - Mistake: use the average QPS to size servers. Fix: size for peak QPS and leave a margin of 30 percent.
@@ -137,9 +213,41 @@ Note: round every number to one significant figure during the estimate. Precisio
 
 ## Check your understanding
 
-- What is the average QPS for 1 million requests per day? About 12 QPS.
-- How many seconds are in a day? 86,400, close to 100,000.
-- A service stores 100 MB per second. How much per day? About 8.6 TB.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: back-of-the-envelope estimation
+q: A service receives 1 million requests per day. What is its average QPS?
+- About 1.2
+* About 12
+- About 120
+- About 1,000
+why: Divide 1,000,000 by 86,400 seconds, which gives 11.6, so about 12 requests per second.
+q: A service stores 100 MB per second. How much does it store per day?
+- About 360 GB
+- About 864 GB
+* About 8.6 TB
+- About 86 TB
+why: 100 MB times 86,400 seconds is 8,640,000 MB, which is 8.64 TB.
+q: In the photo example, which number forces the design choice?
+- The peak QPS of 7,000
+- The read bandwidth of 70 MB per second
+* The storage of 15 PB per year
+- The 700 uploads per second at peak
+why: The reads and the bandwidth fit one machine, but 15 PB per year must go to object storage across many machines.
+q: Why do you size servers for peak QPS and not for average QPS?
+* Traffic is not flat, and the queue forms at the peak
+- The average is harder to measure than the peak
+- Peak numbers are always smaller and cheaper
+- Servers cost the same at any load
+why: A server sized for the average is overloaded for the hours around the daily peak, so the estimate uses the peak with a margin.
+q: A 1 gigabit per second link moves about how many MB per second?
+- 1,000
+* 125
+- 12.5
+- 8,000
+why: A byte is 8 bits, so 1,000 megabits per second is 125 megabytes per second.
+:::
 
 ## Go further
 
@@ -251,6 +359,68 @@ Report p50, p95, and p99. Never report the mean alone. One slow request of 5 sec
 
 Caution: do not average percentiles across servers. The p99 of the whole fleet is not the mean of the p99 of each server. Merge the histograms, then take the percentile.
 
+The script below computes percentiles by the procedure above and shows how the mean hides a tail.
+
+:::code
+lang: python
+file: percentiles.py
+import math, random
+
+def percentile(samples, p):
+    s = sorted(samples)
+    position = math.ceil(p / 100 * len(s))       # 1-based position, rounded up
+    return s[position - 1]
+
+random.seed(1)
+latencies = [10.0] * 980 + [5000.0] * 20        # ms: 980 fast calls, 20 slow calls
+random.shuffle(latencies)
+
+mean = sum(latencies) / len(latencies)
+print(f"mean   {mean:7.1f} ms")
+for p in (50, 95, 99, 99.9):
+    print(f"p{p:<5} {percentile(latencies, p):7.1f} ms")
+
+concurrency = 8
+latency_s = 0.010
+print(f"throughput at concurrency {concurrency}: {concurrency / latency_s:.0f} requests per second")
+:::
+
+:::code
+lang: text
+mean     109.8 ms
+p50       10.0 ms
+p95       10.0 ms
+p99     5000.0 ms
+p99.9   5000.0 ms
+throughput at concurrency 8: 800 requests per second
+:::
+
+The mean says 110 ms, which no request ever took. The p99 says that 1 in 100 requests waits 5 seconds.
+
+## Try it
+
+:::exercise
+title: Latency of a batch
+task: A server batches 4 requests and processes each batch in 15 ms. Requests arrive at 50 per second. Compute the throughput of one batch slot in requests per second. Then compute the latency of the first request in a batch and of the last request in the batch. Finally compute the throughput of a server that runs 16 requests at once, each in 40 ms.
+hint: The first request waits for 3 more arrivals. At 50 per second, one arrival takes 20 ms. Throughput is concurrency divided by latency.
+lang: python
+solution:
+batch = 4
+batch_ms = 15
+arrivals_per_s = 50
+
+slot_throughput = batch / (batch_ms / 1000)            # 267 per second
+gap_ms = 1000 / arrivals_per_s                         # 20 ms between arrivals
+first_latency = (batch - 1) * gap_ms + batch_ms        # 60 + 15 = 75 ms
+last_latency = batch_ms                                # 15 ms
+print(f"batch slot throughput {slot_throughput:.0f} per second")
+print(f"first request {first_latency:.0f} ms, last request {last_latency} ms")
+
+concurrency = 16
+latency_s = 0.040
+print(f"16 at once in 40 ms: {concurrency / latency_s:.0f} requests per second")   # 400
+:::
+
 ## Common mistakes
 
 - Mistake: report the mean latency. Fix: report p50, p95, and p99, because the tail is where users notice.
@@ -260,9 +430,41 @@ Caution: do not average percentiles across servers. The p99 of the whole fleet i
 
 ## Check your understanding
 
-- A server runs 16 requests at once, each in 40 ms. What is the throughput? 400 requests per second.
-- What does p99 = 300 ms mean? 99 percent of requests complete within 300 ms, and 1 percent take longer.
-- Why does batching raise latency? Early requests wait for the batch to fill.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: latency versus throughput
+q: A server runs 16 requests at once, and each takes 40 ms. What is its throughput?
+- 40 requests per second
+- 160 requests per second
+* 400 requests per second
+- 640 requests per second
+why: Throughput is concurrency divided by latency, 16 divided by 0.040 seconds, which is 400 per second.
+q: What does p99 = 300 ms mean?
+- The mean latency is 300 ms
+* 99 percent of requests complete within 300 ms, and 1 percent take longer
+- The slowest request took 300 ms
+- 99 requests took exactly 300 ms
+why: A percentile is the value below which that fraction of the samples fall.
+q: Why does batching raise latency?
+* Early requests wait for the batch to fill
+- Each request runs slower inside a batch
+- The network adds one hop per batch
+- The server sorts the batch first
+why: The first request in a batch of 8 at 100 per second waits 70 ms for 7 more arrivals before any work starts.
+q: 1,000 requests: 20 take 5 seconds and the rest take 10 ms. What is the mean latency?
+- About 10 ms
+- About 50 ms
+* About 110 ms
+- About 5 seconds
+why: The sum is 980 times 10 plus 20 times 5,000, which is 109,800 ms, and divided by 1,000 that is 109.8 ms.
+q: Why must you not average the p99 of each server to get the fleet p99?
+- Averages are too slow to compute
+* The fleet p99 is not the mean of the per-server values; merge the histograms first
+- Each server reports in a different unit
+- The p99 is already an average
+why: Percentiles do not add or average, so you merge the latency histograms and then take the percentile of the whole.
+:::
 
 ## Go further
 
@@ -384,6 +586,59 @@ The sizing procedure is:
 4. Set the pool size to $L$ plus a margin of 50 percent.
 5. Set a queue limit, and reject requests above it, so $W$ cannot grow without bound.
 
+The script below sizes the pool from the example and prints the time in system for each utilisation.
+
+:::code
+lang: python
+file: littles_law.py
+def pool_size(arrival_rate, time_inside_s, margin=0.5):
+    L = arrival_rate * time_inside_s
+    return L, round(L * (1 + margin))
+
+for query_ms in (5, 20):
+    L, pool = pool_size(1000, query_ms / 1000)
+    print(f"query {query_ms} ms: L = {L:.0f}, pool with margin = {pool}")
+
+service_rate = 1000          # requests per second, so 1 ms of service each
+print("utilisation  time in system")
+for rho in (0.5, 0.8, 0.9, 0.99):
+    arrival = rho * service_rate
+    W_ms = 1000 / (service_rate - arrival)
+    print(f"{rho:>10.0%}  {W_ms:>6.0f} ms")
+:::
+
+:::code
+lang: text
+query 5 ms: L = 5, pool with margin = 8
+query 20 ms: L = 20, pool with margin = 30
+utilisation  time in system
+       50%       2 ms
+       80%       5 ms
+       90%      10 ms
+       99%     100 ms
+:::
+
+## Try it
+
+:::exercise
+title: Size a GPU batch pool
+task: An LLM server receives 200 requests per second. Each request stays inside for 1.5 seconds. Compute L and the pool size with a 50 percent margin. Then a second server completes at most 400 requests per second and receives 360 per second. Compute its utilisation and its average time in system with the single-server formula.
+hint: L equals the arrival rate times the time inside. Utilisation is arrival rate divided by service rate. W equals 1 divided by (service rate minus arrival rate).
+lang: python
+solution:
+arrival = 200
+time_inside_s = 1.5
+L = arrival * time_inside_s                    # 300 requests inside
+pool = L * 1.5                                 # 450 slots with a 50 percent margin
+print(f"L = {L:.0f}, pool = {pool:.0f}")
+
+service_rate = 400
+arrival2 = 360
+rho = arrival2 / service_rate                  # 0.9
+W = 1 / (service_rate - arrival2)              # 0.025 s
+print(f"utilisation {rho:.0%}, time in system {W * 1000:.0f} ms")   # 90 percent, 25 ms
+:::
+
 ## Common mistakes
 
 - Mistake: size a pool from the average arrival rate. Fix: use the peak rate, because the queue forms at peak.
@@ -393,9 +648,41 @@ The sizing procedure is:
 
 ## Check your understanding
 
-- A queue receives 200 items per second and each item waits 2 seconds. How many items are in the queue? 400.
-- A server completes 500 requests per second and receives 450. What is its utilisation? 90 percent.
-- Why does latency grow so fast near full utilisation? The wait time scales with 1 / (1 - utilisation), which goes to infinity at 100 percent.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: Little's law and queueing
+q: A queue receives 200 items per second and each item waits 2 seconds. How many items are in the queue?
+- 100
+* 400
+- 800
+- 2
+why: L equals the arrival rate times the time inside, 200 times 2, which is 400 items.
+q: A server completes 500 requests per second and receives 450. What is its utilisation?
+- 10 percent
+- 50 percent
+* 90 percent
+- 111 percent
+why: Utilisation is the arrival rate divided by the service rate, 450 divided by 500.
+q: A server has a service rate of 1,000 per second and receives 950 per second. What is the average time in system?
+- 1 ms
+* 20 ms
+- 50 ms
+- 100 ms
+why: W equals 1 divided by (1,000 minus 950), which is 0.02 seconds.
+q: Why does latency grow so fast near full utilisation?
+- The CPU runs hotter and slows down
+* The wait scales with 1 divided by (1 minus utilisation), which goes to infinity at 100 percent
+- The network link saturates first
+- Threads leak memory under load
+why: The single-server formula has (1 minus utilisation) in the denominator, so the last few percent of load add most of the wait.
+q: You size a connection pool. Which input leads to a pool that is too small?
+* The average arrival rate instead of the peak rate
+- The peak arrival rate
+- The time inside, including waits
+- A margin of 50 percent
+why: The queue forms at the peak, so L computed from the average rate is smaller than what the peak needs.
+:::
 
 ## Go further
 
@@ -516,6 +803,63 @@ Error budget -> Release policy: freeze below 30 percent
 
 Note: a dependency with a 99.9 percent SLO caps your own SLO at 99.9 percent unless you add a fallback.
 
+The script below computes the downtime each target allows, the budget from the example, and a burn rate.
+
+:::code
+lang: python
+file: error_budget.py
+MINUTES_PER_MONTH = 30 * 24 * 60
+
+def allowed_downtime(slo_percent):
+    return MINUTES_PER_MONTH * (100 - slo_percent) / 100
+
+for slo in (99, 99.9, 99.95, 99.99):
+    print(f"{slo} percent allows {allowed_downtime(slo):.1f} minutes per month")
+
+requests_per_month = 10_000_000
+slo = 99.9
+budget = requests_per_month * (100 - slo) / 100
+spent = [4000, 3000]
+remaining = budget - sum(spent)
+print(f"budget {budget:.0f} failed requests, remaining {remaining:.0f} ({remaining / budget:.0%})")
+if remaining / budget <= 0.30:
+    print("policy: freeze releases")
+
+# burn rate: the share of the 30-day budget used in one hour, scaled to the window
+errors_last_hour = 200
+burn_rate = (errors_last_hour / budget) * (30 * 24)
+print(f"burn rate {burn_rate:.1f}")
+:::
+
+:::code
+lang: text
+99 percent allows 432.0 minutes per month
+99.9 percent allows 43.2 minutes per month
+99.95 percent allows 21.6 minutes per month
+99.99 percent allows 4.3 minutes per month
+budget 10000 failed requests, remaining 3000 (30%)
+policy: freeze releases
+burn rate 14.4
+:::
+
+## Try it
+
+:::exercise
+title: Spend a 99.95 percent budget
+task: An API serves 50 million requests per month with an SLO of 99.95 percent. Compute the error budget in failed requests and in minutes of full downtime. In week 1 an outage fails 12,000 requests. Compute the remaining budget as a percentage. Does the 30 percent freeze policy trigger?
+hint: The budget is 0.05 percent of the requests and 0.05 percent of 43,200 minutes.
+lang: python
+solution:
+requests = 50_000_000
+slo = 99.95
+budget = requests * (100 - slo) / 100              # 25,000 failed requests
+minutes = 43_200 * (100 - slo) / 100               # 21.6 minutes
+spent = 12_000
+remaining = (budget - spent) / budget              # 52 percent
+print(f"budget {budget:.0f} requests, {minutes:.1f} minutes")
+print(f"remaining {remaining:.0%}, freeze: {remaining <= 0.30}")   # 52%, freeze: False
+:::
+
 ## Common mistakes
 
 - Mistake: set the SLO at 100 percent. Fix: pick a target below 100, because no system is perfect and the budget enables change.
@@ -525,9 +869,41 @@ Note: a dependency with a 99.9 percent SLO caps your own SLO at 99.9 percent unl
 
 ## Check your understanding
 
-- How many minutes of downtime per month does 99.95 percent allow? About 21.6 minutes.
-- What is an error budget? The amount of failure the SLO allows in a window, such as 10,000 failed requests.
-- Why set the SLO below the measured value? A target you already miss gives no useful signal.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: SLOs and error budgets
+q: How many minutes of downtime per month does 99.95 percent allow?
+- 43 minutes
+* About 21.6 minutes
+- 4.3 minutes
+- 2.2 hours
+why: 0.05 percent of 43,200 minutes is 21.6 minutes.
+q: What is an error budget?
+- The number of bugs a release may contain
+* The amount of failure the SLO allows in a window, such as 10,000 failed requests
+- The money set aside for incidents
+- The number of alerts per month
+why: The budget is 100 percent minus the SLO, applied to the events in the window.
+q: Why set the SLO slightly below the measured value?
+- It makes the SLA easier to sign
+* A target you already miss gives no useful signal
+- Users prefer lower targets
+- It reduces the number of metrics
+why: An SLO you miss every day never changes a decision, so it is set from 4 weeks of data at a value you meet.
+q: A 30-day budget burns at a rate of 14.4. When is it gone?
+- In 14.4 hours
+* In about 2 days
+- In 30 days
+- In 1 hour
+why: A burn rate of 1 uses the budget in 30 days, so 14.4 uses it in 30 divided by 14.4, about 2.1 days.
+q: Your only dependency has a 99.9 percent SLO and you add no fallback. Can your service meet a 99.99 percent SLO?
+* No, the dependency caps you at 99.9 percent
+- Yes, if you retry every failed call
+- Yes, if you measure the SLI inside the server
+- Yes, if the SLA is looser
+why: Every failure of the dependency becomes your failure unless a fallback serves the request another way.
+:::
 
 ## Go further
 
@@ -638,6 +1014,60 @@ The procedure to pick a model is:
 
 Jepsen tests real databases against these models by injecting partitions and clock skew. Many databases fail their own documented claims.
 
+The script below models two replicas with replication delay and shows what an eventual read and a linearizable read return at each moment.
+
+:::code
+lang: python
+file: replicas.py
+class Replica:
+    def __init__(self, name):
+        self.name = name
+        self.value = 100
+        self.pending = []            # (apply_at, value) still in flight
+
+    def read(self, now):
+        for apply_at, value in list(self.pending):
+            if now >= apply_at:
+                self.value = value
+                self.pending.remove((apply_at, value))
+        return self.value
+
+A, B = Replica("A"), Replica("B")
+lag = 1.5                             # time units from A to B
+
+# time 1: client 1 writes 50 to A; A acknowledges at time 2
+A.value = 50
+B.pending.append((2 + lag, 50))
+
+for now in (3, 3.5, 4):
+    print(f"t={now}: eventual read on B returns {B.read(now)}")
+
+# a linearizable read goes to the replica that holds the latest write, or waits
+print(f"t=3: linearizable read returns {A.read(3)}")
+:::
+
+:::code
+lang: text
+t=3: eventual read on B returns 100
+t=3.5: eventual read on B returns 50
+t=4: eventual read on B returns 50
+t=3: linearizable read returns 50
+:::
+
+## Try it
+
+:::exercise
+title: Judge a history
+task: On paper. The key x starts at 0. Client 1 writes x = 1 and gets an acknowledgement at time 2. Client 2 reads x at time 3 and gets 1. Client 2 reads x again at time 5 and gets 0. For each of the four models, say whether this history is allowed and why.
+hint: Look at the two reads of client 2 in order. Which models allow one client to see a new value and then an older value?
+lang: text
+solution:
+Linearizable: not allowed. The write finished at time 2, so both reads must return 1.
+Sequential: not allowed. Client 2 saw 1 and then 0, which reverses the single order of operations.
+Causal: not allowed. The two reads come from one client in program order, and the second read goes backwards.
+Eventual: allowed. Eventual consistency gives no rule for a single read, as long as replicas converge to 1 once writes stop.
+:::
+
 ## Common mistakes
 
 - Mistake: assume a database is linearizable because it has a leader. Fix: read the Jepsen report, because follower reads and failover often break the guarantee.
@@ -647,9 +1077,46 @@ Jepsen tests real databases against these models by injecting partitions and clo
 
 ## Check your understanding
 
-- Under linearizability, can a read return a value older than a completed write? No.
-- What does eventual consistency guarantee about a single read? Nothing, only that replicas converge once writes stop.
-- During a partition, what does a linearizable system do with a write on the isolated side? It refuses the write.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: consistency models
+q: Under linearizability, can a read return a value older than a write that completed before the read started?
+* No
+- Yes, if the read goes to a follower
+- Yes, if the write was on a different replica
+why: Linearizability places every operation at one instant in real time, so a read after a completed write sees that write.
+q: What does eventual consistency guarantee about a single read?
+- The value is at most 1 second old
+- The latest value
+* Nothing, only that replicas converge once writes stop
+- The value from a majority of replicas
+why: Eventual consistency is a promise about convergence, not about any one read.
+q: During a network partition, what does a linearizable system do with a write on the isolated side?
+- Accepts it and merges later
+* Refuses it
+- Accepts it and discards it later
+- Forwards it when the partition heals
+why: The isolated replica cannot know the latest value, so it must refuse rather than return a wrong answer.
+q: Replicas A and B hold balance 100. A write of 50 is acknowledged on A at time 2, and B applies it at time 3.5. What does an eventual read on B return at time 3?
+* 100
+- 50
+- An error
+- 75
+why: At time 3 the record has not reached B, so B still holds 100.
+q: Which operation needs linearizability?
+- Reading a profile picture
+- Counting likes on a post
+* Claiming a unique username
+- Showing a feed
+why: Two clients must not both succeed in claiming one name, so the check needs one agreed order of operations.
+q: When does the CAP trade-off between consistency and availability apply?
+- At all times
+* Only during a network partition
+- Only in normal operation
+- Only with more than 3 replicas
+why: Without a partition a system can give both; the theorem is about what it drops when replicas cannot talk.
+:::
 
 ## Go further
 
@@ -662,6 +1129,7 @@ The Jepsen consistency page maps all the models and their relations in one diagr
       slug: 'storage',
       title: 'Storage',
       description: 'Relational and key-value models, indexes, log-structured trees, and the write-ahead log.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'relational-vs-key-value',
@@ -690,6 +1158,16 @@ A relational store keeps data in tables with rows and columns, and a query can j
 ## Why it matters
 
 The choice of store sets what queries are cheap. A relational store makes new queries cheap to write but some of them slow to run. A key-value store makes every lookup fast but makes new query types costly, because you must store the data again in a new shape. Most large systems use both.
+
+:::video
+id: zsjvFFKOm3c
+why: Watch all 2 minutes. Note how a query names tables and columns and lets the database find the rows, which is the relational side of this lesson.
+:::
+
+:::video
+id: G1rOthIU-uo
+why: Watch all 2 minutes. Note that every operation is get or set on one key, which is the key-value side of this lesson.
+:::
 
 ## The idea with an example
 
@@ -769,6 +1247,75 @@ Key-value stores scale writes by partitioning, because each key lives on one nod
 
 Note: a relational store with one table and lookups by primary key behaves like a key-value store. The models overlap.
 
+The SQL below builds the three tables and runs both queries. Save it as feed.sql and run sqlite3 :memory: with the file as input.
+
+:::code
+lang: sql
+file: feed.sql
+CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE posts (id INTEGER PRIMARY KEY, user_id INTEGER, created_at INTEGER, body TEXT);
+CREATE TABLE follows (follower_id INTEGER, followee_id INTEGER);
+CREATE INDEX posts_by_user ON posts (user_id, created_at);
+
+INSERT INTO users VALUES (42, 'ada'), (7, 'linus');
+INSERT INTO follows VALUES (42, 7);
+INSERT INTO posts VALUES (1, 7, 100, 'hello'), (2, 7, 200, 'again');
+
+-- Query 1: the newest posts of one user, one index lookup
+SELECT id, body FROM posts WHERE user_id = 7 ORDER BY created_at DESC LIMIT 10;
+
+-- Query 2: the feed of user 42, a join over every followed user
+SELECT p.id, p.body
+FROM follows f JOIN posts p ON p.user_id = f.followee_id
+WHERE f.follower_id = 42
+ORDER BY p.created_at DESC LIMIT 10;
+:::
+
+The Python below is the key-value version of the feed. The work moves into on_post, and the read is one dictionary lookup.
+
+:::code
+lang: python
+file: kv_feed.py
+feed = {}                            # key feed:<user> -> newest post ids
+followers = {7: [42, 43, 44]}
+
+def on_post(author, post_id):
+    for f in followers[author]:      # one write per follower
+        key = f"feed:{f}"
+        feed.setdefault(key, []).insert(0, post_id)
+        del feed[key][10:]           # keep the 10 newest
+
+on_post(7, 1)
+on_post(7, 2)
+print(feed["feed:42"])               # one lookup: [2, 1]
+print(len(followers[7]), "writes per post")
+:::
+
+## Try it
+
+:::exercise
+title: Design the keys
+task: On paper. The social network needs three queries: the profile of a user, the list of users who follow a user, and the feed of a user. Write the key you would use for each query in a key-value store. Then list every write that happens when user 42 follows user 7, and every write that happens when user 7 posts.
+hint: Each query must be one lookup, so each needs its own key. A follow changes two lists. A post changes one feed per follower.
+lang: text
+solution:
+Keys:
+  profile:42        -> the profile of user 42
+  followers:7       -> the list of users who follow user 7
+  following:42      -> the list of users that 42 follows (needed to rebuild a feed)
+  feed:42           -> the 10 newest post ids for user 42
+
+User 42 follows user 7:
+  append 42 to followers:7
+  append 7 to following:42
+  (2 writes)
+
+User 7 posts:
+  write the post under post:<id>
+  for each user in followers:7, insert the id at the front of feed:<user>
+  (1 write plus one write per follower; 200 followers means 201 writes)
+:::
+
 ## Common mistakes
 
 - Mistake: pick a key-value store before you know the queries. Fix: list the queries first, because the key design must match them.
@@ -778,9 +1325,41 @@ Note: a relational store with one table and lookups by primary key behaves like 
 
 ## Check your understanding
 
-- What is a join? A query that combines rows from two tables that share a key.
-- Why is a feed lookup fast in a key-value store? The feed is precomputed and stored under one key.
-- What cost does the key-value feed add? One write per follower each time someone posts.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: relational versus key-value
+q: What is a join?
+- A copy of a table on another node
+* A query that combines rows from two tables that share a key
+- An index over two columns
+- A transaction over two tables
+why: The join matches rows in one table to rows in another by the value of a shared column.
+q: Why is the feed lookup fast in a key-value store?
+- Memory is faster than disk
+* The feed is precomputed and stored under one key
+- There is no schema to check
+- The values are smaller
+why: The work of the join was done at write time, so the read is one get on the key feed:42.
+q: What cost does the key-value feed add?
+- One read per follower on each feed load
+* One write per follower each time a user posts
+- A join at read time
+- A larger schema
+why: Each post appends its id to the feed of every follower, so a user with 200 followers causes 200 writes.
+q: A user with 500 followers posts 4 times a day. How many feed writes does that cause per day?
+- 4
+- 500
+* 2,000
+- 125
+why: Each post writes to 500 feeds, and 4 posts give 4 times 500, which is 2,000 writes.
+q: Which workload should start with a relational store?
+- One lookup by key at 1 million per second
+- A session cache
+* Many query types that change often and need transactions
+- A view counter
+why: The relational store makes a new query cheap to write, and transactions across rows are built in.
+:::
 
 ## Go further
 
@@ -897,6 +1476,68 @@ A full scan is faster when the query returns a large fraction of the table. If a
 
 Note: a covering index holds every column the query needs. The database then never reads the row page at all.
 
+The script below computes the tree height and the full-scan cost from the example.
+
+:::code
+lang: python
+file: btree_height.py
+import math
+
+def levels(keys, fan_out):
+    return math.ceil(round(math.log(keys) / math.log(fan_out), 9))
+
+for keys, fan_out in ((250_000, 500), (100_000_000, 500), (1_000_000_000, 1000)):
+    h = levels(keys, fan_out)
+    print(f"{keys:>14,} keys at fan-out {fan_out:>4}: {h} levels, {h + 1} reads with the row page")
+
+page_bytes, row_bytes, rows = 8192, 200, 100_000_000
+pages = rows * row_bytes / page_bytes
+print(f"full scan reads {pages / 2:,.0f} pages on average, {pages / 2 / 1000:,.0f} seconds at 1 ms each")
+:::
+
+:::code
+lang: text
+       250,000 keys at fan-out  500: 2 levels, 3 reads with the row page
+   100,000,000 keys at fan-out  500: 3 levels, 4 reads with the row page
+ 1,000,000,000 keys at fan-out 1000: 3 levels, 4 reads with the row page
+full scan reads 1,220,703 pages on average, 1,221 seconds at 1 ms each
+:::
+
+The SQL below builds the composite index and asks the planner for the plan of two queries. Run it with sqlite3 :memory: and the file as input. The first query uses the index. The second cannot, because created_at is the second column.
+
+:::code
+lang: sql
+file: index.sql
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, created_at INTEGER, total REAL);
+CREATE INDEX orders_by_customer_date ON orders (customer_id, created_at);
+
+EXPLAIN QUERY PLAN
+SELECT * FROM orders WHERE customer_id = 42 AND created_at > 20240301;
+
+EXPLAIN QUERY PLAN
+SELECT * FROM orders WHERE created_at > 20240301;
+:::
+
+## Try it
+
+:::exercise
+title: Read the plan and count the levels
+task: Run index.sql in sqlite3 and read the two plans. Write down which one says SEARCH with the index and which one says SCAN. Then compute by hand how many levels a B-tree needs for 10 billion keys with a fan-out of 200, and how many disk reads one lookup costs when the top two levels are in memory.
+hint: 200 to the power 4 is 1.6 billion, which is less than 10 billion. Each level below the ones in memory costs one read, plus one read for the row page.
+lang: text
+solution:
+Plan 1: SEARCH orders USING INDEX orders_by_customer_date (customer_id=? AND created_at>?)
+Plan 2: SCAN orders
+
+Levels for 10 billion keys at fan-out 200:
+  200 to the power 4 = 1.6 billion, too small
+  200 to the power 5 = 320 billion, enough
+  so 5 levels
+
+Reads per lookup with the top 2 levels in memory:
+  3 index levels on disk + 1 row page = 4 reads, about 4 ms on an SSD
+:::
+
 ## Common mistakes
 
 - Mistake: add an index on every column. Fix: index the columns in your slowest queries only, because each index slows every write.
@@ -906,9 +1547,41 @@ Note: a covering index holds every column the query needs. The database then nev
 
 ## Check your understanding
 
-- How many levels does a B-tree need for 1 billion keys with fan-out 1,000? 3 levels.
-- Why does an index slow inserts? Each insert must also write one page per index.
-- Which column goes first in an index for "where user = 7 and date > X"? The user column.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: indexes and B-trees
+q: How many levels does a B-tree need for 1 billion keys with a fan-out of 1,000?
+* 3
+- 9
+- 30
+- 1,000
+why: 1,000 to the power 3 is 1 billion, so 3 levels of 1,000 pointers each reach every key.
+q: Why does an index slow inserts?
+- The index locks the whole table
+* Each insert must also write one page per index
+- The tree is rebuilt after each insert
+- Reads block writes
+why: The row page is one write, and every index on the table adds one more page write for its new key.
+q: Which column order fits the query "where user = 7 and date > X"?
+* (user, date)
+- (date, user)
+- Either order works the same
+- date only
+why: The equality column goes first so the matching rows sit together, and the range column second keeps them in date order.
+q: When is a full scan faster than an index lookup?
+- When the table has a primary key
+* When the query returns a large fraction of the table
+- When the table is larger than memory
+- Never
+why: Sequential reads are about 10 times faster than random reads on an SSD, so above roughly 10 percent of rows a scan wins.
+q: A table has 12 indexes. How many pages does one insert write?
+- 1
+- 12
+* 13
+- 24
+why: One page for the row plus one page for each of the 12 indexes.
+:::
 
 ## Go further
 
@@ -1017,6 +1690,73 @@ The procedure to size an LSM store is:
 
 Caution: a deleted key becomes a tombstone marker. The key still costs space until compaction reaches the bottom level, which can take days.
 
+The script below is a tiny LSM tree: a memtable that flushes to sorted files, a read that checks each level, and the write amplification arithmetic.
+
+:::code
+lang: python
+file: lsm.py
+import bisect
+
+MEMTABLE_LIMIT = 3
+memtable = {}
+sstables = []                      # sorted lists of (key, value), newest first
+
+def put(key, value):
+    memtable[key] = value
+    if len(memtable) >= MEMTABLE_LIMIT:
+        sstables.insert(0, sorted(memtable.items()))   # flush: one sequential write
+        memtable.clear()
+
+def get(key):
+    if key in memtable:
+        return memtable[key], "memtable"
+    for i, table in enumerate(sstables):
+        keys = [k for k, _ in table]
+        j = bisect.bisect_left(keys, key)
+        if j < len(keys) and keys[j] == key:
+            return table[j][1], f"sstable {i}"
+    return None, "not found"
+
+for i in range(7):
+    put(f"user:{i}", f"v{i}")
+print(f"{len(sstables)} sstables on disk, {len(memtable)} key in the memtable")
+print(get("user:1"))
+print(get("user:6"))
+
+T, L, user_mb_per_s = 10, 5, 5
+amplification = T * L / 2
+print(f"write amplification about {amplification:.0f}, disk writes {user_mb_per_s * amplification:.0f} MB per second")
+:::
+
+:::code
+lang: text
+2 sstables on disk, 1 key in the memtable
+('v1', 'sstable 1')
+('v6', 'memtable')
+write amplification about 25, disk writes 125 MB per second
+:::
+
+## Try it
+
+:::exercise
+title: Size an LSM store
+task: A store has a 128 MB memtable, a size ratio T of 8, and 4 levels. Users write 20 MB per second. The SSD writes 500 MB per second sequentially. Compute the total capacity, the write amplification, and the disk write rate. Then say whether the disk write rate is below half of the SSD limit, and what you would change if it is not.
+hint: Capacity is about T to the power L times the memtable size. Amplification is about T times L divided by 2.
+lang: python
+solution:
+memtable_mb = 128
+T, L = 8, 4
+user_mb_per_s = 20
+ssd_limit = 500
+
+capacity_gb = memtable_mb * pow(T, L) / 1000          # 524 GB
+amplification = T * L / 2                             # 16
+disk_mb_per_s = user_mb_per_s * amplification         # 320 MB per second
+print(f"capacity {capacity_gb:.0f} GB, amplification {amplification:.0f}")
+print(f"disk writes {disk_mb_per_s:.0f} MB per second, limit for safety {ssd_limit / 2:.0f}")
+print("ok" if disk_mb_per_s < ssd_limit / 2 else "too high: lower T, add a disk, or spread writes over more nodes")
+:::
+
 ## Common mistakes
 
 - Mistake: turn off the write-ahead log for speed. Fix: keep it, because the memtable is lost on a crash.
@@ -1026,9 +1766,47 @@ Caution: a deleted key becomes a tombstone marker. The key still costs space unt
 
 ## Check your understanding
 
-- What makes LSM writes fast? Writes go to memory and then to disk in sequential sorted files.
-- What does a Bloom filter answer? Whether a key is definitely absent from a file.
-- What is write amplification of 25? Each user byte causes 25 bytes of disk writes over its lifetime.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: log-structured merge trees
+q: What makes LSM writes fast?
+- The store has no write-ahead log
+* Writes go to memory and then to disk as sequential sorted files
+- Keys are smaller than in a B-tree
+- Values are compressed
+why: An SSD writes sequential data about 10 times faster than it handles random page updates.
+q: What does a Bloom filter answer for one file?
+- The exact position of the key
+- The value of the key
+* Whether the key is definitely absent
+- Whether the key is definitely present
+why: A Bloom filter says "definitely not here" or "maybe here", which skips most files on a read.
+q: What does a write amplification of 25 mean?
+- The store has 25 levels
+* Each user byte causes about 25 bytes of disk writes over its lifetime
+- Each level has 25 files
+- Writes are 25 times slower than reads
+why: Compaction rewrites each byte at every level it passes through, so the disk writes many times the user bytes.
+q: T is 10, L is 4, and users write 8 MB per second. What is the disk write rate?
+- 40 MB per second
+- 80 MB per second
+* 160 MB per second
+- 320 MB per second
+why: The amplification is 10 times 4 divided by 2, which is 20, and 8 times 20 is 160 MB per second.
+q: Which workload fits a B-tree better than an LSM tree?
+- Time-series ingest
+- Log storage
+* Read heavy with many range scans
+- Write heavy counters
+why: A B-tree reads a key in 2 or 3 page reads and scans in order, while an LSM read checks several levels.
+q: What happens to a deleted key in an LSM tree?
+- It is removed from every file at once
+* It becomes a tombstone until compaction reaches the bottom level
+- It moves back to the memtable
+- It is marked in the Bloom filter
+why: Deletes are writes of a marker, so the space returns only when compaction merges the marker down through the levels.
+:::
 
 ## Go further
 
@@ -1154,6 +1932,79 @@ Note: the log grows without limit unless the database recycles it. After a check
 
 Caution: a disk with a volatile write cache can report fsync complete before the data is safe. Use a drive with power-loss protection or disable the cache.
 
+The script below is a minimal write-ahead log. It appends the records, calls fsync, then recovers the pages from the log as if the pages were never written.
+
+:::code
+lang: python
+file: wal.py
+import json, os
+
+LOG = "wal.log"
+pages = {17: {"A": 100}, 92: {"B": 50}}          # the data pages on disk
+
+def commit(txn_id, changes):
+    with open(LOG, "a") as f:
+        for page, key, new in changes:
+            f.write(json.dumps({"txn": txn_id, "page": page, "key": key, "new": new}) + "\\n")
+        f.write(json.dumps({"txn": txn_id, "commit": True}) + "\\n")
+        f.flush()
+        os.fsync(f.fileno())                     # the expensive step
+    return "committed"                           # the pages are written later
+
+def recover():
+    records = [json.loads(line) for line in open(LOG)]
+    committed = {r["txn"] for r in records if r.get("commit")}
+    for r in records:
+        if "page" in r and r["txn"] in committed:
+            pages[r["page"]][r["key"]] = r["new"]
+
+if os.path.exists(LOG):
+    os.remove(LOG)
+print(commit(501, [(17, "A", 70), (92, "B", 80)]))
+print("pages before recovery:", pages)           # the power failed before the page writes
+recover()
+print("pages after recovery: ", pages)
+:::
+
+:::code
+lang: text
+committed
+pages before recovery: {17: {'A': 100}, 92: {'B': 50}}
+pages after recovery:  {17: {'A': 70}, 92: {'B': 80}}
+:::
+
+## Try it
+
+:::exercise
+title: Measure fsync and group commit
+task: Write a script that appends 200 records of 100 bytes to a file and calls fsync after each one, and times it. Then append 200 records with one fsync at the end, and time that. From the first time, compute the maximum commits per second without group commit on your disk.
+hint: Use time.perf_counter() around each loop. The maximum commit rate is 200 divided by the seconds the first loop took.
+lang: python
+solution:
+import os, time
+
+record = b"x" * 100
+
+def run(fsync_each):
+    with open("wal_test.log", "wb") as f:
+        start = time.perf_counter()
+        for _ in range(200):
+            f.write(record)
+            if fsync_each:
+                f.flush()
+                os.fsync(f.fileno())
+        if not fsync_each:
+            f.flush()
+            os.fsync(f.fileno())
+        return time.perf_counter() - start
+
+each = run(True)
+group = run(False)
+os.remove("wal_test.log")
+print(f"fsync per record: {each * 1000:.0f} ms, {200 / each:,.0f} commits per second at most")
+print(f"one fsync for 200: {group * 1000:.1f} ms, {200 / group:,.0f} commits per second")
+:::
+
 ## Common mistakes
 
 - Mistake: disable fsync to speed up commits. Fix: keep fsync on and use group commit, because a crash loses the last seconds of data.
@@ -1163,9 +2014,41 @@ Caution: a disk with a volatile write cache can report fsync complete before the
 
 ## Check your understanding
 
-- Why does the database write the log before the page? So a crash between the two leaves a record that recovery can replay.
-- At 2 ms per fsync, what is the maximum commit rate without group commit? 500 per second.
-- What does recovery do with a transaction that has no commit record? It undoes or ignores its changes.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: the write-ahead log
+q: Why does the database write the log before the data page?
+- The log is smaller, so it is faster to read
+* A crash between the two leaves a record that recovery can replay
+- Pages are read more often than the log
+- The log is compressed
+why: If the page write fails halfway, the log still holds the committed change and recovery applies it again.
+q: At 2 ms per fsync, what is the maximum commit rate without group commit?
+- 50 per second
+* 500 per second
+- 2,000 per second
+- 5,000 per second
+why: One commit per fsync and 500 fsync calls fit in one second at 2 ms each.
+q: What does recovery do with a transaction that has no commit record?
+- Applies its changes
+* Undoes or ignores its changes
+- Applies them if the pages were already written
+- Waits for the client to confirm
+why: Without a commit record the client never received a commit, so recovery must not apply the partial transaction.
+q: Each fsync takes 4 ms and carries 8 commits with group commit. What is the commit rate?
+- 250 per second
+* 2,000 per second
+- 8,000 per second
+- 32 per second
+why: 250 fsync calls per second times 8 commits per call gives 2,000 commits per second.
+q: What is the purpose of a checkpoint?
+- It compresses the log
+* Recovery starts from it instead of from the start of the log
+- It makes fsync faster
+- It copies the log to the replicas
+why: A checkpoint records the log position up to which all pages are on disk, so recovery replays only the records after it.
+:::
 
 ## Go further
 
@@ -1178,6 +2061,7 @@ The PostgreSQL documentation explains its write-ahead log and the settings that 
       slug: 'replication-and-consistency',
       title: 'Replication and consistency',
       description: 'Leader and follower replication, quorums, linearizability in practice, and the Raft protocol.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'leader-follower-replication',
@@ -1297,6 +2181,68 @@ The two risks are data loss and split brain. Data loss: the promoted follower wa
 
 Caution: an automatic failover with a 5-second timeout fails over on every network hiccup and causes more outages than it prevents.
 
+The script below models a leader log, a lagging follower, and the read-your-writes check with a log position.
+
+:::code
+lang: python
+file: replication.py
+class Leader:
+    def __init__(self):
+        self.log = []
+
+    def write(self, key, value):
+        self.log.append((key, value))
+        return len(self.log)                      # the log position of this write
+
+class Follower:
+    def __init__(self, leader):
+        self.leader, self.applied, self.data = leader, 0, {}
+
+    def catch_up(self, up_to):
+        for key, value in self.leader.log[self.applied:up_to]:
+            self.data[key] = value
+        self.applied = up_to
+
+    def read(self, key, min_position=0):
+        if self.applied < min_position:
+            return "lagging, route the read to the leader"
+        return self.data.get(key, "unpaid")
+
+leader = Leader()
+follower2 = Follower(leader)
+position = leader.write("order 501", "paid")
+print("read without a position:", follower2.read("order 501"))
+print("read-your-writes:       ", follower2.read("order 501", position))
+follower2.catch_up(position)
+print("after catch up:         ", follower2.read("order 501", position))
+:::
+
+:::code
+lang: text
+read without a position: unpaid
+read-your-writes:        lagging, route the read to the leader
+after catch up:          paid
+:::
+
+## Try it
+
+:::exercise
+title: Compute the lag after a burst
+task: A leader receives 1,000 writes per second for a 10 minute burst. The follower applies at most 800 writes per second. Compute how many records behind the follower is at the end of the burst, and how many seconds of lag that is. After the burst the leader receives 300 writes per second. Compute how long the follower takes to catch up. Finally, say how many writes an asynchronous failover at the end of the burst would lose.
+hint: The lag grows by 200 records per second during the burst. After the burst the follower gains 500 records per second on the leader.
+lang: python
+solution:
+leader_rate, follower_rate, burst_s = 1000, 800, 600
+behind = (leader_rate - follower_rate) * burst_s          # 120,000 records
+lag_s = behind / follower_rate                             # 150 seconds
+print(f"{behind:,} records behind, {lag_s:.0f} seconds of lag")
+
+after_rate = 300
+catch_up_s = behind / (follower_rate - after_rate)         # 240 seconds
+print(f"catch up in {catch_up_s:.0f} seconds")
+print(f"an asynchronous failover now loses up to {behind:,} writes")
+:::
+
 ## Common mistakes
 
 - Mistake: serve a read after a write from any follower. Fix: route the read to the leader or wait for the write position.
@@ -1306,9 +2252,47 @@ Caution: an automatic failover with a 5-second timeout fails over on every netwo
 
 ## Check your understanding
 
-- Where do writes go in leader-follower replication? Only to the leader.
-- What is replication lag? The delay between a write on the leader and the same write on a follower.
-- What is split brain? Two machines both act as leader and accept different writes.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: leader and follower replication
+q: Where do writes go in leader-follower replication?
+- To any replica
+* Only to the leader
+- To the nearest follower
+- To the leader and a follower, chosen by the client
+why: One leader orders all writes, and the followers copy its log in that order.
+q: What is replication lag?
+- The time one write takes on the leader
+* The delay between a write on the leader and the same write on a follower
+- The network round trip between replicas
+- The failover timeout
+why: Lag is the gap between the log position of the leader and the position a follower has applied.
+q: The leader writes to disk in 1 ms and the round trip to a follower is 1 ms. What is the latency of a synchronous write to one follower?
+- 1 ms
+* 2 ms
+- 3 ms
+- 0.5 ms
+why: The leader writes locally, sends the record, and waits for the confirmation, so 1 plus 1 ms.
+q: What is split brain?
+- A follower that is minutes behind
+- A client that reads stale data
+* Two machines both act as leader and accept different writes
+- A leader that crashes during a write
+why: When the old leader was only slow, it keeps accepting writes while the promoted follower also accepts them.
+q: Why not replicate synchronously to every follower?
+- It uses too much disk
+* One slow follower would stop all writes
+- Followers could not serve reads
+- Data loss would increase
+why: A synchronous write waits for each follower, so the slowest or a dead one blocks every commit.
+q: What is the purpose of fencing during failover?
+- To speed up the catch-up of followers
+* To stop the old leader from accepting writes before the new one starts
+- To pick the follower with the most recent log
+- To detect the failure faster
+why: Fencing shuts down the old leader or rejects its writes, which prevents split brain.
+:::
 
 ## Go further
 
@@ -1424,6 +2408,60 @@ Two mechanisms repair stale replicas. Read repair: when a read sees version 1 on
 
 Note: a quorum with $W + R > N$ is not linearizable in general. Use a consensus protocol when you need linearizability.
 
+The script below checks every pair of W and R for N = 3 by brute force, then runs the write and read from the example.
+
+:::code
+lang: python
+file: quorum.py
+import itertools
+
+def overlaps(N, W, R):
+    # True when every write set of size W shares a node with every read set of size R
+    nodes = range(N)
+    for ws in itertools.combinations(nodes, W):
+        for rs in itertools.combinations(nodes, R):
+            if not set(ws) & set(rs):
+                return False
+    return True
+
+N = 3
+for W in (1, 2, 3):
+    brute = [int(overlaps(N, W, R)) for R in (1, 2, 3)]
+    rule = [int(W + R > N) for R in (1, 2, 3)]
+    print(f"W={W}: by brute force {brute}, by W + R > N {rule}")
+
+# one quorum write and read with a slow replica C, as (version, value)
+replicas = {"A": (1, "old"), "B": (1, "old"), "C": (1, "old")}
+for name in ("A", "B"):                  # W = 2 confirm, C is slow
+    replicas[name] = (2, "new")
+answers = [replicas["B"], replicas["C"]]  # R = 2 answer
+print("read returns", max(answers))       # the highest version wins
+:::
+
+:::code
+lang: text
+W=1: by brute force [0, 0, 1], by W + R > N [0, 0, 1]
+W=2: by brute force [0, 1, 1], by W + R > N [0, 1, 1]
+W=3: by brute force [1, 1, 1], by W + R > N [1, 1, 1]
+read returns (2, 'new')
+:::
+
+## Try it
+
+:::exercise
+title: Pick W and R for 5 replicas
+task: A key lives on N = 5 replicas. The store must keep working for reads and writes with 2 replicas down. List every pair of W and R that satisfies all three rules: W + R is more than 5, W is at most 3, and R is at most 3. Then say which pair you would pick for a write-heavy workload, and why there is no faster option.
+hint: With f = 2 failures, W and R can each be at most N minus f, which is 3. Check each pair against W + R greater than 5.
+lang: python
+solution:
+N, f = 5, 2
+limit = N - f                                          # 3
+pairs = [(W, R) for W in range(1, limit + 1) for R in range(1, limit + 1) if W + R > N]
+print("allowed pairs:", pairs)                         # only (3, 3)
+# A write-heavy workload would prefer a small W, but W = 2 needs R = 4,
+# and R = 4 cannot be answered with 2 replicas down. So W = 3, R = 3 is the only choice.
+:::
+
 ## Common mistakes
 
 - Mistake: set W = 1 and R = 1 for speed and expect fresh reads. Fix: use W + R > N, or accept stale reads knowingly.
@@ -1433,9 +2471,47 @@ Note: a quorum with $W + R > N$ is not linearizable in general. Use a consensus 
 
 ## Check your understanding
 
-- With N = 5, W = 3, what is the smallest R that gives an overlap? R = 3.
-- Why does W = 2, R = 2 survive one failed replica with N = 3? Two replicas remain, enough for both a write and a read.
-- What does hinted handoff do? A spare replica stores a write for a down replica and delivers it later.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: quorum reads and writes
+q: With N = 5 and W = 3, what is the smallest R that guarantees an overlap?
+- 2
+* 3
+- 4
+- 5
+why: W plus R must be more than 5, so R must be at least 3.
+q: Why does W = 2, R = 2 keep working with one failed replica when N = 3?
+* Two replicas remain, which is enough for both a write and a read
+- The third replica is only a backup
+- Writes go to one replica only
+- Reads come from any one replica
+why: A write needs 2 confirmations and a read needs 2 answers, and 2 replicas are still up.
+q: N = 3, W = 1, R = 1. A client writes to A, and another client reads from C right after. What does the read return?
+- Always the new value
+* Possibly the old value
+- An error
+- Nothing until replication finishes
+why: W plus R is 2, not more than 3, so the write set and the read set need not share a replica.
+q: What does hinted handoff do?
+- The client retries the write on another replica
+* A spare replica stores a write for a down replica and delivers it later
+- A reader writes the newest value back to stale replicas
+- The leader hands its role to a follower
+why: The spare holds the write with a hint that names the intended replica, and forwards it when that replica returns.
+q: Is a quorum with W + R more than N linearizable in general?
+- Yes, always
+* No
+- Yes, if W equals N
+- Yes, with read repair
+why: Concurrent writes and partial failures can produce histories that no single order explains, so a consensus protocol is needed for linearizability.
+q: Two writes with the same version land on different replicas at the same time. What does last-writer-wins do?
+- Merges both values
+* Keeps the write with the later timestamp and drops the other
+- Rejects both writes
+- Asks the client to choose
+why: Last-writer-wins resolves the conflict by timestamp, which silently loses one of the writes.
+:::
 
 ## Go further
 
@@ -1551,6 +2627,85 @@ A lock also needs a fencing token. The lock service gives each lock holder an in
 
 Note: keep the linearizable store small. Put locks, configuration, and leader records in etcd or ZooKeeper. Keep bulk data in a faster, weaker store.
 
+The script below checks a small history by trying every order of the operations, as the procedure above describes.
+
+:::code
+lang: python
+file: linearizable.py
+import itertools
+
+# (client, op, value, start, end) for one register that starts at 0
+history = [
+    (1, "write", 5, 0, 10),
+    (2, "read", 5, 4, 6),
+    (3, "read", 0, 12, 14),
+]
+
+def valid_order(order):
+    # an operation that ended before another started must come first
+    for a, b in itertools.combinations(order, 2):
+        if b[4] < a[3]:
+            return False
+    value = 0
+    for _, op, v, _, _ in order:
+        if op == "write":
+            value = v
+        elif v != value:
+            return False
+    return True
+
+def linearizable(history):
+    return any(valid_order(p) for p in itertools.permutations(history))
+
+print("history 1, client 3 reads 0:", linearizable(history))
+history[2] = (3, "read", 5, 12, 14)
+print("history 2, client 3 reads 5:", linearizable(history))
+print("overlapping read of 0:", linearizable([(1, "write", 5, 0, 10), (2, "read", 0, 2, 4)]))
+:::
+
+:::code
+lang: text
+history 1, client 3 reads 0: False
+history 2, client 3 reads 5: True
+overlapping read of 0: True
+:::
+
+## Try it
+
+:::exercise
+title: Judge a four-operation history
+task: On paper first. The register starts at 0. Client 1 writes 1 from 0 to 5 ms. Client 2 reads 1 from 2 to 3 ms. Client 3 writes 2 from 4 to 9 ms. Client 4 reads 1 from 10 to 12 ms. Decide whether the history is linearizable and explain which two constraints conflict. Then add the history to linearizable.py and confirm the answer.
+hint: The read of 1 at 2 to 3 ms forces write(1) before 3 ms. The read of 1 at 10 to 12 ms forces write(2) before write(1). Can both hold?
+lang: python
+solution:
+# On paper: client 2 read 1 by 3 ms, so write(1) takes effect at or before 3 ms.
+# Client 4 reads 1 after both writes ended, so write(2) must come before write(1).
+# But write(2) cannot take effect before 4 ms, and write(1) must be before 3 ms.
+# The two constraints conflict. The history is not linearizable.
+
+import itertools
+
+def valid_order(order):
+    for a, b in itertools.combinations(order, 2):
+        if b[4] < a[3]:
+            return False
+    value = 0
+    for _, op, v, _, _ in order:
+        if op == "write":
+            value = v
+        elif v != value:
+            return False
+    return True
+
+history = [
+    (1, "write", 1, 0, 5),
+    (2, "read", 1, 2, 3),
+    (3, "write", 2, 4, 9),
+    (4, "read", 1, 10, 12),
+]
+print(any(valid_order(p) for p in itertools.permutations(history)))   # False
+:::
+
 ## Common mistakes
 
 - Mistake: check only the final state, not the history. Fix: record the timing of each operation, because a stale read is invisible in the final state.
@@ -1560,9 +2715,41 @@ Note: keep the linearizable store small. Put locks, configuration, and leader re
 
 ## Check your understanding
 
-- Can a read that overlaps a write return the old value? Yes, as long as some single ordering explains all operations.
-- What primitive gives a unique-name check? Compare-and-set.
-- Why does a linearizable read need a round trip? The leader must confirm it has not been replaced.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: linearizability in practice
+q: Can a read that overlaps a write return the old value?
+- Never
+* Yes, as long as one ordering of instants explains all operations
+- Only on a follower
+- Only if the read started before the write started
+why: Each operation takes effect at one instant inside its interval, and the read may be placed before the write.
+q: Which primitive gives a unique-name check?
+- A read followed by a write
+* Compare-and-set
+- A time to live
+- A hash of the name
+why: Compare-and-set writes the name only if the slot still holds the expected empty value, in one linearizable step.
+q: Why does a linearizable read need a round trip to a majority?
+- Followers are slow
+* The leader must confirm it has not been replaced
+- The disk must fsync first
+- Clients may hold a stale cache
+why: A leader that was replaced by a partition could still answer from stale state, so it checks with a majority or holds a lease.
+q: Client 1 writes 5 from 0 to 10 ms. Client 2 reads 0 from 12 to 14 ms. Is the history linearizable?
+- Yes
+* No, because the write completed before the read started
+- Yes, if the read went to a follower
+- It depends on the clocks
+why: The read starts after the write ended, so a linearizable register must return 5.
+q: What does a fencing token do?
+- It speeds up lock acquisition
+* The storage rejects writes that carry an older token than the last one it saw
+- It replaces the lease
+- It counts the operations of a client
+why: A client that paused past its lock expiry still holds an old token, and the storage refuses its late writes.
+:::
 
 ## Go further
 
@@ -1687,6 +2874,55 @@ Randomised timeouts make elections converge. If all nodes timed out at the same 
 
 Note: Raft gives a linearizable log. To serve linearizable reads, the leader uses a read index or a lease, as the previous lesson described.
 
+The script below prints the majority table and simulates one election with random timeouts after S1 crashes.
+
+:::code
+lang: python
+file: raft_election.py
+import random
+
+def majority(n):
+    return n // 2 + 1
+
+for n in (3, 4, 5, 7):
+    print(f"{n} nodes: majority {majority(n)}, survives {n - majority(n)} failures")
+
+random.seed(7)
+nodes = ["S2", "S3", "S4", "S5"]                   # S1 crashed
+last_log = {"S2": 10, "S3": 10, "S4": 9, "S5": 10}
+timeouts = {s: random.uniform(150, 300) for s in nodes}
+candidate = min(timeouts, key=timeouts.get)
+print(f"{candidate} times out first at {timeouts[candidate]:.0f} ms and asks for votes")
+
+votes = 1                                           # the candidate votes for itself
+for s in nodes:
+    if s != candidate and last_log[s] <= last_log[candidate]:
+        votes += 1                                  # the log of the candidate is as complete
+needed = majority(5)
+result = "leader" if votes >= needed else "no leader, try again"
+print(f"votes {votes} of 5, needed {needed}: {result}")
+:::
+
+## Try it
+
+:::exercise
+title: Who can win the election?
+task: On paper. A 5-node cluster has leader S1 in term 3. S1 appends index 11 to its own log and to S2, then crashes before any other node receives it. S3, S4, and S5 have logs up to index 10. Answer three questions. Is index 11 committed? Which nodes can win the next election? If S4 wins, what happens to index 11 on S2?
+hint: An entry is committed when a majority holds it. A node votes for a candidate whose log is at least as complete as its own.
+lang: text
+solution:
+1. Index 11 is on 2 of 5 nodes. That is not a majority, so it is not committed.
+   S1 never replied to the client.
+
+2. S2 can win: S3, S4, and S5 have shorter logs, so all three vote for S2.
+   S3, S4, or S5 can also win: each needs 2 more votes, and the other two
+   nodes with index 10 will vote for it. S2 refuses, because its log is longer.
+   So any of S2 to S5 can win, depending on who times out first.
+
+3. If S4 wins, it sends AppendEntries with its own log. S2 finds that index 11
+   does not match and deletes it. This is safe, because index 11 was never committed.
+:::
+
 ## Common mistakes
 
 - Mistake: run an even number of nodes. Fix: use 3 or 5, because 4 nodes survive the same 1 failure as 3.
@@ -1696,9 +2932,47 @@ Note: Raft gives a linearizable log. To serve linearizable reads, the leader use
 
 ## Check your understanding
 
-- How many nodes does a cluster need to survive 2 failures? 5.
-- When is an entry committed? When the leader knows a majority of nodes hold it.
-- Why do randomised election timeouts help? One node usually times out first and wins before the others start competing.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: Raft consensus
+q: How many nodes does a cluster need to survive 2 failures?
+- 3
+- 4
+* 5
+- 6
+why: N must be at least 2f plus 1, and with f = 2 that is 5.
+q: When is a log entry committed?
+- When the leader appends it to its own log
+* When the leader knows a majority of nodes hold it
+- When every node holds it
+- When the client acknowledges it
+why: A majority guarantees that any future leader, elected by a majority, holds the entry.
+q: Why do randomised election timeouts help?
+- They save network bandwidth
+* One node usually times out first and wins before the others start competing
+- They make terms longer
+- They keep the clocks in sync
+why: If all nodes timed out together they would split the vote every time, and no leader would emerge.
+q: A 7-node cluster loses 4 nodes. What happens to writes?
+- They continue on the 3 remaining nodes
+* They stop, because 3 is not a majority of 7
+- They continue on the leader only
+- They continue as reads only
+why: The majority of 7 is 4, and the 3 remaining nodes cannot commit any entry.
+q: When does a node vote for a candidate?
+- When the candidate has the lowest id
+* When the candidate's log is at least as complete as its own and it has not voted this term
+- When the candidate has the shortest timeout
+- Whenever the candidate is in a newer term
+why: The log rule ensures that the new leader holds every committed entry.
+q: 3 nodes sit in 2 datacenters, and the datacenter with 2 nodes goes offline. What happens?
+- The remaining node continues as leader
+* The cluster stops, because 1 node is not a majority
+- The remaining node elects itself
+- Writes continue asynchronously
+why: A single node cannot form a majority of 3, so the cluster is unavailable until the other datacenter returns.
+:::
 
 ## Go further
 
@@ -1711,6 +2985,7 @@ The official Raft site collects implementations and the visualisation. Read the 
       slug: 'partitioning',
       title: 'Partitioning',
       description: 'Hash and range partitioning, consistent hashing, rebalancing, and hot keys.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'hashing-and-consistent-hashing',
@@ -1821,6 +3096,57 @@ Range partitioning is the alternative. Keys are sorted, and each node owns a ran
 | Range scan | Every node | One node |
 | Sequential writes | Spread | One hot node |
 
+The script below counts how many of 1,000 keys move from 4 to 5 nodes with each method. The ring uses 50 virtual nodes per physical node.
+
+:::code
+lang: python
+file: ring.py
+import bisect, hashlib
+
+def h(s):
+    return int(hashlib.md5(s.encode()).hexdigest(), 16) % pow(2, 32)   # a stable hash
+
+class Ring:
+    def __init__(self, nodes, vnodes=50):
+        self.points = sorted((h(f"{n}#{i}"), n) for n in nodes for i in range(vnodes))
+        self.positions = [p for p, _ in self.points]
+
+    def owner(self, key):
+        i = bisect.bisect_left(self.positions, h(key))
+        return self.points[i % len(self.points)][1]     # wrap to the first node
+
+keys = [f"key{i}" for i in range(1000)]
+
+moved = sum(h(k) % 4 != h(k) % 5 for k in keys)
+print(f"modulo hashing: {moved / 10:.0f} percent of keys moved")
+
+r4 = Ring(["A", "B", "C", "D"])
+r5 = Ring(["A", "B", "C", "D", "E"])
+moved = sum(r4.owner(k) != r5.owner(k) for k in keys)
+print(f"consistent hashing: {moved / 10:.0f} percent of keys moved")
+:::
+
+## Try it
+
+:::exercise
+title: Walk the ring by hand
+task: On paper. The ring has positions 0 to 99. Nodes sit at A 10, B 35, C 60, and D 85. Keys sit at 5, 33, 61, and 99. Write the owner of each key. Then remove node B. Write which keys change owner and where they go.
+hint: A key belongs to the first node clockwise from its position. A key past the last node wraps to the first node.
+lang: text
+solution:
+Owners with 4 nodes:
+  key 5  -> A at 10
+  key 33 -> B at 35
+  key 61 -> D at 85
+  key 99 -> A at 10 (wraps past D)
+
+Remove B at 35:
+  only keys in the arc from 10 to 35 change owner
+  key 33 -> C at 60
+  keys 5, 61, and 99 keep their owner
+  1 of 4 keys moved, and all of them went to one neighbour, C
+:::
+
 ## Common mistakes
 
 - Mistake: use modulo hashing for a cache cluster. Fix: use consistent hashing, because a resize empties most of the cache.
@@ -1830,9 +3156,47 @@ Range partitioning is the alternative. Keys are sorted, and each node owns a ran
 
 ## Check your understanding
 
-- With modulo hashing, about what fraction of keys moves from 9 to 10 nodes? About 90 percent.
-- With consistent hashing, about what fraction moves from 9 to 10 nodes? About 10 percent.
-- Which node owns a key whose position is past the last node on the ring? The first node, by wrap-around.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: consistent hashing
+q: With modulo hashing, about what fraction of keys moves when you go from 9 to 10 nodes?
+- About 10 percent
+- About 50 percent
+* About 90 percent
+- None
+why: Modulo hashing moves about N divided by (N plus 1) of the keys, which is 9 of 10.
+q: With consistent hashing, about what fraction moves from 9 to 10 nodes?
+* About 10 percent
+- About 90 percent
+- About 50 percent
+- None
+why: Only the keys in the arc the new node takes over move, about 1 divided by (N plus 1).
+q: Which node owns a key whose position is past the last node on the ring?
+- The last node
+* The first node, by wrap-around
+- No node, the key is dropped
+- A new node is created
+why: The ring has no end, so the search wraps to the smallest node position.
+q: Why use virtual nodes?
+- They use less memory
+* They make the arcs even, so each node owns about the same share
+- They make the hash faster
+- They stop keys from moving at all
+why: With 100 or more positions per node the random arcs average out to within a few percent.
+q: Nodes sit at 10, 35, 60, and 85. Which node owns a key at position 70?
+- The node at 60
+* The node at 85
+- The node at 10
+- The node at 35
+why: The first node clockwise from 70 is at 85.
+q: Time-series data is range partitioned by timestamp. What is the problem?
+- Range scans become slow
+* All current writes land on one node
+- The hash function collides
+- Keys move on every write
+why: New timestamps are all in the newest range, so one partition takes every write while the others idle.
+:::
 
 ## Go further
 
@@ -1952,6 +3316,59 @@ Here $D$ is the total data, $N$ is the node count before and after, and $r$ is t
 
 Caution: an automatic rebalance that triggers on every brief node failure moves data in circles and overloads the cluster. Add a delay of several minutes before a rebalance starts.
 
+The script below plans the moves for the fourth node and computes the copy time at each rate.
+
+:::code
+lang: python
+file: rebalance.py
+def plan(owners, new_node, target_per_node, to_move):
+    counts = {}
+    for node in owners.values():
+        counts[node] = counts.get(node, 0) + 1
+    moves = []
+    for partition, node in sorted(owners.items()):
+        if counts[node] > target_per_node and len(moves) < to_move:
+            moves.append((partition, node, new_node))
+            counts[node] -= 1
+    return moves
+
+owners = {p: f"node{p % 3 + 1}" for p in range(30)}      # 30 partitions, 10 per node
+moves = plan(owners, "node4", 7, 8)
+print(f"{len(moves)} partitions move, for example {moves[:3]}")
+
+gb_per_partition = 10
+total_gb = len(moves) * gb_per_partition
+for rate_mb in (50, 500):
+    seconds = total_gb * 1000 / rate_mb
+    print(f"{total_gb} GB at {rate_mb} MB per second: {seconds / 60:.0f} minutes")
+:::
+
+:::code
+lang: text
+8 partitions move, for example [(0, 'node1', 'node4'), (1, 'node2', 'node4'), (2, 'node3', 'node4')]
+80 GB at 50 MB per second: 27 minutes
+80 GB at 500 MB per second: 3 minutes
+:::
+
+## Try it
+
+:::exercise
+title: Add a fifth node
+task: A store has 4 nodes, 40 partitions, and 480 GB of data. A fifth node joins. Compute the size of one partition, how many partitions move, the total data moved, and the time to finish when each source node sends at 100 MB per second and all sources work in parallel.
+hint: The target is 8 partitions per node. Each of the 4 old nodes gives 2 partitions. The time is set by the data one source sends, not the total.
+lang: python
+solution:
+nodes_before, partitions, total_gb = 4, 40, 480
+gb_per_partition = total_gb / partitions                  # 12 GB
+target = partitions // (nodes_before + 1)                 # 8 per node
+per_source = partitions // nodes_before - target          # 2 partitions from each old node
+moved = per_source * nodes_before                         # 8 partitions
+moved_gb = moved * gb_per_partition                       # 96 GB
+seconds = per_source * gb_per_partition * 1000 / 100      # 240 s per source, in parallel
+print(f"{gb_per_partition:.0f} GB per partition, {moved} partitions move, {moved_gb:.0f} GB in total")
+print(f"each source sends {per_source * gb_per_partition:.0f} GB: done in {seconds / 60:.0f} minutes")
+:::
+
 ## Common mistakes
 
 - Mistake: pick a partition count equal to the node count. Fix: pick 10 or more partitions per node, so you can add nodes later.
@@ -1961,9 +3378,47 @@ Caution: an automatic rebalance that triggers on every brief node failure moves 
 
 ## Check your understanding
 
-- Why does a fixed partition count help? Keys never change partition, so only partition ownership moves.
-- How long does 60 GB take at 100 MB per second? 600 seconds, 10 minutes.
-- What happens to writes during the copy? The source serves them and streams them to the target afterwards.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: rebalancing partitions
+q: Why does a fixed partition count make rebalancing simple?
+- It needs fewer nodes
+* Keys never change partition, so only the ownership of whole partitions moves
+- Partitions stay small
+- No routing table is needed
+why: The partition of a key depends on the partition count, which never changes, so no key is rehashed.
+q: How long does it take to move 60 GB at 100 MB per second?
+- 1 minute
+* 10 minutes
+- 100 minutes
+- 6 seconds
+why: 60,000 MB divided by 100 MB per second is 600 seconds.
+q: What happens to writes that arrive during the copy of a partition?
+- They are rejected
+* The source serves them, logs them, and streams them to the target afterwards
+- They are dropped
+- They go to the target directly
+why: The source stays the owner until the switch, and the logged writes bring the target up to date.
+q: What is a good rule for the partition count at the start?
+- Equal to the node count
+* 10 to 100 partitions per node at the expected final size
+- One per CPU core
+- One per key
+why: Enough partitions let you add nodes many times without a split, and each partition stays a sensible size.
+q: A client sends a request and gets a "moved" error. What should it do?
+- Drop the request
+* Refresh its routing table and retry
+- Wait for the rebalance to finish
+- Switch to another cluster
+why: The error means ownership changed, and the refreshed table points the retry at the new owner.
+q: Why wait several minutes before an automatic rebalance starts after a node failure?
+- The disk needs to cool down
+* A brief failure would otherwise move data out and back again and overload the cluster
+- Clients cache the table for that long
+- The log must be compacted first
+why: Many failures are short, and a rebalance on each one moves gigabytes for nothing.
+:::
 
 ## Go further
 
@@ -2073,6 +3528,47 @@ A local cache fits keys that change rarely and tolerate staleness. The Facebook 
 
 Note: a hot key in a message queue has the same shape. One partition key for all events, for example one tenant id, fills one queue partition while others idle. Add a second key component, such as a session id.
 
+The script below sends 100,000 reads to 10 nodes with the celebrity key at 60 percent, then applies salting. With 10 copies, chance puts 2 or 3 copies on one node, which is why the procedure says 10 to 100 copies.
+
+:::code
+lang: python
+file: salting.py
+import hashlib, random
+from collections import Counter
+
+def node_for(key, nodes=10):
+    return int(hashlib.md5(key.encode()).hexdigest(), 16) % nodes
+
+random.seed(3)
+reads = ["celeb:42" if random.random() < 0.6 else f"user:{random.randrange(100_000)}"
+         for _ in range(100_000)]
+
+plain = Counter(node_for(k) for k in reads)
+print("busiest node without a fix:", max(plain.values()), "reads")
+
+for copies in (10, 50):
+    salted = Counter(node_for(f"{k}:{random.randrange(copies)}" if k == "celeb:42" else k) for k in reads)
+    print(f"busiest node with {copies} copies: {max(salted.values())} reads, {copies} writes per update")
+:::
+
+## Try it
+
+:::exercise
+title: Fix a hot counter and a hot read
+task: A view counter receives 90,000 increments per second on one key. 300 application servers each keep a local sum and flush it every 200 ms. Compute the writes per second on the key after the change. Then a hot profile key gets 60,000 reads per second. Each of the 300 servers caches it for 2 seconds. Compute the maximum reads per second the cache node sees for that key.
+hint: Each server flushes 5 times per second. Each server refreshes the cached value at most once per 2 seconds.
+lang: python
+solution:
+servers = 300
+flushes_per_second = 1 / 0.2                               # 5 per server
+counter_writes = servers * flushes_per_second              # 1,500 per second, down from 90,000
+print(f"counter writes per second: {counter_writes:.0f}")
+
+ttl_s = 2
+profile_reads = servers / ttl_s                            # 150 per second, down from 60,000
+print(f"profile reads per second on the cache node: {profile_reads:.0f}")
+:::
+
 ## Common mistakes
 
 - Mistake: add nodes to fix a hot key. Fix: the key still lives on one node, so split the key or cache it.
@@ -2082,9 +3578,47 @@ Note: a hot key in a message queue has the same shape. One partition key for all
 
 ## Check your understanding
 
-- A key takes 80 percent of 50,000 reads per second. What load is on its node from that key alone? 40,000 reads per second.
-- How does salting into 20 copies change the per-node read load for that key? It drops to about 2,000 reads per second per copy.
-- Which fix suits a hot counter? Local aggregation with a periodic flush.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: hot keys and skew
+q: A key takes 80 percent of 50,000 reads per second. What load does that key alone put on its node?
+- 4,000 reads per second
+- 10,000 reads per second
+* 40,000 reads per second
+- 50,000 reads per second
+why: 80 percent of 50,000 is 40,000, all on the one node that owns the key.
+q: You salt that key into 20 copies. What is the read load per copy?
+- 40,000 reads per second
+- 20,000 reads per second
+* About 2,000 reads per second
+- 200 reads per second
+why: Readers pick a random suffix, so each of the 20 copies gets about 1 twentieth of 40,000.
+q: Which fix suits a hot counter?
+- Key salting
+- Adding nodes
+* Local aggregation with a periodic flush
+- A longer time to live
+why: Salting multiplies writes, but summing locally and flushing on a timer divides them.
+q: Why does adding nodes not fix a hot key?
+- It costs too much
+* The key still lives on one node
+- Rebalancing takes too long
+- The hash function changes
+why: A key maps to exactly one partition, so new nodes take other keys and leave the hot one where it is.
+q: 200 application servers each cache a hot value for 1 second. How many reads per second for that key reach the cache node at most?
+- 60,000
+* 200
+- 1
+- 2,000
+why: Each server refreshes at most once per second, so the node sees at most one read per server per second.
+q: The busiest partition serves 3 times the average. What does that signal?
+- Normal variation
+* Skew, so sample that partition and look for a hot key
+- A failed node
+- Too many partitions
+why: A ratio above 3 between the busiest partition and the average is the standard alert for skew.
+:::
 
 ## Go further
 
@@ -2097,6 +3631,7 @@ The Facebook memcache paper describes leases and regional pools for hot keys at 
       slug: 'caching-and-queues',
       title: 'Caching and queues',
       description: 'Cache strategies, invalidation, log-based queues, and back-pressure.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'cache-strategies',
@@ -2125,6 +3660,11 @@ A cache is a small fast store in front of a large slow one. This lesson shows ho
 ## Why it matters
 
 A database read costs 1 to 10 ms and a database handles a few thousand reads per second. A cache read costs 0.1 ms and a cache node handles 100,000 reads per second. A cache with a 95 percent hit rate cuts database load by 20 times. Almost every web service relies on this. The cache is also where stale data comes from, so the strategy matters.
+
+:::video
+id: G1rOthIU-uo
+why: Watch all 2 minutes. Note the data types and the time to live on a key, which this lesson uses in the cache-aside procedure.
+:::
 
 ## The idea with an example
 
@@ -2208,6 +3748,70 @@ A thundering herd happens when a popular key expires. Thousands of requests miss
 
 Caution: a write-back cache that holds the only copy of a write loses it on a crash. Use it only for data you can rebuild.
 
+The script below is cache-aside in 20 lines, with a time to live and a delete on write. It then prints the latency and database load for each hit rate.
+
+:::code
+lang: python
+file: cache_aside.py
+import time
+
+db = {"item:7": "price 10"}
+cache = {}                                  # key -> (value, expires_at)
+TTL = 60
+db_reads = 0
+
+def get(key):
+    global db_reads
+    hit = cache.get(key)
+    if hit and hit[1] > time.time():
+        return hit[0]
+    db_reads += 1
+    value = db[key]
+    cache[key] = (value, time.time() + TTL)
+    return value
+
+def write(key, value):
+    db[key] = value                         # write the database first
+    cache.pop(key, None)                    # then delete the key
+
+for _ in range(10):
+    get("item:7")
+write("item:7", "price 20")
+print(get("item:7"), "after", db_reads, "database reads for 11 gets")
+
+def avg_latency_ms(hit_rate, cache_ms=0.2, db_ms=5):
+    return hit_rate * cache_ms + (1 - hit_rate) * (cache_ms + db_ms)
+
+for h in (0.0, 0.9, 0.99):
+    print(f"hit rate {h:.0%}: {avg_latency_ms(h):.2f} ms, {10_000 * (1 - h):,.0f} database reads per second")
+:::
+
+:::code
+lang: text
+price 20 after 2 database reads for 11 gets
+hit rate 0%: 5.20 ms, 10,000 database reads per second
+hit rate 90%: 0.70 ms, 1,000 database reads per second
+hit rate 99%: 0.25 ms, 100 database reads per second
+:::
+
+## Try it
+
+:::exercise
+title: Size the cache for the working set
+task: A service reads 5 million distinct keys per hour, 2 KB each. It serves 30,000 reads per second, and the database can take at most 3,000 reads per second. Compute the size of the working set in GB, the hit rate the database limit requires, and the cache size that reaches it if hits are spread evenly over the working set.
+hint: The hit rate must be at least 1 minus 3,000 divided by 30,000. With even hits, the hit rate equals the share of the working set that fits in the cache.
+lang: python
+solution:
+keys, key_bytes = 5_000_000, 2_000
+reads_per_s, db_limit = 30_000, 3_000
+
+working_set_gb = keys * key_bytes / 1e9              # 10 GB
+needed_hit_rate = 1 - db_limit / reads_per_s         # 0.9
+cache_gb = working_set_gb * needed_hit_rate          # 9 GB
+print(f"working set {working_set_gb:.0f} GB")
+print(f"hit rate needed {needed_hit_rate:.0%}, cache of {cache_gb:.0f} GB plus overhead")
+:::
+
 ## Common mistakes
 
 - Mistake: cache every key with the same long TTL. Fix: set the TTL per key type from how stale the data may be.
@@ -2217,9 +3821,47 @@ Caution: a write-back cache that holds the only copy of a write loses it on a cr
 
 ## Check your understanding
 
-- At 95 percent hit rate and 20,000 reads per second, how many reads reach the database? 1,000 per second.
-- What does cache-aside do on a write? It writes the database and deletes the cache key.
-- What is a thundering herd? Many requests miss on one key at once and all hit the database.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: cache strategies
+q: At a 95 percent hit rate and 20,000 reads per second, how many reads reach the database?
+- 19,000 per second
+* 1,000 per second
+- 100 per second
+- 5 per second
+why: 5 percent of 20,000 is 1,000 misses per second, and each miss reads the database.
+q: What does cache-aside do on a write?
+- It writes the cache only
+* It writes the database, then deletes the cache key
+- It writes the cache and the database together
+- It deletes the key, then writes the database
+why: The next read misses and refills the cache with the fresh value from the database.
+q: A cache read takes 0.2 ms and a database read 5 ms. What is the average latency at an 80 percent hit rate?
+- 0.7 ms
+* 1.2 ms
+- 2.6 ms
+- 4.2 ms
+why: 0.8 times 0.2 plus 0.2 times 5.2 is 0.16 plus 1.04, which is 1.2 ms.
+q: What is a thundering herd?
+- A cache node that restarts
+* Many requests miss on one key at once and all go to the database
+- A time to live that is too long
+- Too many cache nodes
+why: When a popular key expires, every concurrent reader misses and hits the database at the same moment.
+q: What is the main risk of a write-back cache?
+- Slow writes
+- Stale reads
+* Data loss when the cache fails before it flushes
+- High memory use
+why: The cache holds the only copy of the write until it flushes, so a crash loses it.
+q: Why add a random spread to each time to live?
+* So keys do not expire at the same second
+- To raise the hit rate
+- To save memory
+- To shorten the average TTL
+why: Keys filled together after a deploy would expire together and cause a herd on the database.
+:::
 
 ## Go further
 
@@ -2340,6 +3982,68 @@ Change data capture: 1
 
 Caution: a cache in a second region cannot be invalidated at the same instant. Writes in region A reach the cache in region B after the replication lag. Route writes and the reads right after them to the leader region.
 
+The script below runs race 1 twice with the same interleaving: once with update after write and once with delete after write.
+
+:::code
+lang: python
+file: race.py
+def run(method):
+    db = {"item:7": 10}
+    cache = {}
+    # both writers reach the database in order, but writer 1 is slow after that
+    db["item:7"] = 20                      # writer 1
+    db["item:7"] = 30                      # writer 2
+    if method == "update":
+        cache["item:7"] = 30               # writer 2 updates the cache
+        cache["item:7"] = 20               # the slow writer 1 updates last
+    else:
+        cache.pop("item:7", None)          # writer 2 deletes
+        cache.pop("item:7", None)          # writer 1 deletes
+    value = cache.get("item:7")
+    if value is None:                      # the next reader misses and fills
+        value = cache["item:7"] = db["item:7"]
+    return db["item:7"], value
+
+for method in ("update", "delete"):
+    db_value, cache_value = run(method)
+    status = "stale" if db_value != cache_value else "correct"
+    print(f"{method:6s}: database {db_value}, cache {cache_value}, {status}")
+:::
+
+:::code
+lang: text
+update: database 30, cache 20, stale
+delete: database 30, cache 30, correct
+:::
+
+## Try it
+
+:::exercise
+title: Implement versioned keys
+task: Write get_price(item) and set_price(item, price) with versioned keys. A small dictionary holds the current version per item. A read builds the key item:7:v12 from the version and uses the cache. A write stores the new price in the database and increments the version, with no delete. Show that after a write the old cache entry is never read again.
+hint: The key is f"{item}:v{version}". A write only changes the version number and the database.
+lang: python
+solution:
+db = {"item:7": 10}
+versions = {"item:7": 12}
+cache = {}
+
+def get_price(item):
+    key = f"{item}:v{versions[item]}"
+    if key not in cache:
+        cache[key] = db[item]               # fill on a miss
+    return cache[key], key
+
+def set_price(item, price):
+    db[item] = price
+    versions[item] += 1                     # old keys become unreachable
+
+print(get_price("item:7"))                  # (10, 'item:7:v12')
+set_price("item:7", 20)
+print(get_price("item:7"))                  # (20, 'item:7:v13')
+print("old entry still in memory until it expires:", cache["item:7:v12"])
+:::
+
 ## Common mistakes
 
 - Mistake: update the cache value after a write. Fix: delete the key, because two updates can land in the wrong order.
@@ -2349,9 +4053,47 @@ Caution: a cache in a second region cannot be invalidated at the same instant. W
 
 ## Check your understanding
 
-- Why is delete safer than update after a write? Two deletes in any order leave the same result, but two updates do not.
-- What is the safety net for a missed invalidation? A TTL on every entry.
-- What does change data capture read? The database write-ahead log.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: cache invalidation
+q: Why is a delete after a write safer than an update after a write?
+- A delete is faster
+* Two deletes in any order leave the same result, but two updates do not
+- An update needs a lock
+- A delete uses less memory
+why: With updates, the slower writer can land last and leave an older value in the cache.
+q: What is the safety net for a missed invalidation?
+- A retry
+* A time to live on every entry
+- A versioned key
+- A lock on the row
+why: Even if a write path forgets to delete the key, the entry expires after the TTL.
+q: What does change data capture read to invalidate the cache?
+- The cache itself
+* The database write-ahead log
+- The application logs
+- The HTTP access log
+why: A log reader sees every committed change, including manual fixes, and deletes the matching keys.
+q: A reader reads price 10 from the database, pauses, and a writer sets 20 and deletes the key during the pause. The reader then fills the cache. What is in the cache?
+- 20
+* 10, a stale value
+- Nothing
+- An error
+why: The delete found nothing, and the slow reader filled the cache with the old value after it.
+q: What goes wrong when the delete runs before the database commit?
+- The delete fails
+* A reader can refill the cache with the old value before the commit
+- The cache grows too large
+- Nothing, the order does not matter
+why: Between the delete and the commit, a miss reads the old row and caches it, so the fresh value is never seen.
+q: With versioned keys, what happens to item:7:v12 after a write?
+- It is deleted at once
+* Readers build v13, and v12 stays unreachable until it expires
+- It is updated to the new value
+- It is copied to v13
+why: The write only increments the version, so the old key is never looked up again.
+:::
 
 ## Go further
 
@@ -2464,6 +4206,67 @@ The table compares the three delivery guarantees.
 
 Note: a message queue in the style of RabbitMQ deletes a message once a consumer acknowledges it. A log keeps it until retention expires. The log lets you add a new consumer that reads from the start.
 
+The script below is a log-based queue in 30 lines: 12 partitions, a committed offset per partition, a crash before the commit, and an idempotent consumer that skips repeats.
+
+:::code
+lang: python
+file: log_queue.py
+import hashlib
+
+PARTITIONS = 12
+log = {p: [] for p in range(PARTITIONS)}
+committed = {p: 0 for p in range(PARTITIONS)}    # for one consumer group
+seen = set()                                      # event ids already processed
+
+def produce(key, event):
+    p = int(hashlib.md5(key.encode()).hexdigest(), 16) % PARTITIONS
+    log[p].append(event)
+    return p, len(log[p]) - 1                     # partition and offset
+
+def consume(p, crash_after=None):
+    for offset in range(committed[p], len(log[p])):
+        event = log[p][offset]
+        if event in seen:
+            print(f"  skip repeat {event}")
+        else:
+            seen.add(event)
+            print(f"  invoice for {event} at offset {offset}")
+        if crash_after and offset - committed[p] + 1 == crash_after:
+            print("  crash before the commit")
+            return
+    committed[p] = len(log[p])
+
+for i in (501, 502, 503):
+    p, offset = produce("user-42", f"order-{i}")      # same key, same partition, in order
+print("partition", p, "end offset", offset)
+consume(p, crash_after=2)
+consume(p)
+print("committed offset", committed[p])
+:::
+
+## Try it
+
+:::exercise
+title: Size a topic
+task: An events topic receives 25,000 events per second of 2 KB each. One consumer instance handles 4,000 events per second. Retention is 3 days and the replication factor is 3. Compute the minimum consumer count, a partition count with room to grow, the bytes per second, the bytes per second per partition, and the total disk across the brokers.
+hint: Round the consumer count up. Pick 2 to 3 times that many partitions. Storage is bytes per second times seconds of retention times the replication factor.
+lang: python
+solution:
+import math
+
+events_per_s, event_bytes = 25_000, 2_000
+per_consumer = 4_000
+retention_s, replicas = 3 * 86_400, 3
+
+consumers = math.ceil(events_per_s / per_consumer)          # 7
+partitions = consumers * 3                                  # 21, round to 24
+mb_per_s = events_per_s * event_bytes / 1e6                 # 50 MB per second
+per_partition = mb_per_s / partitions                       # about 2.4 MB per second, under 10
+disk_tb = mb_per_s * retention_s * replicas / 1e6           # about 39 TB
+print(f"{consumers} consumers, {partitions} partitions, {mb_per_s:.0f} MB per second")
+print(f"{per_partition:.1f} MB per second per partition, {disk_tb:.0f} TB of disk with replication")
+:::
+
 ## Common mistakes
 
 - Mistake: use one partition for ordering of everything. Fix: partition by the key that needs order, such as a user id.
@@ -2473,9 +4276,47 @@ Note: a message queue in the style of RabbitMQ deletes a message once a consumer
 
 ## Check your understanding
 
-- What is an offset? The position of an event in a partition.
-- How many consumer instances in one group can read one partition? One.
-- What must a consumer do under at-least-once delivery? Handle repeated events without a wrong result.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: log-based message queues
+q: What is an offset?
+- The number of consumers in a group
+* The position of an event in a partition
+- The retention time of the topic
+- The id of a partition
+why: Each partition numbers its events from 0, and a consumer group commits the offset it has reached.
+q: How many consumer instances in one group can read one partition?
+- Any number
+* One
+- Two, for failover
+- As many as the replication factor
+why: Each partition is assigned to exactly one instance in a group, which is what keeps the order of processing.
+q: A topic receives 10,000 events per second and one consumer handles 2,000. What is the minimum partition count?
+- 1
+- 2
+* 5
+- 10
+why: 5 consumers are needed, and each needs its own partition.
+q: What must a consumer do under at-least-once delivery?
+- Commit the offset before processing
+* Handle repeated events without a wrong result
+- Read from two partitions at once
+- Sort events by timestamp
+why: After a crash before the commit, events are delivered again, so the consumer must be idempotent.
+q: What order do events in different partitions have?
+- Order by timestamp
+- Order by offset
+* No order
+- Order by key
+why: Ordering holds within one partition only, which is why related events share a partition key.
+q: What happens when the consumer commits the offset before processing?
+- Exactly-once delivery
+* At-most-once delivery, so a crash can lose events
+- At-least-once delivery
+- Stronger ordering
+why: If the consumer crashes after the commit and before the work, the events are never processed again.
+:::
 
 ## Go further
 
@@ -2588,6 +4429,57 @@ With a log-based queue like Kafka, the broker stores the backlog on disk, so the
 
 Caution: an unbounded retry queue is the most common hidden unbounded queue. A failing downstream service makes every retry fail, and the queue grows until the process dies.
 
+The script below runs a fast producer and a slow consumer with a bounded queue. The queue depth never passes 50, and the producer runs at the speed of the consumer.
+
+:::code
+lang: python
+file: bounded_queue.py
+import queue, threading, time
+
+q = queue.Queue(maxsize=50)              # bounded: put blocks when the queue is full
+TOTAL = 400
+produced = consumed = 0
+
+def producer():
+    global produced
+    for i in range(TOTAL):
+        q.put(i)                         # blocks once 50 items wait
+        produced += 1
+
+def consumer():
+    global consumed
+    while consumed < TOTAL:
+        q.get()
+        consumed += 1
+        time.sleep(0.001)                # about 1,000 per second at most
+
+start = time.perf_counter()
+threads = [threading.Thread(target=producer), threading.Thread(target=consumer)]
+for t in threads:
+    t.start()
+while consumed < TOTAL:
+    time.sleep(0.1)
+    print(f"{time.perf_counter() - start:4.1f} s  produced {produced:3d}  consumed {consumed:3d}  depth {q.qsize():2d}")
+for t in threads:
+    t.join()
+:::
+
+## Try it
+
+:::exercise
+title: Bound the queue
+task: A producer sends 2,000 events per second of 2 KB each, and the consumer handles 1,500 per second. The product accepts a delay of at most 5 seconds. Compute the queue bound, how many seconds the queue takes to fill, the memory the full queue holds, and the depth at which a 50 percent alert fires.
+hint: The bound is the consumer rate times the maximum delay. The queue grows by the difference of the two rates.
+lang: python
+solution:
+producer, consumer, event_kb, max_delay_s = 2000, 1500, 2, 5
+bound = consumer * max_delay_s                    # 7,500 events
+fill_s = bound / (producer - consumer)            # 15 seconds
+memory_mb = bound * event_kb / 1000               # 15 MB
+alert_depth = bound * 0.5                         # 3,750 events
+print(f"bound {bound} events, full after {fill_s:.0f} s, {memory_mb:.0f} MB, alert at {alert_depth:.0f}")
+:::
+
 ## Common mistakes
 
 - Mistake: use an unbounded queue to "absorb bursts". Fix: bound it, because a burst that outlasts the bound is an overload and must be visible.
@@ -2597,9 +4489,47 @@ Caution: an unbounded retry queue is the most common hidden unbounded queue. A f
 
 ## Check your understanding
 
-- A producer sends 500 per second and a consumer handles 300. How fast does an unbounded queue grow? 200 items per second.
-- What is a credit in flow control? Permission from the consumer to send a fixed number of items.
-- What is consumer lag in a log-based queue? The number of events between the newest offset and the consumer's committed offset.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: back-pressure
+q: A producer sends 500 items per second and the consumer handles 300. How fast does an unbounded queue grow?
+- 800 items per second
+* 200 items per second
+- 300 items per second
+- It does not grow
+why: The queue absorbs the difference between the two rates.
+q: What is a credit in flow control?
+- A retry token
+* Permission from the consumer to send a fixed number of items
+- A payment for bandwidth
+- A timeout value
+why: The producer sends up to the credits it holds, then waits for the consumer to grant more.
+q: What is consumer lag in a log-based queue?
+- The network delay to the broker
+* The number of events between the newest offset and the committed offset
+- The CPU use of the consumer
+- The retention time
+why: The broker stores the backlog on disk, so lag is the distance the consumer is behind the end of the log.
+q: The consumer handles 800 items per second and the maximum acceptable delay is 10 seconds. What queue bound gives that delay?
+- 800
+* 8,000
+- 80,000
+- 10
+why: Size equals rate times maximum delay, 800 times 10.
+q: Where should a request be rejected when the system is overloaded?
+- At the slowest stage
+- At the database
+* At the entry point, where a reject is cheap and clear
+- Nowhere, the queue should absorb it
+why: A reject at the edge costs almost nothing and gives the user a clear error at once.
+q: Which hidden queue most often grows without limit?
+- The TCP receive buffer
+- A Kafka partition
+* A retry queue in front of a failing dependency
+- A thread pool
+why: When the dependency is down every retry fails and goes back on the queue, so it grows until memory runs out.
+:::
 
 ## Go further
 
@@ -2612,6 +4542,7 @@ The Reactive Streams specification defines credit-based back-pressure in four in
       slug: 'reliability',
       title: 'Reliability',
       description: 'Timeouts, retries, circuit breakers, load shedding, and the latency tail.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'timeouts-and-retries',
@@ -2740,6 +4671,66 @@ Retry only idempotent calls. An idempotent call has the same effect when run twi
 
 Retry only at one level of the chain, usually the one nearest the user. Lower levels should fail fast and let the top level decide.
 
+The script below prints the backoff schedule with full jitter, the load on B from the example, and the amplification over 4 levels.
+
+:::code
+lang: python
+file: retries.py
+import random
+
+def backoff_ms(attempt, base=100, cap=10_000):
+    return min(cap, base * pow(2, attempt))
+
+random.seed(1)
+for n in range(4):
+    full = backoff_ms(n)
+    print(f"attempt {n}: wait {full} ms, with full jitter {random.uniform(0, full):.0f} ms")
+
+def load_on_b(calls, failure_rate, retries):
+    extra = sum(pow(failure_rate, k) for k in range(1, retries + 1))
+    return calls * (1 + extra)
+
+for fail in (0.1, 0.8):
+    print(f"failure {fail:.0%}, 2 retries: B sees {load_on_b(1000, fail, 2):.0f} calls per second")
+
+budget = 0.10
+print(f"with a {budget:.0%} retry budget B sees at most {1000 * (1 + budget):.0f}")
+print(f"amplification over 4 levels: 3 attempts each {pow(3, 4)}, with the budget {pow(1.1, 4):.2f}")
+:::
+
+:::code
+lang: text
+attempt 0: wait 100 ms, with full jitter 13 ms
+attempt 1: wait 200 ms, with full jitter 169 ms
+attempt 2: wait 400 ms, with full jitter 306 ms
+attempt 3: wait 800 ms, with full jitter 204 ms
+failure 10%, 2 retries: B sees 1110 calls per second
+failure 80%, 2 retries: B sees 2440 calls per second
+with a 10% retry budget B sees at most 1100
+amplification over 4 levels: 3 attempts each 81, with the budget 1.46
+:::
+
+## Try it
+
+:::exercise
+title: Set the timeout and count the retries
+task: Service B has a measured p99.9 latency of 450 ms. Choose a timeout for A. Then compute the failure rate after 1 retry when 5 percent of calls fail. Then A sends 2,000 calls per second and B fails 50 percent of them. Compute the load on B with 3 retries and with a 10 percent retry budget.
+hint: The timeout goes slightly above the p99.9. The failure rate after retries is the per-call rate to the power of the attempts. Extra calls are the sum of the failure rate to the power 1, 2, and 3.
+lang: python
+solution:
+p999_ms = 450
+timeout_ms = 500                                            # slightly above the p99.9
+print(f"timeout {timeout_ms} ms")
+
+fail = 0.05
+print(f"failure after 1 retry: {pow(fail, 2):.2%}")         # 0.25 percent
+
+calls, fail, retries = 2000, 0.5, 3
+extra = sum(pow(fail, k) for k in range(1, retries + 1))    # 0.5 + 0.25 + 0.125
+print(f"load on B with 3 retries: {calls * (1 + extra):.0f}")          # 3,750
+print(f"load on B with a 10 percent budget: {calls * 1.1:.0f}")       # 2,200
+:::
+
 ## Common mistakes
 
 - Mistake: set the timeout equal to the mean latency. Fix: set it above the p99.9, or you cancel good calls and retry them.
@@ -2749,9 +4740,47 @@ Retry only at one level of the chain, usually the one nearest the user. Lower le
 
 ## Check your understanding
 
-- A call fails 5 percent of the time. What is the failure rate with 1 retry? 0.25 percent.
-- Why add jitter to backoff? So clients that failed together do not retry together.
-- What does a 10 percent retry budget do? It caps retries at 10 percent of the normal call rate.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: timeouts and retries
+q: A call fails 5 percent of the time. What is the failure rate with 1 retry?
+- 5 percent
+- 2.5 percent
+* 0.25 percent
+- 10 percent
+why: Both attempts must fail, and 0.05 times 0.05 is 0.0025.
+q: Why add jitter to backoff?
+- It shortens the waits
+* So clients that failed together do not retry together
+- It reduces the number of retries
+- It makes the timeout adaptive
+why: Without jitter, 1,000 clients that failed at the same instant all retry at the same instant and overload the callee again.
+q: What does a 10 percent retry budget do?
+- It retries 10 times
+* It caps retries at 10 percent of the normal call rate
+- It waits 10 percent longer each attempt
+- It retries only 10 percent of the calls
+why: Above the budget, failed calls are not retried, so a failing callee never sees more than 1.1 times the normal load.
+q: A sends 1,000 calls per second, B fails 50 percent, and A retries up to 2 times. How many calls reach B?
+- 1,500
+* 1,750
+- 2,000
+- 3,000
+why: Extra calls are 1,000 times (0.5 plus 0.25), so B sees 1,000 plus 750.
+q: From which number do you set a timeout?
+- The mean latency of the callee
+- The p50 of the callee
+* Slightly above the p99.9 of the callee
+- The longest latency ever observed
+why: A timeout above the p99.9 cancels fewer than 0.1 percent of good calls while still bounding the wait.
+q: Which call is safe to retry?
+- Create an order with no request id
+- Charge a card with no request id
+* A read, or a write that carries a unique request id
+- Append a line to a log
+why: A retry repeats the call, so the callee must be able to detect a repeat or the call must have no side effect.
+:::
 
 ## Go further
 
@@ -2871,6 +4900,79 @@ A bulkhead is a related pattern. It gives each dependency its own thread pool or
 
 A retry budget limits extra load. A breaker removes load. The budget acts per call. The breaker acts per dependency.
 
+The script below is a circuit breaker with the numbers from the example, driven by a simulated clock. R is down until second 91.
+
+:::code
+lang: python
+file: breaker.py
+class Breaker:
+    def __init__(self, window=100, threshold=0.5, open_s=30, probes=10):
+        self.window, self.threshold, self.open_s, self.probes = window, threshold, open_s, probes
+        self.state, self.results, self.opened_at, self.probe_ok = "closed", [], None, 0
+
+    def call(self, now, dependency):
+        if self.state == "open":
+            if now - self.opened_at < self.open_s:
+                return "fallback"
+            self.state, self.probe_ok = "half-open", 0
+        ok = dependency(now)
+        if self.state == "half-open":
+            if not ok:
+                self.state, self.opened_at = "open", now
+                return "probe failed"
+            self.probe_ok += 1
+            if self.probe_ok >= self.probes:
+                self.state, self.results = "closed", []
+            return "ok"
+        self.results = (self.results + [ok])[-self.window:]
+        failures = self.results.count(False) / self.window
+        if len(self.results) == self.window and failures >= self.threshold:
+            self.state, self.opened_at = "open", now
+        return "ok" if ok else "error"
+
+def recommendation_service(now):
+    return now >= 91                           # down until second 91
+
+b = Breaker()
+for second in (0, 1, 2, 31, 32, 61, 91, 92):
+    outcomes = [b.call(second + i / 500, recommendation_service) for i in range(500)]
+    reached_r = sum(1 for o in outcomes if o != "fallback")
+    print(f"second {second:3d}: state {b.state:9s} calls that reached R {reached_r:3d}")
+:::
+
+:::code
+lang: text
+second   0: state open      calls that reached R 100
+second   1: state open      calls that reached R   0
+second   2: state open      calls that reached R   0
+second  31: state open      calls that reached R   1
+second  32: state open      calls that reached R   0
+second  61: state open      calls that reached R   1
+second  91: state closed    calls that reached R 500
+second  92: state closed    calls that reached R 500
+:::
+
+## Try it
+
+:::exercise
+title: Count the calls and size the bulkhead
+task: R is down for 2 full minutes. Compute how many calls reach R from A in those 2 minutes without a breaker, and with the breaker from the example, which opens after 100 failures and sends 10 probes every 30 seconds. Then A has 200 threads and wants R to hold at most 10 percent of them. Compute the bulkhead size, and by Little's law the calls per second to R that the bulkhead allows during an outage with a 1 second timeout.
+hint: Without a breaker every call reaches R. With the breaker, count the first window plus the probes at seconds 31, 61, and 91. The bulkhead allows threads divided by the time each call holds a thread.
+lang: python
+solution:
+calls_per_s, outage_s = 500, 120
+without = calls_per_s * outage_s                          # 60,000
+probe_rounds = 3                                          # at seconds 31, 61, and 91
+with_breaker = 100 + 10 * probe_rounds                    # 100 calls to trip, then 10 probes per round
+print(f"without a breaker {without:,} calls, with the breaker {with_breaker} calls")
+
+threads = 200
+bulkhead = int(threads * 0.10)                            # 20 threads
+timeout_s = 1
+allowed_per_s = bulkhead / timeout_s                      # 20 calls per second to R
+print(f"bulkhead {bulkhead} threads, at most {allowed_per_s:.0f} calls per second to R during the outage")
+:::
+
 ## Common mistakes
 
 - Mistake: count client errors as failures. Fix: count only timeouts and server errors, or a bad request from one user opens the breaker for all.
@@ -2880,9 +4982,47 @@ A retry budget limits extra load. A breaker removes load. The budget acts per ca
 
 ## Check your understanding
 
-- What does the open state do? It fails every call at once without calling the dependency.
-- What is the purpose of the half-open state? To test the dependency with a few calls before full traffic returns.
-- How does a bulkhead differ from a breaker? A bulkhead limits the threads one dependency can hold; a breaker stops calls when failures are high.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: circuit breakers
+q: What does the open state do?
+- It retries each call once
+* It fails every call at once without calling the dependency
+- It queues calls until the dependency returns
+- It slows calls down
+why: The caller returns a fallback in microseconds instead of waiting for the full timeout.
+q: What is the purpose of the half-open state?
+- To send half of the traffic
+* To test the dependency with a few calls before full traffic returns
+- To log the failures
+- To warm the cache
+why: A few probe calls show whether the dependency recovered, without sending the full load at once.
+q: How does a bulkhead differ from a breaker?
+- They are the same pattern
+* A bulkhead limits the threads one dependency can hold, and a breaker stops calls when failures are high
+- A bulkhead retries, a breaker does not
+- A bulkhead works on reads, a breaker on writes
+why: The bulkhead protects the thread pool even when calls succeed slowly, and the breaker removes load from a failing dependency.
+q: A calls R 500 times per second with a 1 second timeout and has 200 threads. How long after R fails are all threads blocked?
+* About 0.4 seconds
+- 1 second
+- 2.5 seconds
+- 200 seconds
+why: Threads fill at 500 per second, and 200 divided by 500 is 0.4 seconds.
+q: Should the breaker count 4xx responses as failures?
+- Yes, every error counts
+* No, they are the caller's fault and the dependency is healthy
+- Only 404
+- Only when they exceed 50 percent
+why: One client that sends bad requests would otherwise open the breaker for every client.
+q: What goes wrong with an open duration of 1 second?
+- The breaker never opens
+* The breaker flaps, and the dependency gets no time to recover
+- The fallback is served too long
+- The probes never run
+why: Every second the probes hit the dependency, and the breaker opens and closes in a loop.
+:::
 
 ## Go further
 
@@ -3000,6 +5140,61 @@ Health checks and retries from clients must count as load. Serve the health chec
 
 Caution: a server that sheds 50 percent of traffic looks broken on a dashboard. Record shed requests as a separate metric, not as errors, and make the alert say "overload".
 
+The script below simulates the overloaded server in steps of 0.1 seconds, with and without a queue limit, and reports the goodput.
+
+:::code
+lang: python
+file: shedding.py
+def simulate(offered, capacity, deadline_s, queue_limit=None, seconds=5, dt=0.1):
+    queue = 0
+    good = rejected = wasted = 0
+    for _ in range(int(seconds / dt)):
+        arrivals = offered * dt
+        if queue_limit is not None:
+            room = max(0, queue_limit - queue)
+            rejected += max(0, arrivals - room)         # 503 in microseconds
+            arrivals = min(arrivals, room)
+        wait = queue / capacity                         # seconds a new request waits
+        queue += arrivals
+        served = min(queue, capacity * dt)
+        if wait <= deadline_s:
+            good += served
+        else:
+            wasted += served                            # the client already gave up
+        queue -= served
+    return good / seconds, rejected / seconds, wasted / seconds
+
+for limit in (None, 100):
+    good, rejected, wasted = simulate(2000, 1000, 1.0, limit)
+    print(f"queue limit {str(limit):4s}: goodput {good:4.0f}, rejected {rejected:4.0f}, wasted {wasted:4.0f} per second")
+:::
+
+:::code
+lang: text
+queue limit None: goodput  220, rejected    0, wasted  780 per second
+queue limit 100 : goodput 1000, rejected 1000, wasted    0 per second
+:::
+
+Over a longer run the goodput without a limit falls toward 0, because every request waits longer than the deadline.
+
+## Try it
+
+:::exercise
+title: Set the limit and the priorities
+task: A server completes 1,000 requests per second and the target latency is 100 ms. Compute the concurrency limit with 20 percent headroom. Then 2,500 requests per second arrive: 1,800 feed reads and 700 payments. With the server at capacity, compute how many of each class complete when the server sheds the lowest class first, and how many feed reads are shed.
+hint: The limit is capacity times target latency times 1.2. Payments go first, and the feed reads get what capacity remains.
+lang: python
+solution:
+capacity, target_s = 1000, 0.1
+limit = capacity * target_s * 1.2                        # 120 requests in flight
+print(f"concurrency limit {limit:.0f}")
+
+feed, payments = 1800, 700
+payments_done = min(payments, capacity)                  # 700
+feed_done = min(feed, capacity - payments_done)          # 300
+print(f"payments {payments_done}, feed reads {feed_done}, feed reads shed {feed - feed_done}")
+:::
+
 ## Common mistakes
 
 - Mistake: accept every request and let the queue grow. Fix: bound the queue, because an unbounded queue drives goodput to zero.
@@ -3009,9 +5204,47 @@ Caution: a server that sheds 50 percent of traffic looks broken on a dashboard. 
 
 ## Check your understanding
 
-- What is goodput? The rate of requests that complete within their deadline.
-- Why does a 1-second client timeout make an overloaded server useless? Every request waits longer than that, so the server works on abandoned requests.
-- Which signal reacts fastest to overload? Concurrency or queue wait time.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: load shedding and admission control
+q: What is goodput?
+- The number of requests the server accepts
+* The rate of requests that complete within their deadline
+- The CPU utilisation of the server
+- The number of requests in the queue
+why: Work on a request the client has abandoned is throughput but not goodput.
+q: Why does a 1 second client timeout make an overloaded server useless without shedding?
+- The server crashes after 1 second
+* Every request waits longer than 1 second, so the server works on abandoned requests
+- The clients stop sending
+- The queue empties too fast
+why: The queue grows until the wait passes the timeout, and from then on every completed request is wasted.
+q: Which signal reacts fastest to overload?
+- CPU use
+* Concurrency or queue wait time
+- Memory use
+- The error rate
+why: By Little's law concurrency rises the instant latency rises, while CPU and memory lag behind.
+q: The queue limit is 100 and each request takes 1 ms. What is the maximum queue wait?
+- 1 ms
+- 10 ms
+* 100 ms
+- 1 second
+why: The last request in a queue of 100 waits for 100 requests at 1 ms each.
+q: Where is the cheapest place to shed a request?
+- After the database call
+- In the deepest service
+* At the edge, before any work is done
+- At random points in the chain
+why: A reject at the load balancer costs microseconds, while a reject after the database wasted the whole request.
+q: How should shed requests appear on a dashboard?
+- As errors
+- As successes
+* As a separate overload metric
+- They should not be recorded
+why: Shedding is the system working as designed, and an alert that says "overload" leads to the right action.
+:::
 
 ## Go further
 
@@ -3141,6 +5374,57 @@ Measure the tail with a histogram, such as HdrHistogram, and record p99, p99.9, 
 
 Caution: hedging a non-idempotent call runs it twice. Hedge reads only, or carry a request id.
 
+The script below computes the fan-out rule for the three cases and then simulates 2,000 fan-out requests with and without hedging.
+
+:::code
+lang: python
+file: tail.py
+import random
+
+def p_slow(per_server_tail, fan_out):
+    return 1 - pow(1 - per_server_tail, fan_out)
+
+for p, n in ((0.01, 10), (0.01, 100), (0.0001, 100)):
+    print(f"fan-out {n:3d}, per-server tail {p:.2%}: {p_slow(p, n):.0%} of users wait")
+
+random.seed(5)
+
+def one_call():
+    return 1000.0 if random.random() < 0.01 else 10.0     # ms
+
+def request(fan_out=100, hedge_after=None):
+    worst = 0.0
+    for _ in range(fan_out):
+        t = one_call()
+        if hedge_after is not None and t > hedge_after:
+            t = min(t, hedge_after + one_call())            # a second copy on another replica
+        worst = max(worst, t)
+    return worst
+
+for hedge in (None, 20):
+    samples = sorted(request(hedge_after=hedge) for _ in range(2000))
+    print(f"hedge after {hedge} ms: user p50 {samples[1000]:.0f} ms, user p99 {samples[1980]:.0f} ms")
+:::
+
+## Try it
+
+:::exercise
+title: Fan-out arithmetic
+task: A feed fans out to 50 shards. Each shard has a 1 percent tail. Compute the fraction of user requests that hit the tail. Then compute the per-shard tail that gives a 1 percent user tail at fan-out 50. Finally, hedging starts at the shard p95; compute the extra load it adds, and the extra load if the hedge delay were 0.
+hint: The user tail is 1 minus (1 minus p) to the power n. For a small target, p is about the target divided by n.
+lang: python
+solution:
+n, p = 50, 0.01
+user_tail = 1 - pow(1 - p, n)                      # 0.395
+print(f"users that hit the tail: {user_tail:.0%}")
+
+target = 0.01
+needed = target / n                                 # 0.0002
+print(f"per-shard tail for a 1 percent user tail: {needed:.2%}")
+
+print("hedge at the p95: about 5 percent extra load; hedge at 0 ms: 100 percent extra load")
+:::
+
 ## Common mistakes
 
 - Mistake: judge a server by its p99 when it serves a fan-out. Fix: track p99.9 and p99.99, because those set the user latency.
@@ -3150,9 +5434,47 @@ Caution: hedging a non-idempotent call runs it twice. Hedge reads only, or carry
 
 ## Check your understanding
 
-- With fan-out 50 and a 1 percent per-server tail, what fraction of user requests hit the tail? About 39 percent.
-- What per-server tail does a 1 percent user tail need at fan-out 100? About 0.01 percent.
-- How much load does hedging at the p95 add? About 5 percent.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: tail latency
+q: With fan-out 50 and a 1 percent per-server tail, what fraction of user requests hit the tail?
+- About 1 percent
+* About 39 percent
+- About 50 percent
+- About 63 percent
+why: 0.99 to the power 50 is 0.605, so 39.5 percent of requests wait for at least one slow server.
+q: What per-server tail does a 1 percent user tail need at fan-out 100?
+- 1 percent
+- 0.1 percent
+* About 0.01 percent
+- 0.001 percent
+why: The per-server tail must be about the target divided by the fan-out, 0.01 divided by 100.
+q: How much extra load does hedging at the p95 add?
+- About 1 percent
+* About 5 percent
+- About 50 percent
+- About 100 percent
+why: Only the 5 percent of calls slower than the p95 get a second copy.
+q: Why is a hedge delay of 0 a mistake?
+- The hedge arrives too late
+* It sends every call twice and doubles the load
+- The second replica is always slower
+- It breaks the ordering of replies
+why: Hedging must wait until a call looks slow, or every call costs two calls.
+q: Which is a common cause of a long tail in one server?
+- A cache that is too warm
+* A garbage collection pause
+- A fan-out that is too small
+- A p50 that is too low
+why: Pauses of 50 to 500 ms stop every request on the server at once and show up only in the tail.
+q: What does returning a partial result mean for a fan-out?
+- Returning the first shard only
+* Returning after 95 percent of shards reply instead of waiting for the slowest
+- Returning a cached result
+- Returning an error after the deadline
+why: A feed from 95 of 100 shards is still a feed, and the user never waits for the slowest shard.
+:::
 
 ## Go further
 
@@ -3165,6 +5487,7 @@ The Google SRE book chapter on monitoring explains why to track latency as a dis
       slug: 'case-studies',
       title: 'Case studies',
       description: 'Four end-to-end designs that use every module: a URL shortener, a chat service, a feed, and an LLM gateway.',
+      level: 'intermediate',
       lessons: [
         {
           slug: 'url-shortener',
@@ -3193,6 +5516,11 @@ A URL shortener takes a long URL and returns a short one. A visit to the short o
 ## Why it matters
 
 The shortener is the standard first design question. It has one write path and one read path, and the read path is 100 times hotter. Every decision here, from the key format to the cache size, comes up again in bigger systems. If you can size and defend this design, you can do the same for a feed or a gateway.
+
+:::video
+id: -MTSQjw5DrM
+why: Watch all 2 minutes. Note the GET and POST verbs and the status codes, which the shortener uses for its redirect and its create call.
+:::
 
 ## The idea with an example
 
@@ -3278,6 +5606,72 @@ Availability. Run the store with 3 replicas. Run the cache with consistent hashi
 
 Note: the write path can also carry a custom alias chosen by the user. Check it with a compare-and-set on the key, so two users cannot claim the same alias.
 
+The script below encodes an id in base62, decodes it back, counts the key space, and runs the write path with a local id range.
+
+:::code
+lang: python
+file: shortener.py
+ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+def encode(n, width=7):
+    out = ""
+    while n:
+        n, r = divmod(n, 62)
+        out = ALPHABET[r] + out
+    return out.rjust(width, "0")
+
+def decode(key):
+    n = 0
+    for ch in key:
+        n = n * 62 + ALPHABET.index(ch)
+    return n
+
+print(encode(1000), decode(encode(1000)))
+print(f"7 characters give {pow(62, 7):,} keys, 6 characters give {pow(62, 6):,}")
+
+store = {}
+next_id = 1000                           # the start of this server's local range
+
+def shorten(url):
+    global next_id
+    key = encode(next_id)
+    next_id += 1
+    store[key] = url
+    return key
+
+key = shorten("https://example.com/a/very/long/path")
+print(key, "->", store[key])
+:::
+
+:::code
+lang: text
+00000g8 1000
+7 characters give 3,521,614,606,208 keys, 6 characters give 56,800,235,584
+00000g8 -> https://example.com/a/very/long/path
+:::
+
+## Try it
+
+:::exercise
+title: Re-estimate for a bigger shortener
+task: Repeat the estimate for 500 million new links per month, each read 50 times, kept for 3 years, with 600 bytes per row. Compute the average and peak write QPS with a peak factor of 3, the average and peak read QPS, the storage after 3 years, and whether 7 base62 characters are enough for the number of rows.
+hint: A month has 2.6 million seconds. Reads are 50 times the writes. Rows after 3 years are 36 times the monthly count.
+lang: python
+solution:
+links_per_month = 500_000_000
+reads_per_link, years, row_bytes, peak = 50, 3, 600, 3
+seconds_per_month = 2_600_000
+
+write_qps = links_per_month / seconds_per_month                   # 192
+read_qps = write_qps * reads_per_link                             # 9,600
+rows = links_per_month * 12 * years                               # 18 billion
+storage_tb = rows * row_bytes / 1e12                              # 10.8 TB
+print(f"writes {write_qps:.0f} per second, {write_qps * peak:.0f} at peak")
+print(f"reads {read_qps:.0f} per second, {read_qps * peak:.0f} at peak")
+print(f"{rows / 1e9:.0f} billion rows, {storage_tb:.1f} TB")
+print("7 characters enough:", rows < pow(62, 7))                 # True, 3.5 trillion keys
+:::
+
 ## Common mistakes
 
 - Mistake: generate keys from a hash and skip the collision check. Fix: check the key, or two URLs share a short link.
@@ -3287,9 +5681,47 @@ Note: the write path can also carry a custom alias chosen by the user. Check it 
 
 ## Check your understanding
 
-- How many keys does a 6-character base62 key give? About 57 billion.
-- Why pre-allocate id ranges? So each server generates keys without a call to the central counter per write.
-- What is the write-to-read ratio in this design? About 1 to 100.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: design a URL shortener
+q: How many keys does a 6-character base62 key give?
+- About 62 million
+* About 57 billion
+- About 3.5 trillion
+- About 6 billion
+why: 62 to the power 6 is 56.8 billion.
+q: Why pre-allocate id ranges to each server?
+- To make the keys shorter
+* So each server generates keys without a call to the central counter per write
+- To keep the keys sorted
+- To avoid base62
+why: A block of 1,000 ids per server turns 1,000 central calls into 1.
+q: What is the write-to-read ratio in this design?
+- 1 to 1
+- 100 to 1
+* 1 to 100
+- 1 to 10
+why: Each link is written once and read about 100 times over its life.
+q: 100 million new links per month is about how many writes per second?
+- 4
+* 40
+- 400
+- 1,000
+why: 100 million divided by 2.6 million seconds is about 38.
+q: Why return a 302 and not a 301?
+- A 301 is slower
+* A 302 brings every visit through the service, so you can count visits and change the target
+- A 301 is not cached
+- There is no difference
+why: A 301 tells the browser to cache the redirect forever, so later visits never reach the service.
+q: One link goes viral and gets 50,000 reads per second. What is the fix?
+- A bigger database
+* A local in-process cache with a 1 second time to live on each web server
+- A 301 redirect
+- More cache nodes
+why: The link is one key on one cache node, so the fix is the hot key fix: cache it on every web server for a second.
+:::
 
 ## Go further
 
@@ -3408,6 +5840,63 @@ Delivery guarantees. The client acknowledges each message. If no acknowledgement
 
 Note: a connection server that restarts drops 100,000 connections at once. Clients reconnect with exponential backoff and jitter, or 100,000 reconnects in one second overload the registry.
 
+The script below generates sortable message ids in the Snowflake layout and groups a fan-out by connection server.
+
+:::code
+lang: python
+file: chat_ids.py
+import time
+from collections import defaultdict
+
+EPOCH_MS = 1_600_000_000_000
+sequence, last_ms = 0, 0
+
+def next_message_id(server_id):
+    # 41 bits of time, 10 bits of server, 12 bits of sequence, sortable by time
+    global sequence, last_ms
+    now = int(time.time() * 1000) - EPOCH_MS
+    sequence = (sequence + 1) & 0xFFF if now == last_ms else 0
+    last_ms = now
+    return (now << 22) | (server_id << 12) | sequence
+
+a, b = next_message_id(12), next_message_id(12)
+print("ids sort by time:", a < b, a, b)
+
+presence = {"alice": 12, "bob": 47, "carol": 47, "dave": None}    # user -> server
+
+def fan_out(members):
+    by_server = defaultdict(list)
+    offline = []
+    for user in members:
+        server = presence.get(user)
+        (offline if server is None else by_server[server]).append(user)
+    return dict(by_server), offline
+
+pushes, offline = fan_out(["bob", "carol", "dave"])
+print("one internal message per server:", pushes)
+print("store as undelivered and notify:", offline)
+:::
+
+## Try it
+
+:::exercise
+title: Re-estimate the chat service
+task: Repeat the estimate for 80 million daily users with 20 million online at peak. Each user sends 100 messages per day. A connection server holds 150,000 connections at 8 KB each. The average group size is 3. Compute the connection servers with 25 percent headroom, the memory per server for connections, the average and peak message rate with a peak factor of 3, and the push rate at peak.
+hint: Servers equal online users divided by connections per server, times 1.25. Pushes equal messages times the group size.
+lang: python
+solution:
+daily_users, online, per_server, kb_per_conn = 80_000_000, 20_000_000, 150_000, 8
+messages_per_user, group, peak = 100, 3, 3
+
+servers = online / per_server * 1.25                        # 167
+memory_gb = per_server * kb_per_conn / 1e6                  # 1.2 GB
+messages_per_s = daily_users * messages_per_user / 86_400   # 92,593
+peak_messages = messages_per_s * peak                       # 277,778
+pushes = peak_messages * group                              # 833,333
+print(f"{servers:.0f} connection servers, {memory_gb:.1f} GB of connection memory each")
+print(f"{messages_per_s:,.0f} messages per second, {peak_messages:,.0f} at peak, {pushes:,.0f} pushes per second")
+:::
+
 ## Common mistakes
 
 - Mistake: poll for new messages over HTTP every second. Fix: use a WebSocket, because 10 million polls per second is 100 times the message rate.
@@ -3417,9 +5906,47 @@ Note: a connection server that restarts drops 100,000 connections at once. Clien
 
 ## Check your understanding
 
-- How many connection servers does 10 million users need at 100,000 per server? 100, plus headroom.
-- What does the presence registry map? A user id to the server that holds that user's connection.
-- Why must the chat client deduplicate messages? The server resends after a missing acknowledgement, so repeats happen.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: design a chat service
+q: How many connection servers do 10 million users need at 100,000 connections per server?
+- 10
+- 50
+* 100, plus headroom
+- 1,000
+why: 10 million divided by 100,000 is 100, and the design adds 50 more for headroom.
+q: What does the presence registry map?
+- A user id to the list of friends
+* A user id to the server that holds that user's connection
+- A message id to a server
+- A server to its load
+why: Server 12 must find that user B is on server 47 to deliver the message.
+q: Why must the chat client deduplicate messages?
+- Clients send each message twice
+* The server resends after a missing acknowledgement, so repeats happen
+- The store returns duplicates
+- Group messages arrive once per member
+why: Delivery is at-least-once, so the client skips a message id it has already shown.
+q: 70,000 messages per second with an average group size of 5 gives how many pushes per second?
+- 14,000
+- 70,000
+* 350,000
+- 3.5 million
+why: Each message is pushed to every member of its group, 70,000 times 5.
+q: Which message id design gives a defined order across devices?
+- A random UUID
+- The client clock
+* A server-assigned id with a timestamp in the high bits and a sequence number in the low bits
+- A counter per client
+why: Server-assigned ids sort by time and break ties with the sequence, while client clocks drift.
+q: Why add a time bucket to the conversation partition key?
+- It makes writes faster
+* Partitions stay small instead of growing forever
+- It orders messages
+- It reduces the number of servers
+why: A partition that holds years of messages grows past a few hundred megabytes and becomes slow and hard to move.
+:::
 
 ## Go further
 
@@ -3535,6 +6062,67 @@ Inactive users. A user who has not opened the app in 30 days does not need a tim
 | Fan-out on read | 1 write | 300 reads | Celebrities, inactive users |
 | Hybrid | Mixed | About 10 reads | Everyone |
 
+The script below is the hybrid feed in 30 lines: normal users fan out on write, celebrities fan out on read, and the feed merges both.
+
+:::code
+lang: python
+file: feed.py
+from collections import defaultdict
+
+CELEBRITY = 10_000                          # followers above this fan out on read
+timelines = defaultdict(list)               # user -> newest post ids
+celebrity_posts = defaultdict(list)         # author -> post ids
+followers = {"ada": ["u1", "u2", "u3"], "star": [f"u{i}" for i in range(50_000)]}
+follows = {"u1": ["ada", "star"]}
+
+def post(author, post_id):
+    if len(followers[author]) > CELEBRITY:
+        celebrity_posts[author].append(post_id)      # 1 write
+        return 1
+    for f in followers[author]:                       # fan-out on write
+        timelines[f].insert(0, post_id)
+        del timelines[f][500:]
+    return len(followers[author])
+
+def feed(user):
+    ids = list(timelines[user])
+    for author in follows[user]:
+        if len(followers[author]) > CELEBRITY:
+            ids += celebrity_posts[author][-10:]      # fan-out on read, a few lookups
+    return sorted(ids, reverse=True)[:50]             # newest first, then rank
+
+print("timeline writes for ada's post:", post("ada", 101))
+print("timeline writes for star's post:", post("star", 102))
+print("feed of u1:", feed("u1"))
+:::
+
+:::code
+lang: text
+timeline writes for ada's post: 3
+timeline writes for star's post: 1
+feed of u1: [102, 101]
+:::
+
+## Try it
+
+:::exercise
+title: Re-estimate the feed
+task: Repeat the estimate for 50 million daily users who each follow 200 accounts, post 3 times per day, and load the feed 15 times per day. Use a peak factor of 3. Compute the peak timeline writes per second for fan-out on write, the peak lookups per second for fan-out on read, and the timeline storage at 500 post ids of 8 bytes per user.
+hint: Posts per second times followers gives the writes. Feed loads per second times follows gives the lookups.
+lang: python
+solution:
+users, follows, posts_per_day, loads_per_day, peak = 50_000_000, 200, 3, 15, 3
+
+posts_per_s = users * posts_per_day / 86_400 * peak            # 5,208 at peak
+writes_per_s = posts_per_s * follows                            # 1.04 million
+loads_per_s = users * loads_per_day / 86_400 * peak             # 26,042 at peak
+lookups_per_s = loads_per_s * follows                           # 5.2 million
+storage_gb = users * 500 * 8 / 1e9                              # 200 GB
+print(f"fan-out on write: {writes_per_s:,.0f} timeline writes per second at peak")
+print(f"fan-out on read: {lookups_per_s:,.0f} lookups per second at peak")
+print(f"timeline storage {storage_gb:.0f} GB")
+:::
+
 ## Common mistakes
 
 - Mistake: fan out on write for every account. Fix: fan out on read for accounts with many followers.
@@ -3544,9 +6132,47 @@ Inactive users. A user who has not opened the app in 30 days does not need a tim
 
 ## Check your understanding
 
-- A user with 2,000 followers posts. How many timeline writes does fan-out on write cause? 2,000.
-- Why does a celebrity post fan out on read? 50 million timeline writes per post would take minutes and block other posts.
-- What does a timeline store? A list of post ids, not post bodies.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: design a news feed
+q: A user with 2,000 followers posts. How many timeline writes does fan-out on write cause?
+- 1
+- 300
+- 500
+* 2,000
+why: The post id goes into the timeline of every follower.
+q: Why does a celebrity post fan out on read?
+- Celebrities post more often
+* 50 million timeline writes per post would take minutes and block other posts
+- Their posts are larger
+- Their followers are inactive
+why: At 100,000 writes per second, 50 million writes take 500 seconds and fill the fan-out queue.
+q: What does a timeline store?
+- Full post bodies
+* A list of post ids
+- The follower list
+- The ranked feed
+why: Ids are 8 bytes each, and the bodies are fetched in one batch call at read time.
+q: 7,000 posts per second with 300 followers each gives how many timeline writes per second?
+- 21,000
+- 210,000
+* 2.1 million
+- 7,300
+why: 7,000 times 300 is 2,100,000 writes per second.
+q: Where does ranking run?
+- At write time in the fan-out worker
+* At read time on the merged candidates
+- In the database
+- On the client
+why: Ranking at read time uses the current model and the current state of the user for every feed load.
+q: What happens to users who have not opened the app in 30 days?
+- They get a larger timeline
+* The fan-out skips them and rebuilds their timeline on read when they return
+- Their posts are deleted
+- They fan out on read forever
+why: Skipping inactive users cuts fan-out writes by more than half without changing what they see.
+:::
 
 ## Go further
 
@@ -3580,6 +6206,11 @@ An LLM serving gateway sits between clients and a fleet of model replicas on gra
 ## Why it matters
 
 A GPU replica is the most expensive server in the stack. The gateway is where you spend the GPU budget well.
+
+:::video
+id: 7t2alSnE2-I
+why: Watch the first 20 minutes. It builds the kind of HTTP server that the gateway in this lesson is, with routes and request handling that the design below adds limits and streaming to.
+:::
 
 ## The idea with an example
 
@@ -3688,6 +6319,87 @@ Prefill and decode separation. Prefill is compute-bound and decode is memory-bou
 
 Caution: a client that sends a 100,000-token prompt takes 32 GB of KV cache on its own. Cap the prompt length at the gateway, and count prompt tokens before you route.
 
+The script below runs the sizing arithmetic from the KV cache to the GPU count. Change the inputs for another model or another traffic level.
+
+:::code
+lang: python
+file: fleet.py
+gpu_gb, gpus_per_replica = 80, 2
+weights_gb = 140
+kv_kb_per_token = 320
+prompt_tokens, answer_tokens = 1000, 300
+tokens_per_s_per_request = 40
+peak_rps = 1000
+headroom = 0.30
+
+kv_gb = gpu_gb * gpus_per_replica - weights_gb
+tokens_in_flight = kv_gb * 1e6 / kv_kb_per_token
+concurrent = tokens_in_flight / (prompt_tokens + answer_tokens)
+seconds_per_request = answer_tokens / tokens_per_s_per_request
+rps_per_replica = concurrent / seconds_per_request          # Little's law
+replicas = peak_rps / rps_per_replica
+with_headroom = replicas * (1 + headroom)
+
+print(f"KV cache {kv_gb} GB holds {tokens_in_flight:,.0f} tokens")
+print(f"{concurrent:.0f} concurrent requests of {seconds_per_request} s each")
+print(f"{rps_per_replica:.1f} requests per second per replica")
+print(f"{replicas:.0f} replicas, {with_headroom:.0f} with headroom, {with_headroom * gpus_per_replica:.0f} GPUs")
+:::
+
+:::code
+lang: text
+KV cache 20 GB holds 62,500 tokens
+48 concurrent requests of 7.5 s each
+6.4 requests per second per replica
+156 replicas, 203 with headroom, 406 GPUs
+:::
+
+The gateway settings from this section fit in one configuration file.
+
+:::code
+lang: yaml
+file: gateway.yaml
+routing:
+  policy: most_free_kv_cache
+  prefix_aware: true
+admission:
+  max_queue_per_replica: 8
+  reject_status: 429
+  retry_after_seconds: 2
+limits:
+  max_prompt_tokens: 8000
+  per_client_tokens_per_minute: 200000
+timeouts:
+  time_to_first_token_seconds: 2
+  time_between_tokens_seconds: 5
+priority:
+  interactive: 1
+  batch: 2
+:::
+
+## Try it
+
+:::exercise
+title: Size a fleet for a smaller model
+task: Repeat the sizing for an 8-billion-weight model in 16-bit, which takes 16 GB, on one 80 GB GPU. The KV cache needs 128 KB per token. Each request has a 2,000-token prompt and a 500-token answer at 60 tokens per second. The peak is 500 requests per second. Compute the KV cache size, the tokens in flight, the concurrent requests, the requests per second per replica, and the replicas with 30 percent headroom.
+hint: Copy fleet.py and change the inputs. One GPU means gpus_per_replica is 1.
+lang: python
+solution:
+gpu_gb, gpus_per_replica, weights_gb = 80, 1, 16
+kv_kb_per_token = 128
+prompt_tokens, answer_tokens, tokens_per_s = 2000, 500, 60
+peak_rps, headroom = 500, 0.30
+
+kv_gb = gpu_gb * gpus_per_replica - weights_gb               # 64 GB
+tokens_in_flight = kv_gb * 1e6 / kv_kb_per_token             # 500,000
+concurrent = tokens_in_flight / (prompt_tokens + answer_tokens)   # 200
+seconds_per_request = answer_tokens / tokens_per_s           # 8.3 s
+rps_per_replica = concurrent / seconds_per_request           # 24
+replicas = peak_rps / rps_per_replica * (1 + headroom)       # 27
+print(f"KV {kv_gb} GB, {tokens_in_flight:,.0f} tokens, {concurrent:.0f} concurrent")
+print(f"{rps_per_replica:.0f} requests per second per replica, {replicas:.0f} replicas with headroom")
+:::
+
 ## Common mistakes
 
 - Mistake: size the fleet by compute alone. Fix: size by KV cache memory, because that sets concurrency.
@@ -3697,9 +6409,47 @@ Caution: a client that sends a 100,000-token prompt takes 32 GB of KV cache on i
 
 ## Check your understanding
 
-- A replica has 30 GB of KV cache and uses 250 KB per token. How many tokens fit? 120,000.
-- Why does admission control matter more for a GPU than for a web server? A GPU over its memory limit slows every request, and each request is seconds long.
-- When is a retry safe on a streaming request? Only before the first token reaches the client.
+Answer each question, then read the explanation.
+
+:::quiz
+title: Check: design an LLM serving gateway
+q: A replica has 30 GB of KV cache and uses 250 KB per token. How many tokens fit?
+- 12,000
+* 120,000
+- 1.2 million
+- 7,500
+why: 30 GB is 30 million KB, and divided by 250 KB per token that is 120,000 tokens.
+q: Why does admission control matter more for a GPU replica than for a web server?
+- GPUs are slower
+* A replica past its memory limit slows every request, and each request lasts seconds
+- Web servers have no queues
+- GPUs cannot return errors
+why: One oversized batch stalls dozens of multi-second requests at once, so the limit must hold at the door.
+q: When is a retry safe on a streaming request?
+- At any time
+* Only before the first token reaches the client
+- Only after the last token
+- Never
+why: After tokens have streamed, a retry would repeat text to the client.
+q: A replica holds 48 concurrent requests that take 7.5 seconds each. How many requests per second does it serve?
+- 360
+- 0.16
+* 6.4
+- 48
+why: By Little's law the rate is 48 divided by 7.5 seconds.
+q: Why set two timeouts instead of one total timeout?
+- One timeout is harder to configure
+* A long answer takes a minute by design, so one timeout catches a stuck prefill and the other a stalled decode
+- Two timeouts halve the latency
+- The client needs two headers
+why: A time to first token and a time between tokens each catch a real failure without cutting off a healthy long answer.
+q: A client sends a 100,000-token prompt at 320 KB per token. How much KV cache does it take?
+- 320 MB
+- 3.2 GB
+* 32 GB
+- 320 GB
+why: 100,000 times 320 KB is 32 million KB, which is 32 GB, more than the whole cache of one replica.
+:::
 
 ## Go further
 

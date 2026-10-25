@@ -8,11 +8,17 @@ export const track: Track = {
     'A preview track on embodied AI: how a robot sees, estimates its state, acts, and learns from demonstrations. Content is added weekly.',
   accent: 'var(--accent-robotics)',
   status: 'preview',
+  level: 'advanced',
+  order: 10,
+  audience: 'AI engineers who want to move from language models to robots that act in the world.',
+  outcome: 'Explain the modern robot learning stack and read current robotics papers.',
+  prerequisites: ['ai-research'],
   modules: [
     {
       slug: 'vla',
       title: 'Vision-language-action models',
       description: 'From web-scale pretraining to motor commands.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'what-is-a-vla',
@@ -150,6 +156,62 @@ At test time, the model outputs 7 tokens. The driver converts each token back to
 
 The main limits are speed and data. A 7-billion-weight model runs at about 5 to 10 actions per second on one high-end graphics card. Fine motor tasks need faster control. Robot data is also small. Open X-Embodiment, the largest open set, has about 1 million episodes. Web text has trillions of tokens.
 
+The snippet shows the conversion for the example action with a range of -1 to 1 and 256 bins. Run it with NumPy installed.
+
+:::code
+lang: python
+file: action_tokens.py
+import numpy as np
+
+action = np.array([0.01, -0.02, 0.00, 0.0, 0.0, 0.1, 1.0])
+low, high, bins = -1.0, 1.0, 256
+first_token = 32000  # start of the reserved token range
+
+# encode: clip, scale to 0..1, pick a bin index, add the offset
+clipped = np.clip(action, low, high)
+index = np.floor((clipped - low) / (high - low) * bins).astype(int)
+index = np.minimum(index, bins - 1)
+tokens = first_token + index
+print("tokens:", tokens.tolist())
+
+# decode: take the bin centre of each index
+centre = low + (index + 0.5) * (high - low) / bins
+print("decoded:", np.round(centre, 4).tolist())
+print("tokens per tick for a chunk of 5:", 5 * len(action))
+:::
+
+:::code
+lang: text
+tokens: [32129, 32125, 32128, 32128, 32128, 32140, 32255]
+decoded: [0.0117, -0.0195, 0.0039, 0.0039, 0.0039, 0.0977, 0.9961]
+tokens per tick for a chunk of 5: 35
+:::
+
+## Try it
+
+:::exercise
+title: Count the control ticks
+task: The gripper starts at x = 0.00 m, y = 0.00 m. The block is at x = 0.20 m, y = -0.40 m. At each tick the policy moves the gripper at most 1 cm along x and at most 2 cm along y toward the block. Write a loop that counts the ticks until the gripper is within 1 mm of the block. The answer is 20. Then halve both step sizes and run again. Predict the count before you run it.
+hint: At each tick move each coordinate by the smaller of the step size and the remaining distance. Stop when both remaining distances are below 0.001 m.
+lang: python
+solution:
+import numpy as np
+
+def ticks_to_reach(step, target):
+    gripper = np.zeros(2)
+    ticks = 0
+    while np.max(np.abs(target - gripper)) > 0.001:
+        remaining = target - gripper
+        move = np.sign(remaining) * np.minimum(np.abs(remaining), step)
+        gripper = gripper + move
+        ticks = ticks + 1
+    return ticks
+
+target = np.array([0.20, -0.40])
+print(ticks_to_reach(np.array([0.01, 0.02]), target))   # 20
+print(ticks_to_reach(np.array([0.005, 0.01]), target))  # 40
+:::
+
 ## Common mistakes
 
 - Mistake: treat the VLA model as a planner that outputs a full trajectory. Fix: the model outputs one action or a short chunk, and the loop runs again after each step.
@@ -159,9 +221,41 @@ The main limits are speed and data. A 7-billion-weight model runs at about 5 to 
 
 ## Check your understanding
 
-- What are the two main inputs to a VLA model? Camera images and a text instruction.
-- How many action tokens does a 7-dimensional action with 256 bins produce? 7 tokens, one per dimension.
-- Why does a VLA model start from a vision-language model? The VLM already connects images and words, so the robot inherits that knowledge.
+Answer the questions with the example robot arm in mind.
+
+:::quiz
+title: Check: what a VLA model is
+q: What are the two main inputs to a VLA model at each control tick?
+- A full 3D map and a planned path
+* A camera image and a text instruction
+- A joint angle list and a reward
+- A depth image and a grasp pose
+why: The model reads the current image and the instruction, and sometimes the previous actions, then writes the next action.
+q: How many action tokens does a 7-dimensional action with 256 bins produce for a chunk of 5 steps?
+- 7
+- 256
+* 35
+- 1280
+why: Each dimension becomes one token, so one action is 7 tokens and a chunk of 5 is 5 times 7, or 35 tokens.
+q: The model needs 200 ms per call and predicts one action per call. What is the highest control rate the loop can hold?
+- 10 actions per second
+* 5 actions per second
+- 20 actions per second
+- 200 actions per second
+why: One call takes 0.2 s, so the loop can run at most 1 / 0.2, or 5 times per second.
+q: Why does a VLA model start from a pretrained vision-language model?
+- The VLM already knows the robot's joint limits
+* The VLM already connects images and words, so the robot inherits that knowledge
+- The VLM runs faster than a model trained from scratch
+- The VLM output is already a 7-number action
+why: Web pretraining gives the model concepts such as "dog" or "red block" that the small robot dataset never covers.
+q: What does the model output at one control tick?
+- The full path from the gripper to the bowl
+* One action or a short chunk of actions
+- A success probability for the task
+- A new instruction for the planner
+why: The loop runs the model again after each step, so the model never has to plan the whole trajectory.
+:::
 
 ## Go further
 
@@ -291,6 +385,59 @@ The table compares the three output heads.
 
 Note: a diffusion head needs 10 or more denoising steps, so the model latency rises. Chunking makes up for the extra time.
 
+The snippet encodes the value 0.012 m from the example and decodes it again.
+
+:::code
+lang: python
+file: quantise.py
+low, high, bins = -0.05, 0.05, 256
+width = (high - low) / bins
+
+def encode(value):
+    index = int((min(max(value, low), high) - low) / width)
+    return min(index, bins - 1)
+
+def decode(index):
+    return low + (index + 0.5) * width
+
+value = 0.012
+index = encode(value)
+back = decode(index)
+print(f"bin width: {width:.6f} m")
+print(f"index: {index}, token id: {32000 + index}")
+print(f"decoded: {back:.4f} m, error: {abs(back - value) * 1000:.2f} mm")
+:::
+
+:::code
+lang: text
+bin width: 0.000391 m
+index: 158, token id: 32158
+decoded: 0.0119 m, error: 0.09 mm
+:::
+
+Note: the error for this one value is 0.09 mm. The maximum error over all values is half a bin, 0.2 mm.
+
+## Try it
+
+:::exercise
+title: Measure the rounding error for three bin counts
+task: Use the range -0.05 m to 0.05 m from the example. For 64, 256, and 1024 bins, encode and decode 10,000 evenly spaced values. Report the maximum error in millimetres for each bin count. Compare your numbers with the bars in this lesson: 0.78, 0.2, and 0.05 mm.
+hint: The maximum error is close to half the bin width. Use numpy.linspace for the values and numpy.floor for the index.
+lang: python
+solution:
+import numpy as np
+
+low, high = -0.05, 0.05
+values = np.linspace(low, high, 10000)
+
+for bins in [64, 256, 1024]:
+    width = (high - low) / bins
+    index = np.minimum(np.floor((values - low) / width), bins - 1)
+    decoded = low + (index + 0.5) * width
+    error_mm = np.max(np.abs(decoded - values)) * 1000
+    print(f"{bins} bins: max error {error_mm:.2f} mm")
+:::
+
 ## Common mistakes
 
 - Mistake: use the full min and max of the data as the bin range. Fix: use percentiles, or one outlier makes all other bins too coarse.
@@ -300,9 +447,39 @@ Note: a diffusion head needs 10 or more denoising steps, so the model latency ri
 
 ## Check your understanding
 
-- What is the maximum rounding error with 256 bins over a 0.1 m range? About 0.2 mm, half of one bin.
-- Why does chunking help a slow model? The model runs once per chunk, so it has more time per call.
-- What problem does a diffusion head solve that bins do not? It can represent two valid actions without averaging them into an invalid one.
+:::quiz
+title: Check: action tokens and chunking
+q: What is the maximum rounding error with 256 bins over a 0.1 m range?
+- About 0.4 mm, one full bin
+* About 0.2 mm, half of one bin
+- About 0.1 m divided by 256 squared
+- Zero, because the bin centre is exact
+why: The bin width is 0.1 / 256, about 0.39 mm, and a value can be at most half a bin from its bin centre.
+q: You switch from 256 bins to 1024 bins over the same range. What happens to the maximum rounding error?
+- It doubles
+- It stays the same
+* It falls to one quarter
+- It falls to one half
+why: Four times as many bins gives bins one quarter as wide, so the half-bin error also falls to one quarter.
+q: Why does action chunking help a model with 500 ms of latency?
+- The model becomes faster per call
+* The model runs once per chunk, so it has more time per call
+- The driver can skip the camera between chunks
+- The chunk removes the need for bins
+why: With a chunk of 10 actions at 10 ticks per second, the model only has to finish one call per second.
+q: What problem does a diffusion head solve that bins do not?
+- It needs no training data from the robot
+- It removes the need for a vision encoder
+* It can represent two valid actions without averaging them into an invalid one
+- It always runs faster than a token head
+why: A bin head trained with cross-entropy may average left and right into the middle, while a diffusion head samples one side.
+q: Why use the 1st and 99th percentiles of the data as the bin range instead of the minimum and maximum?
+* One extreme outlier would make all other bins too coarse
+- Percentiles make the model output more tokens
+- The minimum and maximum are not stored in the dataset
+- The language model cannot handle negative numbers
+why: A single rare value far from the rest would stretch the range and waste most bins on values that never occur.
+:::
 
 ## Go further
 
@@ -336,6 +513,11 @@ A VLA model learns from episodes recorded on real robots. This lesson explains h
 ## Why it matters
 
 Robot data is the limit on robot learning. A language model sees trillions of tokens. The largest open robot dataset has about one million episodes. Every hour of teleoperation costs a person and a robot. So the choice of what to record, and how to test, decides whether a project works.
+
+:::video
+id: bkVCAk9Nsss
+why: Watch the first 20 minutes. Chelsea Finn motivates multi-task learning with robot examples, which is the idea behind training one model on many robots and tasks.
+:::
 
 ## The idea with an example
 
@@ -426,6 +608,50 @@ Caution: a policy that scores 90 percent on seen objects and 20 percent on unsee
 
 Distribution shift is the gap between training conditions and test conditions. Lighting, camera angle, and table height all shift. Record data under many conditions to reduce the shift.
 
+The snippet computes the dataset size from the example and the standard error for four trial counts.
+
+:::code
+lang: python
+file: dataset_and_error.py
+import math
+
+episodes_per_day, seconds, fps, days = 500, 30, 10, 20
+episodes = episodes_per_day * days
+frames = episodes * seconds * fps
+hours = episodes * seconds / 3600
+print(f"{episodes} episodes, {frames} frames, {hours:.1f} robot hours")
+
+p = 0.75
+for n in [5, 20, 50, 100]:
+    se = math.sqrt(p * (1 - p) / n)
+    print(f"{n} trials: {p:.0%} +/- {se:.1%}")
+:::
+
+:::code
+lang: text
+10000 episodes, 3000000 frames, 83.3 robot hours
+5 trials: 75% +/- 19.4%
+20 trials: 75% +/- 9.7%
+50 trials: 75% +/- 6.1%
+100 trials: 75% +/- 4.3%
+:::
+
+## Try it
+
+:::exercise
+title: Plan the number of trials
+task: Your policy has a success rate near 75 percent. You want to show that it beats a baseline by 10 percent. Compute the number of trials that brings the standard error to 5 percent, so that the gap is twice the error. Then compute the trials for an error of 2 percent. Do it on paper first, then check with Python.
+hint: Solve the standard error formula for n. The result is n = p (1 - p) divided by the squared error.
+lang: python
+solution:
+p = 0.75
+for target in [0.05, 0.02]:
+    n = p * (1 - p) / (target * target)
+    print(f"error {target:.0%}: about {n:.0f} trials")
+# error 5%: about 75 trials
+# error 2%: about 469 trials
+:::
+
 ## Common mistakes
 
 - Mistake: record all episodes from one camera position. Fix: move the camera a little between sessions so the policy does not depend on exact pixels.
@@ -435,9 +661,39 @@ Distribution shift is the gap between training conditions and test conditions. L
 
 ## Check your understanding
 
-- How many frames does a 30-second episode at 10 frames per second hold? 300 frames.
-- What does cross-embodiment training mean? One model trains on data from many different robot types.
-- Why is a 5 percent gap between two policies at 20 trials not meaningful? The standard error is about 10 percent, larger than the gap.
+:::quiz
+title: Check: robot data and generalisation
+q: How many frames does a 30-second episode at 10 frames per second hold?
+- 30
+* 300
+- 3000
+- 40
+why: Thirty seconds times 10 frames per second gives 300 frames.
+q: What does cross-embodiment training mean?
+- One robot trains on data from many cameras
+* One model trains on data from many different robot types
+- One policy transfers from simulation to a real robot
+- One model trains on web images and then on robot images
+why: The model learns from arms, grippers, and cameras of many labs, mapped to one common action format.
+q: Two policies score 70 percent and 75 percent on 20 trials each. What should you conclude?
+- The second policy is better
+- The first policy memorised the training set
+* The gap is inside the noise, so you need more trials
+- The test objects were seen in training
+why: The standard error at 20 trials is about 10 percent, which is larger than the 5 percent gap.
+q: A policy scores 90 percent on seen objects and 20 percent on unseen objects. What is the most likely explanation?
+- The unseen objects are too heavy for the gripper
+* The policy memorised the training scenes and does not generalise
+- The camera moved between the two tests
+- The success rule was unclear
+why: A large gap between seen and unseen results is the signature of a policy that depends on exact training pixels.
+q: Why does the sampler use a weight per dataset during cross-embodiment training?
+- To make every batch come from the target robot
+* So that large datasets do not drown small ones
+- To remove episodes with low success
+- To match the frame rate of every robot
+why: Without weights, a dataset with 10 times more episodes would fill 10 times more of each batch and the small robots would be ignored.
+:::
 
 ## Go further
 
@@ -450,6 +706,7 @@ Read the Open X-Embodiment paper for the pooling method and the RT-X results. DR
       slug: 'perception-and-state',
       title: 'Perception and state estimation',
       description: 'Cameras, depth, and the Kalman filter that turns noisy readings into a state.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'cameras-and-the-pinhole-model',
@@ -580,6 +837,64 @@ Divide by Z -> Intrinsic matrix: scale by f, shift by c
 Intrinsic matrix -> Pixel: (u, v)
 :::
 
+The snippet projects the block corner with the intrinsic matrix and converts the pixel back to metres. Run it with NumPy installed.
+
+:::code
+lang: python
+file: pinhole.py
+import numpy as np
+
+K = np.array([[500.0, 0.0, 320.0],
+              [0.0, 500.0, 240.0],
+              [0.0, 0.0, 1.0]])
+
+def project(point, K):
+    x = K @ point          # (f X + c Z, f Y + c Z, Z)
+    return x[:2] / x[2]    # divide by Z
+
+def unproject(u, v, Z, K):
+    X = (u - K[0, 2]) * Z / K[0, 0]
+    Y = (v - K[1, 2]) * Z / K[1, 1]
+    return np.array([X, Y, Z])
+
+corner = np.array([0.1, 0.05, 0.5])
+print("pixel at 0.5 m:", project(corner, K))
+print("pixel at 1.0 m:", project(np.array([0.1, 0.05, 1.0]), K))
+print("back to metres:", unproject(420, 290, 0.5, K))
+:::
+
+:::code
+lang: text
+pixel at 0.5 m: [420. 290.]
+pixel at 1.0 m: [370. 265.]
+back to metres: [0.1  0.05 0.5 ]
+:::
+
+## Try it
+
+:::exercise
+title: Project a cube face
+task: A 10 cm cube sits on the optical axis of the example camera. Its front face is at Z = 0.45 m and its back face is at Z = 0.55 m. Project the four corners of each face with f = 500 and principal point (320, 240). Report the width of each face in pixels. Predict which face looks larger before you compute.
+hint: The front face corners are at X = plus or minus 0.05 m and Y = plus or minus 0.05 m with Z = 0.45 m. The width is the difference between the u values of the left and right corners.
+lang: python
+solution:
+import numpy as np
+
+K = np.array([[500.0, 0.0, 320.0], [0.0, 500.0, 240.0], [0.0, 0.0, 1.0]])
+
+def project(point):
+    x = K @ point
+    return x[:2] / x[2]
+
+for Z in [0.45, 0.55]:
+    corners = [np.array([sx * 0.05, sy * 0.05, Z]) for sx in (-1, 1) for sy in (-1, 1)]
+    pixels = np.array([project(c) for c in corners])
+    width = pixels[:, 0].max() - pixels[:, 0].min()
+    print(f"face at {Z} m: width {width:.1f} px")
+# face at 0.45 m: width 111.1 px
+# face at 0.55 m: width 90.9 px
+:::
+
 ## Common mistakes
 
 - Mistake: use the focal length in millimetres from the lens box. Fix: use the focal length in pixels from calibration.
@@ -589,9 +904,39 @@ Intrinsic matrix -> Pixel: (u, v)
 
 ## Check your understanding
 
-- Where does the point (0.2, 0.0, 1.0) appear with f = 500 and principal point (320, 240)? At pixel (420, 240).
-- What four numbers are the intrinsic parameters? $f_x$, $f_y$, $c_x$, $c_y$.
-- What does a reprojection error of 0.3 pixels mean? The model predicts corner positions within 0.3 pixels of the detected ones, which is a good calibration.
+:::quiz
+title: Check: the pinhole model
+q: Where does the point (0.2, 0.0, 1.0) appear with f = 500 and principal point (320, 240)?
+- Pixel (100, 0)
+* Pixel (420, 240)
+- Pixel (520, 240)
+- Pixel (320, 340)
+why: X / Z = 0.2, times 500 gives 100, plus 320 gives u = 420, and Y = 0 keeps v at 240.
+q: Which four numbers are the intrinsic parameters?
+- Rotation, translation, focal length, and distortion
+* The two focal lengths and the two principal point coordinates
+- Width, height, frame rate, and exposure
+- Baseline, disparity, depth, and focal length
+why: The intrinsic matrix K holds fx, fy, cx, and cy, which map camera coordinates to pixels.
+q: What does a reprojection error of 0.3 pixels after calibration mean?
+- The lens has 0.3 percent distortion
+- The camera is 0.3 mm from its nominal position
+* The model predicts corner positions within 0.3 pixels of the detected ones, which is good
+- The chessboard squares were 0.3 mm too large
+why: Reprojection error measures the pixel distance between detected and predicted corners, and under 0.5 pixels is a good result.
+q: You halve the camera resolution from 640 by 480 to 320 by 240 without recalibrating. What happens to the intrinsic parameters?
+- They stay correct because the lens did not change
+* They are twice too large, so projected pixels land in the wrong place
+- Only the principal point changes
+- Only the distortion changes
+why: Focal length and principal point are in pixels, so every parameter must be scaled by the same factor as the image.
+q: A pixel is at (420, 290) and the depth is 1.0 m instead of 0.5 m. What is X?
+- 0.1 m
+* 0.2 m
+- 0.05 m
+- 0.4 m
+why: X = (u - cx) Z / fx = 100 times 1.0 divided by 500, which is 0.2 m, twice the value at half the depth.
+:::
 
 ## Go further
 
@@ -707,6 +1052,56 @@ Voxel grid -> Planner: downsampled cloud
 
 Caution: a depth sensor returns zero or a wrong value on glass, mirrors, and shiny metal. Check the invalid-pixel rate before you trust a grasp.
 
+The snippet computes depth from disparity and the error from a one-pixel matching mistake at four distances.
+
+:::code
+lang: python
+file: stereo_depth.py
+f, b = 500.0, 0.06  # focal length in pixels, baseline in metres
+
+def depth(disparity):
+    return f * b / disparity
+
+print("cup at disparity 60:", depth(60), "m")
+for Z in [0.5, 1.0, 2.0, 4.0]:
+    d = f * b / Z
+    error = depth(d - 1) - Z
+    print(f"{Z} m: disparity {d:.1f} px, 1-pixel error {error * 1000:.0f} mm")
+:::
+
+:::code
+lang: text
+cup at disparity 60: 0.5 m
+0.5 m: disparity 60.0 px, 1-pixel error 8 mm
+1.0 m: disparity 30.0 px, 1-pixel error 34 mm
+2.0 m: disparity 15.0 px, 1-pixel error 143 mm
+4.0 m: disparity 7.5 px, 1-pixel error 615 mm
+:::
+
+## Try it
+
+:::exercise
+title: Build a point cloud from a depth image
+task: Make a 480 by 640 depth image filled with 0.5 m. Set a 100 by 100 square in the top-left corner to 0 to mark failed pixels. Build the point cloud with f = 500 and principal point (320, 240). Report the number of valid points and the X value of the pixel at column 420, row 290. The answers are 297,200 points and 0.1 m.
+hint: Use numpy.meshgrid to get u and v for every pixel. Then apply X = (u - cx) Z / fx and Y = (v - cy) Z / fy and keep only pixels with depth above zero.
+lang: python
+solution:
+import numpy as np
+
+fx, fy, cx, cy = 500.0, 500.0, 320.0, 240.0
+depth = np.full((480, 640), 0.5)
+depth[:100, :100] = 0.0
+
+v, u = np.meshgrid(np.arange(480), np.arange(640), indexing="ij")
+valid = depth > 0
+Z = depth[valid]
+X = (u[valid] - cx) * Z / fx
+Y = (v[valid] - cy) * Z / fy
+cloud = np.stack([X, Y, Z], axis=1)
+print("points:", len(cloud))
+print("X at (420, 290):", (420 - cx) * depth[290, 420] / fx)
+:::
+
 ## Common mistakes
 
 - Mistake: use a structured light sensor outdoors. Fix: use stereo or time of flight, because sunlight hides the pattern.
@@ -716,9 +1111,39 @@ Caution: a depth sensor returns zero or a wrong value on glass, mirrors, and shi
 
 ## Check your understanding
 
-- What is the depth for f = 500 pixels, b = 0.1 m, d = 25 pixels? 2.0 m.
-- Why does stereo fail on a blank wall? There is no texture to match between the two images.
-- What does depth zero usually mean in a depth image? The sensor failed to measure that pixel.
+:::quiz
+title: Check: depth sensing
+q: What is the depth for f = 500 pixels, b = 0.1 m, and d = 25 pixels?
+- 0.5 m
+- 1.25 m
+* 2.0 m
+- 4.0 m
+why: Z = f b / d = 500 times 0.1 divided by 25, which is 2.0 m.
+q: Why does stereo matching fail on a blank wall?
+- The wall is too far for the baseline
+* There is no texture to match between the two images
+- The wall reflects the projected pattern
+- Both cameras see the wall at the same column
+why: The matcher looks for a similar neighbourhood in the other image, and every patch of a blank wall looks the same.
+q: What does depth zero usually mean in a depth image?
+- The point is exactly at the lens
+* The sensor failed to measure that pixel
+- The point is beyond the maximum range
+- The pixel is at the principal point
+why: Sensors write zero for pixels with no valid match or return, so you must mask them before projection.
+q: You double the baseline from 6 cm to 12 cm. What happens to the depth error from a one-pixel disparity mistake at 2 m?
+- It doubles
+* It falls to about half
+- It stays the same
+- It falls to one quarter
+why: Disparity doubles to 30 pixels, so one pixel is a smaller fraction of it and the depth error roughly halves.
+q: Which sensor should you choose for a robot that works on a sunny patio?
+- Structured light, because it gives fine detail
+* Stereo or time of flight, because sunlight hides a projected pattern
+- Learned depth, because it gives metric depth without a sensor
+- Any sensor, because sunlight does not affect depth
+why: Structured light needs its own pattern to be visible, and the sun washes it out.
+:::
 
 ## Go further
 
@@ -751,6 +1176,11 @@ The state of a robot is the set of numbers that describe it now: position, veloc
 ## Why it matters
 
 A wheel encoder drifts. A camera pose jumps by centimetres from frame to frame. A controller that acts on raw readings shakes or wanders. The Kalman filter gives a smooth, best-guess state and a measure of its uncertainty. Every drone, every self-driving car, and most robot arms run one.
+
+:::video
+id: HZGCoVF3YvM
+why: Watch the whole video. The Kalman update is Bayes theorem for a Gaussian belief: the prediction is the prior and the measurement is the evidence.
+:::
 
 ## The idea with an example
 
@@ -847,6 +1277,54 @@ To choose the noise values:
 
 Note: the filter assumes Gaussian noise and a linear model. For a rotating robot, the extended Kalman filter linearises the model at the current estimate. Visual SLAM systems such as ORB-SLAM3 use related optimisation instead of a filter for the map.
 
+The snippet runs the 1D filter from the example for five ticks. The first line of output matches the worked numbers.
+
+:::code
+lang: python
+file: kalman_1d.py
+Q, R = 0.04, 0.09          # process and measurement noise variances
+x, P = 0.0, 0.0            # estimate and its variance at time 0
+velocity = 1.0             # metres per second from the motion model
+measurements = [1.3, 2.2, 2.9, 4.1, 5.0]
+
+for tick, z in enumerate(measurements, start=1):
+    # predict: move the state and grow the variance
+    x = x + velocity
+    P = P + Q
+    # update: weigh the measurement by the Kalman gain
+    K = P / (P + R)
+    x = x + K * (z - x)
+    P = (1 - K) * P
+    print(f"tick {tick}: z={z:.2f} K={K:.2f} estimate={x:.3f} variance={P:.4f}")
+:::
+
+:::code
+lang: text
+tick 1: z=1.30 K=0.31 estimate=1.092 variance=0.0277
+tick 2: z=2.20 K=0.43 estimate=2.139 variance=0.0386
+tick 3: z=2.90 K=0.47 estimate=3.027 variance=0.0420
+tick 4: z=4.10 K=0.48 estimate=4.062 variance=0.0429
+tick 5: z=5.00 K=0.48 estimate=5.032 variance=0.0432
+:::
+
+Note: the gain settles near 0.48 after a few ticks. The filter reaches a steady balance between the motion model and the camera.
+
+## Try it
+
+:::exercise
+title: Compute the second tick by hand
+task: After tick 1 the estimate is 1.09 m with variance 0.028. The robot moves another 1 m and the camera reports 2.2 m. Compute the predicted estimate and variance, the gain, the updated estimate, and the updated variance. Use Q = 0.04 and R = 0.09. Round to two decimals. Then check your numbers against the code block above.
+hint: Predict first: add 1.0 to the estimate and 0.04 to the variance. Then the gain is P divided by P plus R.
+lang: text
+solution:
+Predict:  estimate = 1.09 + 1.0 = 2.09 m,  variance = 0.028 + 0.04 = 0.068
+Gain:     K = 0.068 / (0.068 + 0.09) = 0.43
+Update:   estimate = 2.09 + 0.43 x (2.2 - 2.09) = 2.09 + 0.047 = 2.14 m
+Variance: (1 - 0.43) x 0.068 = 0.039
+The filter moves 43 percent of the way to the camera, more than at tick 1,
+because the prediction variance grew while the camera variance stayed the same.
+:::
+
 ## Common mistakes
 
 - Mistake: set $R$ to a tiny value to make the filter follow the sensor. Fix: measure $R$ from real data, or the filter copies sensor noise.
@@ -856,9 +1334,39 @@ Note: the filter assumes Gaussian noise and a linear model. For a rotating robot
 
 ## Check your understanding
 
-- What is the gain when P = 0.1 and R = 0.1? 0.5, so the estimate is the average of prediction and measurement.
-- What happens to the variance after an update? It decreases, because the filter has more information.
-- Why does a zero process noise cause problems? The variance shrinks to zero and the filter ignores all new measurements.
+:::quiz
+title: Check: the Kalman filter
+q: What is the gain when P = 0.1 and R = 0.1?
+- 0.1
+* 0.5
+- 1.0
+- 0.2
+why: K = P / (P + R) = 0.1 / 0.2 = 0.5, so the estimate is the average of prediction and measurement.
+q: The prediction is 1.0 m with P = 0.04 and the camera reports 1.3 m with R = 0.01. What is the updated estimate?
+- 1.09 m
+- 1.15 m
+* 1.24 m
+- 1.30 m
+why: K = 0.04 / 0.05 = 0.8, so the estimate is 1.0 + 0.8 times 0.3, which is 1.24 m.
+q: What happens to the variance after an update step?
+- It grows by Q
+- It stays the same
+* It decreases, because the filter has more information
+- It becomes equal to R
+why: The update multiplies P by (1 - K), which is below 1, so two sources of information give a tighter estimate.
+q: Why does a process noise of zero cause problems?
+- The gain becomes 1 and the filter copies the sensor
+* The variance shrinks to zero and the filter ignores all new measurements
+- The prediction step stops moving the state
+- The filter cannot start without a measurement
+why: With Q = 0 the variance only shrinks, so the gain falls to zero and the filter stops listening to the camera.
+q: A camera frame arrives 100 ms after it was taken. How should the filter use it?
+- Discard it, because old measurements are useless
+- Apply it at the time it arrived
+* Apply it at the time it was taken
+- Double its variance and apply it now
+why: The measurement describes the state at capture time, so applying it later would pull the estimate toward an old position.
+:::
 
 ## Go further
 
@@ -871,6 +1379,7 @@ The free book Kalman and Bayesian Filters in Python builds the filter in noteboo
       slug: 'control-and-learning',
       title: 'Control and learning',
       description: 'PID control, imitation learning, and how to cross the sim-to-real gap.',
+      level: 'advanced',
       lessons: [
         {
           slug: 'pid-control',
@@ -1005,6 +1514,61 @@ Integral windup happens when the motor hits its limit. The error stays large, th
 
 Caution: test a new gain set with a small setpoint change first. A gain that is 10 times too large can damage the arm.
 
+The snippet reproduces the three hand-computed steps. The measured positions are given as a list, so the output matches the example.
+
+:::code
+lang: python
+file: pid_steps.py
+Kp, Ki, Kd, dt = 0.5, 0.1, 0.2, 0.1
+setpoint = 90.0
+positions = [0.0, 30.0, 50.0]   # measured at the three steps
+integral = 0.0
+prev_error = setpoint - positions[0]
+
+for step, position in enumerate(positions, start=1):
+    error = setpoint - position
+    integral = integral + error * dt
+    derivative = (error - prev_error) / dt
+    command = Kp * error + Ki * integral + Kd * derivative
+    prev_error = error
+    print(f"step {step}: error={error:.0f} P={Kp * error:.1f} "
+          f"I={Ki * integral:.1f} D={Kd * derivative:.1f} command={command:.1f} V")
+:::
+
+:::code
+lang: text
+step 1: error=90 P=45.0 I=0.9 D=0.0 command=45.9 V
+step 2: error=60 P=30.0 I=1.5 D=-60.0 command=-28.5 V
+step 3: error=40 P=20.0 I=1.9 D=-40.0 command=-18.1 V
+:::
+
+## Try it
+
+:::exercise
+title: Watch the derivative term fight overshoot
+task: Replace the fixed position list with a simulated joint. At each step the velocity changes by (8 times the command minus 2 times the velocity) times dt, and the position changes by velocity times dt. Clamp the command to plus or minus 48 V. Run 60 steps with the example gains and report the peak position. Then set Kd to 0 and run again. Predict which run overshoots more before you run it.
+hint: Keep the PID lines from the code block. Add velocity and position variables and update them after the command. Track the maximum position with max.
+lang: python
+solution:
+def run(Kp, Ki, Kd, steps=60, dt=0.1):
+    position, velocity, integral, prev_error = 0.0, 0.0, 0.0, 90.0
+    peak = 0.0
+    for _ in range(steps):
+        error = 90.0 - position
+        integral = integral + error * dt
+        derivative = (error - prev_error) / dt
+        command = Kp * error + Ki * integral + Kd * derivative
+        command = max(-48.0, min(48.0, command))   # the driver limit
+        prev_error = error
+        velocity = velocity + (8.0 * command - 2.0 * velocity) * dt
+        position = position + velocity * dt
+        peak = max(peak, position)
+    return peak
+
+print(f"Kd = 0.2: peak {run(0.5, 0.1, 0.2):.1f} degrees")   # about 102
+print(f"Kd = 0.0: peak {run(0.5, 0.1, 0.0):.1f} degrees")   # about 114
+:::
+
 ## Common mistakes
 
 - Mistake: tune on the bench and deploy with a heavier gripper. Fix: retune after any change of mass or load.
@@ -1014,9 +1578,39 @@ Caution: test a new gain set with a small setpoint change first. A gain that is 
 
 ## Check your understanding
 
-- What is the proportional command when $K_p = 0.5$ and the error is 20? 10.
-- Which term removes a steady error from gravity? The integral term.
-- What causes integral windup? The motor saturates while the error stays large, so the integral grows too much.
+:::quiz
+title: Check: PID control
+q: What is the proportional command when Kp = 0.5 and the error is 20?
+- 40
+* 10
+- 0.025
+- 20.5
+why: The proportional term is the gain times the error, 0.5 times 20, which is 10.
+q: Which term removes a steady error caused by gravity?
+- The proportional term
+* The integral term
+- The derivative term
+- The setpoint
+why: The integral sums the error over time, so a small constant error keeps growing the command until the error vanishes.
+q: At step 2 of the example the error falls from 90 to 60 in 0.1 s. What is the derivative term with Kd = 0.2?
+- 6 V
+- -6 V
+* -60 V
+- -300 V
+why: The derivative is (60 - 90) / 0.1 = -300 per second, and 0.2 times -300 is -60 V.
+q: What causes integral windup?
+- The derivative term amplifies sensor noise
+- The proportional gain is too small
+* The motor saturates while the error stays large, so the integral grows too much
+- The loop runs at a variable rate
+why: When the command hits its limit the error cannot fall, and the integral keeps accumulating until the joint overshoots.
+q: The joint oscillates with a steady amplitude at Kp = 2.0 during manual tuning. What is the next step?
+- Raise Kp to 4.0 and add Ki
+* Set Kp to about 1.0, then raise Kd until the overshoot is under 10 percent
+- Set Kp to zero and tune Ki alone
+- Keep Kp at 2.0 and raise Ki
+why: The procedure halves the gain that caused steady oscillation, then adds derivative action before integral action.
+:::
 
 ## Go further
 
@@ -1050,6 +1644,11 @@ Imitation learning trains a policy from demonstrations. A demonstration is a rec
 ## Why it matters
 
 Every VLA model in this track is trained by imitation. The fine-tuning step of RT-2 and OpenVLA is behaviour cloning. The ACT policy and Diffusion Policy are behaviour cloning with better output heads. If you understand why pure cloning drifts, you understand why these papers record data the way they do.
+
+:::video
+id: FgzM3zpZ55o
+why: Watch the first 30 minutes. Emma Brunskill places imitation learning next to reinforcement learning and explains why learning from demonstrations is the cheap starting point.
+:::
 
 ## The idea with an example
 
@@ -1133,6 +1732,69 @@ The table compares the three ways to get recovery data.
 
 Note: generative adversarial imitation learning trains a reward from demonstrations instead of copying actions. It avoids compounding error but needs a simulator and many interactions.
 
+The snippet simulates the toy car. The expert steers back to the centre. The clone copies the expert only on offsets it saw in training and guesses elsewhere.
+
+:::code
+lang: python
+file: drift.py
+def expert(offset):
+    return -offset                 # steer straight back to the centre
+
+def cloned(offset, seen):
+    # the clone copies the expert only on offsets it saw in training
+    return -offset if abs(offset) <= seen else 0.2 * offset
+
+def drive(policy, steps=50, drift=1.0):
+    offset = 0.0
+    for step in range(1, steps + 1):
+        offset = offset + drift        # a bump pushes the car 1 cm left
+        offset = offset + policy(offset)
+        if abs(offset) > 20:
+            return f"left the lane at step {step}"
+    return f"in lane after {steps} steps, offset {offset:.1f} cm"
+
+print("expert:", drive(expert))
+print("clone: ", drive(lambda x: cloned(x, seen=0.5)))
+:::
+
+:::code
+lang: text
+expert: in lane after 50 steps, offset 0.0 cm
+clone:  left the lane at step 9
+:::
+
+## Try it
+
+:::exercise
+title: Add DAgger to the drift simulation
+task: Extend the code block. After each failed drive, let the expert label every offset the clone visited. Model this by setting seen to the largest offset the clone reached in that drive. Retrain means: use the new seen value. Run up to 3 rounds and print the result of each round. Predict how many rounds the car needs before it stays in the lane.
+hint: Make drive return the list of offsets it visited. After each round set seen to the maximum absolute offset in that list.
+lang: python
+solution:
+def cloned(offset, seen):
+    return -offset if abs(offset) <= seen else 0.2 * offset
+
+def drive(seen, steps=50, drift=1.0):
+    offset, visited = 0.0, []
+    for step in range(1, steps + 1):
+        offset = offset + drift
+        offset = offset + cloned(offset, seen)
+        visited.append(abs(offset))
+        if abs(offset) > 20:
+            return False, visited
+    return True, visited
+
+seen = 0.5
+for round_number in range(1, 4):
+    ok, visited = drive(seen)
+    print(f"round {round_number}: seen={seen:.1f} cm, stays in lane={ok}")
+    if ok:
+        break
+    seen = max(visited)   # the expert labels every visited offset
+# round 1: seen=0.5 cm, stays in lane=False
+# round 2: seen=25.0 cm, stays in lane=True
+:::
+
 ## Common mistakes
 
 - Mistake: judge a policy by its loss on held-out demonstration pairs. Fix: run the policy on the robot, because low loss does not prevent drift.
@@ -1142,9 +1804,39 @@ Note: generative adversarial imitation learning trains a reward from demonstrati
 
 ## Check your understanding
 
-- What is behaviour cloning? Supervised learning from observation-action pairs recorded from an expert.
-- Why does a cloned policy drift? Small errors lead to unseen states where the error is larger.
-- What does DAgger add to the dataset? Expert labels for the states the learned policy itself visits.
+:::quiz
+title: Check: imitation learning
+q: What is behaviour cloning?
+- Reinforcement learning with a reward from demonstrations
+* Supervised learning from observation-action pairs recorded from an expert
+- Copying the weights of one policy into another
+- Training a policy in simulation and running it on a real robot
+why: Behaviour cloning treats each demonstration step as a labelled example and minimises a supervised loss.
+q: Why does a cloned policy drift off the lane?
+- The loss function was mean squared error
+* Small errors lead to unseen states where the error is larger
+- The expert drove too fast during recording
+- The camera resolution was too low
+why: Each mistake moves the car into a view the training set does not cover, and the next mistake is bigger.
+q: The error per step is 0.01 and a run has 100 steps. What is the quadratic bound on total error?
+- 1
+- 10
+* 100
+- 0.01
+why: The bound is T squared times epsilon, 10,000 times 0.01, which is 100, while a linear bound would give only 1.
+q: What does DAgger add to the dataset?
+- More demonstrations from the expert driving perfectly
+- Rewards for each visited state
+* Expert labels for the states the learned policy itself visits
+- Random noise added to the expert's actions
+why: The policy drives, the expert only labels, so the new pairs cover the states that cause drift.
+q: Which loss should you avoid for a task where the robot may go left or right around a cup?
+- Cross-entropy on action tokens
+- A diffusion loss
+* Mean squared error on the continuous action
+- An L1 loss on an action chunk with a diffusion head
+why: Mean squared error pulls the output to the average of left and right, which drives the gripper into the cup.
+:::
 
 ## Go further
 
@@ -1290,6 +1982,57 @@ A transfer test measures the gap directly:
 
 Caution: a policy that works in simulation can damage a real robot. Add joint limits and a kill switch before the first real run.
 
+The snippet draws randomised parameters for three episodes and computes the training budget from the example.
+
+:::code
+lang: python
+file: randomise.py
+import numpy as np
+
+rng = np.random.default_rng(0)
+
+def draw_parameters():
+    return {
+        "friction": rng.uniform(0.4, 1.2),
+        "motor_delay_ms": rng.uniform(0, 40),
+        "mass_scale": rng.uniform(0.9, 1.1),
+        "push_newtons": rng.uniform(0, 5),
+    }
+
+for episode in range(3):
+    p = draw_parameters()
+    print(episode, {k: round(v, 2) for k, v in p.items()})
+
+robots, steps, sim_rate, updates = 4096, 24, 200_000, 1500
+per_update = robots * steps
+seconds = per_update / sim_rate
+print(f"{per_update} steps per update, {seconds:.2f} s each, "
+      f"{updates * seconds / 60:.0f} min total")
+:::
+
+:::code
+lang: text
+0 {'friction': 0.91, 'motor_delay_ms': 10.79, 'mass_scale': 0.91, 'push_newtons': 0.08}
+1 {'friction': 1.05, 'motor_delay_ms': 36.51, 'mass_scale': 1.02, 'push_newtons': 3.65}
+2 {'friction': 0.83, 'motor_delay_ms': 37.4, 'mass_scale': 1.06, 'push_newtons': 0.01}
+98304 steps per update, 0.49 s each, 12 min total
+:::
+
+## Try it
+
+:::exercise
+title: Estimate a training budget
+task: A smaller graphics card runs 2,048 robots at 100,000 steps per second. Each update uses 48 steps per robot and the policy needs 3,000 updates. Compute the steps per update, the seconds per update, and the total training time in minutes. Do it on paper first. Then write the three lines of Python and compare.
+hint: Steps per update is robots times steps. Seconds per update is that number divided by the simulator rate. Total time is updates times seconds per update.
+lang: python
+solution:
+robots, steps, sim_rate, updates = 2048, 48, 100_000, 3000
+per_update = robots * steps                 # 98304 steps
+seconds = per_update / sim_rate             # 0.98 s
+print(per_update, round(seconds, 2), round(updates * seconds / 60), "min")
+# 98304 0.98 49 min
+:::
+
 ## Common mistakes
 
 - Mistake: tune the simulator until one policy transfers, then change the robot. Fix: randomise ranges, so the policy survives later hardware changes.
@@ -1299,9 +2042,39 @@ Caution: a policy that works in simulation can damage a real robot. Add joint li
 
 ## Check your understanding
 
-- What is the sim-to-real gap? The drop in policy performance from the simulator to the real robot.
-- What does domain randomisation change? Simulator parameters, drawn at random for each episode.
-- When should you use system identification instead of randomisation? When you can measure the parameter accurately on the real robot.
+:::quiz
+title: Check: sim-to-real transfer
+q: What is the sim-to-real gap?
+- The time a simulator needs to match real time
+* The drop in policy performance from the simulator to the real robot
+- The number of parameters the simulator cannot model
+- The difference between two simulators
+why: The gap is measured directly as the success rate in simulation minus the success rate on the real robot.
+q: What does domain randomisation change?
+- The real robot's motors, to match the simulator
+* Simulator parameters, drawn at random for each episode
+- The policy network size
+- The reward function at each step
+why: Each episode draws friction, delay, mass, and pushes from ranges that contain the real values, so the policy learns to be robust.
+q: The simulator runs 200,000 steps per second with 4,096 robots and 24 steps per update. How long does one update take?
+- 0.05 s
+* About 0.5 s
+- About 5 s
+- 24 s
+why: 4,096 times 24 is 98,304 steps, divided by 200,000 per second gives about 0.49 s.
+q: When should you use system identification instead of randomisation?
+- When the policy fails to learn in simulation
+* When you can measure the parameter accurately on the real robot
+- When the parameter changes with the battery level
+- When the simulator has no setting for it
+why: A measured value such as motor delay goes straight into the simulator, and randomisation is kept for values you cannot pin down.
+q: A policy scores 95 percent in simulation and 60 percent on the real robot. What is the best next step?
+- Train longer in the same simulator
+* Log the same metrics in both, such as foot slip and torque, to find which source causes the gap
+- Narrow all randomisation ranges
+- Remove the kill switch so the robot can recover
+why: A 35 percent gap needs a diagnosis by source, dynamics, perception, or modelling, before you change the training.
+:::
 
 ## Go further
 

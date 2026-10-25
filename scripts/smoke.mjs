@@ -35,6 +35,14 @@ const pages = {
   '/videos': ['/src/pages/Videos.tsx', 'Videos'],
   '/style': ['/src/pages/StyleGuide.tsx', 'StyleGuide'],
   '/labs/ste-checker': ['/src/pages/Labs.tsx', 'LabPage'],
+  '/path': ['/src/pages/Path.tsx', 'Path'],
+  '/practice': ['/src/pages/Practice.tsx', 'Practice'],
+  '/practice/placement': ['/src/pages/Practice.tsx', 'Placement'],
+  '/practice/ai-research/1': ['/src/pages/Practice.tsx', 'PracticePaper'],
+  '/hub': ['/src/pages/Hub.tsx', 'Hub'],
+  '/courses/start-here': ['/src/pages/Courses.tsx', 'TrackPage', { track: 'start-here' }],
+  '/courses/start-here/how-a-computer-works/input-process-store-output': ['/src/pages/Lesson.tsx', 'LessonPage'],
+  '/courses/build-ai-ecosystem/ship-it/capstone': ['/src/pages/Lesson.tsx', 'LessonPage'],
 }
 let fail = 0
 const { posts } = await vite.ssrLoadModule('/src/data/blog.ts')
@@ -53,6 +61,7 @@ for (let [path, [file, name]] of Object.entries(pages)) {
               createElement(Route, { path: '/glossary/:slug', element: createElement(Page) }),
               createElement(Route, { path: '/labs/:slug', element: createElement(Page) }),
               createElement(Route, { path: '/blog/:slug', element: createElement(Page) }),
+              createElement(Route, { path: '/practice/:track/:paper', element: createElement(Page) }),
               createElement(Route, { path: '*', element: createElement(Page) }),
             )))
     )
@@ -80,11 +89,21 @@ for (const l of labs) routes.add(`/labs/${l.slug}`)
 for (const g of glossary) routes.add(`/glossary/${g.slug}`)
 for (const p of posts) routes.add(`/blog/${p.slug}`)
 let bad = 0
-for (const r of roadmaps) for (const s of r.stages) for (const it of s.items) if (!routes.has(it.to)) { bad++; console.log(`BAD roadmap link ${it.to}`) }
+const staticOk = (to) => /^\/(hub|practice|papers|courses|labs|roadmaps|path)(\?|#|$)/.test(to)
+for (const r of roadmaps) for (const s of r.stages) for (const it of s.items) if (!routes.has(it.to) && !staticOk(it.to)) { bad++; console.log(`BAD roadmap link ${it.to}`) }
 for (const n of nodes) if (n.to && !routes.has(n.to)) { bad++; console.log(`BAD graph link ${n.id} -> ${n.to}`) }
 const ids = new Set(nodes.map((n) => n.id))
 for (const e of edges) if (!ids.has(e.source) || !ids.has(e.target)) { bad++; console.log(`BAD edge ${e.source} -> ${e.target}`) }
 for (const p of papers) for (const q of p.prereqs ?? []) if (!papers.some((x) => x.slug === q)) { bad++; console.log(`BAD prereq ${p.slug} -> ${q}`) }
+for (const t of tracks) for (const q of t.prerequisites ?? []) if (!tracks.some((x) => x.slug === q)) { bad++; console.log(`BAD track prerequisite ${t.slug} -> ${q}`) }
+for (const t of tracks) for (const m of t.modules) for (const l of m.lessons) for (const b of l.before ?? []) if (!routes.has(b.to)) { bad++; console.log(`BAD before link ${t.slug}/${m.slug}/${l.slug} -> ${b.to}`) }
+// internal links inside lesson bodies: [text](/courses/...) must resolve
+const linkRe = /\]\((\/courses\/[^)\s#]+)/g
+for (const t of tracks) for (const m of t.modules) for (const l of m.lessons) { let mm; while ((mm = linkRe.exec(l.body))) { const to = mm[1]; const ok = routes.has(to) || tracks.some((x) => `/courses/${x.slug}` === to) || tracks.some((x) => x.modules.some((mo) => `/courses/${x.slug}/${mo.slug}` === to)); if (!ok) { bad++; console.log(`BAD lesson link ${t.slug}/${m.slug}/${l.slug} -> ${to}`) } } }
+const { quizzesIn } = await vite.ssrLoadModule('/src/lib/quiz.ts')
+let qn = 0
+for (const t of tracks) for (const m of t.modules) for (const l of m.lessons) qn += quizzesIn(l.body).length
+console.log(`${qn} quiz questions across ${tracks.reduce((n, t) => n + t.modules.reduce((k, m) => k + m.lessons.length, 0), 0)} lessons`)
 for (const g of glossary) for (const r of g.related) if (!glossary.some((x) => x.slug === r)) { bad++; console.log(`BAD related ${g.slug} -> ${r}`) }
 console.log(bad ? `${bad} broken links` : 'all internal links resolve')
 fail += bad

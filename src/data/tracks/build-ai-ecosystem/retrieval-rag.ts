@@ -100,6 +100,53 @@ note: Chroma store = finds the 3 chunks most similar to the question
 
 A RAG system has two phases. The indexing phase runs once, or every time the documents change. The query phase runs for every question. Keep the two phases separate in your head and in your code, because they fail in different ways.
 
+:::anim
+title: One question through the two phases of RAG
+box files "data folder" @ 150,150 icon: file size: 180x64
+box chunker "Chunker" @ 470,150 icon: file
+box embed "Embedding model" @ 790,150 icon: model size: 220x64
+box store "Chroma store" @ 470,290 icon: database
+box user "You" @ 150,430 icon: user
+box builder "Prompt builder" @ 470,430 icon: server
+box llm "Claude API" @ 790,430 icon: model
+num nchunks = 0 @ 310,225 suffix: " chunks" size: 24 color: yellow
+text q "Is the rye loaf|gluten free?" @ 150,365 size: 16 color: yellow
+num ptok = 0 @ 790,345 prefix: "prompt: " suffix: " tokens" size: 22 color: yellow
+text note "not 130,000" @ 790,378 size: 14 color: grey
+text note2 "2 hours chunks|stay in the store" @ 310,365 size: 14 color: grey
+
+step: Indexing runs first. The loader reads the 3 bakery files and the chunker cuts them into 5 chunks.
+  show files, chunker, nchunks
+  arrow files -> chunker : 3 files
+  count nchunks -> 5
+step: The embedding model turns each chunk into 384 numbers. The Chroma store keeps the 5 vectors.
+  show embed
+  arrow chunker -> embed : 5 chunks
+  show store
+  arrow embed -> store : 5 vectors of 384 numbers
+step: Indexing is done. The query phase starts when you ask if the rye loaf is gluten free.
+  dim files, chunker, embed, nchunks
+  show user, q, builder
+  arrow user -> builder : question
+step: Your code embeds the question with the same model and asks the store for the 3 closest chunks.
+  arrow builder -> store : question vector
+  highlight store
+  arrow store -> builder : top 3 chunks
+step: The prompt builder puts the 3 chunks and the question in one prompt of about 160 tokens.
+  restore store
+  show llm, ptok, note
+  arrow builder -> llm : prompt
+  & count ptok -> 160
+step: The model answers from the chunks and cites allergens.txt#0. The answer streams back to you.
+  arrow llm -> builder : answer
+  highlight llm
+  arrow builder -> user : No [allergens.txt#0]
+step: The 2 opening hours chunks never enter the prompt. RAG finds the right pieces instead of pasting everything.
+  show note2
+  pulse store
+  restore llm
+:::
+
 1. Load. Read each file and turn it into plain text. A PDF needs a library; a text file needs one line of Python.
 2. Chunk. Cut the text into pieces of a fixed size with some overlap. Give each piece an id and record which file and position it came from.
 3. Embed and store. Turn each chunk into a vector with an embedding model and save the vectors in a vector store. The vector store is a database that finds the vectors closest to a query vector.
@@ -289,6 +336,47 @@ Chunk list -> Next lesson: embed and store
 ## How it works
 
 Loading comes first. A text file needs one call: read the file as a string. A PDF needs a library, because a PDF stores drawing commands, not plain text. The library pypdf opens the file, walks through the pages and extracts the text of each page. Install it with pip install pypdf. Some PDF files hold scanned images instead of text, and pypdf returns an empty string for them; those need optical character recognition, which this module does not cover.
+
+:::anim
+title: The chunker walks through opening_hours.txt with size 40 and overlap 10
+box file "opening_hours.txt" @ 480,100 icon: file size: 240x56
+text tsize "size 40, overlap 10" @ 790,100 size: 16 color: grey
+rect words @ 480,210 size: 700x50 "44 words" color: grey
+dot start @ 130,170 r: 8 color: yellow label: "start"
+dot end @ 130,170 r: 8 color: teal label: "end"
+rect chunk0 @ 448,310 size: 636x50 "chunk 0: words 0 to 39" color: blue
+rect ov @ 686,360 size: 159x30 "overlap 10" color: orange
+rect chunk1 @ 718,410 size: 223x50 "chunk 1: words 30 to 43" color: green
+num nstart = 0 @ 200,480 prefix: "start = " size: 24 color: yellow
+num nend = 0 @ 480,480 prefix: "end = " size: 24 color: teal
+num nchunks = 0 @ 760,480 suffix: " chunks" size: 24
+
+step: The loader reads opening_hours.txt and splits the text on spaces. The result is a list of 44 words.
+  show file, words
+  arrow file -> words : text
+step: The chunk size is 40 and the overlap is 10. Set start to 0 and end to start plus 40.
+  show tsize, start, end, nstart, nend
+  move end -> 766,170 (1.5s)
+  & count nend -> 40 (1.5s)
+step: Join words 0 to 39 and save them as chunk 0. It ends in the middle of a sentence.
+  show chunk0, nchunks
+  count nchunks -> 1
+step: Move start to end minus overlap: 40 minus 10 is 30. The next chunk begins 10 words earlier.
+  move start -> 607,170 (1.5s)
+  & count nstart -> 30 (1.5s)
+  show ov
+step: Set end to start plus 40. That is 70, past the last word, so end stops at 44.
+  move end -> 830,170
+  & count nend -> 44
+step: Join words 30 to 43 and save them as chunk 1. The overlap repairs the broken sentence.
+  show chunk1
+  count nchunks -> 2
+step: End reached the last word, so the chunker stops. Two chunks with ids cover one file of 44 words.
+  hide start, end, ov
+  label chunk0 "opening_hours.txt#0: 40 words"
+  & label chunk1 "opening_hours.txt#1|14 words"
+  highlight chunk0, chunk1
+:::
 
 :::code
 lang: python
@@ -511,6 +599,66 @@ why: Watch all 8 minutes. It shows text becoming vectors and a query finding its
 > **Analogy.** Imagine a huge map of a city where every shop is placed by what it sells, not by its street. Bakeries sit near other bakeries, and a cake shop sits between the bakeries and the sweet shops. To find a place for a chocolate croissant, you do not read every shop sign. You walk to the bakery district and look at the five nearest doors. The embedding model is the rule that places each shop on the map. The vector store is the map with a fast way to find the nearest doors. The question is a new pin you drop, and the search returns the doors closest to it.
 
 The map of a text embedding has 384 dimensions instead of 2, but the idea is the same. The model all-MiniLM-L6-v2 reads a chunk and outputs 384 numbers. Two chunks about allergens get vectors that point in similar directions. A chunk about opening hours points somewhere else. The vector for the question "Is the rye loaf gluten free?" lands near the allergen chunks.
+
+:::anim
+title: Five chunks and one question on the map of meaning
+axes ax @ 100,70 size: 540x420 x: 0,10 y: 0,10 xlabel: "384 dimensions, drawn as 2"
+dot hours0 on ax @ 2,8 r: 8 color: blue label: "hours#0"
+dot hours1 on ax @ 3,7 r: 8 color: blue label: "hours#1"
+dot menu0 on ax @ 5.5,4.5 r: 8 color: purple label: "menu#0"
+dot all0 on ax @ 8,3 r: 8 color: green label: "allergens#0"
+dot all1 on ax @ 8.5,1.8 r: 8 color: green label: "allergens#1"
+dot q on ax @ 7.2,9.6 r: 10 color: yellow label: "question"
+line l78 on ax from 8,3 to 8.5,1.8 color: green dashed
+line l63 on ax from 2,8 to 3,7 color: blue dashed
+text t78 "0.78" @ 575,392 size: 15 color: green anchor: start
+text t63 "0.63" @ 215,200 size: 15 color: blue anchor: end
+line la0 on ax from 7.2,3.6 to 8,3 color: yellow
+line la1 on ax from 7.2,3.6 to 5.5,4.5 color: yellow
+line la2 on ax from 7.2,3.6 to 8.5,1.8 color: yellow
+line lh1 on ax from 7.2,3.6 to 3,7 color: grey dashed
+line lh0 on ax from 7.2,3.6 to 2,8 color: grey dashed
+text hdr "cosine similarity|to the question" @ 790,90 size: 17
+num s0 = 0 @ 790,150 prefix: "allergens#0  " digits: 2 size: 22 color: yellow
+num s1 = 0 @ 790,190 prefix: "menu#0  " digits: 2 size: 22 color: yellow
+num s2 = 0 @ 790,230 prefix: "allergens#1  " digits: 2 size: 22 color: yellow
+num s3 = 0 @ 790,270 prefix: "hours#1  " digits: 2 size: 22 color: grey
+num s4 = 0 @ 790,310 prefix: "hours#0  " digits: 2 size: 22 color: grey
+text top3 "top 3 go to the prompt" @ 790,370 size: 16 color: green
+text dist "Chroma distance is 1 minus similarity|0.29 / 0.52 / 0.59" @ 790,420 size: 15 color: grey
+
+step: The model all-MiniLM-L6-v2 turns each chunk into 384 numbers: a point on a map of meaning.
+  show ax
+  show all0, all1
+  show menu0
+  show hours0, hours1
+step: Chunks about one topic land close. The two allergen chunks score 0.78, the two hours chunks 0.63.
+  draw l78, l63
+  show t78, t63
+step: Now the question gets its own vector from the same model. It drops near the allergen chunks.
+  show q
+  move q -> 7.2,3.6 (2s)
+step: Cosine similarity compares directions: 1 is the same, 0 is unrelated. allergens#0 scores 0.71.
+  show hdr, s0
+  draw la0
+  & count s0 -> 0.71
+step: menu#0 scores 0.48 because it names the rye loaf. allergens#1 scores 0.41.
+  show s1, s2
+  draw la1
+  & count s1 -> 0.48
+  draw la2
+  & count s2 -> 0.41
+step: Both opening hours chunks score near 0.1. They point somewhere else on the map.
+  show s3, s4
+  draw lh1, lh0
+  & count s3 -> 0.12
+  & count s4 -> 0.09
+step: Keep the top 3. Chroma reports the cosine distance, 1 minus similarity: 0.29, 0.52 and 0.59.
+  hide lh1, lh0, l78, l63, t78, t63
+  dim hours0, hours1, s3, s4
+  highlight all0, menu0, all1
+  show top3, dist
+:::
 
 You compare two vectors with cosine similarity, a number from -1 to 1. The value 1 means the same direction, 0 means unrelated, and values near -1 are rare for text. Cosine similarity is the dot product of the two vectors divided by the product of their lengths. The dot product multiplies the vectors position by position and adds the results. The length of a vector is the square root of the dot product of the vector with itself.
 
@@ -780,6 +928,59 @@ The query phase has five steps, and rag/ask.py holds one function per step:
 4. Call. Send the system prompt and the user message to the model with the Anthropic SDK.
 5. Return. Collect the text blocks of the reply.
 
+:::anim
+title: Building the prompt for "Is the rye loaf gluten free?"
+box user "You" @ 130,130 icon: user
+box ask "rag/ask.py" @ 130,290 icon: python
+box store "Chroma" @ 130,440 icon: database
+rect sysr @ 440,110 size: 320x44 "System prompt: 3 rules, cite ids" color: purple
+rect c0 @ 440,180 size: 320x44 "[allergens.txt#0]  distance 0.29" color: blue
+rect c1 @ 440,240 size: 320x44 "[menu.txt#0]  distance 0.52" color: blue
+rect c2 @ 440,300 size: 320x44 "[allergens.txt#1]  distance 0.59" color: blue
+rect qr @ 440,380 size: 320x44 "Question: Is the rye loaf gluten free?" color: yellow
+text tsys "system" @ 612,110 size: 13 color: grey anchor: start
+text tctx "Context, best match first" @ 280,146 size: 13 color: grey anchor: start
+text tum "user message" @ 612,300 size: 13 color: grey anchor: start
+box llm "Claude API" @ 790,240 icon: model
+text ans "No. The rye loaf contains rye and wheat,|so it is not gluten free [allergens.txt#0]." @ 790,330 size: 14 color: green
+num ntok = 0 @ 440,460 prefix: "input: " suffix: " tokens" size: 22 color: yellow
+num cost = 0 @ 790,440 prefix: "cost: " suffix: " dollars" digits: 4 size: 22 color: yellow
+text t1000 "1,000 questions: 0.82 dollars" @ 790,480 size: 15 color: grey
+
+step: You ask if the rye loaf is gluten free. The question goes to the ask function in rag/ask.py.
+  show user, ask
+  arrow user -> ask : question
+step: Retrieve: search embeds the question and asks Chroma for the top 3 chunks with their distances.
+  show store
+  arrow ask -> store : question vector
+  arrow store -> ask : 3 chunks
+step: Format: each chunk becomes one line that starts with its id in square brackets, best match first.
+  show tctx, c0, c1, c2
+  arrow a0 = ask -> c0
+  & arrow a1 = ask -> c1
+  & arrow a2 = ask -> c2
+step: Build: the template puts the context and the question in the user message, about 170 tokens.
+  show qr, tum, ntok
+  arrow aq = ask -> qr
+  & count ntok -> 170
+step: The system prompt holds the rules. It never changes, so it goes in the system field. Input: 260 tokens.
+  show sysr, tsys
+  arrow as = ask -> sysr
+  & count ntok -> 260
+step: Call: send the system prompt and the user message to claude-sonnet-5-5 with the Anthropic SDK.
+  show llm
+  arrow p = c1 -> llm : prompt
+step: The model answers from the chunks and cites allergens.txt#0. The answer returns through ask to you.
+  show ans
+  hide p, a0, a1, a2, aq, as, sysr, c0, c1, c2, qr, tctx, tum, tsys
+  arrow llm -> ask : answer
+  arrow ask -> user : answer
+step: One question costs about 0.0008 dollars: 260 input and 30 output tokens. 1,000 questions cost 0.82.
+  show cost
+  count cost -> 0.0008
+  show t1000
+:::
+
 | Part of the prompt | Where it goes | Changes per question | Example |
 | --- | --- | --- | --- |
 | Role and task | system prompt | no | You answer questions about Sunrise Bakery. |
@@ -1008,6 +1209,92 @@ Evaluation has two layers, because the pipeline has two parts that can fail:
 
 1. Retrieval evaluation. For each test question, run the search and check whether the expected chunk id is in the top k. This needs no model call and runs in a second.
 2. Answer evaluation. For each test question, run the full ask function and compare the answer with the reference. A model reads both and returns PASS or FAIL. This is an LLM judge: a model that grades another model's output against a rubric.
+
+:::anim
+title: Measuring the hit rate at 3 on the bakery test set
+box tests "rag/tests.json" @ 160,150 icon: file size: 200x64
+box ret "Retriever" @ 160,330 icon: vector
+text q "Is the rye loaf gluten free?" @ 480,100 size: 18 color: yellow
+text exp "expected: allergens.txt#0" @ 480,150 size: 16 color: teal
+rect r0 @ 480,220 size: 260x44 "allergens.txt#0" color: blue
+rect r1 @ 480,280 size: 260x44 "menu.txt#0" color: blue
+rect r2 @ 480,340 size: 260x44 "allergens.txt#1" color: blue
+text tag "top 3" @ 625,220 size: 13 color: grey anchor: start
+num hits = 0 @ 790,120 prefix: "hits = " size: 26
+num asked = 0 @ 790,180 prefix: "asked = " size: 26
+num rate = 0 @ 790,270 prefix: "hit rate = " digits: 2 size: 30 color: yellow
+text verdict "HIT" @ 790,360 size: 34 color: green
+text fix "dense search only" @ 790,430 size: 16 color: grey
+
+step: The test set holds 8 questions, each with the id of the chunk that holds the answer. Take the first.
+  show tests, hits, asked, rate
+  show q, exp
+  pulse tests
+step: The retriever embeds the question and returns the top 3 ids, best match first.
+  show ret
+  arrow tests -> ret : question
+  show r0, r1, r2, tag
+  arrow a0 = ret -> r0
+  & arrow a1 = ret -> r1
+  & arrow a2 = ret -> r2
+step: The expected id allergens.txt#0 is in the list. Count a hit: anywhere in the top 3 is enough.
+  color r0 green
+  show verdict
+  count hits -> 1
+  & count asked -> 1
+  count rate -> 1
+step: Next question: when does the last batch come out? Expected: opening_hours.txt#1, the short 14-word chunk.
+  label q "What time does the last batch of bread come out?"
+  & label exp "expected: opening_hours.txt#1"
+  hide verdict
+  & color r0 blue
+  send tests -> ret
+  label r0 "opening_hours.txt#0"
+  & label r1 "menu.txt#0"
+  & label r2 "allergens.txt#1"
+  send a0 = ret -> r0
+  & send a1 = ret -> r1
+  & send a2 = ret -> r2
+step: The short chunk is missing. The longer hours chunk won the dense search. Count a miss.
+  color r0, r1, r2 red
+  label verdict "MISS"
+  & color verdict red
+  show verdict
+  count asked -> 2
+  count rate -> 0.5
+step: Third question: how much is a slice of carrot cake? Expected menu.txt#0 comes first. A hit.
+  label q "How much is a slice of carrot cake?"
+  & label exp "expected: menu.txt#0"
+  hide verdict
+  & color r0, r1, r2 blue
+  send tests -> ret
+  label r0 "menu.txt#0"
+  & label r1 "allergens.txt#1"
+  & label r2 "allergens.txt#0"
+  send a0 = ret -> r0
+  & send a1 = ret -> r1
+  & send a2 = ret -> r2
+  color r0 green
+  label verdict "HIT"
+  & color verdict green
+  show verdict
+  count hits -> 2
+  & count asked -> 3
+  count rate -> 0.67
+step: After all 7 scored questions, 5 hit. The hit rate at 3 is 5 divided by 7, which is 0.71.
+  hide q, exp, r0, r1, r2, tag, verdict, a0, a1, a2
+  count hits -> 5
+  & count asked -> 7
+  count rate -> 0.71
+  highlight rate
+  show fix
+step: The 2 misses point at fixes. Hybrid search lifts the hit rate to 0.86 and a reranker to 1.00.
+  label fix "hybrid search (RRF)"
+  count rate -> 0.86
+  wait 1
+  label fix "hybrid plus reranker"
+  count rate -> 1
+:::
 
 Start with the test set. Write it by hand; 8 questions are enough to begin, and 30 to 50 are typical for a real project. Cover every file, include at least one question that needs two chunks, and include one question with no answer in the documents.
 

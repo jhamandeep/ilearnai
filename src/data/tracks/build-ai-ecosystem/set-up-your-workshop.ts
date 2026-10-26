@@ -82,6 +82,52 @@ Notice which parts the question did not visit. It did not visit the agent loop, 
 
 The architecture becomes real as a repository. A project repository is one folder, tracked by git, that holds all the code and data for a project. The repository for this track is named aiworkshop. Each module adds one folder to it. The table lists the folders, the module that fills each one, and what the folder holds when the track ends.
 
+:::anim
+title: The walnut loaf question crosses the system, folder by folder
+box user "Browser" @ 130,140 icon: browser
+box api "FastAPI app|app/" @ 420,140 icon: server
+box llm "Claude API|chat/" @ 710,140 icon: model
+box ret "Retriever|rag/" @ 420,290 icon: vector
+box vdb "Vector store|data/" @ 710,290 icon: database
+box agent "Agent loop|agents/" @ 130,290 size: 180x64 icon: agent
+text q "Does the walnut loaf contain nuts,|and what does it cost?" @ 60,215 size: 15 color: yellow anchor: start
+num chunks = 0 @ 710,420 suffix: " chunks" size: 24
+num ptok = 0 @ 420,420 prefix: "prompt: " suffix: " tokens" size: 22
+num atok = 0 @ 710,460 prefix: "answer: " suffix: " tokens" size: 22 color: green
+text ans "Yes, it contains tree nuts.|It costs 4.50." @ 130,440 size: 16 color: green
+
+step: A customer types the walnut loaf question. The browser sends it to the FastAPI app, which lives in app/.
+  show user, q, api
+  arrow user -> api : question
+step: The app hands the question to the retriever in rag/.
+  show ret
+  arrow api -> ret : question
+step: The retriever turns the question into an embedding and asks the vector store in data/ for similar chunks.
+  show vdb
+  arrow ret -> vdb : embedding
+step: The store returns the 3 closest chunks: one from allergens.txt, one from menu.txt, one weak.
+  show chunks
+  arrow vdb -> ret : 3 chunks
+  & count chunks -> 3
+step: The retriever passes the chunks up. The app builds a prompt of about 320 tokens from them and the question.
+  show ptok
+  arrow ret -> api : chunks
+  & count ptok -> 320
+step: The app sends the prompt to the Claude API, called from chat/. The model writes about 25 tokens.
+  show llm
+  arrow api -> llm : prompt
+  show atok
+  count atok -> 25
+step: The answer returns to the app and then to the browser. The page shows it.
+  arrow llm -> api : answer
+  arrow api -> user : answer
+  show ans
+step: The agent loop in agents/ stays unused: a simple question needs no tools. A system holds more paths than one request uses.
+  show agent
+  dim agent
+  highlight ans
+:::
+
 | Folder | Module that fills it | What it holds at the end |
 | --- | --- | --- |
 | chat/ | 2, Chat application | the first model calls, the chat loop, streaming and structured output |
@@ -327,6 +373,48 @@ state: screen=key found, 108 characters
 The key moves through three places: the console, the file and the environment. Git must see none of them. The last section of this lesson makes that rule explicit.
 
 ## How it works
+
+The scene below follows the key from the console to the request header, and shows the one door that .gitignore keeps shut. The sections after it build each step by hand.
+
+:::anim
+title: The key reaches the program and never reaches git
+box console "Anthropic Console" @ 160,140 size: 200x64 icon: browser
+box envf ".env file" @ 460,140 icon: key
+box osenv "os.environ" @ 760,140 icon: memory
+box files "README, code,|.env.example" @ 160,290 size: 200x64 icon: files
+box git "git commit" @ 460,290 icon: disk
+box client "anthropic client" @ 760,290 icon: python
+box gitignore ".gitignore" @ 460,440 icon: guard
+box api "Claude API" @ 760,440 icon: model
+text keytxt "sk-ant-api03-..." @ 160,215 size: 18 color: yellow
+num chars = 0 @ 600,215 prefix: "key found, " suffix: " characters" size: 19 color: green
+arrow block from envf to git ".env: blocked" color: red dashed
+
+step: You create a key in the Anthropic Console. The console shows it once, then hides it forever.
+  show console, keytxt
+step: You paste the key into the .env file as ANTHROPIC_API_KEY=... and save the file.
+  show envf
+  arrow console -> envf : paste once
+step: python check_setup.py starts. Its first line, load_dotenv, reads .env and copies each line into os.environ.
+  show osenv
+  arrow envf -> osenv : load_dotenv
+step: The script asks os.environ for the key, finds 108 characters, and prints the length, never the key.
+  hide keytxt
+  show chars
+  count chars -> 108
+step: The anthropic client reads the same variable and sends the key to the Claude API in a request header.
+  show client, api
+  arrow osenv -> client : ANTHROPIC_API_KEY
+  arrow client -> api : header
+step: git add . stages README, the code and .env.example for the first commit.
+  show files, git
+  arrow files -> git : git add .
+step: .gitignore blocks .env, so the commit never holds the key. A committed key is a leaked key.
+  show gitignore
+  arrow gitignore -> git : rule: .env
+  show block
+  pulse gitignore
+:::
 
 ### The virtual environment
 
@@ -657,6 +745,53 @@ Two details in the script deserve a second look. The content field is a list of 
 ### The three ways
 
 All three ways do the same job: send a messages list, get a text answer. They differ in who runs the model, what the request looks like on the wire, and what it costs.
+
+:::anim
+title: One prompt, three ways: the cloud, the OpenAI-compatible form, and your own computer
+box script "Your script" @ 480,120 icon: script
+text prompt "Write one sentence that welcomes|a customer to a small bakery|called Crumb." @ 760,120 size: 15 color: yellow
+box claude "Claude API|Anthropic servers" @ 180,290 size: 220x64 icon: model
+box ollama "Ollama|localhost:11434" @ 780,290 size: 220x64 icon: hardware
+num tin = 0 @ 180,370 prefix: "in: " suffix: " tokens" size: 21
+num tout = 0 @ 180,404 prefix: "out: " suffix: " tokens" size: 21
+num secs = 0 @ 180,438 prefix: "time: " suffix: " s" digits: 1 size: 21
+num cost = 0 @ 180,472 prefix: "cost: " suffix: " dollars" digits: 4 size: 21 color: green
+num tin2 = 0 @ 780,370 prefix: "in: " suffix: " tokens" size: 21
+num tout2 = 0 @ 780,404 prefix: "out: " suffix: " tokens" size: 21
+num secs2 = 0 @ 780,438 prefix: "time: " suffix: " s" digits: 1 size: 21
+num cost2 = 0 @ 780,472 prefix: "cost: " suffix: " dollars" digits: 4 size: 21 color: green
+text note "base_url = http://localhost:11434/v1" @ 480,420 size: 16 color: grey
+
+step: Your script holds one prompt: a welcome sentence for a small bakery called Crumb.
+  show script, prompt
+step: The Anthropic SDK packs the prompt into a JSON request and sends it over HTTPS, key in a header.
+  show claude
+  arrow script -> claude : HTTPS + key
+step: The API counts 23 input tokens. The model writes 24 output tokens, one at a time.
+  show tin, tout
+  count tin -> 23
+  count tout -> 24 (2.5s)
+step: The response returns after 1.4 seconds. The SDK turns the JSON into a Python object.
+  show secs
+  arrow claude -> script : response
+  & count secs -> 1.4
+step: Cost: 23 input tokens at 2 dollars per million, plus 24 output at 10 dollars per million. About 0.0003 dollars.
+  show cost
+  count cost -> 0.0003 (2s)
+step: The same messages list goes to Ollama on your own computer, port 11434. Nothing leaves your disk.
+  show ollama
+  arrow script -> ollama : messages list
+step: Its own tokenizer counts 31 input tokens. It writes 14 tokens in 2.6 seconds, and the cost is zero.
+  show tin2, tout2, secs2, cost2
+  count tin2 -> 31
+  count tout2 -> 14 (2s)
+  & count secs2 -> 2.6 (2s)
+  arrow ollama -> script : response
+step: The OpenAI-compatible script reaches the same server through /v1. Change the base URL, not the code.
+  show note
+  send script -> ollama : messages list
+  highlight ollama
+:::
 
 | | Anthropic SDK | OpenAI-compatible endpoint | Ollama, local |
 | --- | --- | --- | --- |

@@ -100,6 +100,45 @@ state: rows=7, file=closed
 
 The open function takes 2 arguments. The first is the path of the file. The second is the mode. The mode "w" means write, and it creates the file or empties an existing one. The mode "r" means read, and it is the default. The mode "a" means append, and it adds to the end. The table lists the three modes.
 
+:::anim
+title: Six houses go to the disk as text and come back as numbers
+box prog "write_houses.py" @ 150,150 icon: python size: 220x64
+box disk "houses.csv on the disk" @ 480,150 icon: disk size: 240x64
+box reader "mean_price.py" @ 480,430 icon: python size: 220x64
+num lines = 0 @ 790,150 suffix: " lines" size: 26
+text closed "closed: the 7 lines are safe" @ 480,215 size: 16 color: grey
+text row "row['price'] = '150000'|a string, not a number" @ 790,300 size: 17 color: yellow
+text conv "int(row['price']) = 150000" @ 790,365 size: 17 color: green
+num total = 0 @ 790,430 prefix: "total = " size: 24
+num mean = 0 @ 790,485 prefix: "mean = " size: 22 color: green
+
+step: The program calls open with mode w. The operating system creates an empty file on the disk.
+  show prog, disk, lines
+  arrow prog -> disk : open('houses.csv', 'w')
+step: The loop writes the header line and 6 data lines. Each line ends with a newline character.
+  send prog -> disk : 50,1,Leeds,no,150000 (2.5s)
+  & count lines -> 7 (2.5s)
+step: The with block ends and Python closes the file. The 7 lines are now safe on the disk.
+  show closed
+  highlight disk
+step: A second program opens the file to read. csv.DictReader turns each line into a dictionary of strings.
+  show reader
+  restore disk
+  arrow disk -> reader : csv.DictReader(f)
+step: Look at the quotes. The price is the string '150000'. The program converts it with int before it adds.
+  show row
+  wait 1
+  show conv
+step: The loop adds the 6 prices one by one. The total counts up to 1,470,000.
+  show total
+  send disk -> reader : 6 rows (3s)
+  & count total -> 1470000 (3s)
+step: Divide by the count, 6 houses. The mean is 245,000 pounds, the same as by hand.
+  show mean
+  count mean -> 245000
+  pulse mean
+:::
+
 | Mode | Name | What it does to an existing file |
 | --- | --- | --- |
 | "r" | read | leaves it as it is; fails if the file does not exist |
@@ -458,6 +497,53 @@ state: output=mean: 245000.0
 
 Every traceback has the same three parts. The table names them from the top down, but you read them from the bottom up.
 
+:::anim
+title: Read a traceback from the bottom up to the nearest line that is yours
+rect hdr @ 360,110 size: 520x54 "Traceback (most recent call last):" color: grey
+rect b1a @ 360,180 size: 520x54 "File mean_price.py, line 12, in <module>"
+rect b1b @ 360,250 size: 520x54 "print('mean:', mean_price('houses.csv'))"
+rect b2a @ 360,320 size: 520x54 "File mean_price.py, line 8, in mean_price"
+rect b2b @ 360,390 size: 520x54 "total = total + int(row['Price'])"
+rect err @ 360,460 size: 520x54 "KeyError: 'Price'" color: red
+dot ptr @ 75,460 r: 9 color: yellow
+text t1 "a dictionary has no|key named Price" @ 790,460 size: 17 color: red
+text t2 "line 8 was running|when it failed" @ 790,355 size: 17
+text t3 "mean_price.py is yours:|the line to fix" @ 790,355 size: 17 color: yellow
+text t4 "the caller only called;|it is not wrong" @ 790,215 size: 17 color: grey
+text t5 "one letter fixed:|the program runs" @ 790,460 size: 17 color: green
+
+step: Python prints a traceback with 3 parts: a header, one block per call, and the error line last.
+  show hdr
+  show b1a, b1b
+  show b2a, b2b
+  show err
+step: Read the last line first. KeyError: 'Price' means a dictionary has no key named Price.
+  show ptr
+  highlight err
+  show t1
+step: Go up one block. Line 8, inside the function mean_price, is the line that was running when it failed.
+  move ptr -> 75,355
+  restore err
+  highlight b2a, b2b
+  show t2
+step: Is mean_price.py a file you wrote? Yes. So this is the line to fix.
+  hide t2
+  show t3
+  pulse b2b
+step: The block above only called the function on line 12. It is not wrong, so leave it.
+  move ptr -> 75,215
+  dim b1a, b1b
+  show t4
+step: Compare the key Price with the header in the file: price. Fix the capital P and run again.
+  hide ptr, t1, t3, t4
+  restore b1a, b1b, b2a, b2b
+  label b2b "total = total + int(row['price'])"
+  color b2b green
+  label err "mean: 245000.0"
+  color err green
+  show t5
+:::
+
 | Part | Where | What it tells you |
 | --- | --- | --- |
 | Header | first line, Traceback (most recent call last) | a traceback follows; the last block is the newest |
@@ -773,6 +859,44 @@ state: requirements.txt=pandas==2.2.3 and 4 more lines
 
 The import statement has 3 forms. All 3 load the same code; they differ in the name you use afterwards.
 
+:::anim
+title: Where import looks for pandas, and how pip puts it there
+box prog "mean_pandas.py" @ 150,290 icon: python size: 220x64
+box stdlib "Standard library|csv, json, math" @ 480,150 icon: package size: 240x64
+box venv ".venv|empty" @ 480,430 icon: package size: 240x64
+box pypi "PyPI|500,000 packages" @ 790,430 icon: cloud size: 220x64
+box req "requirements.txt" @ 790,290 icon: file size: 220x64
+text err "ModuleNotFoundError:|No module named 'pandas'" @ 790,150 size: 18 color: red
+num pkgs = 0 @ 480,500 suffix: " packages in .venv" size: 20
+text out "prints 245000.0" @ 150,390 size: 20 color: green
+
+step: Line 1 says import pandas as pd. Python looks for a package named pandas in the standard library.
+  show prog, stdlib
+  arrow prog -> stdlib : import pandas
+step: The box holds csv, json and math, but no pandas. Python stops with ModuleNotFoundError.
+  color stdlib red
+  show err
+  pulse err
+step: Ada runs python -m venv .venv. A private, empty folder of packages appears for this project.
+  hide err
+  color stdlib blue
+  show venv, pkgs
+step: She activates it and runs pip install pandas. pip asks PyPI, an index of 500,000 packages.
+  show pypi
+  arrow venv -> pypi : pip install pandas
+step: PyPI sends pandas, numpy and 4 small packages that pandas needs. pip puts all 6 inside .venv.
+  arrow pypi -> venv : pandas, numpy + 4 more (2.5s)
+  & count pkgs -> 6 (2.5s)
+  label venv ".venv|pandas, numpy, ..."
+step: Run the program again. The import finds pandas in .venv, and the program prints 245000.0.
+  arrow prog -> venv : import pandas
+  highlight venv
+  show out
+step: pip freeze writes the 6 names and versions to requirements.txt, so a new computer can repeat the install.
+  show req
+  arrow venv -> req : pip freeze
+:::
+
 | Form | Example | How you call a function after it |
 | --- | --- | --- |
 | import package | import math | math.sqrt(16) |
@@ -1011,6 +1135,58 @@ houses["price"].mean()
 :::
 
 She runs them in order. Cell 1 shows nothing. Cell 2 shows the table, because a notebook prints the last value of a cell without a print call. Cell 3 shows 245000.0. The left margin now reads In [1], In [2] and In [3]. The number is the order in which the cells ran, not their position on the page.
+
+:::anim
+title: The page shows page order, but the kernel holds run order
+text pg "The page" @ 300,70 size: 16 color: grey
+rect c1 @ 300,130 size: 460x56 "In [ ]   import pandas as pd"
+rect c2 @ 300,210 size: 460x56 "In [ ]   houses = pd.read_csv('houses.csv')"
+rect c3 @ 300,290 size: 460x56 "In [ ]   houses['price'].mean()"
+num mean = 0 @ 300,360 prefix: "Out: " digits: 1 size: 22 color: green
+text kt "The kernel: one Python process" @ 790,70 size: 16 color: grey
+box kernel "Kernel" @ 790,130 icon: kernel size: 200x64
+rect kpd @ 790,210 size: 200x50 "pd = pandas" color: teal
+rect kh @ 790,290 size: 200x50 "houses = 6 rows" color: teal
+text warn "the margin reads In [1], In [4], In [5]|but houses has only 3 rows" @ 300,450 size: 18 color: yellow
+
+step: The page shows 3 cells in page order. The kernel, one Python process, starts empty.
+  show pg, c1, c2, c3
+  show kt, kernel
+step: Run cell 1. The kernel loads pandas. The margin shows In [1].
+  label c1 "In [1]   import pandas as pd"
+  arrow c1 -> kernel : run
+  show kpd
+step: Run cell 2. The kernel reads houses.csv into houses, 6 rows. The margin shows In [2].
+  label c2 "In [2]   houses = pd.read_csv('houses.csv')"
+  arrow c2 -> kernel : run
+  show kh
+step: Run cell 3. The kernel computes the mean of the 6 prices: 245000.0. The margin shows In [3].
+  label c3 "In [3]   houses['price'].mean()"
+  arrow c3 -> kernel : run
+  show mean
+  count mean -> 245000
+step: Ada edits cell 2 to houses = houses[houses['city'] == 'York'] and runs it. In [4]. Only 3 rows are left.
+  label c2 "In [4]   houses = houses[...]  York rows only"
+  send c2 -> kernel : run
+  label kh "houses = 3 rows (York)"
+  color kh orange
+step: Run cell 3 again. In [5]. The mean is now 313333.3, the mean of the 3 York prices.
+  label c3 "In [5]   houses['price'].mean()"
+  send c3 -> kernel : run
+  count mean -> 313333.3
+step: The margin reads 1, 4, 5 from the top. A reader cannot tell what ran, but the kernel remembers.
+  show warn
+  pulse kh
+step: Restart and Run All empties the kernel. Every cell runs again from the top, and the numbers start at 1.
+  hide kpd, kh, mean, warn
+  label c1 "In [ ]   import pandas as pd"
+  label c2 "In [ ]   houses = houses[...]  York rows only"
+  label c3 "In [ ]   houses['price'].mean()"
+  wait 0.6
+  label c1 "In [1]   import pandas as pd"
+  send c1 -> kernel : run
+  show kpd
+:::
 
 The diagram shows the parts that make this work. The page in the browser sends the cell to a small server, the server passes it to the kernel, and the kernel sends the output back.
 
@@ -1286,6 +1462,57 @@ state: result=2 rows
 ### Look at the table
 
 The first 4 things to run on any new DataFrame are in the table below. Run each one in its own cell.
+
+:::anim
+title: groupby splits the 6 rows by city, then mean works on each group
+text q "houses.groupby('city')['price'].mean()" @ 620,70 size: 20 color: yellow
+rect r0 @ 170,120 size: 200x44 "0   Leeds   150000"
+rect r1 @ 170,180 size: 200x44 "1   Leeds   210000"
+rect r2 @ 170,240 size: 200x44 "2   York   260000"
+rect r3 @ 170,300 size: 200x44 "3   York   380000"
+rect r4 @ 170,360 size: 200x44 "4   Leeds   170000"
+rect r5 @ 170,420 size: 200x44 "5   York   300000"
+text hL "Leeds" @ 480,120 size: 22 color: blue
+text hY "York" @ 760,120 size: 22 color: orange
+num sumL = 0 @ 480,370 prefix: "sum = " size: 22 color: blue
+num sumY = 0 @ 760,370 prefix: "sum = " size: 22 color: orange
+num meanL = 0 @ 480,420 prefix: "mean = " digits: 2 size: 24 color: blue
+num meanY = 0 @ 760,420 prefix: "mean = " digits: 2 size: 24 color: orange
+text note "York costs about 137,000 pounds|more on average" @ 620,480 size: 18 color: grey
+
+step: The table has 6 rows. The question is: what is the mean price in each city?
+  show r0, r1, r2, r3, r4, r5
+  show q
+step: groupby('city') splits the rows by the value in the city column: 3 Leeds rows and 3 York rows.
+  show hL, hY
+  color r0, r1, r4 blue
+  color r2, r3, r5 orange
+  move r0 -> 480,170 (1.5s)
+  & move r1 -> 480,230 (1.5s)
+  & move r4 -> 480,290 (1.5s)
+  & move r2 -> 760,170 (1.5s)
+  & move r3 -> 760,230 (1.5s)
+  & move r5 -> 760,290 (1.5s)
+step: ['price'] keeps only the price column of each group.
+  label r0 "150000"
+  & label r1 "210000"
+  & label r4 "170000"
+  & label r2 "260000"
+  & label r3 "380000"
+  & label r5 "300000"
+step: mean() first adds the prices in each group. Leeds: 530,000. York: 940,000.
+  show sumL, sumY
+  count sumL -> 530000 (2s)
+  & count sumY -> 940000 (2s)
+step: Then it divides each sum by the count, 3. Leeds: 176,666.67. York: 313,333.33.
+  show meanL, meanY
+  count meanL -> 176666.67 (2s)
+  & count meanY -> 313333.33 (2s)
+step: pandas returns a small table with one row per city, and no loop. York costs about 137,000 pounds more.
+  hide sumL, sumY
+  pulse meanL, meanY
+  show note
+:::
 
 | Line | What it shows | For houses |
 | --- | --- | --- |

@@ -164,6 +164,55 @@ state: container=aiw (exited), health=unknown
 
 A Docker image is a stack of image layers. Each instruction in the Dockerfile that changes files makes one layer. A layer is a read-only set of file changes, like one commit in Git. Docker stores every layer and reuses it when the instruction and its inputs have not changed. This reuse is the build cache.
 
+:::anim
+title: Image layers and the build cache
+box df "Dockerfile" @ 160,334 icon: file size: 170x64
+rect l1 @ 480,450 size: 260x48 "FROM python:3.12-slim" color: blue
+rect l2 @ 480,392 size: 260x48 "WORKDIR /app" color: blue
+rect l3 @ 480,334 size: 260x48 "COPY requirements.txt ." color: blue
+rect l4 @ 480,276 size: 260x48 "RUN pip install" color: blue
+rect l5 @ 480,218 size: 260x48 "COPY . ." color: blue
+text t1 "First build" @ 800,190 size: 18 color: grey
+num build = 0 @ 800,250 suffix: " s" digits: 1 size: 30
+text t2 "Change one line of code|and build again" @ 800,340 size: 17 color: yellow
+text t3 "Cached layers are reused" @ 800,400 size: 16 color: green
+num rebuild = 0 @ 800,460 prefix: "rebuild " suffix: " s" digits: 0 size: 26 color: orange
+
+step: Docker reads the Dockerfile from the top. FROM pulls the base image, the first layer, in 12 seconds.
+  show df, l1, t1, build
+  arrow df -> l1 : FROM
+  & count build -> 12.1
+step: WORKDIR and COPY requirements.txt add two small layers on top of it.
+  show l2
+  arrow df -> l2 : WORKDIR
+  show l3
+  arrow df -> l3 : COPY requirements.txt
+  & count build -> 12.2
+step: RUN pip install downloads every package. This layer takes 79 seconds, the largest by far.
+  show l4
+  arrow df -> l4 : RUN pip install
+  count build -> 90.8 (3s)
+  & highlight l4
+step: COPY . . adds your code as the last layer. The first build ends after 94 seconds.
+  restore l4
+  show l5
+  arrow df -> l5 : COPY . .
+  & count build -> 94.3
+step: Now you change one line of code and build again. The four lower layers are unchanged.
+  show t2
+  color l1, l2, l3, l4 green
+  show t3
+step: Docker reuses the cached layers and rebuilds only the last COPY layer: about 3 seconds, not 94.
+  show rebuild
+  color l5 orange
+  send df -> l5 : COPY . .
+  & count rebuild -> 3
+  pulse l5
+step: This is why the order matters: put the layer that changes most often last, so the cache does the work.
+  highlight l5
+  dim df, t1, build
+:::
+
 The order of lines matters because of the cache. When a layer changes, Docker rebuilds that layer and every layer after it. In the aiworkshop Dockerfile the requirements.txt copy and the pip install come before COPY . . of the code. You change code many times a day and change requirements rarely. So a code change invalidates only the last COPY layer. The 78 second pip install layer stays cached and the rebuild takes about 3 seconds.
 
 | Instruction | What it does | Makes a layer? |
@@ -425,6 +474,52 @@ state: location=Tokyo browser, encrypted=yes
 ## How it works
 
 Every container host does the same 6 jobs. The names differ, the jobs do not.
+
+:::anim
+title: A rollout: the new container takes over only after its health check passes
+box term "Your terminal" @ 130,290 icon: terminal size: 170x64
+box build "Fly builder" @ 400,150 icon: server size: 170x64
+box edge "Edge: HTTPS proxy" @ 400,430 icon: network size: 200x64
+box old "Machine v2 (old)" @ 670,150 icon: server size: 190x64
+box new "Machine v3 (new)" @ 670,290 icon: server size: 190x64
+box users "Users" @ 670,430 icon: user size: 150x64
+num img = 0 @ 860,220 suffix: " MB" size: 22 color: blue
+text t1 "image size" @ 860,190 size: 14 color: grey
+text t2 "GET /health|every 30 s" @ 860,320 size: 14 color: grey
+num rb = 0 @ 860,480 prefix: "rollback " suffix: " s" size: 20 color: orange
+
+step: You run fly deploy. The terminal sends the Dockerfile and your code to the Fly builder.
+  show term, build
+  arrow term -> build : fly deploy
+step: The builder makes the image on Fly servers: 421 MB, the same size as on your computer.
+  show t1, img
+  count img -> 421
+  pulse build
+step: Meanwhile machine v2 serves users through the edge. Nothing changes for them yet.
+  show edge, users, old
+  arrow u1 = users -> edge : https
+  arrow t2old = edge -> old : http to port 8000
+step: The builder starts a new machine, v3, from the fresh image, next to the old one.
+  show new
+  arrow build -> new : image v3
+step: The edge calls /health on v3 every 30 seconds. After a 10 second grace period the check returns 200.
+  show t2
+  arrow hc = edge -> new : GET /health
+  arrow ok = new -> edge : 200 ok
+  color new green
+step: The edge routes traffic to v3 and stops v2. The rollout is complete.
+  hide hc, ok, t2old
+  arrow t3 = edge -> new : http to port 8000
+  label old "Machine v2 (stopped)"
+  dim old
+step: If v3 misbehaves later, fly deploy with the v2 image starts it again in about 30 seconds: a rollback.
+  show rb
+  send term -> build : fly deploy --image v2
+  restore old
+  label old "Machine v2 (rollback)"
+  count rb -> 30
+  highlight old
+:::
 
 1. Build: read your Dockerfile and produce an image, or accept an image you pushed to a registry.
 2. Schedule: pick a server with free memory and start the container there.
@@ -696,6 +791,56 @@ step: Later you search the logs for trace_id 7f3a9c21d4e8b056 and get exactly th
 ## How it works
 
 Observability rests on three kinds of data. The table defines them with the aiworkshop example.
+
+:::anim
+title: One /ask request traced through its spans, tied together by one trace id
+box user "User" @ 130,150 icon: user size: 150x64
+box api "FastAPI /ask" @ 420,150 icon: server size: 180x64
+box vs "Vector store" @ 420,290 icon: database size: 180x64
+box llm "Claude API" @ 710,150 icon: model size: 170x64
+text tid "trace_id 7f3a9c21d4e8b056" @ 820,230 size: 15 color: yellow
+num clock = 0 @ 820,290 suffix: " ms" size: 28
+text l1 "7f3a9c21d4e8b056  span=embed  ms=88.4" @ 110,380 size: 14 color: grey anchor: start
+text l2 "7f3a9c21d4e8b056  span=search  ms=41.2  hits=5" @ 110,410 size: 14 color: grey anchor: start
+text l3 "7f3a9c21d4e8b056  span=build_prompt  ms=2.1  prompt_tokens=1180" @ 110,440 size: 14 color: grey anchor: start
+text l4 "7f3a9c21d4e8b056  span=model  ms=1470.8  input_tokens=1203  output_tokens=96" @ 110,470 size: 14 color: grey anchor: start
+text l5 "7f3a9c21d4e8b056  request  path=/ask  status=200  ms=1620.3" @ 110,500 size: 14 color: grey anchor: start
+text pct "model: 1,471 of 1,620 ms|91 percent of the time" @ 820,400 size: 17 color: orange
+
+step: A user asks: What is the refund period? The middleware gives the request trace id 7f3a9c21d4e8b056 and starts the clock.
+  show user, api, tid, clock
+  arrow user -> api : POST /ask
+step: The embed span turns the question into a vector in 88 ms and writes the first log line.
+  pulse api
+  count clock -> 93
+  show l1
+step: The search span asks the vector store for the 5 best chunks: 41 ms, the second line.
+  show vs
+  arrow api -> vs : vector
+  arrow vs -> api : 5 chunks
+  & count clock -> 134
+  show l2
+step: build_prompt joins the chunks into 1,180 tokens in 2 ms. Third line, same trace id.
+  count clock -> 136
+  show l3
+step: The model span sends 1,203 input tokens to the Claude API and waits. The clock runs for 1,471 ms.
+  show llm
+  arrow api -> llm : 1203 input tokens
+  count clock -> 1607 (3s)
+  & highlight llm
+  arrow llm -> api : 96 output tokens
+  show l4
+step: The middleware logs the whole request: status 200, 1,620 ms. Five lines, one trace id.
+  restore llm
+  count clock -> 1620
+  arrow api -> user : reply
+  show l5
+  pulse tid
+step: Now you can see where the time went: the model took 1,471 of 1,620 ms, 91 percent.
+  show pct
+  highlight l4
+  dim l1, l2, l3
+:::
 
 | Kind | What it is | Example in aiworkshop | Question it answers |
 | --- | --- | --- | --- |
@@ -1094,6 +1239,61 @@ state: cache=hit
 
 Cost control is a pipeline of checks in front of the model call. Each check is cheap, a Redis call of about 1 ms, and each one either answers, routes or rejects before any tokens are bought.
 
+:::anim
+title: The cost of one request, then the month, then the controls
+rect inp @ 180,110 size: 200x50 "1,200 input tokens" color: blue
+box model "claude-sonnet-5-5" @ 480,110 icon: model size: 220x64
+rect out @ 780,110 size: 200x50 "300 output tokens" color: orange
+text f1 "1,200 / 1,000,000 x USD 3.00 =" @ 380,210 size: 18 anchor: end
+num cin = 0 @ 480,210 prefix: "USD " digits: 4 size: 24 color: blue
+text f2 "300 / 1,000,000 x USD 15.00 =" @ 380,260 size: 18 anchor: end
+num cout = 0 @ 480,260 prefix: "USD " digits: 4 size: 24 color: orange
+text f3 "one request =" @ 380,310 size: 18 anchor: end
+num total = 0 @ 480,310 prefix: "USD " digits: 4 size: 26 color: yellow
+text f4 "x 10,000 requests a day =" @ 380,370 size: 18 anchor: end
+num day = 0 @ 480,370 prefix: "USD " digits: 0 size: 26
+text f5 "x 30 days =" @ 380,430 size: 18 anchor: end
+num month = 0 @ 480,430 prefix: "USD " digits: 0 size: 30 color: yellow
+text note "The model is 99 percent|of the bill" @ 800,230 size: 16 color: grey
+box cache "Response cache|30 percent hits" @ 800,330 icon: cache size: 200x64
+box router "Router: 70 percent|to Haiku" @ 800,440 icon: model size: 200x64
+
+step: One typical request sends 1,200 input tokens to the Sonnet model.
+  show inp, model
+  arrow inp -> model : 1,200 tokens
+step: The model answers with 300 output tokens. Prices are per million tokens, output costs more.
+  show out
+  arrow model -> out : 300 tokens
+step: Input: 1,200 divided by one million, times USD 3.00, is USD 0.0036.
+  show f1, cin
+  count cin -> 0.0036
+step: Output: 300 divided by one million, times USD 15.00, is USD 0.0045. One request costs USD 0.0081.
+  show f2, cout
+  count cout -> 0.0045
+  show f3, total
+  count total -> 0.0081
+  pulse total
+step: Times 10,000 requests a day is USD 81. Times 30 days is USD 2,430 a month, almost all of it model.
+  show f4, day
+  count day -> 81
+  show f5, month
+  count month -> 2430 (2s)
+  show note
+step: Add the response cache. Redis answers 30 percent of requests, so only 7,000 are paid: USD 1,701.
+  show cache
+  arrow cache -> model : 7,000 paid
+  label f5 "with 30 percent cache hits ="
+  count month -> 1701 (2s)
+  color cache green
+step: Add routing: 70 percent of paid requests go to Haiku at USD 0.0027. The month falls to USD 907.
+  show router
+  arrow router -> model : haiku or sonnet
+  label model "haiku or sonnet"
+  label f5 "cache plus routing ="
+  count month -> 907 (2s)
+  highlight month
+:::
+
 :::flow
 title: The cost pipeline in front of the model
 Request -> Rate limiter: 1 token from the bucket
@@ -1353,6 +1553,67 @@ why: Watch all 2 minutes. Kubernetes is what people use when one container is no
 ## The idea with an example
 
 > **Analogy.** A restaurant has a front door, a host who seats people, a kitchen, suppliers and a storeroom. A guest sees only the door and the plate. The owner sees the whole floor plan and knows what happens when a supplier is late. You are now the owner of aiworkshop. This lesson is the floor plan.
+
+:::anim
+title: One request through the whole ecosystem
+box browser "Browser" @ 120,130 icon: browser size: 170x64
+box edge "HTTPS edge" @ 120,270 icon: network size: 170x64
+box limiter "Rate limiter|Budget check" @ 120,410 size: 170x64
+box cache "Redis cache" @ 390,130 icon: cache size: 170x64
+box api "FastAPI /ask" @ 390,270 icon: server size: 170x64
+box vs "Vector store" @ 390,410 icon: database size: 170x64
+box router "Router" @ 660,130 size: 170x64
+box llm "Claude API|sonnet" @ 660,270 icon: model size: 170x64
+box logs "Logs and traces" @ 660,410 icon: file size: 170x64
+text lt "latency" @ 850,100 size: 14 color: grey
+num lat = 0 @ 850,135 suffix: " ms" size: 24
+text tid "trace id|9b2e41c7a0d35f68" @ 850,250 size: 14 color: yellow
+text ct "cost" @ 850,360 size: 14 color: grey
+num cost = 0 @ 850,390 prefix: "USD " digits: 5 size: 20 color: orange
+
+step: The browser sends POST /ask over HTTPS. The edge ends the encryption and forwards plain HTTP to port 8000.
+  show browser, edge, lt, lat
+  arrow browser -> edge : POST /ask over https
+  & count lat -> 12
+step: The rate limiter takes 1 of 7 tokens. The budget check reads USD 41.20 against the USD 100 cap and passes.
+  show limiter
+  arrow edge -> limiter : plain http
+  & count lat -> 14
+step: The middleware makes trace id 9b2e41c7a0d35f68. The cache hashes the prompt and asks Redis: a miss.
+  show api, tid
+  arrow limiter -> api : request
+  show cache
+  arrow api -> cache : key
+  arrow cache -> api : miss
+  & count lat -> 16
+step: The router sees the word draft in an 18-word, two-part question and picks claude-sonnet-5-5.
+  show router
+  arrow api -> router : question
+  show llm
+  arrow router -> llm : pick sonnet
+step: Embedding takes 88 ms. The vector store returns 5 chunks; the best holds the 14-day refund period.
+  show vs
+  arrow api -> vs : vector
+  arrow vs -> api : 5 chunks
+  & count lat -> 146
+step: The prompt builder joins the chunks into 1,340 input tokens. The Claude API answers in 1,610 ms with 210 output tokens.
+  arrow api -> llm : 1,340 input tokens
+  count lat -> 1756 (2.5s)
+  & highlight llm
+  arrow llm -> api : 210 output tokens
+  restore llm
+step: The service records the cost, USD 0.00717, adds it to the day's spend and stores the answer in Redis.
+  show ct, cost
+  count cost -> 0.00717
+  send api -> cache : store 24 h
+step: Six log lines carry the trace id. The reply returns through the edge to the browser: 1,790 ms.
+  show logs
+  arrow api -> logs : 6 lines
+  arrow api -> edge : reply
+  arrow edge -> browser : reply
+  & count lat -> 1790
+  pulse tid
+:::
 
 Here is the complete system you built. Read it layer by layer, from the users at the top to the data at the bottom.
 

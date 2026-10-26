@@ -39,6 +39,54 @@ why: Watch the first 15 minutes. Andrej Karpathy pastes text into a tokenizer an
 
 Take the sentence "the cat sat on the mat". A computer stores it as 22 characters, which includes 5 spaces. A character is one letter, digit, space or punctuation mark. There are 3 common ways to cut this text into tokens.
 
+:::anim
+title: The sentence becomes a list of token ids
+text sent "the cat sat on the mat" @ 400,90 size: 24 color: yellow
+box tok "Tokenizer" @ 400,180 icon: process
+rect c1 @ 175,275 size: 80x50 "the"
+rect c2 @ 265,275 size: 80x50 "cat"
+rect c3 @ 355,275 size: 80x50 "sat"
+rect c4 @ 445,275 size: 80x50 "on"
+rect c5 @ 535,275 size: 80x50 "the"
+rect c6 @ 625,275 size: 80x50 "mat"
+rect ids @ 400,355 size: 300x50 "[1, 2, 3, 4, 1, 5]" color: blue
+box model "Model" @ 400,450 icon: model
+num chars = 0 @ 800,180 suffix: " characters" size: 26
+num ntok = 0 @ 800,275 suffix: " tokens" size: 26 color: green
+num cost = 0 @ 800,380 prefix: "cost " suffix: " dollars" digits: 6 size: 20 color: grey
+text note "the gets id 1 both times" @ 800,450 size: 16 color: grey
+
+step: Here is the sentence. The computer stores it as 22 characters, which includes 5 spaces.
+  show sent, chars
+  count chars -> 22
+step: The tokenizer cuts the text into pieces. Each piece is one token. Common words stay whole.
+  show tok
+  arrow sent -> tok : text
+  show c1, c2, c3, c4, c5, c6
+  show ntok
+  count ntok -> 6
+step: The tokenizer looks up each piece in the vocabulary: the is 1, cat is 2, sat is 3, on is 4, mat is 5.
+  label c1 "the|id 1"
+  label c2 "cat|id 2"
+  label c3 "sat|id 3"
+  label c4 "on|id 4"
+  label c5 "the|id 1"
+  label c6 "mat|id 5"
+step: The word the appears twice and gets the same id, 1, both times.
+  highlight c1, c5
+  show note
+step: The model never sees the words. It reads only the list of ids.
+  restore c1, c5
+  show ids
+  pulse ids
+  show model
+  arrow ids -> model : 1 2 3 4 1 5
+step: The price is per million tokens. At 3 dollars per million, these 6 tokens cost 0.000018 dollars.
+  show cost
+  count cost -> 0.000018
+  highlight ntok
+:::
+
 | Method | Tokens for the sentence | Count | Vocabulary size |
 | --- | --- | --- | --- |
 | Characters | t, h, e, space, c, a, t, ... | 22 | about 100 |
@@ -269,6 +317,54 @@ why: Watch the first 12 minutes. The video shows how word vectors are learned fr
 
 Give each word in our sentence a 2-dimensional vector. A dimension is one of the numbers in the vector. For this lesson, read the first number as "how much this word is a thing" and the second as "how much this word is an action or position". Real embeddings have 300 to 4,000 dimensions and nobody can name what each one means, but the small version shows the mechanics.
 
+:::anim
+title: Words as arrows on a map, and how close two arrows point
+axes ax @ 100,60 size: 440x420 x: 0,1 y: 0,1 xlabel: "thing-ness" ylabel: "action-ness"
+vector the on ax from 0,0 to 0.1,0.1 color: grey label: "the (0.1, 0.1)"
+vector cat on ax from 0,0 to 0.9,0.3 color: blue label: "cat (0.9, 0.3)"
+vector mat on ax from 0,0 to 0.8,0.1 color: blue label: "mat (0.8, 0.1)"
+vector sat on ax from 0,0 to 0.2,0.8 color: green label: "sat (0.2, 0.8)"
+vector on on ax from 0,0 to 0.3,0.5 color: green label: "on (0.3, 0.5)"
+text pair "cat and mat" @ 760,130 size: 22 color: yellow
+num dotv = 0 @ 760,200 prefix: "dot product = " digits: 2 size: 26
+text lens "lengths 0.949 and 0.806" @ 760,260 size: 18 color: grey
+num cos = 0 @ 760,330 prefix: "cosine = " digits: 2 size: 32 color: green
+text verdict "almost the same direction" @ 760,390 size: 18 color: green
+
+step: Each word is an arrow on a map. The first number is thing-ness, the second is action-ness.
+  show ax
+  draw the
+step: cat is (0.9, 0.3) and mat is (0.8, 0.1). Both are things, so both arrows point right.
+  draw cat
+  draw mat
+step: sat is (0.2, 0.8) and on is (0.3, 0.5). Both arrows point up, away from the things.
+  draw sat
+  draw on
+step: How close are cat and mat? Multiply matching numbers and add. The dot product is 0.75.
+  dim the, sat, on
+  show pair, dotv
+  count dotv -> 0.75
+step: Divide by both lengths, 0.949 and 0.806. The cosine is 0.98: the arrows point almost the same way.
+  show lens
+  show cos
+  count cos -> 0.98
+  show verdict
+step: Compare cat with sat instead. The dot product is 0.42 and the cosine is 0.54: different directions.
+  restore sat
+  dim mat
+  label pair "cat and sat"
+  label lens "lengths 0.949 and 0.825"
+  label verdict "different directions"
+  color verdict orange
+  count dotv -> 0.42
+  & count cos -> 0.54
+step: Two groups appear: things on the right, actions and positions above. Closeness in meaning is closeness between arrows.
+  restore the, mat
+  hide pair, dotv, lens, cos, verdict
+  pulse cat, mat
+  pulse sat, on
+:::
+
 | Word | Vector | Thing-ness | Action-ness |
 | --- | --- | --- | --- |
 | the | [0.1, 0.1] | low | low |
@@ -476,6 +572,85 @@ A corpus is the collection of text a model learns from. Our corpus has 3 sentenc
 1. the cat sat on the mat
 2. the cat sat on the rug
 3. the dog sat on the mat
+
+:::anim
+title: Count what follows, turn counts into probabilities, sample, repeat
+text corpus "the cat sat on the mat|the cat sat on the rug|the dog sat on the mat" @ 190,150 size: 18
+text ask "After the, what comes next?" @ 190,290 size: 18 color: yellow
+text total "the appears 6 times" @ 190,340 size: 16 color: grey
+rect r1 @ 520,120 size: 120x50 "cat"
+rect r2 @ 520,190 size: 120x50 "dog"
+rect r3 @ 520,260 size: 120x50 "mat"
+rect r4 @ 520,330 size: 120x50 "rug"
+num n1 = 0 @ 640,120 size: 24
+num n2 = 0 @ 640,190 size: 24
+num n3 = 0 @ 640,260 size: 24
+num n4 = 0 @ 640,330 size: 24
+num p1 = 0 @ 780,120 prefix: "p = " digits: 2 size: 24 color: green
+num p2 = 0 @ 780,190 prefix: "p = " digits: 2 size: 24 color: green
+num p3 = 0 @ 780,260 prefix: "p = " digits: 2 size: 24 color: green
+num p4 = 0 @ 780,330 prefix: "p = " digits: 2 size: 24 color: green
+text out "the" @ 480,450 size: 26 color: green
+dot pick @ 520,120 r: 9 color: yellow
+dot pick2 @ 520,330 r: 9 color: yellow
+
+step: The corpus is 3 sentences. The model counts which word follows which word.
+  show corpus
+step: To predict the word after the, count every neighbour pair that starts with the.
+  show ask, r1, r2, r3, r4, n1, n2, n3, n4
+  count n1 -> 2
+  & count n2 -> 1
+  & count n3 -> 2
+  & count n4 -> 1
+step: the appears 6 times. Divide each count by 6. The 4 probabilities add up to 1.
+  show total, p1, p2, p3, p4
+  count p1 -> 0.33
+  & count p2 -> 0.17
+  & count p3 -> 0.33
+  & count p4 -> 0.17
+step: Sample one word with these probabilities. Suppose the sample is cat. Append it to the text.
+  show out
+  highlight r1
+  show pick
+  move pick -> 480,450
+  hide pick
+  label out "the cat"
+  restore r1
+step: The last word is cat. Its only next word in the corpus is sat, so the probability is 1.0.
+  hide r2, r3, r4, n2, n3, n4, p2, p3, p4
+  label ask "After cat, what comes next?"
+  label total "cat appears 2 times"
+  label r1 "sat"
+  count p1 -> 1
+  label out "the cat sat"
+step: After sat comes on, then the, each with probability 1.0. The text grows one word at a time.
+  label ask "After sat, what comes next?"
+  label total "sat appears 3 times"
+  label r1 "on"
+  count n1 -> 3
+  label out "the cat sat on"
+  label ask "After on, what comes next?"
+  label total "on appears 3 times"
+  label r1 "the"
+  label out "the cat sat on the"
+step: Back at the, sample again. This time the sample is rug. The sentence is complete.
+  label ask "After the, what comes next?"
+  label total "the appears 6 times"
+  label r1 "cat"
+  count n1 -> 2
+  & count p1 -> 0.33
+  show r2, r3, r4, n2, n3, n4, p2, p3, p4
+  highlight r4
+  show pick2
+  move pick2 -> 480,450
+  hide pick2
+  label out "the cat sat on the rug"
+step: With other samples it writes the dog sat on the rug, a sentence it never saw.
+  restore r4
+  label out "the dog sat on the rug"
+  color out yellow
+  pulse out
+:::
 
 The simplest model counts bigrams. A bigram is a pair of neighbouring words. An n-gram is a run of n neighbouring words, so a bigram is an n-gram with n equal to 2. To predict the word after "the", count every bigram that starts with "the".
 
@@ -685,6 +860,58 @@ why: Watch the first 12 minutes. It animates the query, key and value vectors wi
 > **Analogy.** You walk into a library with a question written on a card. That card is your query. Every book has a label on its spine. Each label is a key. You compare your card with every label and take the books whose labels match best. Inside the chosen books is the content you take home. That content is the value. Attention is this search, done with vectors, for every token at once.
 
 Take the 3 tokens "the", "cat" and "sat" with the embeddings from the embeddings lesson: the is [0.1, 0.1], cat is [0.9, 0.3], sat is [0.2, 0.8]. The model makes 3 vectors from each embedding: a query, a key and a value. It makes them with 3 learned 2 by 2 matrices. To keep every number visible, this lesson uses tiny matrices.
+
+:::anim
+title: The token sat asks who sat: query, keys, weights, new vector
+rect t1 @ 300,110 size: 160x60 "the|(0.1, 0.1)"
+rect t2 @ 530,110 size: 160x60 "cat|(0.9, 0.3)"
+rect t3 @ 760,110 size: 160x60 "sat|(0.2, 0.8)"
+rect k1 @ 300,200 size: 160x50 "key (0.1, 0.1)" color: grey
+rect k2 @ 530,200 size: 160x50 "key (0.3, 0.9)" color: grey
+rect k3 @ 760,200 size: 160x50 "key (0.8, 0.2)" color: grey
+text knote "key matrix swaps|the 2 numbers" @ 130,200 size: 15 color: grey
+rect q @ 130,320 size: 130x64 "query of sat|(0.2, 0.8)" color: yellow
+num s1 = 0 @ 300,300 prefix: "score " digits: 2 size: 24
+num s2 = 0 @ 530,300 prefix: "score " digits: 2 size: 24
+num s3 = 0 @ 760,300 prefix: "score " digits: 2 size: 24
+num w1 = 0 @ 300,380 prefix: "weight " digits: 2 size: 24 color: green
+num w2 = 0 @ 530,380 prefix: "weight " digits: 2 size: 24 color: green
+num w3 = 0 @ 760,380 prefix: "weight " digits: 2 size: 24 color: green
+text wnote "softmax: positive,|add up to 1" @ 130,420 size: 15 color: grey
+rect out @ 530,455 size: 280x50 "new sat = (0.47, 0.40)" color: green
+
+step: Three tokens: the, cat and sat. Each token starts as its embedding vector.
+  show t1, t2, t3
+step: Each token makes a key, the label on its spine. The key matrix swaps the 2 numbers.
+  show k1, k2, k3, knote
+step: The token sat asks: who sat? Its query is its own vector, (0.2, 0.8).
+  show q
+  pulse t3
+step: The dot product of the query with each key gives a score: 0.10, 0.78 and 0.32.
+  arrow q -> k1 : dot
+  & arrow q -> k2 : dot
+  & arrow q -> k3 : dot
+  show s1, s2, s3
+  count s1 -> 0.10
+  & count s2 -> 0.78
+  & count s3 -> 0.32
+step: Divide by the square root of 2 and apply softmax. The weights 0.26, 0.43 and 0.31 add up to 1.
+  show w1, w2, w3, wnote
+  count w1 -> 0.26
+  & count w2 -> 0.43
+  & count w3 -> 0.31
+  highlight w2
+step: Multiply each value by its weight and add them. The new vector for sat is about (0.47, 0.40).
+  show out
+  arrow w1 -> out : x (0.1, 0.1)
+  & arrow w2 -> out : x (0.9, 0.3)
+  & arrow w3 -> out : x (0.2, 0.8)
+  pulse out
+step: sat now carries 43 percent of cat, so it knows who sat. Every token updates in one step.
+  restore w2
+  highlight out
+  pulse t2
+:::
 
 | Vector | Matrix | What it does | Result for the | Result for cat | Result for sat |
 | --- | --- | --- | --- | --- | --- |
@@ -940,6 +1167,76 @@ The 3 limits follow from the way the model is made. Here is each one, why it hap
 1. The context window is the maximum number of tokens the model can hold in one request, input and output together. It is a limit of attention: the score table has one cell per pair of tokens, so memory and time grow with the square of the window. Everything the model knows about your conversation must fit inside. The model has no memory between requests. If the window is 128,000 tokens and your document is 200,000 tokens, the model cannot read it in one call.
 2. Hallucination is a confident, fluent, wrong statement. It happens because the model is trained to produce likely text, not true text. If you ask who wrote "the cat sat on the mat", the most likely continuation is an author name, so the model gives one, even though the phrase has no known author. Fine-tuning reduces this but does not remove it.
 3. The knowledge cutoff is the date of the last text in the pretraining data. The model knows nothing after it. Ask about an event after the cutoff, and the model either says it does not know or hallucinates.
+
+:::anim
+title: One exchange fills an 8-token context window
+text msg "The context window holds 8 tokens, input and output together" @ 480,80 size: 19 color: yellow
+rect s1 @ 165,130 size: 80x50 "You" color: blue
+rect s2 @ 255,130 size: 80x50 "are" color: blue
+rect s3 @ 345,130 size: 80x50 "a" color: blue
+rect s4 @ 435,130 size: 80x50 "helpful" color: blue
+rect s5 @ 525,130 size: 80x50 "assistant" color: blue
+rect s6 @ 615,130 size: 80x50 "." color: blue
+rect u1 @ 165,200 size: 80x50 "Summarise" color: purple
+rect u2 @ 255,200 size: 80x50 "this" color: purple
+rect u3 @ 345,200 size: 80x50 "report" color: purple
+rect u4 @ 435,200 size: 80x50 "." color: purple
+rect o1 @ 525,200 size: 80x50 "Which" color: green
+rect o2 @ 615,200 size: 80x50 "report" color: green
+rect o3 @ 705,200 size: 80x50 "?" color: green
+rect w1 @ 165,290 size: 80x50 color: grey
+rect w2 @ 255,290 size: 80x50 color: grey
+rect w3 @ 345,290 size: 80x50 color: grey
+rect w4 @ 435,290 size: 80x50 color: grey
+rect w5 @ 525,290 size: 80x50 color: grey
+rect w6 @ 615,290 size: 80x50 color: grey
+rect w7 @ 705,290 size: 80x50 color: grey
+rect w8 @ 795,290 size: 80x50 color: grey
+num used = 0 @ 300,380 prefix: "used " suffix: " of 8" size: 28
+text over "2 tokens do not fit" @ 680,380 size: 20 color: red
+text real "A real window holds 128,000 to 1,000,000 tokens and fills the same way" @ 480,450 size: 16 color: grey
+
+step: The context window holds 8 tokens, input and output together. Every token of the conversation must fit.
+  show msg, w1, w2, w3, w4, w5, w6, w7, w8
+  show used
+step: The app sends the system prompt: You are a helpful assistant. That is 6 tokens.
+  label msg "System prompt: You are a helpful assistant."
+  show s1, s2, s3, s4, s5, s6
+  move s1 -> 165,290
+  & move s2 -> 255,290
+  & move s3 -> 345,290
+  & move s4 -> 435,290
+  & move s5 -> 525,290
+  & move s6 -> 615,290
+  & count used -> 6
+step: The user types: Summarise this report. That is 4 tokens. The total is 10, more than 8.
+  label msg "User: Summarise this report."
+  show u1, u2, u3, u4
+  move u1 -> 705,290
+  & move u2 -> 795,290
+  & count used -> 10
+  color u3, u4 red
+  show over
+step: The app must cut something. It removes the system prompt and keeps the user message.
+  label msg "The system prompt is dropped"
+  hide over, s1, s2, s3, s4, s5, s6
+  move u1 -> 165,290
+  & move u2 -> 255,290
+  & move u3 -> 345,290
+  & move u4 -> 435,290
+  & count used -> 4
+  color u3, u4 purple
+step: The model generates: Which report? That is 3 tokens. Output tokens also live in the window.
+  label msg "Model: Which report?"
+  show o1, o2, o3
+  move o1 -> 525,290
+  & move o2 -> 615,290
+  & move o3 -> 705,290
+  & count used -> 7
+step: After one exchange the window is almost full: 7 of 8 tokens used, 1 free.
+  highlight w8
+  show real
+:::
 
 The fix for each limit shapes the systems you will build.
 

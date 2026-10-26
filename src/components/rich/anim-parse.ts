@@ -101,12 +101,13 @@ function size(s: string | undefined): [number, number] | null {
 
 // Joins "@ 120, 300" and "x: -1, 7" style fragments so one token holds a pair.
 function normalise(line: string): string {
-  return line
+  // only the parts outside double quotes are rewritten; labels keep their exact text
+  return line.split('"').map((part, i) => (i % 2 === 1 ? part : part
     .replace(/@\s*/g, '@ ')
     .replace(new RegExp(`(${NUM})\\s*,\\s*(?=${NUM})`, 'g'), '$1,')
     .replace(/(\w)\s*:\s+/g, '$1: ')
     .replace(/\s*->\s*/g, ' -> ')
-    .replace(/\s*=\s*/g, ' = ')
+    .replace(/\s*=\s*/g, ' = '))).join('"')
 }
 
 const DEFAULT_DUR: Record<Action['op'], number> = {

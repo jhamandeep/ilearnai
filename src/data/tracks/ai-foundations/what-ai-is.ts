@@ -116,6 +116,53 @@ Here is the history of the field in ten lines. The last column names the circle.
 
 To place a product in a circle, ask three questions in order. Each yes moves you one circle inward.
 
+:::anim
+title: Three questions move a product inward through the four circles
+box ai "AI|(rules)" @ 145,440 size: 150x64 icon: code
+box ml "Machine|learning" @ 370,440 size: 150x64 icon: training
+box dl "Deep|learning" @ 595,440 size: 150x64 icon: network
+box genai "Generative|AI" @ 820,440 size: 150x64 icon: chat
+rect chat @ 145,340 size: 170x50 "Chat assistant" color: yellow
+rect face @ 145,250 size: 170x50 "Face unlock" color: teal
+rect chess @ 145,160 size: 170x50 "Chess program" color: grey
+text q1 "Question 1: does it learn its rules from examples?" @ 480,80 size: 19 color: yellow
+text q2 "Question 2: is the model a neural network with many layers?" @ 480,80 size: 19 color: yellow
+text q3 "Question 3: does it produce new content?" @ 480,80 size: 19 color: yellow
+text done "Each yes moves a product one circle inward" @ 480,80 size: 19 color: grey
+
+step: The four circles lie side by side. AI, the outer circle, is on the left.
+  show ai, ml, dl, genai
+step: Take a chat assistant. Question 1: does it learn its rules from examples? Yes, so it moves inward.
+  show chat, q1
+  arrow ai -> ml : yes
+  & move chat -> 370,340
+step: Question 2: is the model a neural network with many layers? Yes. One circle further in.
+  hide q1
+  show q2
+  arrow ml -> dl : yes
+  & move chat -> 595,340
+step: Question 3: does it produce new content? Yes. A chat assistant is generative AI.
+  hide q2
+  show q3
+  arrow dl -> genai : yes
+  & move chat -> 820,340
+  highlight genai
+step: Face unlock learns and uses many layers, but only answers yes or no. It stops at deep learning.
+  hide q3
+  restore genai
+  show face
+  send ai -> ml : yes
+  & move face -> 370,250
+  send ml -> dl : yes
+  & move face -> 595,250
+  highlight dl
+step: A chess program follows rules a person wrote. It does not learn, so it stays in the outer circle.
+  restore dl
+  show chess, done
+  pulse chess
+  highlight ai
+:::
+
 1. Does the program learn its rules from examples, or did a person write every rule? If a person wrote every rule, the product is AI only. Stop here. If it learns, it is at least machine learning.
 2. Is the model a neural network with many layers? If not, it is classic machine learning, such as the word-count spam filter or the line through the house prices. If yes, it is deep learning.
 3. Does the model produce new content, such as text, images or sound? If not, it is deep learning that scores or sorts. If yes, it is generative AI.
@@ -262,6 +309,51 @@ why: Watch the first 12 minutes. The teacher defines machine learning as learnin
 ## The idea with an example
 
 > **Analogy.** You want to teach a new worker to spot a ripe mango. One way is to write rules: yellow skin, a little soft, a sweet smell at the stem. The worker reads the rules and follows them. The other way is to show the worker 50 mangoes, say ripe or not ripe for each one, and let the worker work out the pattern. The first way is fast to start and easy to explain. The second way handles the strange green mango that is ripe anyway, because the worker saw one like it.
+
+:::anim
+title: One email scored two ways: by a written rule and by learned shares
+rect w1 @ 230,150 size: 160x50 "free" color: yellow
+rect w2 @ 480,150 size: 160x50 "meeting"
+rect w3 @ 730,150 size: 160x50 "tomorrow"
+num s1 = 0 @ 230,230 digits: 2 size: 26 color: blue
+num s2 = 0 @ 480,230 digits: 2 size: 26 color: blue
+num s3 = 0 @ 730,230 digits: 2 size: 26 color: blue
+box rules "Rule filter" @ 200,340 size: 200x64 icon: code
+box learned "Learned filter" @ 760,340 size: 200x64 icon: training
+num total = 0 @ 480,340 prefix: "sum = " digits: 2 size: 26
+num avg = 0 @ 480,420 prefix: "average = " digits: 2 size: 28 color: yellow
+text line "spam if the average is above 0.5" @ 480,470 size: 16 color: grey
+text rv "spam: wrong" @ 200,420 size: 20 color: red
+text lv "normal: right" @ 760,420 size: 20 color: green
+
+step: The email Free meeting tomorrow arrives. It has three words.
+  show w1, w2, w3
+step: The rule filter looks for the word free. It finds it, so it says spam. That is wrong.
+  show rules
+  arrow w1 -> rules : free
+  show rv
+step: The learned filter has a share for each word, counted from 1,000 marked emails. Nobody typed them.
+  show learned
+  show s1, s2, s3
+  count s1 -> 0.87
+  & count s2 -> 0.03
+  & count s3 -> 0.10
+step: It adds the three shares: 0.87 plus 0.03 plus 0.10 is 1.00.
+  show total
+  arrow s1 -> total
+  arrow s2 -> total
+  arrow s3 -> total
+  & count total -> 1.00
+step: Divide by the 3 known words. The average is 0.33, which is below the 0.5 line.
+  show avg, line
+  arrow total -> avg : "/ 3"
+  & count avg -> 0.33
+step: So the learned filter says normal. That is right: meeting and tomorrow pulled the score down.
+  arrow avg -> learned : "below 0.5"
+  show lv
+  highlight w2, w3
+  dim rules, rv
+:::
 
 A rule-based system is a program whose decisions follow if-then rules that a person wrote. Here is the spam filter as rules. The function takes the text of an email and returns True for spam.
 
@@ -489,6 +581,52 @@ why: Watch the first 12 minutes. StatQuest fits a line to a few points by steppi
 ## The idea with an example
 
 > **Analogy.** You are tuning a guitar string by ear. You pluck it and compare the note with a tuning fork: that is the loss, the gap between the sound and the target. If the note is too low, you turn the peg a little to tighten: that is the update. You pluck again. Each turn is smaller as you get close. If you turn too hard, you shoot past the note and must come back. After a few turns the string is in tune. Then you play a song to check that it sounds right in use: that is evaluation.
+
+:::anim
+title: Three update steps roll w down the loss curve
+axes ax @ 90,60 size: 540x400 x: 1.6,4.4 y: 0,16000 xlabel: "w" ylabel: "loss"
+curve loss on ax = 7250*x^2 - 43800*x + 66250 color: blue label: "loss"
+dot ball on ax @ 2,7650 r: 9 color: yellow
+tangent tan on loss at 2 len: 0.5 color: orange
+num wv = 2 @ 800,150 prefix: "w = " digits: 2 size: 30
+num lossv = 7650 @ 800,220 prefix: "loss = " digits: 0 size: 26 color: blue
+num slopev = -14800 @ 800,290 prefix: "slope = " digits: 0 size: 26 color: orange
+text note "w moves by|minus 0.00005 times the slope" @ 800,380 size: 17 color: grey
+text evalt "Test house, 80 m2:|model says 240, sold for 250" @ 800,460 size: 17 color: green
+
+step: This curve is the loss for every value of w. Lower is better. The model cannot see it.
+  show ax
+  draw loss
+step: Start with the guess w equals 2. The loss there is 7,650: every prediction is too low.
+  show ball, wv, lossv
+  pulse ball
+step: The slope under the ball is minus 14,800. A negative slope means the loss falls when w grows.
+  show tan, slopev
+step: Update: w moves by minus 0.00005 times the slope, which is plus 0.74. The ball rolls to 2.74.
+  show note
+  walk ball along loss from 2 to 2.74 (2s)
+  & tangent tan -> 2.74 (2s)
+  & count wv -> 2.74 (2s)
+  & count lossv -> 668 (2s)
+  & count slopev -> -4070 (2s)
+step: The loss is 668. The slope is smaller, so the step is smaller: w becomes 2.94, loss 140.
+  walk ball along loss from 2.74 to 2.9435 (1.5s)
+  & tangent tan -> 2.9435 (1.5s)
+  & count wv -> 2.9435 (1.5s)
+  & count lossv -> 140 (1.5s)
+  & count slopev -> -1119 (1.5s)
+step: One more step: w reaches 3.00 and the loss is 100. The slope is nearly zero, so the steps stop.
+  walk ball along loss from 2.9435 to 2.9995 (1.5s)
+  & tangent tan -> 2.9995 (1.5s)
+  & count wv -> 2.9995 (1.5s)
+  & count lossv -> 100 (1.5s)
+  & count slopev -> -67 (1.5s)
+  highlight ball
+step: Evaluate on a house not in the table: 80 square metres. The model says 240; it sold for 250.
+  hide note
+  show evalt
+  pulse evalt
+:::
 
 Here is the running example. The house-price table has 6 rows. To keep the numbers small, prices are in thousands of pounds, so 150000 becomes 150.
 
@@ -801,6 +939,57 @@ Model server -> Chat app: answer @1.4
 ## How it works
 
 Each part has a job, an input and an output. Read the list once now, and come back to it when you build each part.
+
+:::anim
+title: One question travels through the parts of the system in 1.4 seconds
+num lat = 0 @ 120,130 prefix: "t = " suffix: " s" digits: 2 size: 34 color: yellow
+box mon "Monitoring" @ 720,130 size: 180x64
+num tin = 0 @ 720,200 suffix: " input tokens" size: 18 color: grey
+num tout = 0 @ 720,228 suffix: " output tokens" size: 18 color: grey
+box app "Chat app" @ 120,300 size: 170x64 icon: browser
+box agent "Agent" @ 420,300 size: 170x64
+box server "Model server" @ 720,300 size: 180x64 icon: server
+box user "You" @ 120,450 size: 170x64 icon: user
+box retr "Retrieval" @ 420,450 size: 170x64
+box tool "Tool: filter_houses" @ 720,450 size: 220x64 icon: tool
+
+step: You type: which house has a garden and costs under 250 thousand? The chat app sends it to the agent.
+  show user, app, agent, lat
+  arrow user -> app : question
+  arrow app -> agent : HTTP
+  & count lat -> 0.05
+step: The agent plans. It needs house data, so it asks retrieval, which returns the three listings with gardens.
+  show retr
+  arrow agent -> retr : "garden, price"
+  arrow retr -> agent : "houses 2, 3, 4"
+  & count lat -> 0.15
+step: The agent sends the listings and the question to the model server. Inference runs with fixed parameters.
+  show server
+  arrow agent -> server : prompt
+  & count lat -> 0.8 (2s)
+  highlight server
+step: The model does not run tools. It returns a tool request: filter_houses, garden yes, max price 250.
+  show tool
+  arrow server -> agent : "tool request"
+  restore server
+step: The agent runs the tool, a 5-line Python function over the table. It returns house 2 only.
+  arrow agent -> tool : "garden yes, max 250"
+  arrow tool -> agent : "house 2"
+  & count lat -> 0.85
+step: The agent sends the result back. The model writes the final sentence: house 2 in Leeds, 210 thousand.
+  send agent -> server : "tool result"
+  send server -> agent : answer
+  & count lat -> 1.35 (2s)
+step: The chat app shows the answer. Monitoring writes one log line: 812 input tokens, 64 output tokens, 1.4 seconds.
+  arrow agent -> app : answer
+  arrow app -> user : answer
+  & count lat -> 1.4
+  show mon, tin, tout
+  arrow agent -> mon : "log line"
+  & count tin -> 812
+  & count tout -> 64
+  highlight mon
+:::
 
 1. Data. Collect documents, tables and examples. Clean them. Split them into training data and test data. Input: the world. Output: files on a disk.
 2. Training. Run the learning loop on the training data. For a language model this has two stages: pretraining on a huge corpus, which you will never run yourself, and fine-tuning on your own examples, which you will. Input: data. Output: a trained model, a file of parameters.

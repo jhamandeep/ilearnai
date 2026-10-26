@@ -85,6 +85,49 @@ Notice what the model never sees: the earlier replies that your program did not 
 
 Each entry in the messages list is a dictionary with 2 keys. The role says who spoke. The content holds the text. There are 2 roles inside the list: user for you and assistant for the model. A third kind of text, the system prompt, travels outside the list in its own field. The system prompt is an instruction that sets the role and tone of the assistant for the whole conversation.
 
+:::anim
+title: The messages list grows by 2 entries every turn
+box you "You" @ 130,150 icon: user
+box prog "Your program" @ 130,430
+box api "API (the model)" @ 790,430 icon: model
+text sys "system: assistant for Rosa's Bakery" @ 545,150 size: 16 color: grey
+text hdr "messages list" @ 545,225 size: 18
+rect m1 @ 350,290 size: 120x60 "user|name is Sam" color: blue
+rect m2 @ 480,290 size: 120x60 "assistant|Yes, Sam" color: green
+rect m3 @ 610,290 size: 120x60 "user|my name?" color: blue
+rect m4 @ 740,290 size: 120x60 "assistant|Your name is Sam" color: green
+num entries = 0 @ 790,150 suffix: " entries" size: 26
+
+step: The program starts with an empty messages list and a system prompt for Rosa's Bakery.
+  show prog, sys, hdr, entries
+step: You type: My name is Sam. Do you sell croissants? The program appends a user entry.
+  show you
+  arrow you -> prog : your line
+  show m1
+  & count entries -> 1
+step: The program sends the system prompt and the list of 1 entry to the API.
+  show api
+  arrow prog -> api : 1 entry
+step: The model replies. The program appends an assistant entry and prints the reply.
+  arrow api -> prog : reply
+  show m2
+  & count entries -> 2
+  arrow prog -> you : print
+step: Turn 2. You type: What is my name? The program appends a second user entry.
+  send you -> prog : your line
+  show m3
+  & count entries -> 3
+step: The program sends all 3 entries. The model finds the name in the first entry.
+  send prog -> api : 3 entries
+  highlight m1
+step: The model answers: Your name is Sam. The program appends it. The list holds 4 entries.
+  send api -> prog : reply
+  restore m1
+  show m4
+  & count entries -> 4
+  send prog -> you : print
+:::
+
 | Where it lives | Role | Who writes it | Example |
 | --- | --- | --- | --- |
 | system field | none | you, once, before the loop | You are the assistant for Rosa's Bakery. Answer in at most 3 sentences. |
@@ -317,6 +360,53 @@ step: The event message_stop closes the reply. The program computes 44 times 2 p
 ## How it works
 
 Streaming uses a long-lived HTTP response. Instead of one body that arrives at the end, the server sends many small events, one after another, on the same connection. The Python software development kit (SDK) reads them for you and turns each into a Python object with a type field. A stream event is one such object. There are 6 kinds.
+
+:::anim
+title: One streamed turn: events arrive, tokens are counted, the cost is computed
+box prog "Your program" @ 180,250
+box api "API" @ 520,250 icon: server
+num t = 0 @ 790,130 prefix: "t = " suffix: " s" digits: 1 size: 26 color: grey
+num tin = 0 @ 790,210 prefix: "input: " suffix: " tokens" size: 24 color: blue
+num tout = 0 @ 790,290 prefix: "output: " suffix: " tokens" size: 24 color: green
+num cost = 0 @ 790,370 prefix: "cost: " suffix: " USD" digits: 6 size: 24 color: yellow
+text formula "44 x 2 + 96 x 10|divided by 1,000,000" @ 790,450 size: 16 color: grey
+text printed "Our sourdough" @ 80,380 size: 16 anchor: start color: white
+
+step: The program first asks the API to count the tokens of the request. The answer is 44.
+  show prog, api, tin, t
+  arrow prog -> api : count_tokens
+  arrow api -> prog : 44 tokens
+  & count tin -> 44
+  & count t -> 0.2
+step: The program opens the stream. The first event, message_start, arrives after half a second.
+  send prog -> api : stream request
+  send api -> prog : message_start
+  & count t -> 0.7
+step: A content_block_delta carries the text Our sourdough. The program prints it at once, with no newline.
+  send api -> prog : delta
+  show printed
+step: About 40 more deltas arrive over 2.4 seconds. Each one adds a few characters to the screen.
+  send api -> prog : delta (0.7s)
+  & label printed "Our sourdough has a crisp crust."
+  & count t -> 1.5
+  send api -> prog : delta (0.7s)
+  & label printed "Our sourdough has a crisp crust.|Our rye is dark and dense."
+  & count t -> 2.3
+  send api -> prog : delta (0.7s)
+  & label printed "Our sourdough has a crisp crust.|Our rye is dark and dense.|Our baguette is light and long."
+  & count t -> 3.1
+step: The event message_delta carries the output count, 96, and the stop reason end_turn.
+  show tout
+  send api -> prog : message_delta
+  & count tout -> 96
+step: The event message_stop closes the reply. The final usage says 44 in and 96 out.
+  send api -> prog : message_stop
+  pulse tin, tout
+step: The program computes the cost: 44 times 2 plus 96 times 10, over a million: 0.001048 USD.
+  show cost, formula
+  count cost -> 0.001048 (2s)
+  highlight cost
+:::
 
 | Event type | How often | What it carries |
 | --- | --- | --- |
@@ -592,6 +682,46 @@ A good schema removes most retries before they happen. Most replies pass on the 
 
 Pydantic is a Python library that turns a class with typed fields into a validator. You write the fields once. Pydantic gives you 3 things from that one class. The first is a JSON schema to show the model. The second is a parser that turns JSON text into a Python object. The third is an error message when the text does not fit. A JSON schema is a standard description of the fields, their types and their rules, written as JSON itself.
 
+:::anim
+title: Ask for JSON, validate it, retry with the error
+box model "Model" @ 130,290 icon: model
+box code "Your code" @ 450,290
+box val "Validator (pydantic)" @ 450,430
+text schema "system prompt holds|the JSON schema" @ 450,160 size: 16 color: grey
+num attempt = 1 @ 790,150 prefix: "attempt " size: 26
+rect pt @ 790,290 size: 220x60 "pickup_time: 9am" color: blue
+text err "pickup_time should|match pattern hh:mm" @ 790,430 size: 17 color: red
+text ok "Order object: 2 items|items[0].quantity = 12" @ 790,430 size: 17 color: green
+
+step: Your code pastes the JSON schema into the system prompt and sends the customer message.
+  show code, model, schema, attempt
+  arrow code -> model : message + schema
+step: The model replies with a JSON object. Every field is present, but pickup_time is 9am.
+  arrow model -> code : JSON text
+  show pt
+step: Your code passes the text to the validator, which checks every field against its rule.
+  show val
+  arrow code -> val : JSON text
+step: Validation fails on one field. The error names the field and the rule it broke.
+  arrow val -> code : ValidationError
+  color pt red
+  & show err
+  pulse pt
+step: Your code appends the reply and the error to the list and asks the model again.
+  count attempt -> 2
+  send code -> model : the error, ask again
+step: The model reads its own wrong reply and the error. It writes 09:00 this time.
+  send model -> code : corrected JSON
+  hide err
+  label pt "pickup_time: 09:00"
+  & color pt green
+step: Validation passes. Your code receives an Order object with 2 items; items[0].quantity is 12.
+  send code -> val : JSON text
+  send val -> code : Order object
+  show ok
+  highlight code
+:::
+
 | Field | Type | Rule | Valid example | Rejected example |
 | --- | --- | --- | --- | --- |
 | customer | string | required | Sam | missing |
@@ -823,6 +953,45 @@ Notice where the messages list lives: in the browser, in a JavaScript variable. 
 ## How it works
 
 Four pieces take part in every turn. The client is the program that sends a request; here it is the browser. The server is the program that waits for requests and answers them; here it is FastAPI run by uvicorn. A request carries a method, a path, headers and a body. A response carries a status code and a body. Both bodies are JSON in this lesson.
+
+:::anim
+title: One turn: the browser, the FastAPI server and the model
+box browser "Browser" @ 130,290 icon: browser
+box api "FastAPI server" @ 450,290
+box llm "Claude API" @ 790,290
+num entries = 0 @ 140,150 prefix: "list: " suffix: " entries" size: 20 color: blue
+text q "Do you sell rye?" @ 130,210 size: 17 color: yellow
+text body "POST /chat|body: the list as JSON" @ 450,150 size: 16 color: grey
+text valid "ChatRequest checks the role|and content of each entry" @ 450,430 size: 16 color: grey
+num status = 0 @ 790,150 prefix: "status " size: 26 color: green
+text reply "Yes, we bake a dark|rye every day." @ 130,430 size: 16 color: green
+text stateless "The server stores nothing|between requests" @ 790,430 size: 16 color: grey
+
+step: You type Do you sell rye? and press Send. The JavaScript appends a user entry to its list.
+  show browser, q, entries
+  count entries -> 1
+step: The page calls fetch: a POST request to /chat with the list as JSON in the body.
+  show api, body
+  arrow browser -> api : POST /chat
+step: FastAPI checks the body against the ChatRequest model before your route code runs.
+  highlight api
+  show valid
+step: The chat handler calls the model with the system prompt and the list, as in the terminal loop.
+  show llm
+  restore api
+  arrow api -> llm : system + list
+step: The model answers. The handler returns a dictionary with the reply and the token counts.
+  arrow llm -> api : reply + usage
+step: FastAPI turns the dictionary into a JSON response with status 200, which means success.
+  show status
+  arrow api -> browser : JSON reply
+  & count status -> 200
+step: The JavaScript appends an assistant entry and shows the reply. The list now holds 2 entries.
+  hide valid, body
+  show reply, stateless
+  count entries -> 2
+  highlight browser
+:::
 
 The status code is a 3-digit number that says how the request went. 200 means success. 422 means the body did not match the model. 500 means your code raised an error, for example when the API key is missing. The browser does not throw on a 422 or a 500; your JavaScript must check res.ok or the status when it matters.
 

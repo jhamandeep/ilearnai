@@ -118,6 +118,60 @@ state: h=0, derivative=2
 
 The procedure above works for any function f and any point x. Here it is as a list of steps.
 
+:::anim
+title: The secant line slides into the tangent at t = 1
+axes ax @ 110,60 size: 540x400 x: 0,4 y: 0,16 xlabel: "t (seconds)" ylabel: "p (metres)"
+curve p on ax = x^2 color: blue label: "p(t) = t squared"
+dot a on ax @ 1,1 r: 8 color: yellow label: "(1, 1)"
+dot b on ax @ 3,9 r: 8 color: green
+line sec on ax from 1,1 to 3,9 color: orange
+tangent tan on p at 1 len: 1.2 color: yellow label: slope
+num h = 2 @ 790,180 prefix: "gap h = " digits: 2 size: 26
+num avg = 4 @ 790,250 prefix: "average = " digits: 2 size: 26 color: orange
+text t1 "rise / run = 8 / 2" @ 790,310 size: 17 color: grey
+text t2 "The averages head for 2|and never pass it" @ 790,310 size: 17 color: grey
+text t3 "p prime of 1 = 2" @ 790,400 size: 24 color: yellow
+
+step: The car's position is p(t) = t squared. We want its speed at exactly t = 1.
+  show ax
+  draw p
+  show a
+step: A second point at t = 3 makes a gap h of 2. The line through both is a secant.
+  show b, h
+  draw sec
+step: The slope of the secant is the rise over the run: 8 metres over 2 seconds, which is 4.
+  show avg, t1
+  pulse sec
+step: Shrink the gap. Slide the second point to t = 2. The average falls to 3.
+  hide t1
+  walk b along p from 3 to 2 (1.5s)
+  & vector sec -> 2,4 (1.5s)
+  & count h -> 1 (1.5s)
+  & count avg -> 3 (1.5s)
+step: Shrink again to t = 1.5, then to t = 1.1. The averages go 2.5, then 2.1.
+  walk b along p from 2 to 1.5 (1.2s)
+  & vector sec -> 1.5,2.25 (1.2s)
+  & count h -> 0.5 (1.2s)
+  & count avg -> 2.5 (1.2s)
+  walk b along p from 1.5 to 1.1 (1.2s)
+  & vector sec -> 1.1,1.21 (1.2s)
+  & count h -> 0.1 (1.2s)
+  & count avg -> 2.1 (1.2s)
+step: With h = 0.01 the average is 2.01. The averages head for 2 and never pass it.
+  show t2
+  walk b along p from 1.1 to 1.01 (1.2s)
+  & vector sec -> 1.01,1.0201 (1.2s)
+  & count h -> 0.01 (1.2s)
+  & count avg -> 2.01 (1.2s)
+step: At the limit the secant becomes the tangent at (1, 1). Its slope, 2, is the derivative.
+  hide sec, b
+  show tan
+  count h -> 0 (1s)
+  & count avg -> 2 (1s)
+  show t3
+  highlight a
+:::
+
 1. Choose the point x where you want the rate of change.
 2. Choose a small gap h and compute the output at x + h and at x.
 3. Subtract: f(x + h) minus f(x). This is the rise.
@@ -334,6 +388,52 @@ The last lesson estimated this derivative as minus 5.9 with a gap of 0.1. The ch
 ## How it works
 
 Each rule below has three parts: the rule in symbols, the rule in words, and one numeric example. Work each example on paper as you read.
+
+:::anim
+title: The chain rule multiplies the inner and outer rates
+box xin "x" @ 150,170 size: 150x64 icon: none
+box inner "inner part|u = x - 3" @ 480,170 size: 220x64 icon: none
+box outer "outer part|f = u squared" @ 800,170 size: 200x64 icon: none
+num fval = 0 @ 800,270 prefix: "f = " size: 26 color: blue
+text lab1 "u changes by 1|per unit of x" @ 480,330 size: 16 color: grey
+num rin = 0 @ 480,390 prefix: "inner slope = " size: 26 color: green
+text lab2 "f changes by 2u|per unit of u" @ 800,330 size: 16 color: grey
+num rout = 0 @ 800,390 prefix: "outer slope = " size: 26 color: green
+text mult "multiply the rates: -6 times 1" @ 480,440 size: 16 color: grey
+num prod = 0 @ 480,480 prefix: "f prime of 0 = " size: 30 color: yellow
+text formula "f prime of x = 2(x - 3)" @ 175,480 size: 18 color: yellow
+
+step: A function inside a function: x goes into the inner part, and its output u goes into the outer part.
+  show xin, inner, outer
+  arrow xin -> inner : x
+  arrow inner -> outer : u
+step: Put in x = 0. The inner part gives u = -3. The outer part squares it: f = 9.
+  label xin "x = 0"
+  send xin -> inner : 0
+  send inner -> outer : -3
+  show fval
+  count fval -> 9
+step: The inner rate: u grows by 1 when x grows by 1. The inner slope is 1.
+  highlight inner
+  show lab1, rin
+  count rin -> 1
+step: The outer rate: u squared changes by 2u per unit of u. At u = -3 that is -6.
+  restore inner
+  highlight outer
+  show lab2, rout
+  count rout -> -6
+step: Like the currency chain, multiply the two rates: -6 times 1 is -6.
+  restore outer
+  show mult, prod
+  arrow rin -> prod : 1
+  arrow rout -> prod : -6
+  count prod -> -6
+  pulse prod
+step: The same chain at any x gives 2(x - 3). At x = 0 that is exactly -6.
+  hide lab1, lab2, mult
+  show formula
+  highlight prod
+:::
 
 ### 1. The power rule
 
@@ -608,6 +708,82 @@ state: distance to 3=8.232
 
 Gradient descent is a loop. Here are the steps in general form for any function f with a known derivative.
 
+:::anim
+title: Three learning rates on f(x) = (x - 3) squared
+axes ax @ 110,60 size: 540x400 x: -3.5,7.5 y: 0,36 xlabel: "x" ylabel: "f(x)"
+curve f on ax = (x-3)^2 color: blue label: "f(x) = (x - 3) squared"
+dot ball on ax @ 0,9 r: 9 color: yellow
+tangent tan on f at 0 len: 1.2 color: orange label: slope
+num rate = 0.1 @ 790,130 prefix: "learning rate = " digits: 1 size: 24 color: green
+num xv = 0 @ 790,200 prefix: "x = " digits: 3 size: 26
+num fv = 9 @ 790,260 prefix: "f = " digits: 2 size: 22 color: blue
+num stp = 0 @ 790,320 prefix: "step = " digits: 3 size: 22 color: orange
+text t1 "step = rate times slope|new x = old x - step" @ 790,410 size: 16 color: grey
+text t2 "the steps shrink|as the slope shrinks" @ 790,410 size: 16 color: grey
+text t3 "one perfect stride|for this valley" @ 790,410 size: 16 color: green
+text t4 "each landing is farther|from 3: the walk diverges" @ 790,410 size: 16 color: red
+
+step: The valley is (x - 3) squared. Start at x = 0: f is 9 and the slope is -6.
+  show ax
+  draw f
+  show ball, tan, xv, fv
+step: With learning rate 0.1 the step is 0.1 times -6, which is -0.6. Subtract it: x becomes 0.6.
+  show rate, stp, t1
+  count stp -> -0.6
+  walk ball along f from 0 to 0.6 (1.5s)
+  & tangent tan -> 0.6 (1.5s)
+  & count xv -> 0.6 (1.5s)
+  & count fv -> 5.76 (1.5s)
+step: Feel the slope again: -4.8. The next steps are -0.48 and -0.384. The steps shrink as the slope shrinks.
+  hide t1
+  show t2
+  count stp -> -0.48 (0.8s)
+  walk ball along f from 0.6 to 1.08 (1.2s)
+  & tangent tan -> 1.08 (1.2s)
+  & count xv -> 1.08 (1.2s)
+  & count fv -> 3.69 (1.2s)
+  count stp -> -0.384 (0.8s)
+  walk ball along f from 1.08 to 1.464 (1.2s)
+  & tangent tan -> 1.464 (1.2s)
+  & count xv -> 1.464 (1.2s)
+  & count fv -> 2.36 (1.2s)
+step: Start again at x = 0 with learning rate 0.5. The step is 0.5 times -6, which is -3.
+  hide t2
+  count rate -> 0.5 (0.8s)
+  move ball -> 0,9 (1.2s)
+  & tangent tan -> 0 (1.2s)
+  & count xv -> 0 (1.2s)
+  & count fv -> 9 (1.2s)
+  count stp -> -3 (0.8s)
+step: One stride lands exactly at x = 3. The slope is 0 and f is 0: finished in one step.
+  show t3
+  walk ball along f from 0 to 3 (2s)
+  & tangent tan -> 3 (2s)
+  & count xv -> 3 (2s)
+  & count fv -> 0 (2s)
+  pulse ball
+step: Start again with learning rate 1.2. The step is -7.2, so x jumps over the valley to 7.2.
+  hide t3
+  count rate -> 1.2 (0.8s)
+  move ball -> 0,9 (1.2s)
+  & tangent tan -> 0 (1.2s)
+  & count xv -> 0 (1.2s)
+  & count fv -> 9 (1.2s)
+  count stp -> -7.2 (0.8s)
+  move ball -> 7.2,17.64 (2s)
+  & tangent tan -> 7.2 (2s)
+  & count xv -> 7.2 (2s)
+  & count fv -> 17.64 (2s)
+step: The slope is now 8.4 and the step 10.08. x lands at -2.88, f grows to 34.57. The walk diverges.
+  count stp -> 10.08 (0.8s)
+  move ball -> -2.88,34.57 (2.5s)
+  & tangent tan -> -2.88 (2.5s)
+  & count xv -> -2.88 (2.5s)
+  & count fv -> 34.57 (2.5s)
+  show t4
+  color ball red
+:::
+
 1. Choose a starting x. In training, this is a random value.
 2. Compute the slope f prime of x at the current x.
 3. Compute the step: learning rate times slope.
@@ -864,6 +1040,71 @@ state: f=6.48
 ## How it works
 
 The procedure extends to any number of inputs. For a function of n inputs, there are n partial derivatives and the gradient has n components.
+
+:::anim
+title: Two partial derivatives make one gradient, and one descent step
+axes ax @ 110,80 size: 540x345 x: -1,10 y: -1,6 xlabel: "x" ylabel: "y"
+dot bottom on ax @ 0,0 r: 7 color: grey label: "bottom (0, 0)"
+dot pt on ax @ 3,1 r: 9 color: yellow
+vector px on ax from 3,1 to 9,1 color: blue label: "partial x = 6"
+vector py on ax from 3,1 to 3,5 color: green label: "partial y = 4"
+vector grad on ax from 3,1 to 9,5 color: yellow label: "gradient = [6, 4]"
+num xv = 3 @ 790,150 prefix: "x = " digits: 2 size: 24
+num yv = 1 @ 790,200 prefix: "y = " digits: 2 size: 24
+num fv = 11 @ 790,260 prefix: "f = " digits: 2 size: 26 color: blue
+num gx = 0 @ 790,330 prefix: "2x = " size: 22 color: blue
+num gy = 0 @ 790,380 prefix: "4y = " size: 22 color: green
+text t1 "f(x, y) = x squared + 2y squared" @ 380,470 size: 17 color: grey
+text t2 "0.1 times [6, 4] = [0.6, 0.4]" @ 790,450 size: 16 color: grey
+text t3 "new point = (3 - 0.6, 1 - 0.4)" @ 790,450 size: 16 color: grey
+text t4 "x shrinks by 0.8 and y by 0.6|on every step" @ 790,450 size: 16 color: grey
+
+step: The bowl has its bottom at (0, 0). Start at (3, 1), where f is 11.
+  show ax, t1, bottom, pt, xv, yv, fv
+step: Hold y fixed and feel the slope along x. The partial derivative is 2x, which is 6 here.
+  show gx
+  draw px
+  & count gx -> 6 (1.2s)
+step: Hold x fixed and feel the slope along y. The partial derivative is 4y, which is 4.
+  show gy
+  draw py
+  & count gy -> 4 (1.2s)
+step: Put the two numbers together: the gradient [6, 4]. It points straight uphill, away from the bottom.
+  draw grad
+  hide px, py
+  pulse grad
+step: Multiply the gradient by the learning rate 0.1. The arrow shrinks to [0.6, 0.4].
+  show t2
+  vector grad -> 3.6,1.4 (1.5s)
+  & label grad "0.1 times gradient" (1.5s)
+step: Subtract it: the arrow flips to point downhill. The point moves to (2.4, 0.6) and f falls to 6.48.
+  hide t2
+  show t3
+  vector grad -> 2.4,0.6 (1.5s)
+  & label grad "minus the step" (1.5s)
+  move pt -> 2.4,0.6 (1.5s)
+  & count xv -> 2.4 (1.5s)
+  & count yv -> 0.6 (1.5s)
+  & count fv -> 6.48 (1.5s)
+  & count gx -> 4.8 (1.5s)
+  & count gy -> 2.4 (1.5s)
+step: Repeat. Each step multiplies x by 0.8 and y by 0.6, so the point heads for the bottom.
+  hide grad, t3
+  show t4
+  move pt -> 1.92,0.36 (1.2s)
+  & count xv -> 1.92 (1.2s)
+  & count yv -> 0.36 (1.2s)
+  & count fv -> 3.95 (1.2s)
+  & count gx -> 3.84 (1.2s)
+  & count gy -> 1.44 (1.2s)
+  move pt -> 1.536,0.216 (1.2s)
+  & count xv -> 1.54 (1.2s)
+  & count yv -> 0.22 (1.2s)
+  & count fv -> 2.45 (1.2s)
+  & count gx -> 3.07 (1.2s)
+  & count gy -> 0.86 (1.2s)
+  highlight bottom
+:::
 
 1. Write down the function.
 2. For each input, treat all the other inputs as constants and differentiate with the usual rules. This gives one partial derivative per input.

@@ -78,6 +78,49 @@ Notice the last step. The memory is cleared when the app closes. Memory holds in
 
 Every part of a computer belongs to one of the four jobs. The table lists the common parts.
 
+
+:::anim
+title: 7 + 5 = 12 through the four jobs of a computer
+box kb "Keyboard" @ 130,290 icon: none
+box cpu "CPU" @ 420,290 icon: cpu
+box mem "Memory" @ 420,450 icon: memory
+box screen "Screen" @ 710,290 icon: screen
+box disk "Disk" @ 130,450 icon: disk
+rect m1 @ 600,450 size: 70x50 "7"
+rect m2 @ 680,450 size: 70x50 "5"
+text jin "1 Input" @ 130,210 size: 18 color: yellow
+text jproc "2 Processing" @ 420,210 size: 18 color: yellow
+text jstore "3 Storage" @ 420,380 size: 18 color: yellow
+text jout "4 Output" @ 710,210 size: 18 color: yellow
+num sum = 0 @ 420,140 prefix: "7 + 5 = " size: 28 color: green
+num shown = 0 @ 710,140 size: 40 color: green
+text note "Memory clears when the app closes.|Nothing went to the disk." @ 770,450 size: 16 color: grey
+
+step: You press 7, +, 5 and =. The keyboard sends the key presses to the CPU. That is input.
+  show kb, cpu, jin
+  arrow kb -> cpu : "7 + 5 ="
+step: The CPU stores 7 and 5 in memory, two cells on the counter. That is storage.
+  show mem, jstore
+  arrow cpu -> mem : "7 and 5"
+  show m1, m2
+step: The CPU reads 7 and 5 back from memory and adds them. That is processing.
+  arrow mem -> cpu : "7 and 5"
+  show jproc, sum
+  highlight cpu
+  count sum -> 12
+step: The CPU sends 12 to the screen. The screen draws the number. That is output.
+  restore cpu
+  show screen, jout
+  arrow cpu -> screen : "12"
+  show shown
+  count shown -> 12
+step: You close the app. The memory cells clear. Nothing was written to the disk, so nothing is kept.
+  show disk
+  dim disk
+  hide m1, m2
+  show note
+:::
+
 | Job | Parts | Kitchen analogy |
 | --- | --- | --- |
 | Input | keyboard, mouse, touch screen, microphone, camera | the order slip |
@@ -270,6 +313,56 @@ Linux:    /home/ada/Documents/notes.txt
 :::
 
 Windows starts with a drive letter, C:, and separates folders with a backslash. macOS and Linux start with a single forward slash, which is the root, and separate folders with forward slashes. On Linux the personal folders live under home instead of Users. The rest of the idea is the same.
+
+:::anim
+title: The operating system follows a path and opens notes.txt
+rect root @ 130,130 size: 120x50 "/"
+rect users @ 290,130 size: 120x50 "Users"
+rect ada @ 450,130 size: 120x50 "ada"
+rect docs @ 610,130 size: 120x50 "Documents"
+rect notes @ 770,130 size: 120x50 "notes.txt" color: yellow
+text path "/" @ 450,220 size: 20 color: yellow
+box editor "Text editor" @ 150,330 icon: file
+box os "Operating system" @ 450,330 icon: none
+box mem "Memory" @ 150,460 icon: memory
+box disk "Disk" @ 450,460 icon: disk
+num bytes = 0 @ 300,400 suffix: " bytes" size: 22 color: green
+text note "Programs never touch the disk.|They ask the operating system." @ 770,330 size: 16 color: grey
+
+step: Ada double-clicks notes.txt. The text editor asks the operating system to open the file by its path.
+  show editor, os
+  arrow editor -> os : "open notes.txt"
+step: The operating system starts at the root, the single slash at the top of the tree.
+  show root, path
+  highlight root
+step: It follows the path one folder at a time: Users, then ada, then Documents.
+  restore root
+  show users
+  arrow root -> users
+  & label path "/Users"
+  show ada
+  arrow users -> ada
+  & label path "/Users/ada"
+  show docs
+  arrow ada -> docs
+  & label path "/Users/ada/Documents"
+step: In Documents it finds the file. The path led to exactly one file: notes.txt.
+  show notes
+  arrow docs -> notes
+  & label path "/Users/ada/Documents/notes.txt"
+  highlight notes
+step: The contents live on the disk. The operating system asks the disk driver to read the file.
+  show disk, note
+  arrow os -> disk : "read"
+step: The disk copies the 40 bytes of notes.txt into memory, where the CPU can reach them fast.
+  show mem, bytes
+  arrow disk -> mem : "copy"
+  & count bytes -> 40
+step: The editor reads the text from memory and draws it on the screen. Ada can now edit it.
+  arrow mem -> editor : "text"
+  label editor "Text editor|shows notes.txt"
+  highlight editor
+:::
 
 Press Next to follow what the computer does when Ada double-clicks notes.txt.
 
@@ -508,6 +601,49 @@ state: screen=Wikipedia home page
 
 A URL is the full address of one thing on the web. Read it from left to right. Take the example https://www.wikipedia.org/wiki/Computer.
 
+
+:::anim
+title: One request for www.wikipedia.org, in milliseconds
+box browser "Browser" @ 130,330 icon: browser
+box dns "DNS" @ 130,150 icon: dns
+box router "Home router" @ 420,330 icon: router
+box server "Web server" @ 710,330 icon: server
+box files "Files" @ 710,150 icon: file
+num clock = 0 @ 420,150 suffix: " ms" size: 36 color: green
+text url "www.wikipedia.org" @ 130,430 size: 18 color: yellow
+text note "Most of the time is travel.|The server works for only 30 ms." @ 420,460 size: 16 color: grey
+
+step: You type www.wikipedia.org and press Enter. The browser needs the IP address of that name.
+  show browser, url, clock
+step: The browser asks DNS, the directory of the internet. DNS answers with the number 208.80.154.224.
+  show dns
+  arrow browser -> dns : "IP of www.wikipedia.org?"
+  arrow dns -> browser : "208.80.154.224"
+  & count clock -> 20
+step: The browser sends the request GET / to that address, through the home router and across the internet.
+  show router, server
+  arrow browser -> router : "GET /"
+  arrow router -> server : "GET /"
+  & count clock -> 60
+step: The server reads the request, finds the page in its files, and builds the response.
+  show files
+  highlight server
+  arrow server -> files : "find /"
+  arrow files -> server : "page"
+  & count clock -> 90
+step: The response travels back the same way. It starts with the status code 200, which means OK.
+  restore server
+  arrow server -> router : "200 OK"
+  arrow router -> browser : "200 OK"
+  & count clock -> 120
+step: The browser reads the text and draws the page. The clock stops at 200 milliseconds.
+  label url "Wikipedia home page"
+  & color url green
+  count clock -> 200
+  show note
+  highlight browser
+:::
+
 | Part | Example | What it means |
 | --- | --- | --- |
 | scheme | https | the rules for the conversation, here HTTP with encryption |
@@ -720,6 +856,63 @@ state: answer=9
 ### Why computers need exactness
 
 The CPU understands only a small set of basic actions: move a number, add two numbers, compare two numbers, jump to another instruction. Every program, including an AI model, is built from billions of these tiny actions. The CPU has no idea what the numbers mean. It does not know that 9 is a price or an age. So a program must spell out every step in terms of these actions. When a step is missing or wrong, the result is a bug. A bug is a mistake in a program that makes it do the wrong thing. Every programmer writes bugs every day. Finding and fixing them is a normal part of the work.
+
+
+:::anim
+title: The computer runs find-the-largest on 4, 9 and 2
+rect l1 @ 250,150 size: 320x44 "largest = numbers[0]"
+rect l2 @ 250,210 size: 320x44 "for n in numbers:"
+rect l3 @ 250,270 size: 320x44 "if n > largest:"
+rect l4 @ 250,330 size: 320x44 "largest = n"
+rect l5 @ 250,390 size: 320x44 "print(largest)"
+text prog "The program, five lines" @ 250,90 size: 16 color: grey
+text nums "numbers = [4, 9, 2]" @ 700,90 size: 16 color: grey
+rect c1 @ 620,150 size: 70x50 "4"
+rect c2 @ 700,150 size: 70x50 "9"
+rect c3 @ 780,150 size: 70x50 "2"
+dot ptr @ 620,205 r: 8 color: yellow label: "n"
+num largest = 0 @ 700,300 prefix: "largest = " size: 28 color: green
+text cmp "4 > 4? no" @ 700,370 size: 20 color: red
+text out "Output: 9" @ 700,440 size: 26 color: green
+
+step: A program is a list of instructions. The computer reads them in order, one line at a time.
+  show prog, l1, l2, l3, l4, l5
+  show nums, c1, c2, c3
+step: Line 1 runs: set largest to the first number, 4.
+  highlight l1
+  show largest
+  count largest -> 4
+  pulse c1
+step: Line 2 starts the loop. n is the first number, 4. Line 3 asks: is 4 bigger than 4? No.
+  restore l1
+  highlight l2
+  show ptr
+  highlight l3
+  show cmp
+step: n moves to the next number, 9. Is 9 bigger than largest, 4? Yes.
+  restore l3
+  move ptr -> 700,205
+  label cmp "9 > 4? yes"
+  & color cmp green
+  highlight l3
+step: Line 4 runs: largest becomes 9.
+  restore l3
+  highlight l4
+  count largest -> 9
+  pulse c2
+step: n moves to the last number, 2. Is 2 bigger than 9? No, so line 4 does not run.
+  restore l4
+  move ptr -> 780,205
+  label cmp "2 > 9? no"
+  & color cmp red
+  highlight l3
+step: No numbers remain. Line 5 reports largest. The screen shows 9.
+  restore l3, l2
+  hide ptr, cmp
+  highlight l5
+  show out
+  pulse out
+:::
 
 Exactness has an upside. A computer follows the same steps the same way every time, at billions of steps per second, without getting tired. A person who found the largest of a million numbers would take days and make mistakes. A computer takes less than a thousandth of a second and makes none, as long as the instructions are right.
 

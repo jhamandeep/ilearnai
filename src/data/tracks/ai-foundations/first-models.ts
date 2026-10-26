@@ -101,6 +101,55 @@ That is the whole of training for linear regression. You needed 2 averages, 10 s
 
 For any line you could draw, each house has a residual. A residual is the real price minus the price the line predicts. The line price = 2.5 times size + 8 predicts 108 for house 1, so the residual is 110 minus 108, which is 2. The table lists all 5.
 
+:::anim
+title: Fit a line through 5 houses and predict a sixth
+axes ax @ 90,50 size: 520x400 x: 20,130 y: 60,340 xlabel: "size in m2" ylabel: "price in thousand pounds"
+dot h1 on ax @ 40,110 color: blue
+dot h2 on ax @ 60,150 color: blue
+dot h3 on ax @ 80,220 color: blue
+dot h4 on ax @ 100,250 color: blue
+dot h5 on ax @ 120,310 color: blue
+dot m on ax @ 80,208 r: 9 color: yellow label: "mean: size 80 and price 208"
+curve fit on ax = 2.5*x + 8 color: yellow label: "price = 2.5 x size + 8"
+line r1 on ax from 40,108 to 40,110 color: red label: "2"
+line r2 on ax from 60,158 to 60,150 color: red label: "-8"
+line r3 on ax from 80,208 to 80,220 color: red label: "12"
+line r4 on ax from 100,258 to 100,250 color: red label: "-8"
+line r5 on ax from 120,308 to 120,310 color: red label: "2"
+dot q on ax @ 40,108 r: 8 color: green label: "90 m2"
+num msize = 0 @ 790,120 prefix: "mean size = " size: 20
+num mprice = 0 @ 790,160 prefix: "mean price = " size: 20
+num wv = 0 @ 790,225 prefix: "w = " digits: 1 size: 26 color: yellow
+num bv = 0 @ 790,270 prefix: "b = " size: 26 color: yellow
+text res "the residuals add up to 0|so square them first" @ 790,335 size: 16 color: red
+num mse = 0 @ 790,390 prefix: "MSE = " size: 22 color: red
+num pred = 108 @ 790,450 prefix: "price = " size: 28 color: green
+
+step: Each house is one point: size across, price up. Here are the 5 houses.
+  show ax, h1, h2, h3, h4, h5
+step: Average the sizes and the prices. The mean point sits at size 80 and price 208.
+  show msize, mprice
+  count msize -> 80
+  & count mprice -> 208
+  show m
+step: The best line passes through the mean point, with slope w = 2.5 and intercept b = 8.
+  draw fit
+  show wv, bv
+  count wv -> 2.5
+  & count bv -> 8
+step: Each house sits a little off the line. The gaps are the residuals, and they add up to 0.
+  draw r1, r2, r3, r4, r5
+  show res
+step: Square each residual, add, divide by 5: the MSE is 56. No other line gets a smaller MSE.
+  show mse
+  count mse -> 56
+step: Now predict a 90 square metre house: slide along the line to size 90 and read 233.
+  show q, pred
+  walk q along fit from 40 to 90 (2s)
+  & count pred -> 233 (2s)
+  highlight q
+:::
+
 | House | Size | Real price | Predicted price | Residual |
 | --- | --- | --- | --- | --- |
 | 1 | 40 | 110 | 108 | 2 |
@@ -352,6 +401,54 @@ The training MSE is 25. The test MSE is 225, nine times larger. This gap is the 
 ### The three error measures
 
 Every error measure starts from the residuals, the real values minus the predictions. The formulas use n for the number of examples, y for a real value and a y with a hat for a prediction.
+
+:::anim
+title: Train on 4 houses, test on the hidden fifth
+axes ax @ 90,50 size: 520x400 x: 20,130 y: 60,340 xlabel: "size in m2" ylabel: "price in thousand pounds"
+dot h1 on ax @ 40,110 color: blue
+dot h2 on ax @ 60,150 color: blue
+dot h3 on ax @ 80,220 color: blue label: "house 3"
+dot h4 on ax @ 100,250 color: blue
+dot h5 on ax @ 120,310 color: blue
+curve fit on ax = 2.5*x + 5 color: yellow label: "price = 2.5 x size + 5"
+line r1 on ax from 40,105 to 40,110 color: green label: "5"
+line r2 on ax from 60,155 to 60,150 color: green label: "-5"
+line r4 on ax from 100,255 to 100,250 color: green label: "-5"
+line r5 on ax from 120,305 to 120,310 color: green label: "5"
+dot p3 on ax @ 80,205 r: 6 color: red label: "predicted 205"
+line r3 on ax from 80,205 to 80,220 color: red label: "15"
+text t1 "Training set: 4 houses" @ 790,110 size: 18 color: green
+text t2 "Test set: house 3, hidden" @ 790,150 size: 18 color: red
+num trmse = 0 @ 790,240 prefix: "training MSE = " size: 24 color: green
+num tres = 0 @ 790,320 prefix: "test residual = " size: 20 color: red
+num temse = 0 @ 790,370 prefix: "test MSE = " size: 24 color: red
+text t3 "9 times the training MSE" @ 790,440 size: 20 color: yellow
+
+step: The 5 houses again. The question: how well does the line price a house it has never seen?
+  show ax, h1, h2, h3, h4, h5
+step: Hide house 3 before fitting. The other 4 houses are the training set.
+  show t1, t2
+  color h1, h2, h4, h5 green
+  color h3 red
+  dim h3
+step: Fit the line to the 4 training houses only: price = 2.5 times size + 5.
+  draw fit
+step: Each training residual is 5 or minus 5. Square, add and divide by 4: training MSE 25.
+  draw r1, r2, r4, r5
+  show trmse
+  count trmse -> 25
+step: Now bring back house 3. The line predicts 205 for 80 square metres, but it sold for 220.
+  restore h3
+  show p3
+  draw r3
+  show tres
+  count tres -> 15
+step: The test residual is 15. Squared, the test MSE is 225, nine times the training MSE.
+  show temse
+  count temse -> 225
+  show t3
+  highlight temse
+:::
 
 $$\\text{MSE} = \\frac{1}{n}\\sum_{i=1}^{n}(y_i - \\hat{y}_i)^2, \\qquad \\text{RMSE} = \\sqrt{\\text{MSE}}, \\qquad \\text{MAE} = \\frac{1}{n}\\sum_{i=1}^{n}|y_i - \\hat{y}_i|$$
 
@@ -623,6 +720,59 @@ Four of five right, so the accuracy is 0.8, or 80 percent. But the one mistake h
 ### Training the line behind the sigmoid
 
 Where did w = -0.1 and b = 7.5 come from? Training, as always, but with a twist. There is no one-step formula for logistic regression as there was for the straight line. Instead the computer starts with a guess and measures how far the probabilities are from the real answers. Then it nudges w and b downhill with [gradient descent](/courses/math-from-zero/change-and-gradients/follow-the-slope). The measure of distance is not the squared error. It is cross-entropy, which you met in [Surprise, entropy and cross-entropy](/courses/math-from-zero/chance/entropy-and-cross-entropy). Cross-entropy charges a large penalty when the model gives a probability near 0 to something that happened. scikit-learn does all of this inside fit, so you never write the loop yourself at this level.
+
+:::anim
+title: The sigmoid turns a size into a probability, then a threshold decides
+axes ax @ 90,50 size: 520x400 x: 20,130 y: 0,1 xlabel: "size in m2" ylabel: "p = chance of a quick sale"
+curve sig on ax = sigmoid(0.1*(75 - x)) color: blue label: "sigmoid"
+line thr on ax from 20,0.5 to 130,0.5 color: yellow dashed label: "threshold 0.5"
+dot h1 on ax @ 40,0.971 color: grey
+dot h2 on ax @ 60,0.818 color: grey
+dot h3 on ax @ 80,0.378 color: grey label: "house 3"
+dot h4 on ax @ 100,0.076 color: grey
+dot h5 on ax @ 120,0.011 color: grey
+dot ball on ax @ 40,0.971 r: 10 color: yellow
+num zv = 3.5 @ 790,140 prefix: "z = " digits: 1 size: 26
+num pv = 0.971 @ 790,190 prefix: "p = " digits: 3 size: 26 color: blue
+text yes "above 0.5: predict yes" @ 790,290 size: 18 color: green
+text no "below 0.5: predict no" @ 790,290 size: 18 color: red
+text miss "real answer yes: a miss" @ 790,335 size: 18 color: red
+num acc = 0 @ 790,410 prefix: "accuracy = " digits: 1 size: 26 color: yellow
+text note "one miss and no false alarm" @ 790,455 size: 18 color: grey
+
+step: The line gives each size a score z. The sigmoid squashes z into a probability p between 0 and 1.
+  show ax
+  draw sig (2s)
+step: The 5 houses sit on the curve at their sizes. The dashed line is the threshold, 0.5.
+  show h1, h2, h3, h4, h5
+  draw thr
+step: House 1, 40 square metres: z = 3.5, p = 0.971. Above the threshold, so predict yes. Correct.
+  show ball, zv, pv, yes
+  color h1 green
+step: Slide to house 2 at 60 square metres: z = 1.5 and p = 0.818. Predict yes. Correct.
+  walk ball along sig from 40 to 60 (1.5s)
+  & count zv -> 1.5 (1.5s)
+  & count pv -> 0.818 (1.5s)
+  color h2 green
+step: House 3, 80 square metres: p = 0.378, below the line. Predict no. But it really sold fast: a miss.
+  walk ball along sig from 60 to 80 (1.5s)
+  & count zv -> -0.5 (1.5s)
+  & count pv -> 0.378 (1.5s)
+  hide yes
+  show no, miss
+  color h3 red
+  pulse h3
+step: Houses 4 and 5 give p = 0.076 and 0.011. Predict no, and both really were no. Correct.
+  walk ball along sig from 80 to 120 (2s)
+  & count zv -> -4.5 (2s)
+  & count pv -> 0.011 (2s)
+  color h4, h5 green
+step: Four of five right: accuracy 0.8. The one error is a miss, not a false alarm.
+  hide ball, no, miss
+  show acc, note
+  count acc -> 0.8
+  highlight h3
+:::
 
 ### The confusion matrix
 
@@ -915,6 +1065,74 @@ state: line=245.5, tree=235, knn=235
 
 Training a tree is a search for the best question at each step. For one feature, the only questions are "is size at most some cut?". The only cuts that matter lie between neighbouring sizes: 50, 70, 90 and 110. For each cut the tree splits the houses into two groups and predicts the mean in each group. Then it adds up the squared residuals of both groups. It keeps the cut with the smallest total. This is the same squared error as linear regression, applied to a split instead of a line.
 
+:::anim
+title: How a tree picks its first question
+axes ax @ 90,50 size: 520x400 x: 20,130 y: 60,340 xlabel: "size in m2" ylabel: "price in thousand pounds"
+dot h1 on ax @ 40,110 color: blue
+dot h2 on ax @ 60,150 color: blue
+dot h3 on ax @ 80,220 color: blue
+dot h4 on ax @ 100,250 color: blue
+dot h5 on ax @ 120,310 color: blue
+line c50 on ax from 50,60 to 50,340 color: yellow dashed label: "cut 50"
+line c70 on ax from 70,60 to 70,340 color: yellow dashed label: "cut 70"
+line c90 on ax from 90,60 to 90,340 color: yellow dashed label: "cut 90"
+line c110 on ax from 110,60 to 110,340 color: yellow dashed label: "cut 110"
+line leafA on ax from 20,130 to 70,130 color: green label: "130"
+line leafB on ax from 70,235 to 110,235 color: green label: "235"
+line leafC on ax from 110,310 to 130,310 color: green label: "310"
+num lmean = 0 @ 790,130 prefix: "left mean = " digits: 1 size: 22 color: green
+num rmean = 0 @ 790,175 prefix: "right mean = " digits: 1 size: 22 color: purple
+num total = 0 @ 790,260 prefix: "squared error = " size: 24 color: yellow
+text best "smallest at cut 70" @ 790,320 size: 18 color: yellow
+text leaves "leaf means 130 / 235 / 310" @ 790,400 size: 18 color: green
+
+step: A tree asks one question: is the size at most a cut? Here are the 5 houses it must split.
+  show ax, h1, h2, h3, h4, h5
+step: Try the cut at 50. The left side predicts its mean, 110. The right side predicts 232.5.
+  draw c50
+  color h1 green
+  color h2, h3, h4, h5 purple
+  show lmean, rmean
+  count lmean -> 110
+  & count rmean -> 232.5
+step: Score the cut: add the squared residuals of both sides. 0 plus 13275 is 13275.
+  show total
+  count total -> 13275
+step: Move the cut to 70. The means become 130 and 260, and the score falls to 5000.
+  hide c50
+  draw c70
+  color h2 green
+  count lmean -> 130
+  & count rmean -> 260
+  & count total -> 5000
+step: Move it to 90. The means are 160 and 280, and the score rises to 8000. Worse.
+  hide c70
+  draw c90
+  color h3 green
+  count lmean -> 160
+  & count rmean -> 280
+  & count total -> 8000
+step: Move it to 110. The score rises again, to 12275. Worse still.
+  hide c90
+  draw c110
+  color h4 green
+  count lmean -> 182.5
+  & count rmean -> 310
+  & count total -> 12275
+step: The cut at 70 has the smallest score, so the root question is: size at most 70?
+  hide c110
+  draw c70
+  color h3, h4 purple
+  count lmean -> 130
+  & count rmean -> 260
+  & count total -> 5000
+  show best
+step: The tree repeats the search on the right and cuts at 110. Three leaves predict 130, 235 and 310.
+  draw c110
+  draw leafA, leafB, leafC
+  show leaves
+:::
+
 | Cut | Left prices | Right prices | Squared residuals, left plus right |
 | --- | --- | --- | --- |
 | 50 | 110 | 150, 220, 250, 310 | 0 + 13275 = 13275 |
@@ -1124,6 +1342,70 @@ why: Watch all 6 minutes. StatQuest fits a straight line and a wiggly curve to t
 ## The idea with an example
 
 > **Analogy.** Three students prepare for a mathematics test with the same 5 practice problems. The first student barely reads them and answers every question with the class average. The second works out the method behind the problems. The third memorises the 5 answers word for word. On the practice problems the third student scores 100 percent and the second scores 95. On the real test, with new problems, the second student scores 90, the first scores 20, and the third scores 30. The first student underfitted. The third overfitted. Only the second generalised.
+
+:::anim
+title: Three models learn 5 houses, then meet 2 new houses
+axes ax @ 90,50 size: 520x400 x: 20,130 y: 60,420 xlabel: "size in m2" ylabel: "price in thousand pounds"
+dot h1 on ax @ 40,110 color: blue
+dot h2 on ax @ 60,150 color: blue
+dot h3 on ax @ 80,220 color: blue
+dot h4 on ax @ 100,250 color: blue
+dot h5 on ax @ 120,310 color: blue
+curve meanm on ax = 208 color: grey label: "mean: 208"
+curve linem on ax = 2.5*x + 8 color: yellow label: "line"
+curve poly on ax = 110 + 40*(x/20-2) + 15*(x/20-2)*(x/20-3) - 35/3*(x/20-2)*(x/20-3)*(x/20-4) + 35/6*(x/20-2)*(x/20-3)*(x/20-4)*(x/20-5) color: red label: "degree-4 curve"
+dot t1 on ax @ 50,140 r: 8 color: green label: "new: 50 m2 sold 140"
+dot t2 on ax @ 110,290 r: 8 color: green label: "new: 110 m2 sold 290"
+line g1 on ax from 50,116 to 50,140 color: red label: "24"
+line g2 on ax from 110,266 to 110,290 color: red label: "24"
+dot ball on ax @ 50,116 r: 9 color: red
+text cur "model: mean" @ 790,120 size: 20
+num tr = 0 @ 790,180 prefix: "training MSE = " size: 22
+num te = 0 @ 790,230 prefix: "test MSE = " size: 22 color: green
+text diag "underfitting" @ 790,300 size: 22 color: yellow
+num pv = 116 @ 790,400 prefix: "curve says " size: 22 color: red
+
+step: The same 5 houses. Three models try to learn the pattern: a mean, a line and a degree-4 curve.
+  show ax, h1, h2, h3, h4, h5
+step: The mean model predicts 208 for every house. Training MSE 5056: too simple to see the pattern.
+  draw meanm
+  show cur, tr, diag
+  count tr -> 5056
+step: The straight line follows the trend. Its training MSE is 56.
+  label cur "model: line"
+  draw linem
+  count tr -> 56
+  label diag "fits well"
+step: The degree-4 curve passes through all 5 points exactly. Training MSE 0. It looks perfect.
+  label cur "model: curve"
+  dim meanm, linem
+  draw poly (2s)
+  count tr -> 0
+  label diag "perfect?"
+step: Then 2 new houses sell: 50 square metres for 140, and 110 square metres for 290.
+  show t1, t2
+  pulse t1, t2
+step: The line misses each by 7. Test MSE 49, about the same as training: it generalises.
+  label cur "model: line"
+  restore linem
+  dim poly
+  show te
+  count tr -> 56
+  & count te -> 49
+  label diag "generalises"
+step: The curve misses each by 24. Test MSE 557, eleven times the line. It memorised: overfitting.
+  label cur "model: curve"
+  restore poly
+  dim linem
+  draw g1, g2
+  count tr -> 0
+  & count te -> 557
+  label diag "overfitting"
+step: Ask the curve about a 20 square metre flat: it climbs to 310, more than a house 3 times bigger.
+  show ball, pv
+  walk ball along poly from 50 to 20 (2s)
+  & count pv -> 310 (2s)
+:::
 
 Now the three students become three models for the 5 houses. The data is the same: sizes 40, 60, 80, 100 and 120 square metres, prices 110, 150, 220, 250 and 310 thousand pounds.
 

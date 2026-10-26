@@ -647,10 +647,12 @@ function SceneObject({ o, scene, variants }: { o: Obj; scene: Scene; variants: s
     case 'tangent': {
       const g = tangentGeom(scene, o, o.at!)
       return (
-        <g data-id={o.id} style={hidden} className="an-obj" clipPath={o.on ? `url(#an-clip-stage-${o.on})` : undefined}>
-          <line x1={g.a[0]} y1={g.a[1]} x2={g.b[0]} y2={g.b[1]} stroke={color} strokeWidth={2.5} strokeDasharray="8 6" strokeLinecap="round" />
+        <g data-id={o.id} style={hidden} className="an-obj">
+          <g clipPath={o.on ? `url(#an-clip-stage-${o.on})` : undefined}>
+            <line x1={g.a[0]} y1={g.a[1]} x2={g.b[0]} y2={g.b[1]} stroke={color} strokeWidth={2.5} strokeDasharray="8 6" strokeLinecap="round" />
+          </g>
           <circle cx={g.p[0]} cy={g.p[1]} r={6} fill={color} stroke={BG} strokeWidth={2} />
-          {o.label && <text x={g.p[0] + 12} y={g.p[1] - 12} fontSize={15} fill={color}>{o.label === 'slope' ? `slope = ${fmt(g.m, 2)}` : o.label}</text>}
+          {o.label && <text x={g.p[0] + 12} y={g.p[1] - 12} fontSize={15} fill={color} className="an-curve-label">{o.label === 'slope' ? `slope = ${fmt(g.m, 2)}` : o.label}</text>}
         </g>
       )
     }

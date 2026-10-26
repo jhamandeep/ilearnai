@@ -36,6 +36,52 @@ why: Watch the first 8 minutes. StatQuest draws a neuron as a box with weights o
 
 > **Analogy.** A neuron is a judge with a scoring sheet. Each contestant shows two things, say a dance and a song. The judge thinks the dance matters twice as much as the song, so the dance score counts with weight 1 and the song score with weight 0.5. The judge is also strict and takes 1 point off every total: that is the bias. Finally, the judge never gives a negative score; anything below 0 becomes 0. That last rule is the activation function.
 
+:::anim
+title: One neuron computes its output from inputs 1 and 2
+box x1 "x1 = 1" @ 130,150 icon: none size: 150x64
+box x2 "x2 = 2" @ 130,290 icon: none size: 150x64
+box bias "bias = -1" @ 130,430 icon: none size: 150x64
+box sum "Weighted sum" @ 420,290 icon: none size: 200x64
+box relu "ReLU" @ 660,290 icon: none size: 150x64
+box out "Output" @ 860,290 icon: none size: 130x64
+num z = 0 @ 420,180 prefix: "z = " digits: 1 size: 30 color: yellow
+text rule "keeps a positive number|turns a negative number into 0" @ 660,410 size: 15 color: grey
+
+step: The first input is 1. Its weight is 1, so the product is 1.
+  show x1, sum, z
+  arrow x1 -> sum : times weight 1
+  & count z -> 1
+step: The second input is 2. Its weight is 0.5, so the product is 1. The sum is 2.
+  show x2
+  arrow x2 -> sum : times weight 0.5
+  & count z -> 2
+step: The bias is -1. It is added once. The weighted sum z is 1.
+  show bias
+  arrow bias -> sum : add bias -1
+  & count z -> 1
+step: ReLU keeps a positive number and turns a negative number into 0. The sum 1 stays 1.
+  show relu, rule
+  arrow sum -> relu : z
+  highlight relu
+step: The output of the neuron is 1.
+  show out
+  arrow relu -> out : max(0, z)
+  label out "Output = 1"
+  highlight out
+step: Now the inputs are 0 and 1. The weighted sum is -0.5, so ReLU makes the output 0.
+  restore relu, out
+  label x1 "x1 = 0"
+  label x2 "x2 = 1"
+  send x1 -> sum
+  & send x2 -> sum
+  & send bias -> sum
+  & count z -> -0.5
+  send sum -> relu
+  send relu -> out
+  & label out "Output = 0"
+  highlight out
+:::
+
 A neuron is a small formula with three kinds of numbers. The inputs are the numbers that come in. The weights are the numbers the neuron multiplies each input by. The bias is one extra number the neuron adds at the end. The neuron adds up all the products and the bias to get a weighted sum. Then it applies an activation function to that sum, and the result is the output of the neuron.
 
 Here is the running example for the whole module. The task is: given two numbers, output half of the larger one. For the input numbers 1 and 2, the larger is 2, so the right answer is 1. We call the two inputs $x_1 = 1$ and $x_2 = 2$. Our first neuron has weight $w_1 = 1$ for the first input, weight $w_2 = 0.5$ for the second input, and bias $b = -1$. These three numbers stay fixed in every lesson of this module, so you can always check your work against them.
@@ -322,6 +368,50 @@ state: target=1, error=-0.5
 
 A forward pass follows the same steps for a network of any size.
 
+:::anim
+title: The forward pass through the 2-2-1 network for input 1 and 2
+box x1 "x1 = 1" @ 130,190 icon: none size: 150x64
+box x2 "x2 = 2" @ 130,330 icon: none size: 150x64
+box h1 "Hidden 1|bias -1, ReLU" @ 420,190 icon: none size: 190x64
+box h2 "Hidden 2|bias -0.5, ReLU" @ 420,330 icon: none size: 190x64
+box out "Output|bias -0.5, no ReLU" @ 710,260 icon: none size: 190x64
+num a1 = 0 @ 420,110 prefix: "a1 = " digits: 1 size: 26 color: yellow
+num a2 = 0 @ 420,410 prefix: "a2 = " digits: 1 size: 26 color: yellow
+text predt "prediction" @ 870,210 size: 15 color: grey
+num pred = 0 @ 870,260 digits: 1 size: 34 color: yellow
+text tgt "target = 1" @ 870,310 size: 18 color: green
+num params = 0 @ 790,450 suffix: " parameters" size: 24 color: grey
+
+step: The inputs are 1 and 2. They are data, not neurons.
+  show x1, x2
+step: Hidden 1 reads both inputs: 1 times 1 plus 0.5 times 2 minus 1 is 1. ReLU keeps 1.
+  show h1, a1
+  arrow x1 -> h1 : times 1
+  & arrow x2 -> h1 : times 0.5
+  count a1 -> 1
+step: Hidden 2 reads the same inputs: -1 times 1 plus 1 times 2 minus 0.5 is 0.5.
+  show h2, a2
+  arrow x1 -> h2 : times -1
+  & arrow x2 -> h2 : times 1
+  count a2 -> 0.5
+step: The output neuron reads a1 and a2, never the inputs: 0.5 times 1 plus 1 times 0.5 minus 0.5.
+  show out, predt, pred
+  arrow h1 -> out : times 0.5
+  & arrow h2 -> out : times 1
+  count pred -> 0.5
+step: The prediction is 0.5. The target is 1, so the network is 0.5 too low.
+  show tgt
+  highlight pred
+step: Information flows one way. Each layer reads only the layer before it.
+  dim x1, x2
+  highlight h1, h2
+  wait 1
+  restore x1, x2, h1, h2
+step: Count what training can change: 4 hidden weights, 2 hidden biases, 2 output weights, 1 output bias.
+  show params
+  count params -> 9 (2s)
+:::
+
 1. Place the input numbers in the input layer.
 2. For each neuron in the first hidden layer, compute its weighted sum from the inputs and apply its activation function.
 3. Treat the outputs of that layer as the inputs of the next layer. Repeat step 2 for every layer.
@@ -569,6 +659,53 @@ state: prediction=0.55, loss=0.2025
 
 Gradient descent for a network follows four steps for every parameter at once.
 
+:::anim
+title: One gradient step on the output bias rolls the loss downhill
+axes ax @ 80,50 size: 560x420 x: -0.5,2.5 y: 0,2.5 xlabel: "prediction" ylabel: "loss"
+curve loss on ax = (x-1)^2 color: blue label: "loss = (prediction - 1)^2"
+line tline on ax from 1,0 to 1,2.4 color: green dashed
+dot ball on ax @ 0.5,0.25 r: 9 color: yellow
+tangent tan on loss at 0.5 len: 1.2 color: orange label: slope
+text t1 "The slope is negative:|the loss falls to the right.|Raise the prediction." @ 790,110 size: 17
+text t2 "c is added straight on,|so its gradient is -1 times 1" @ 790,110 size: 17
+text t3 "c = -0.5 minus 0.05 times -1" @ 790,110 size: 17
+num cval = -0.5 @ 790,240 prefix: "c = " digits: 2 size: 24
+num pred = 0.5 @ 790,300 prefix: "prediction = " digits: 4 size: 22 color: yellow
+num lossv = 0.25 @ 790,360 prefix: "loss = " digits: 4 size: 22 color: blue
+num gc = 0 @ 790,420 prefix: "gradient of c = " digits: 0 size: 22 color: orange
+
+step: The loss is the squared error. It is a bowl whose bottom sits at the target, 1.
+  show ax
+  draw loss
+  draw tline
+step: The network predicts 0.5. The loss there is 0.25.
+  show ball, pred, lossv
+step: The slope of the loss at 0.5 is -1. The loss falls to the right, so raise the prediction.
+  show tan, t1
+step: The output bias c is -0.5. Its gradient is -1 times 1, which is -1.
+  hide t1
+  show t2, cval, gc
+  count gc -> -1
+step: Move c against its gradient: -0.5 plus 0.05 is -0.45. The prediction rises to 0.55.
+  hide t2
+  show t3
+  count cval -> -0.45
+  walk ball along loss from 0.5 to 0.55
+  & tangent tan -> 0.55
+  & count pred -> 0.55
+  & count lossv -> 0.2025
+step: Step v1 and v2 the same way. The prediction becomes 0.6125 and the loss falls to 0.15.
+  hide t3, gc
+  walk ball along loss from 0.55 to 0.6125 (1.5s)
+  & tangent tan -> 0.6125 (1.5s)
+  & count pred -> 0.6125 (1.5s)
+  & count lossv -> 0.15 (1.5s)
+step: More steps, on all 9 parameters, roll the ball to the bottom of the bowl, where the loss is 0.
+  hide tan, cval, pred, lossv
+  walk ball along loss from 0.6125 to 1 (2.5s)
+  highlight ball
+:::
+
 1. Run the forward pass and compute the loss.
 2. For each parameter, compute the gradient: the slope of the loss with respect to that parameter.
 3. Move each parameter by minus the learning rate times its gradient.
@@ -812,6 +949,52 @@ state: gradients=9 of 9
 ## How it works
 
 Backpropagation for a network of any depth follows these steps.
+
+:::anim
+title: Blame flows backwards from the loss to all 9 parameters
+box x1 "x1 = 1" @ 130,150 icon: none size: 150x64
+box x2 "x2 = 2" @ 130,290 icon: none size: 150x64
+box h1 "Hidden 1|a1 = 1" @ 420,150 icon: none size: 170x64
+box h2 "Hidden 2|a2 = 0.5" @ 420,290 icon: none size: 170x64
+box out "Output|prediction 0.5" @ 710,250 icon: none size: 180x64
+box loss "Loss" @ 710,100 icon: none size: 150x64
+num lossv = 0.25 @ 870,100 digits: 2 size: 26 color: red
+text gout "gradients: v1 -1, v2 -0.5, c -1" @ 710,330 size: 15 color: orange
+text g1 "Hidden 1: w11 -0.5, w12 -1, b1 -0.5" @ 420,410 size: 15 color: orange
+text g2 "Hidden 2: w21 -1, w22 -2, b2 -1" @ 420,450 size: 15 color: orange
+text done "9 gradients, one pass" @ 130,430 size: 16 color: green
+
+step: The forward pass is done: a1 is 1, a2 is 0.5, the prediction is 0.5, the loss is 0.25.
+  show x1, x2, h1, h2, out, loss, lossv
+step: The slope of the loss with respect to the prediction is 2 times (0.5 - 1), which is -1.
+  arrow loss -> out : -1
+step: Output parameters: multiply -1 by a1, a2 and 1. The gradients are -1, -0.5 and -1.
+  show gout
+  pulse out
+step: Blame for the hidden activations: multiply -1 by v1 = 0.5 and by v2 = 1.
+  arrow out -> h1 : -1 times 0.5 = -0.5
+  & arrow out -> h2 : -1 times 1 = -1
+step: Through ReLU: both sums were positive, so the slope is 1 and the blame passes unchanged.
+  highlight h1, h2
+  label h1 "Hidden 1|blame -0.5"
+  label h2 "Hidden 2|blame -1"
+step: Hidden 1 parameters: multiply -0.5 by x1, x2 and 1. The gradients are -0.5, -1 and -0.5.
+  restore h2
+  arrow h1 -> x1 : -0.5 times 1
+  & arrow h1 -> x2 : -0.5 times 2
+  show g1
+step: Hidden 2 parameters: multiply -1 by x1, x2 and 1. The gradients are -1, -2 and -1.
+  restore h1
+  highlight h2
+  arrow h2 -> x1 : -1 times 1
+  & arrow h2 -> x2 : -1 times 2
+  show g2
+step: All 9 gradients came from one backward pass. One step with learning rate 0.05 takes the loss to 0.000006.
+  restore h2
+  show done
+  count lossv -> 0.000006 (2s)
+  highlight lossv
+:::
 
 1. Run the forward pass and keep every intermediate value: each weighted sum and each activation. You need them later.
 2. Compute the slope of the loss with respect to the prediction. For squared error it is 2 times prediction minus target.
@@ -1122,6 +1305,56 @@ state: match=9 of 9
 ## How it works
 
 A PyTorch training program has three parts: the data as tensors, the model as an nn.Module, and the training loop. The diagram shows how a batch moves through them.
+
+:::anim
+title: The training loop in train.py, 300 times round
+box data "Data|X 8 by 2, Y 8 by 1" @ 130,290 icon: file size: 190x64
+box model "TinyNet|Linear, ReLU, Linear" @ 420,290 icon: model size: 210x64
+box lossfn "MSELoss" @ 710,290 icon: none size: 160x64
+box opt "SGD, lr 0.05" @ 710,450 icon: none size: 160x64
+num epoch = 0 @ 790,110 prefix: "epoch " size: 26
+num lossv = 0 @ 790,160 prefix: "loss " digits: 4 size: 26 color: red
+text zg "zero_grad() clears|the old gradients" @ 420,160 size: 15 color: grey
+num pred = 0 @ 420,440 prefix: "model([1, 2]) = " digits: 3 size: 22 color: yellow
+
+step: The data is two tensors: X holds the 8 examples and Y holds their 8 targets.
+  show data
+step: optimizer.zero_grad() clears old gradients. Then model(X) runs the forward pass on the whole batch.
+  show model, zg
+  arrow data -> model : X, 8 by 2
+step: loss_fn compares the 8 predictions with Y. Before any update, the mean squared error is 0.4844.
+  show lossfn, epoch, lossv
+  arrow model -> lossfn : y_hat, 8 by 1
+  & count epoch -> 1
+  & count lossv -> 0.4844
+step: loss.backward() runs the backward pass. Every one of the 9 parameters now holds its gradient.
+  hide zg
+  show opt
+  arrow lossfn -> opt : backward(): 9 gradients
+step: optimizer.step() moves each parameter against its gradient, by 0.05 times the gradient.
+  arrow opt -> model : step()
+  highlight model
+step: Epoch 2 goes round the loop again. The loss falls to 0.3464.
+  restore model
+  send data -> model
+  send model -> lossfn
+  & count epoch -> 2
+  & count lossv -> 0.3464
+  send lossfn -> opt
+  send opt -> model
+step: The loop runs 300 times. The loss falls fast, then flattens at 0.0051.
+  send data -> model (0.5s)
+  & send model -> lossfn (0.5s)
+  & send lossfn -> opt (0.5s)
+  & send opt -> model (0.5s)
+  & count epoch -> 300 (3s)
+  & count lossv -> 0.0051 (3s)
+step: The trained network predicts 0.976 for the input 1 and 2. The target is 1.
+  show pred
+  send data -> model : [1, 2]
+  & count pred -> 0.976
+  highlight pred
+:::
 
 :::arch
 title: A PyTorch training run

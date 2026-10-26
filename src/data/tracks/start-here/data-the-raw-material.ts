@@ -84,6 +84,53 @@ state: examples=6, features=4
 
 A data set has a shape. The shape is 2 numbers: the number of rows and the number of columns. The house table has shape 6 by 6 when you count the id column, or 6 by 5 without it. Say the shape out loud as "6 rows and 5 columns". When people say a data set has 10,000 examples, they mean it has 10,000 rows.
 
+:::anim
+title: One row becomes features and a label, and 6 rows become a data set
+text hdr "Row 3 of the house table, one example" @ 440,70 size: 18 color: grey
+rect c_size @ 160,140 size: 110x56 "size_m2|90"
+rect c_bed @ 300,140 size: 110x56 "bedrooms|3"
+rect c_city @ 440,140 size: 110x56 "city|York"
+rect c_gar @ 580,140 size: 110x56 "garden|yes"
+rect c_price @ 720,140 size: 110x56 "price|260000"
+box xbox "X: 4 features" @ 250,290 size: 260x64 icon: none
+box ybox "y: the label" @ 530,290 size: 180x64 icon: none
+box model "Model" @ 800,290 size: 180x64 icon: model
+num ex = 0 @ 200,430 prefix: "examples = " size: 26
+num feat = 0 @ 480,430 prefix: "features = " size: 26
+num meanp = 0 @ 760,430 prefix: "mean price = " size: 26 color: yellow
+
+step: Row 3 is one example: one house that sold, written across the table in 5 cells.
+  show hdr, c_size, c_bed, c_city, c_gar, c_price
+  pulse c_size, c_bed, c_city, c_gar, c_price
+step: The 4 cells that describe the house are features. Together they form X.
+  show xbox
+  color c_size, c_bed, c_city, c_gar blue
+  arrow c_size -> xbox
+  & arrow c_bed -> xbox
+  & arrow c_city -> xbox
+  & arrow c_gar -> xbox
+step: The price is the column we want to predict. It is the label, y.
+  show ybox
+  color c_price yellow
+  arrow c_price -> ybox : label
+  highlight ybox
+step: A model reads the features, learns a rule, and compares its guess with the label.
+  show model
+  arrow xbox -> model : features
+  arrow ybox -> model : right answer
+  restore ybox
+step: Repeat for all 6 rows. The data set has 6 examples with 4 features: shape (6, 4).
+  show ex, feat
+  count ex -> 6 (2s)
+  & count feat -> 4 (2s)
+  label xbox "X: shape (6, 4)"
+  & label ybox "y: shape (6,)"
+step: Add the 6 prices and divide by 6. The mean price, 245,000 pounds, is a first guess for any house.
+  show meanp
+  count meanp -> 245000 (2.5s)
+  highlight meanp
+:::
+
 Here are the steps to turn any table into a data set a model can learn from.
 
 1. Decide what one row stands for. In the house table, one row is one house.
@@ -327,6 +374,62 @@ Pixels -> Model: now numbers
 ## How it works
 
 Data comes in 2 big families. Structured data has a fixed layout: rows and columns, with one kind per column. The house table without the description is structured. A spreadsheet and a database table are structured. Unstructured data has no fixed layout: free text, photos, sound and video. The description column, the door photos, and a voice note from the agent are unstructured. Most of the data in the world is unstructured, and modern AI is the first set of tools that handles it well.
+
+:::anim
+title: Every kind of data becomes numbers before the model reads it
+rect c_size @ 150,100 size: 170x56 "size_m2 = 90"
+rect c_city @ 150,190 size: 170x56 "city = York"
+rect c_gar @ 150,280 size: 170x56 "garden = yes"
+rect c_photo @ 150,410 size: 170x56 "door photo"
+rect k_city @ 490,190 size: 200x56 "Leeds 0, York 1"
+rect k_gar @ 490,280 size: 200x56 "no 0, yes 1"
+rect p00 @ 420,340 size: 44x40 "200" color: white
+rect p01 @ 468,340 size: 44x40 "200" color: white
+rect p02 @ 516,340 size: 44x40 "200" color: white
+rect p03 @ 564,340 size: 44x40 "200" color: white
+rect p10 @ 420,384 size: 44x40 "200" color: white
+rect p11 @ 468,384 size: 44x40 "190" color: #d0d0d0
+rect p12 @ 516,384 size: 44x40 "60" color: #555555
+rect p13 @ 564,384 size: 44x40 "200" color: white
+rect p20 @ 420,428 size: 44x40 "200" color: white
+rect p21 @ 468,428 size: 44x40 "190" color: #d0d0d0
+rect p22 @ 516,428 size: 44x40 "60" color: #555555
+rect p23 @ 564,428 size: 44x40 "200" color: white
+rect p30 @ 420,472 size: 44x40 "200" color: white
+rect p31 @ 468,472 size: 44x40 "200" color: white
+rect p32 @ 516,472 size: 44x40 "200" color: white
+rect p33 @ 564,472 size: 44x40 "200" color: white
+box model "Model" @ 800,100 size: 180x64 icon: model
+num pix = 0 @ 800,300 prefix: "pixels = " size: 26
+num mean = 0 @ 800,380 prefix: "mean = " digits: 2 size: 26 color: yellow
+text note "Every value is now a number,|so the model can do arithmetic" @ 800,470 size: 16 color: grey
+
+step: A model does arithmetic, so it reads only numbers. The size 90 goes in as it is.
+  show c_size, model
+  arrow c_size -> model : 90
+step: York is a category from a fixed list. It becomes one 0/1 code per option: Leeds 0, York 1.
+  show c_city, k_city
+  arrow c_city -> k_city : code
+  arrow k_city -> model : 0, 1
+step: The binary column garden maps no to 0 and yes to 1.
+  show c_gar, k_gar
+  arrow c_gar -> k_gar : map
+  arrow k_gar -> model : 1
+step: The door photo is not in the table. Cut it into a grid of 4 by 4 pixels.
+  show c_photo, pix
+  show p00, p01, p02, p03, p10, p11, p12, p13, p20, p21, p22, p23, p30, p31, p32, p33 (1.5s)
+  & count pix -> 16 (1.5s)
+  arrow c_photo -> p10 : pixels
+step: Each pixel holds a brightness from 0 (black) to 255 (white). The dark handle is the two 60s.
+  highlight p12, p22
+  pulse p12, p22
+step: The 16 numbers go to the model as one list. Their mean, 173.75, says the door is bright.
+  show mean, note
+  restore p12, p22
+  arrow p03 -> model : 16 numbers
+  & count mean -> 173.75 (2s)
+  highlight model
+:::
 
 Here is how to work out the kind of a column.
 
@@ -589,6 +692,63 @@ step: The table is clean. 7 rows, 2 cities, no missing cells, no outliers.
 
 Follow the same 6 steps for every new table. Always look before you change anything, and always write down what you changed.
 
+:::anim
+title: Cleaning the raw house table, one fault at a time
+rect r1 @ 330,100 size: 460x40 "1: 50 m2, 1 bed, Leeds, no, 150000"
+rect r2 @ 330,146 size: 460x40 "2: 70 m2, 2 beds, Leeds, yes, 210000"
+rect r3 @ 330,192 size: 460x40 "3: 90 m2, NaN beds, York, yes, 260000" color: red
+rect r4 @ 330,238 size: 460x40 "4: 120 m2, 4 beds, YORK, yes, 380000" color: orange
+rect r5 @ 330,284 size: 460x40 "5: 60 m2, 2 beds, 'leeds ', no, 170000" color: orange
+rect r6 @ 330,330 size: 460x40 "6: 100 m2, 3 beds, York, no, 300000"
+rect r7 @ 330,376 size: 460x40 "7: 70 m2, 2 beds, Leeds, yes, 210000" color: purple
+rect r8 @ 330,422 size: 460x40 "8: 85 m2, 3 beds, York, yes, 2600000" color: red
+num rows = 8 @ 800,110 prefix: "rows = " size: 26
+num cities = 4 @ 800,170 prefix: "cities = " size: 26
+num missing = 1 @ 800,230 prefix: "missing = " size: 26
+num mean = 535000 @ 800,310 prefix: "mean = " size: 24 color: yellow
+num median = 235000 @ 800,370 prefix: "median = " size: 24
+num perm2 = 0 @ 800,450 prefix: "row 8 per m2 = " size: 20 color: red
+
+step: Look first. The raw table has 8 rows. The mean, 535,000, is more than twice the median, 235,000.
+  show r1, r2, r3, r4, r5, r6, r7, r8
+  show rows, cities, missing, mean, median
+  pulse mean, median
+step: Fix formats. strip and title turn YORK and leeds into York and Leeds. 4 spellings become 2.
+  highlight r4, r5
+  label r4 "4: 120 m2, 4 beds, York, yes, 380000"
+  & label r5 "5: 60 m2, 2 beds, Leeds, no, 170000"
+  count cities -> 2
+  color r4, r5 blue
+step: Drop duplicates. Row 7 is an exact copy of row 2 and goes away. 7 rows remain.
+  restore r4, r5
+  highlight r2, r7
+  hide r7
+  move r8 -> 330,376
+  & count rows -> 7
+  & count mean -> 581429
+  & count median -> 260000
+  restore r2
+step: Fill the missing value. Houses of 85 to 100 square metres have 3 bedrooms, so row 3 gets 3.
+  highlight r3
+  label r3 "3: 90 m2, 3 beds, York, yes, 260000"
+  count missing -> 0
+  color r3 blue
+  restore r3
+step: Check outliers. Row 8 costs 30,588 pounds per square metre, 10 times the other houses.
+  show perm2
+  highlight r8
+  count perm2 -> 30588 (2s)
+step: The agent confirms the real price was 260,000. Fix it. The mean falls to 247,143, close to the median.
+  label r8 "8: 85 m2, 3 beds, York, yes, 260000"
+  hide perm2
+  count mean -> 247143 (2.5s)
+  color r8 blue
+  restore r8
+step: Look again. 7 rows, 2 cities, no missing cells, mean and median close. The table is clean.
+  color r1, r2, r3, r4, r5, r6, r8 green
+  pulse rows, cities, missing
+:::
+
 1. Look. Print the shape, the dtypes, the count of missing values per column, and describe() for the numeric columns. Compare the mean with the median.
 2. Fix formats. Make the same fact look the same everywhere: remove extra spaces, use one case for words, one unit for numbers, one date format.
 3. Drop duplicates. Remove rows that are exact copies. Decide first whether 2 equal rows could be 2 real events.
@@ -847,6 +1007,66 @@ state: datasheet=written
 ## How it works
 
 Run the same 6 steps for every data set, whether you typed it yourself, downloaded it, or got it from a colleague.
+
+:::anim
+title: Four checks before the house file may reach a model
+rect address @ 116,110 size: 92x44 "address" color: red
+rect seller @ 220,110 size: 92x44 "seller" color: red
+rect phone @ 324,110 size: 92x44 "phone" color: red
+rect size @ 428,110 size: 92x44 "size_m2"
+rect beds @ 532,110 size: 92x44 "bedrooms"
+rect city @ 636,110 size: 92x44 "city"
+rect garden @ 740,110 size: 92x44 "garden"
+rect price @ 844,110 size: 92x44 "price"
+box book "Sales book" @ 200,250 icon: file
+box registry "Land Registry" @ 480,250 icon: database
+box sheet "Datasheet" @ 790,250 icon: file
+box model "Model" @ 790,400 icon: model
+num leeds = 0 @ 150,400 prefix: "Leeds: " suffix: " rows" size: 24
+num york = 0 @ 350,400 prefix: "York: " suffix: " rows" size: 24
+num london = 0 @ 550,400 prefix: "London: " suffix: " rows" size: 24 color: red
+num pl = 0 @ 150,470 suffix: " per m2" size: 20
+num py = 0 @ 350,470 suffix: " per m2" size: 20
+num plon = 0 @ 550,470 suffix: " per m2" size: 20 color: red
+
+step: The agent's first file has 8 columns. Three of them point to real people.
+  show address, seller, phone, size, beds, city, garden, price
+  pulse address, seller, phone
+step: Check the source. Names come from her private sales book. Prices were checked against the public Land Registry.
+  show book, registry
+  arrow a1 = book -> seller : typed
+  arrow a2 = registry -> price : checked
+step: Check the licence. Land Registry prices are open under the OGL. The names and phones have no licence.
+  label registry "Land Registry|Open Government Licence"
+  label book "Sales book|no licence to share"
+  color price green
+  highlight seller, phone
+step: Find personal data. Drop seller and phone. Replace the address with the city, which identifies nobody.
+  hide a1, a2, book, registry
+  hide address, seller, phone
+  move size -> 116,110
+  & move beds -> 220,110
+  & move city -> 324,110
+  & move garden -> 428,110
+  & move price -> 532,110
+  color city green
+step: Count for bias. 3 rows in Leeds, 3 in York, 0 anywhere else. All sizes sit between 50 and 120.
+  show leeds, york, london
+  count leeds -> 3
+  & count york -> 3
+  & count london -> 0
+  pulse london
+step: Price per square metre is about 3,000 in both cities. A London flat costs 8,571. The table never saw London.
+  show pl, py, plon
+  count pl -> 2944 (2s)
+  & count py -> 3019 (2s)
+  & count plon -> 8571 (2s)
+step: Write the datasheet: source, licence, columns removed, rows per group, known gaps. Only then may the model train.
+  show sheet, model
+  arrow city -> sheet : 5 columns
+  arrow sheet -> model : a table you may use
+  highlight sheet
+:::
 
 1. Find the source. Write down who collected the data, when, how and why. A table collected to sell houses was not collected to train a model, and it shows.
 2. Read the licence. Look for a file named LICENSE, a page called Terms, or a licence name next to the download link. No licence means all rights reserved, so you must ask the owner in writing.

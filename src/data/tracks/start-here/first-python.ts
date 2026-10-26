@@ -48,6 +48,45 @@ The terminal is a program where you type commands as text and the computer answe
 
 The diagram shows the path from your fingers to the screen.
 
+
+:::anim
+title: What happens when you run python hello.py
+box term "Terminal" @ 180,150 size: 220x64 icon: terminal
+box os "Operating system" @ 480,150 size: 230x64 icon: process
+box py "Python interpreter" @ 480,390 size: 230x64 icon: python
+box file "hello.py" @ 780,390 size: 170x64 icon: file
+text cmd "> python hello.py" @ 180,235 size: 18 color: yellow
+text folder "current folder:|Documents/ilearnai" @ 780,290 size: 16 color: grey
+text line1 "line 1: print('Hello, Ada')" @ 780,470 size: 16 color: yellow
+text out "Hello, Ada" @ 180,235 size: 20 color: green
+
+step: You type python hello.py in the terminal and press Enter.
+  show term, cmd
+  pulse cmd
+step: The terminal asks the operating system to run a command named python.
+  show os
+  arrow term -> os : python hello.py
+step: The operating system finds the Python interpreter and starts it with the file name hello.py.
+  show py
+  arrow os -> py : start with hello.py
+step: The interpreter looks for hello.py in the current folder and opens it.
+  show file, folder
+  arrow py -> file : open
+step: It reads line 1, the print instruction, and carries it out.
+  show line1
+  arrow file -> py : line 1
+  highlight py
+step: The interpreter sends the text to the terminal. The screen shows Hello, Ada.
+  hide cmd
+  arrow py -> term : Hello, Ada
+  show out
+  highlight term
+step: No lines remain. The interpreter stops, and the terminal waits for your next command.
+  hide line1, folder
+  restore py, term
+  dim py, file
+:::
+
 :::flow
 title: What happens when you run python hello.py
 Terminal -> Operating system: runs the python command
@@ -355,6 +394,50 @@ state: screen=apples cost 3.6
 ### The four basic types
 
 Every value has a type. The type is the kind of value, and it decides what you can do with the value. Python has four basic types, and the running example uses all four.
+
+:::anim
+title: Four jars, one calculation: cost = price * count
+rect j_name @ 140,130 size: 150x60 "name|apples"
+rect j_price @ 350,130 size: 150x60 "price|1.2"
+rect j_count @ 560,130 size: 150x60 "count|3"
+rect j_stock @ 770,130 size: 150x60 "in_stock|True"
+text t_name "str" @ 140,195 size: 18 color: purple
+text t_price "float" @ 350,195 size: 18 color: blue
+text t_count "int" @ 560,195 size: 18 color: green
+text t_stock "bool" @ 770,195 size: 18 color: orange
+text expr "line 5:|cost = price * count" @ 140,300 size: 18 color: yellow
+box cpu "CPU" @ 350,300 size: 150x64 icon: cpu
+num result = 0 @ 560,300 prefix: "1.2 * 3 = " digits: 1 size: 24
+rect j_cost @ 770,300 size: 150x60 "cost|?"
+box screen "Screen" @ 450,440 size: 300x64 icon: screen
+
+step: Line 1 stores the text apples in a jar labelled name. Line 2 stores 1.2 under price.
+  show j_name, j_price
+step: Line 3 stores the whole number 3 under count. Line 4 stores True under in_stock.
+  show j_count, j_stock
+step: Every value has a type. The type decides what you can do with the value.
+  show t_name, t_price, t_count, t_stock
+  pulse t_name, t_price, t_count, t_stock
+step: Line 5 reads price and count. Their values travel to the CPU.
+  show expr, cpu
+  arrow j_price -> cpu : 1.2
+  arrow j_count -> cpu : 3
+step: The CPU multiplies 1.2 by 3 and gets 3.6.
+  show result
+  count result -> 3.6
+  & highlight cpu
+step: The result goes into a new jar named cost.
+  show j_cost
+  arrow cpu -> j_cost : 3.6
+  label j_cost "cost|3.6"
+  restore cpu
+step: Line 6 reads name and cost and prints them: apples cost 3.6.
+  hide expr, cpu, result
+  show screen
+  arrow j_name -> screen : apples
+  arrow j_cost -> screen : 3.6
+  label screen "apples cost 3.6"
+:::
 
 | Type | Python name | Example from the shop | What you can do with it |
 | --- | --- | --- | --- |
@@ -665,6 +748,58 @@ state: prices={apples: 1.2, bread: 2.5}, len=2
 
 A list has a small set of actions you use all the time. The table shows them with the items list from the running example, where items is ["apples", "bread", "milk"].
 
+:::anim
+title: A list finds by position, a dictionary finds by name
+text lst "items" @ 120,140 size: 22 color: yellow
+text i0 "0" @ 270,92 size: 18 color: grey
+text i1 "1" @ 420,92 size: 18 color: grey
+text i2 "2" @ 570,92 size: 18 color: grey
+text i3 "3" @ 720,92 size: 18 color: grey
+rect c0 @ 270,140 size: 130x56 "apples"
+rect c1 @ 420,140 size: 130x56 "bread"
+rect c2 @ 570,140 size: 130x56 "milk"
+rect c3 @ 720,230 size: 130x56 "eggs" color: green
+num n1 = 0 @ 860,140 prefix: "len " size: 22
+rect q1 @ 120,220 size: 120x44 "items[1]" color: yellow
+text dct "prices" @ 120,380 size: 22 color: yellow
+rect d0 @ 270,380 size: 130x56 "apples|1.2"
+rect d1 @ 420,380 size: 130x56 "bread|2.5"
+rect d2 @ 570,380 size: 130x56 "milk|0.99"
+rect d3 @ 720,290 size: 130x56 "eggs|3.0" color: green
+num n2 = 0 @ 860,380 prefix: "len " size: 22
+rect q2 @ 130,460 size: 160x44 "prices['bread']" color: yellow
+
+step: A list is a row of numbered shelves. items holds apples, bread and milk at indexes 0, 1 and 2.
+  show lst, i0, i1, i2, c0, c1, c2, n1
+  count n1 -> 3
+step: items[1] asks for shelf number 1. Python goes straight to it and returns bread.
+  show q1
+  arrow a1 = q1 -> c1 : index 1
+  highlight c1
+step: items.append adds eggs at the end. It takes index 3, and len becomes 4.
+  hide a1, q1
+  restore c1
+  show c3
+  move c3 -> 720,140
+  show i3
+  & count n1 -> 4
+step: A dictionary is a wall of labelled drawers. prices maps each name to its price.
+  show dct, d0, d1, d2, n2
+  count n2 -> 3
+step: prices['bread'] asks for the drawer labelled bread. Its position does not matter.
+  show q2
+  arrow a2 = q2 -> d1 : key bread
+  highlight d1
+step: prices['eggs'] = 3.0 adds a drawer. Writing an existing key replaces its value instead.
+  hide a2, q2
+  restore d1
+  show d3
+  move d3 -> 720,380
+  & count n2 -> 4
+step: Think first, second, third: use a list. Think the price of bread: use a dictionary.
+  pulse c1, d1
+:::
+
 | Action | Code | Result |
 | --- | --- | --- |
 | read by index | items[1] | "bread" |
@@ -912,6 +1047,54 @@ Now change line 1 so the total is 3.6. The test gives False. The interpreter ski
 ### Comparisons
 
 Python has six comparison operators. Each one takes two values and gives a boolean. The examples use total = 4.69 and count = 3 from the shop.
+
+:::anim
+title: One condition chooses one road
+box calc "line 1:|1.2 + 2.5 + 0.99" @ 160,270 size: 200x64 icon: none
+num tot = 0 @ 160,180 prefix: "total = " digits: 2 size: 26
+box cond "total > 4 ?" @ 440,270 size: 170x64 icon: none color: yellow
+text res "True" @ 440,180 size: 26 color: green
+text res2 "False" @ 440,180 size: 26 color: red
+box yes "Free delivery" @ 740,150 size: 190x64 icon: none color: green
+box thanks "Thank you" @ 740,270 size: 160x64 icon: none
+box no "Delivery costs 1.5" @ 740,390 size: 210x64 icon: none color: red
+text out1 "Total: 4.69" @ 440,390 size: 18 color: grey
+text out2 "Free delivery" @ 440,420 size: 18 color: grey
+text out3 "Thank you" @ 440,450 size: 18 color: grey
+
+step: Line 1 adds the three prices. total becomes 4.69.
+  show calc, tot
+  count tot -> 4.69
+step: Line 3 asks a yes-or-no question: is total greater than 4?
+  show cond
+  arrow calc -> cond : 4.69
+step: 4.69 is greater than 4, so the condition gives the boolean True.
+  show res
+  highlight cond
+  pulse res
+step: Two roads exist in the file. Python reads the sign once and takes only the True road.
+  show yes, no
+  dim no
+  arrow cond -> yes : True
+  show out1, out2
+step: The else block is skipped. The roads join, and the unindented print runs every time.
+  show thanks
+  arrow yes -> thanks : join
+  show out3
+step: Change line 1 so total is 3.6. The question now gives False, and the other road runs.
+  count tot -> 3.6
+  hide res
+  show res2
+  restore no
+  dim yes
+  arrow cond -> no : False
+  label out1 "Total: 3.6"
+  label out2 "Delivery costs 1.5"
+  arrow no -> thanks : join
+step: One program, two behaviours, chosen by one condition.
+  restore yes, no
+  pulse cond
+:::
 
 | Operator | Meaning | Example | Result |
 | --- | --- | --- | --- |
@@ -1202,6 +1385,58 @@ state: screen=Final total: 4.69
 ### The for loop
 
 The general shape is: for, a new variable name, the word in, a list, a colon, and an indented block. Python runs the block once per item. The name after for is your choice. Pick a singular noun for one item of a plural list: for price in prices, for item in items, for row in rows. The loop also works on a string, where each item is one character, and on a dictionary, where each item is a key.
+
+:::anim
+title: The running total, one pass at a time
+text lst "prices" @ 130,150 size: 22 color: yellow
+rect c0 @ 300,150 size: 120x56 "1.2"
+rect c1 @ 450,150 size: 120x56 "2.5"
+rect c2 @ 600,150 size: 120x56 "0.99"
+text forl "for price in prices:" @ 160,225 size: 18 color: grey
+rect pv @ 450,300 size: 150x60 "price" color: blue
+num iter = 1 @ 130,300 prefix: "pass " size: 22
+text expr "total = total + price" @ 790,220 size: 18 color: yellow
+num total = 0 @ 790,300 prefix: "total = " digits: 2 size: 30
+text out "Added 1.2 total is now 1.2" @ 450,440 size: 18 color: grey
+
+step: prices holds three values. total starts at 0 before the loop.
+  show lst, c0, c1, c2, total
+  pulse total
+step: Pass 1: price is set to the first item, 1.2.
+  show forl, pv, iter
+  highlight c0
+  arrow a0 = c0 -> pv : 1.2
+  label pv "price|1.2"
+step: The block adds price to total. total is 0 + 1.2 = 1.2.
+  show expr, out
+  arrow p0 = pv -> total : + 1.2
+  & count total -> 1.2
+step: Pass 2: price becomes 2.5. total is 1.2 + 2.5 = 3.7.
+  hide a0, p0
+  restore c0
+  highlight c1
+  count iter -> 2
+  arrow a1 = c1 -> pv : 2.5
+  label pv "price|2.5"
+  arrow p1 = pv -> total : + 2.5
+  & count total -> 3.7
+  label out "Added 2.5 total is now 3.7"
+step: Pass 3: price becomes 0.99. total is 3.7 + 0.99 = 4.69.
+  hide a1, p1
+  restore c1
+  highlight c2
+  count iter -> 3
+  arrow a2 = c2 -> pv : 0.99
+  label pv "price|0.99"
+  arrow p2 = pv -> total : + 0.99
+  & count total -> 4.69
+  label out "Added 0.99 total is now 4.69"
+step: No items remain, so the loop ends. The last print shows Final total: 4.69.
+  hide a2, p2, forl, pv, expr
+  restore c2
+  label out "Final total: 4.69"
+  highlight total
+:::
 
 :::code
 lang: python
@@ -1524,6 +1759,51 @@ state: screen=Ada pays 4.69
 :::
 
 ## How it works
+
+:::anim
+title: One call of basket_total, from the main program and back
+box main "Main program" @ 180,150 size: 210x64 icon: program
+text call "basket_total(ada)" @ 180,235 size: 20 color: yellow
+text out "Ada pays 4.69" @ 180,330 size: 20 color: green
+text lists "ada = [1.2, 2.5, 0.99]|sam = [3.0, 0.5]" @ 180,420 size: 16 color: grey
+box fn "def basket_total(prices):" @ 600,150 size: 300x64 icon: function
+rect par @ 600,280 size: 240x60 "prices|[1.2, 2.5, 0.99]"
+num tot = 0 @ 600,380 prefix: "total = " digits: 2 size: 28
+num tot2 = 0 @ 600,380 prefix: "total = " digits: 2 size: 28
+text scope "local names: prices, total" @ 600,450 size: 16 color: grey
+
+step: The interpreter reads the def block and remembers a function named basket_total. Nothing runs yet.
+  show main, fn, lists
+  pulse fn
+step: The main program calls basket_total(ada). The argument ada travels into the parameter prices.
+  show call
+  arrow c1 = main -> fn : ada
+  show par
+step: The body sets total to 0, and the loop adds the three prices.
+  show tot, scope
+  count tot -> 4.69 (2s)
+step: return total ends the body and hands 4.69 back. The local names prices and total vanish.
+  arrow r1 = fn -> main : 4.69
+  hide par, tot, scope
+step: Back in the main program, the call stands for 4.69, and print shows Ada pays 4.69.
+  hide call, c1, r1
+  show out
+  highlight main
+step: A second call, basket_total(sam), runs the same body with prices set to [3.0, 0.5].
+  restore main
+  label call "basket_total(sam)"
+  show call
+  arrow c2 = main -> fn : sam
+  show par
+  label par "prices|[3.0, 0.5]"
+  show tot2
+  count tot2 -> 3.5
+step: It returns 3.5. One recipe card, two baskets, one line per call.
+  arrow r2 = fn -> main : 3.5
+  hide par, tot2
+  label out "Ada pays 4.69|Sam pays 3.5"
+  highlight fn
+:::
 
 ### The parts of a function
 

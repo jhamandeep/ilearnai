@@ -106,6 +106,47 @@ state: request=3 JSON, method=prompt, pass=40 of 40
 
 The procedure is the same for every task. Follow the steps in order, and do not skip the measurement.
 
+:::anim
+title: One task walks the decision path
+box task "Style reply" @ 180,150 icon: reply
+box prompt "Prompt: 4 rules" @ 480,150 icon: prompt
+box measure "Measure on 40" @ 480,290 icon: eval
+box retr "Retrieval" @ 180,430 icon: database
+box ft "Fine-tune" @ 480,430 icon: train
+box done "Done" @ 780,430 icon: check
+num pass = 0 @ 780,150 prefix: "pass " suffix: " of 40" size: 28 color: yellow
+text vol "10,000 replies a day" @ 780,205 size: 16 color: grey
+num cost = 900 @ 780,290 prefix: "USD " suffix: " a month" size: 24 color: orange
+text fails "Failures: 90-word replies,|no sign-off. Style, not facts." @ 180,290 size: 16 color: grey
+
+step: The task is a reply in the house style. Start with a prompt: the 4 rules and 3 examples.
+  show task, prompt
+  arrow task -> prompt : "rules + 3 examples"
+step: Test the prompt on 40 held-out messages. The small model passes 19 of 40.
+  show measure, pass
+  arrow prompt -> measure : "40 messages"
+  & count pass -> 19
+step: Sort the failures. Replies of 90 words and a missing sign-off are style failures, not fact failures.
+  show fails
+  pulse fails
+step: A wrong or missing fact would point to retrieval. These failures do not, so retrieval stays dim.
+  show retr
+  arrow measure -> retr : "wrong facts"
+  dim retr
+step: Style failures at 10,000 replies a day point to fine-tuning.
+  show vol, ft
+  arrow measure -> ft : "style failures"
+step: After training on 200 examples the same 40 messages go in again. Now 34 of 40 pass.
+  arrow ft -> measure : "tuned model"
+  & count pass -> 34
+  highlight ft
+step: The pass rate is 85 percent and the bill falls from USD 900 to USD 15 a month.
+  show cost
+  count cost -> 15 (2s)
+  show done
+  arrow measure -> done : "85 percent"
+:::
+
 1. Write the task as input and output. Write one real input and the exact output you want.
 2. Write 40 test inputs with the outputs you want before you try anything. This is your held-out set, the same idea as the test split in [Measuring error and splitting data](/courses/ai-foundations/first-models/measuring-error).
 3. Try a prompt on a capable model. Put the rules and 3 examples in the system prompt. Measure the pass rate on the 40.
@@ -328,6 +369,54 @@ state: train=1, test=0
 ## How it works
 
 The procedure for any style dataset is the same. Follow it in order.
+
+:::anim
+title: 200 examples from inputs to a checked, split dataset
+box prompts "prompts.jsonl" @ 180,150 icon: file
+box draft "Draft script" @ 480,150 icon: model
+box check "Check script" @ 780,150 icon: check
+box eyes "Your eyes" @ 780,290 icon: user
+box split "Split script" @ 480,290 icon: script
+box train "train.jsonl" @ 180,290 icon: file
+box test "test.jsonl" @ 480,430 icon: file
+num n_in = 0 @ 180,215 suffix: " inputs" size: 22 color: yellow
+num n_draft = 0 @ 480,215 suffix: " drafts" size: 22 color: yellow
+num n_bad = 0 @ 780,215 suffix: " fail the rules" size: 22 color: red
+num n_train = 0 @ 180,365 suffix: " train" size: 22 color: green
+num n_test = 0 @ 780,430 suffix: " test" size: 22 color: green
+text note "Line 58: two Next step lines" @ 780,365 size: 16 color: grey
+
+step: You write 200 customer messages, each with a policy note, into prompts.jsonl. Half have a name.
+  show prompts, n_in
+  count n_in -> 200 (2s)
+step: The draft script sends each input to a capable model with the 4 rules. It writes 200 drafts.
+  show draft, n_draft
+  arrow prompts -> draft : "200 inputs"
+  & count n_draft -> 200 (2s)
+step: The check script tests every draft against the 4 rules. Three drafts fail.
+  show check, n_bad
+  arrow draft -> check : "200 drafts"
+  & count n_bad -> 3
+step: Line 58 has two Next step lines. You merge them, fix the other two, and read all 200.
+  show eyes, note
+  arrow check -> eyes : "3 failures"
+  count n_bad -> 0
+  & color n_bad green
+step: The split script shuffles inside each topic with seed 42, so every topic reaches the test set.
+  hide note
+  show split
+  arrow eyes -> split : "200 checked examples"
+step: One in five of each topic goes to test.jsonl. The rest, 160 examples, go to train.jsonl.
+  show train, test, n_train, n_test
+  arrow split -> train : "160"
+  & count n_train -> 160 (1.4s)
+  arrow split -> test : "40"
+  & count n_test -> 40
+step: Seal test.jsonl. You open it again only in the evaluation lesson.
+  highlight test
+  label test "test.jsonl, sealed"
+  dim train
+:::
 
 1. Fix the rules in writing, as checks a program can run. A rule you cannot check is a rule you cannot measure.
 2. Write the inputs yourself. Vary the names, the wording, the length and the mood. Include the cases where the right answer is "no" or "I cannot help with that".
@@ -746,6 +835,64 @@ This message is in the training set, so a good reply here proves little. It prov
 
 The general procedure for a LoRA fine-tune has 6 steps, and every step above maps to one of them.
 
+:::anim
+title: One LoRA layer: the frozen matrix and the thin correction
+rect x @ 110,270 size: 100x60 "x|896 numbers" color: blue
+rect W @ 420,130 size: 220x70 "W, frozen|896 x 896" color: grey
+rect A @ 330,400 size: 150x60 "A|16 x 896" color: purple
+rect B @ 560,400 size: 150x60 "B|896 x 16" color: purple
+rect sum @ 710,270 size: 70x60 "+" color: white
+rect y @ 850,270 size: 90x60 "y" color: blue
+num frozen = 0 @ 420,70 suffix: " frozen numbers" size: 20 color: grey
+text zero "B starts at zero:|the correction is zero" @ 430,330 size: 16 color: grey
+num loss = 2.3 @ 800,110 prefix: "loss " digits: 2 size: 26 color: yellow
+num upd = 0 @ 800,155 prefix: "update " suffix: " of 60" size: 20 color: grey
+text eq "y = W x + 2 B A x" @ 800,205 size: 18 color: yellow
+num adapt = 0 @ 800,350 suffix: " in A and B" size: 20 color: purple
+text pct "3.6 percent of W" @ 800,382 size: 16 color: grey
+num total = 0 @ 800,430 suffix: " trainable" size: 20 color: green
+num mb = 0 @ 800,470 digits: 1 suffix: " MB adapter file" size: 20 color: green
+
+step: The input x has 896 numbers. It enters the frozen matrix W, 802,816 numbers that never change.
+  show x, W, frozen
+  arrow x -> W : "x"
+  & count frozen -> 802816 (1.4s)
+step: W x is the original output y. With nothing else, this is the base model.
+  show sum, y
+  arrow W -> sum : "W x"
+  arrow sum -> y : "y"
+step: LoRA adds two thin matrices. A squeezes x from 896 numbers down to 16, the rank.
+  show A, adapt
+  arrow x -> A : "x"
+  & count adapt -> 14336
+step: B expands the 16 numbers back to 896. A and B hold 28,672 numbers, 3.6 percent of W.
+  show B
+  arrow A -> B : "16 numbers"
+  & count adapt -> 28672
+  show pct
+step: The correction is scaled by alpha over rank, 32 over 16, which is 2, and added to W x.
+  show eq
+  arrow B -> sum : "times 2"
+  send sum -> y : "y"
+step: At the start B is all zeros, so the correction is zero and the model equals the base.
+  show zero
+  color B grey
+  pulse B
+step: Training changes only A and B. Over 60 updates the loss falls from 2.3 to 0.55.
+  hide zero
+  show loss, upd
+  color B purple
+  count upd -> 60 (3s)
+  & count loss -> 0.55 (3s)
+  & pulse A
+step: Across 24 layers the adapters hold 2,162,688 numbers, 0.44 percent of the model: an 8.7 MB file.
+  show total, mb
+  count total -> 2162688 (1.5s)
+  & count mb -> 8.7 (1.5s)
+  highlight A, B
+  dim W
+:::
+
 1. Load a frozen instruct model that fits the GPU. A 0.5B model in float32 needs 2 GB; a 7B model needs 4-bit quantisation to fit the same card.
 2. Render each example with the model's chat template and tokenize it. Use the template of the model you train, never another model's.
 3. Choose the matrices to adapt and the rank. Attention matrices with rank 8 to 32 cover most style tasks.
@@ -948,6 +1095,55 @@ The script uses messages[:2], the system and user messages only, so the model ne
 ## How it works
 
 Evaluation first, then serving. The procedure for evaluation is short and you should run it after every training change.
+
+:::anim
+title: Message 7 scores the base model and the adapter
+box test "test.jsonl" @ 130,290 icon: file
+box base "Base model" @ 420,150 icon: model
+box tuned "Base + adapter" @ 420,430 icon: train
+box check "check: 4 rules" @ 710,290 icon: check
+rect b1 @ 610,150 size: 80x50 "greeting"
+rect b2 @ 690,150 size: 80x50 "short"
+rect b3 @ 770,150 size: 80x50 "next"
+rect b4 @ 850,150 size: 80x50 "sign-off"
+rect t1 @ 610,430 size: 80x50 "greeting"
+rect t2 @ 690,430 size: 80x50 "short"
+rect t3 @ 770,430 size: 80x50 "next"
+rect t4 @ 850,430 size: 80x50 "sign-off"
+text m7 "Omar: Ordered Monday,|nothing yet on Thursday." @ 130,380 size: 16 color: yellow
+num b_pass = 0 @ 420,225 prefix: "all four: " suffix: " of 40" size: 22 color: red
+num t_pass = 0 @ 420,360 prefix: "all four: " suffix: " of 40" size: 22 color: green
+num b_fact = 0 @ 130,150 prefix: "facts " suffix: " of 40" size: 22 color: grey
+num t_fact = 0 @ 130,470 prefix: "facts " suffix: " of 40" size: 22 color: grey
+
+step: Message 7 leaves test.jsonl: the note and the question from Omar. The model never sees the stored reply.
+  show test, m7, base
+  arrow test -> base : "note + message"
+step: The base model writes 84 words with no greeting line and no sign-off.
+  show check
+  arrow base -> check : "84-word reply"
+step: check tests the 4 rules. The base reply fails all four.
+  show b1, b2, b3, b4
+  color b1, b2, b3, b4 red
+  & pulse b1, b2, b3, b4
+step: Now attach the adapter from train/adapter. The same note and message go in.
+  show tuned
+  arrow test -> tuned : "same input"
+step: The tuned model writes 44 words: Hi Omar, two sentences, one Next step line, the sign-off.
+  arrow tuned -> check : "44-word reply"
+  show t1, t2, t3, t4
+  color t1, t2, t3, t4 green
+  & pulse t1, t2, t3, t4
+step: compare.py repeats this for all 40 messages. The base passes 2 of 40, the adapter 34.
+  show b_pass, t_pass
+  count b_pass -> 2 (2s)
+  & count t_pass -> 34 (2s)
+step: A judge checks the facts: 35 of 40 before, 36 after. The style changed, the facts did not.
+  show b_fact, t_fact
+  count b_fact -> 35 (1.5s)
+  & count t_fact -> 36 (1.5s)
+  highlight tuned
+:::
 
 1. Score the base model on the held-out set with the same check function as the data. This is the baseline.
 2. Score the fine-tuned model the same way. Report both, rule by rule, as counts out of 40.

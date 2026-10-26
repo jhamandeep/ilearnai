@@ -40,6 +40,53 @@ why: Watch the first 5 minutes. It shows the three views of a vector that this l
 
 Take one concrete thing: a house. You decide to describe every house with 3 numbers, always in this order: the number of rooms, the number of floors, and the distance to the nearest school in kilometres. House A has 3 rooms, 2 floors and a school 1 kilometre away. The vector for House A is $h = [3, 2, 1]$. In words: the vector h is the list three, two, one.
 
+:::anim
+title: House A becomes a list, a point and an arrow
+box house "House A" @ 190,110 icon: none
+text f1 "rooms" @ 110,205 size: 15 color: grey
+text f2 "floors" @ 190,205 size: 15 color: grey
+text f3 "km to school" @ 270,205 size: 15 color: grey
+rect c1 @ 110,250 size: 70x50 "?"
+rect c2 @ 190,250 size: 70x50 "?"
+rect c3 @ 270,250 size: 70x50 "?"
+num dim = 0 @ 190,330 prefix: "dimension = " size: 24
+text hlist "h = [3, 2, 1]" @ 190,400 size: 22 color: yellow
+text note "One list, two pictures:|a point and an arrow" @ 190,465 size: 17 color: grey
+axes ax @ 480,70 size: 360x360 x: 0,4 y: 0,4 xlabel: "right" ylabel: "up"
+line l1 on ax from 0,0 to 3,0 color: orange dashed
+line l2 on ax from 3,0 to 3,2 color: orange dashed
+dot p on ax @ 0,0 r: 8 color: yellow label: "point [3, 2]"
+vector v on ax from 0,0 to 3,2 color: yellow
+
+step: Here is House A. Fix three features in this order: rooms, floors, kilometres to school.
+  show house, f1, f2, f3, c1, c2, c3
+step: Count the rooms: 3. Write 3 in the first slot.
+  arrow house -> c1 : 3
+  label c1 "3"
+  show dim
+  & count dim -> 1
+step: Count the floors: 2. Write 2 in the second slot.
+  arrow house -> c2 : 2
+  label c2 "2"
+  count dim -> 2
+step: Measure the distance to the school: 1 kilometre. Write 1 in the third slot. The list has dimension 3.
+  arrow house -> c3 : 1
+  label c3 "1"
+  count dim -> 3
+  show hlist
+step: Keep only [3, 2] to draw it. Start at the origin, go 3 right, then 2 up.
+  show ax, p
+  move p -> 3,0 (1.2s)
+  & draw l1 (1.2s)
+  move p -> 3,2 (1s)
+  & draw l2 (1s)
+step: That spot is the point [3, 2]. An arrow from the origin to it is the same list.
+  pulse p
+  draw v
+  show note
+  highlight c1, c2, c3
+:::
+
 Each number in the list is a component. The first component of h is 3. The third component is 1. The number of components is the dimension of the vector. The vector h has dimension 3, because it holds 3 numbers. A single number on its own, such as 3, is a scalar. A scalar is a number without a list around it.
 
 House B has 4 rooms, 1 floor and a school 5 kilometres away, so $g = [4, 1, 5]$. House C is $c = [2, 2, 2]$. The grid below shows the three houses as three rows of numbers. Each row is one vector. Each column is one feature. A vector that lists the features of one object is a feature vector.
@@ -244,6 +291,54 @@ why: Watch from 5 minutes to the end. It shows vector addition as placing arrows
 > **Analogy.** Think of a vector as a walk in a city with square blocks. The vector [3, 4] means walk 3 blocks east and 4 blocks north. Two walks one after the other add up: the east parts add, and the north parts add. Walking the same route twice doubles both parts. The straight-line distance from your start to your finish is the length of the vector, and a drone would fly it.
 
 Use two vectors through the whole lesson: $a = [3, 4]$ and $b = [1, 2]$. In words: a is three, four, and b is one, two. Both have dimension 2, so you can draw them. Vector a is the arrow from the origin to the point 3 right and 4 up. Vector b is the arrow to 1 right and 2 up.
+
+:::anim
+title: Add, scale and measure a = [3, 4] and b = [1, 2]
+axes ax @ 100,50 size: 400x400 x: -1,9 y: -1,9 xlabel: "east" ylabel: "north"
+vector a on ax from 0,0 to 3,4 color: blue label: "a = (3, 4)"
+vector b on ax from 0,0 to 1,2 color: green label: "b = (1, 2)"
+vector b2 on ax from 3,4 to 4,6 color: green dashed
+vector s on ax from 0,0 to 4,6 color: yellow label: "a + b = (4, 6)"
+line east on ax from 0,0 to 3,0 color: orange dashed
+line north on ax from 3,0 to 3,4 color: orange dashed
+vector d on ax from 1,2 to 3,4 color: red label: "a - b = (2, 2)"
+text tadd "(3 + 1, 4 + 2) = (4, 6)" @ 740,150 size: 20 color: yellow
+text tscale "2a = (6, 8): same direction,|twice as long" @ 740,150 size: 18
+text tsq "9 + 16 = 25" @ 740,260 size: 18 color: orange
+num len = 0 @ 740,310 prefix: "norm of a = " size: 26 color: orange
+text tdsq "4 + 4 = 8" @ 740,400 size: 18 color: red
+num dist = 0 @ 740,450 prefix: "distance = " digits: 2 size: 26 color: red
+
+step: Here are a = [3, 4] and b = [1, 2], two arrows from the origin.
+  show ax
+  draw a
+  draw b
+step: To add them, slide b so that its tail sits on the tip of a.
+  draw b2
+step: The sum runs from the origin to the new tip: (3 + 1, 4 + 2) = (4, 6).
+  draw s
+  show tadd
+step: Multiply a by 2. Every component doubles. The arrow keeps its direction and is twice as long.
+  hide b2, s, tadd, b
+  show tscale
+  vector a -> 6,8 (1.5s)
+  & label a "2a = (6, 8)"
+step: Back to a. Walk 3 east, then 4 north. With a, that makes a right-angled triangle.
+  hide tscale
+  vector a -> 3,4
+  & label a "a = (3, 4)"
+  draw east
+  draw north
+step: Square and add the two sides: 9 plus 16 is 25. The square root, 5, is the norm of a.
+  show tsq, len
+  count len -> 5
+step: The distance from b to a is the norm of a - b: square root of 8, about 2.83.
+  hide east, north
+  draw b
+  draw d
+  show tdsq, dist
+  count dist -> 2.83
+:::
 
 Vector addition adds the components in matching positions. The first component of the sum is $3 + 1 = 4$. The second component is $4 + 2 = 6$. So $a + b = [4, 6]$. In the picture, you place the tail of b at the tip of a. The arrow from the origin to the new tip is the sum. Vector subtraction works the same way with minus. The difference $a - b = [3 - 1, 4 - 2] = [2, 2]$. In words: a minus b is two, two. You can only add or subtract vectors of the same dimension.
 
@@ -452,6 +547,62 @@ why: Watch the first 6 minutes. It shows why the dot product measures how much o
 > **Analogy.** Two people push a heavy box. If they push in the same direction, their efforts add up. If they push at a right angle to each other, one push does nothing for the other. If they push in opposite directions, they cancel. The dot product is a number that measures this agreement: large and positive for the same direction, zero for a right angle, and negative for opposite directions.
 
 Start with the vectors from the previous lesson: $a = [3, 4]$ and $b = [1, 2]$. The dot product multiplies the components in matching positions and adds the products. First components: $3 \\times 1 = 3$. Second components: $4 \\times 2 = 8$. Add: $3 + 8 = 11$. So $a \\cdot b = 11$. In words: the dot product of a and b is eleven. The result is a scalar, a single number, not a vector.
+
+:::anim
+title: The dot product of a and b, and what its sign means
+text ta "a" @ 90,110 size: 22 color: blue
+text tb "b" @ 90,200 size: 22 color: green
+rect a1 @ 160,110 size: 70x50 "3" color: blue
+rect a2 @ 240,110 size: 70x50 "4" color: blue
+rect b1 @ 160,200 size: 70x50 "1" color: green
+rect b2 @ 240,200 size: 70x50 "2" color: green
+text tx "multiply matching positions" @ 200,265 size: 15 color: grey
+num p1 = 0 @ 160,300 size: 26
+num p2 = 0 @ 240,300 size: 26
+text tplus "+" @ 200,300 size: 22 color: grey
+num dot = 0 @ 200,370 prefix: "a · b = " size: 30 color: yellow
+num cos = 0 @ 200,440 prefix: "cosine = " digits: 2 size: 24 color: teal
+axes ax @ 420,70 size: 400x300 x: -3,5 y: -1,5 xlabel: "x" ylabel: "y"
+vector a on ax from 0,0 to 3,4 color: blue label: "a = (3, 4)"
+vector b on ax from 0,0 to 1,2 color: green label: "b = (1, 2)"
+text note "11 divided by 5 times 2.236" @ 620,440 size: 17 color: grey
+text note2 "a right angle: the vectors are orthogonal" @ 620,440 size: 17 color: grey
+
+step: Take a = [3, 4] and b = [1, 2]. Multiply the components that sit in the same position.
+  show ta, tb, a1, a2, b1, b2, tx
+step: First position: 3 times 1 is 3.
+  highlight a1, b1
+  show p1
+  count p1 -> 3
+step: Second position: 4 times 2 is 8.
+  restore a1, b1
+  highlight a2, b2
+  show p2, tplus
+  count p2 -> 8
+step: Add the products: 3 plus 8 is 11. The dot product of a and b is one scalar, 11.
+  restore a2, b2
+  show dot
+  count dot -> 11
+  pulse dot
+step: Draw both arrows. They point almost the same way, so the dot product is large and positive.
+  show ax
+  draw a
+  draw b
+step: Divide 11 by both norms, 5 and 2.236. The cosine similarity is 0.98: almost the same direction.
+  show note, cos
+  count cos -> 0.98
+step: Turn b until it stands at a right angle to a. The dot product falls to 0: orthogonal.
+  hide note
+  show note2
+  vector b -> -2,1.5 (2s)
+  & label b "b = (-2, 1.5)"
+  & label b1 "-2"
+  & label b2 "1.5"
+  & count p1 -> -6 (2s)
+  & count p2 -> 6 (2s)
+  & count dot -> 0 (2s)
+  & count cos -> 0 (2s)
+:::
 
 Now check the sign rule with three short arrows. Take $e = [1, 0]$, which points right, and $f = [0, 1]$, which points up. Their dot product is $1 \\times 0 + 0 \\times 1 = 0$. The arrows meet at a right angle, and the dot product is zero. Two vectors with dot product zero are orthogonal, which means perpendicular. Now take $g = [-1, 0]$, which points left. Then $e \\cdot g = -1 + 0 = -1$. Opposite directions give a negative number.
 
@@ -737,6 +888,62 @@ Row 2 -> Output vector: second component
 
 A matrix with $m$ rows and $n$ columns has shape $m \\times n$, read as m by n. Mathematicians write the entry in row $i$ and column $j$ as $A_{ij}$. In words: A sub i j is the number where row i meets column j. For the matrix S above, $S_{11} = 2$, $S_{12} = 0$, $S_{21} = 0$ and $S_{22} = 1$. Rows come first, columns second, always.
 
+:::anim
+title: The matrix R turns the vector v = [3, 4]
+text tR "R" @ 150,75 size: 24 color: purple
+rect r11 @ 110,130 size: 70x50 "0" color: purple
+rect r12 @ 190,130 size: 70x50 "-1" color: purple
+rect r21 @ 110,190 size: 70x50 "1" color: purple
+rect r22 @ 190,190 size: 70x50 "0" color: purple
+text tv "v" @ 310,75 size: 24 color: blue
+rect v1 @ 310,130 size: 70x50 "3" color: blue
+rect v2 @ 310,190 size: 70x50 "4" color: blue
+text e1 "row 1: 0 × 3 + (-1) × 4" @ 210,270 size: 17 color: grey
+num out1 = 0 @ 210,310 prefix: "= " size: 28 color: yellow
+text e2 "row 2: 1 × 3 + 0 × 4" @ 210,380 size: 17 color: grey
+num out2 = 0 @ 210,420 prefix: "= " size: 28 color: yellow
+axes ax @ 420,90 size: 480x240 x: -5,7 y: -1,5 xlabel: "x" ylabel: "y"
+vector v on ax from 0,0 to 3,4 color: blue label: "v = (3, 4)"
+vector w on ax from 0,0 to 3,4 color: yellow
+num nrm = 0 @ 660,420 prefix: "norm of output = " digits: 2 size: 24
+text note "a quarter turn left, same length" @ 660,470 size: 17 color: grey
+
+step: Here is the rotation matrix R with two rows, and the vector v = [3, 4] as an arrow.
+  show tR, r11, r12, r21, r22, tv, v1, v2, ax
+  draw v
+step: Row 1 dot v: 0 times 3 plus minus 1 times 4 is minus 4.
+  highlight r11, r12, v1, v2
+  show e1, out1
+  count out1 -> -4
+step: Row 2 dot v: 1 times 3 plus 0 times 4 is 3.
+  restore r11, r12
+  highlight r21, r22
+  show e2, out2
+  count out2 -> 3
+step: Stack the two results: Rv = [-4, 3]. The arrow turns a quarter turn to the left.
+  restore r21, r22, v1, v2
+  draw w
+  vector w -> -4,3 (2s)
+  label w "Rv = (-4, 3)"
+step: Check the length: 16 plus 9 is 25, square root 5. R turned v but kept its length.
+  show nrm, note
+  count nrm -> 5
+step: Swap in the stretch matrix S. The same rule sends [3, 4] to [6, 4], a longer arrow.
+  hide note
+  label tR "S"
+  & label r11 "2"
+  & label r12 "0"
+  & label r21 "0"
+  & label r22 "1"
+  label e1 "row 1: 2 × 3 + 0 × 4"
+  & label e2 "row 2: 0 × 3 + 1 × 4"
+  count out1 -> 6
+  & count out2 -> 4
+  vector w -> 6,4 (2s)
+  & label w "Sv = (6, 4)"
+  & count nrm -> 7.21 (2s)
+:::
+
 To apply an $m \\times n$ matrix $A$ to a vector $x$ of dimension $n$, follow three steps.
 
 1. Check the shapes. The matrix has n columns, so the vector must have n components.
@@ -954,6 +1161,86 @@ row 2: 11, 4, 5, 8
 ## How it works
 
 The shape rule comes first. You can multiply an $m \\times n$ matrix by an $n \\times p$ matrix, and the result is $m \\times p$. In words: the column count of the left matrix must equal the row count of the right matrix, and the result takes its rows from the left and its columns from the right. The inner numbers must match and then disappear. If they do not match, the product does not exist.
+
+:::anim
+title: Multiply A by B: each entry is a row times a column
+text tA "A" @ 170,245 size: 22 color: blue
+rect a11 @ 130,300 size: 70x50 "1" color: blue
+rect a12 @ 210,300 size: 70x50 "2" color: blue
+rect a21 @ 130,360 size: 70x50 "3" color: blue
+rect a22 @ 210,360 size: 70x50 "4" color: blue
+text tB "B" @ 410,85 size: 22 color: green
+rect b11 @ 370,140 size: 70x50 "1" color: green
+rect b12 @ 450,140 size: 70x50 "0" color: green
+rect b21 @ 370,200 size: 70x50 "2" color: green
+rect b22 @ 450,200 size: 70x50 "1" color: green
+text tC "AB" @ 410,440 size: 22 color: yellow
+rect c11 @ 370,300 size: 70x50 "?" color: yellow
+rect c12 @ 450,300 size: 70x50 "?" color: yellow
+rect c21 @ 370,360 size: 70x50 "?" color: yellow
+rect c22 @ 450,360 size: 70x50 "?" color: yellow
+text shape "2 by 2 times 2 by 2:|inner 2 and 2 match,|result 2 by 2" @ 750,120 size: 17 color: grey
+text work "1 × 1 + 2 × 2" @ 750,240 size: 22
+num val = 0 @ 750,300 prefix: "= " size: 34 color: yellow
+num mul = 0 @ 750,400 suffix: " multiplications" size: 20 color: grey
+
+step: Multiply A by B. Inner numbers 2 and 2 match, so the product exists and is 2 by 2.
+  show tA, a11, a12, a21, a22, tB, b11, b12, b21, b22, shape
+  show tC, c11, c12, c21, c22
+step: Row 1 of A with column 1 of B: 1 times 1 plus 2 times 2 is 5.
+  highlight a11, a12, b11, b21
+  show work, val, mul
+  count val -> 5
+  & count mul -> 2
+  label c11 "5"
+  pulse c11
+step: Row 1 of A with column 2 of B: 1 times 0 plus 2 times 1 is 2.
+  restore b11, b21
+  highlight b12, b22
+  label work "1 × 0 + 2 × 1"
+  count val -> 2
+  & count mul -> 4
+  label c12 "2"
+  pulse c12
+step: Row 2 of A with column 1 of B: 3 times 1 plus 4 times 2 is 11.
+  restore a11, a12, b12, b22
+  highlight a21, a22, b11, b21
+  label work "3 × 1 + 4 × 2"
+  count val -> 11
+  & count mul -> 6
+  label c21 "11"
+  pulse c21
+step: Row 2 of A with column 2 of B: 3 times 0 plus 4 times 1 is 4.
+  restore b11, b21
+  highlight b12, b22
+  label work "3 × 0 + 4 × 1"
+  count val -> 4
+  & count mul -> 8
+  label c22 "4"
+  pulse c22
+step: Read AB: first row 5 and 2, second row 11 and 4. Four entries cost eight multiplications.
+  restore a21, a22, b12, b22
+  hide work, val
+  highlight c11, c12, c21, c22
+step: Swap the order. The matrices change places, and BA has first row 1, 2 and second row 5, 8.
+  restore c11, c12, c21, c22
+  move a11 -> 370,140 (1.5s)
+  & move a12 -> 450,140 (1.5s)
+  & move a21 -> 370,200 (1.5s)
+  & move a22 -> 450,200 (1.5s)
+  & move b11 -> 130,300 (1.5s)
+  & move b12 -> 210,300 (1.5s)
+  & move b21 -> 130,360 (1.5s)
+  & move b22 -> 210,360 (1.5s)
+  & move tA -> 410,85 (1.5s)
+  & move tB -> 170,245 (1.5s)
+  label tC "BA"
+  & label c11 "1"
+  & label c12 "2"
+  & label c21 "5"
+  & label c22 "8"
+  pulse c11, c12, c21, c22
+:::
 
 | Left shape | Right shape | Inner numbers match? | Result shape |
 | --- | --- | --- | --- |

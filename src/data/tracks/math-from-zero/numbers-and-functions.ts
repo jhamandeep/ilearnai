@@ -91,6 +91,43 @@ state: trend=down by 0.8
 
 Each shape of number has a few rules. The rules below go from the simplest shape to the most compact one.
 
+:::anim
+title: One amount, many shapes: the report card numbers change clothes
+rect frac @ 180,150 size: 150x64 "fraction" color: blue
+rect dec @ 480,150 size: 150x64 "decimal" color: blue
+rect pct @ 780,150 size: 150x64 "percent" color: blue
+text fracv "1/5" @ 180,222 size: 28 color: yellow
+num decv = 0 @ 480,222 digits: 1 size: 28
+num pctv = 0 @ 780,222 suffix: "%" size: 28
+rect sci @ 180,320 size: 150x64 "7e9" color: purple
+num big = 7 @ 450,320 prefix: "= " size: 30 anchor: start
+rect sci2 @ 180,430 size: 150x64 "3e-4" color: purple
+num small = 3 @ 450,430 prefix: "= " digits: 4 size: 30 anchor: start
+text note "e means: times 10|to the power of" @ 800,375 size: 17 color: grey
+
+step: The test share on the report card is the fraction 1/5. Three shapes can write this one amount.
+  show frac, fracv
+step: Divide the top by the bottom: 1 divided by 5 gives the decimal 0.2.
+  show dec, decv
+  arrow frac -> dec : divide 1 by 5
+  & count decv -> 0.2
+step: Multiply the decimal by 100 and add the sign: 20 percent. Same amount, third shape.
+  show pct, pctv
+  arrow dec -> pct : times 100
+  & count pctv -> 20
+step: The parameters line is huge. Programs write 7e9: start with 7 and move the point 9 places right.
+  show sci, big, note
+  arrow sci -> big : point moves 9 places right
+  & count big -> 7000000000 (2.5s)
+step: The learning rate is tiny. In 3e-4 the point moves 4 places left: 0.0003.
+  show sci2, small
+  arrow sci2 -> small : point moves 4 places left
+  & count small -> 0.0003 (2s)
+step: Each shape is the best way to write one kind of amount. Read the shape before the digits. [3s]
+  highlight frac, dec, pct, sci, sci2
+  pulse fracv, decv, pctv, big, small
+:::
+
 ### Integers and negative numbers
 
 An integer is a whole number with no fractional part. The numbers 0, 1, 2, 17 and 7,000,000,000 are integers. The numbers -1 and -350 are integers too. A negative number is a number less than zero, written with a minus sign in front. You meet negative numbers whenever something can go down as well as up: a change in accuracy, a temperature, a bank balance, or a weight inside a model.
@@ -354,6 +391,45 @@ state: f(t(5))=14
 
 A function has three parts: a set of allowed inputs, a rule, and the outputs the rule produces. The table lists the parts for the taxi meter and for two AI models. The AI models have the same shape as the taxi meter. Only the inputs, the rule and the outputs are bigger.
 
+:::anim
+title: Put 5 through the taxi meter f, then through the tip machine t
+rect inp @ 130,290 size: 120x64 "x = 5" color: yellow
+box f "Meter f|2x + 3" @ 420,290 icon: none size: 200x64
+box t "Tip t|1.1 times p" @ 710,290 icon: none size: 200x64
+num fv = 0 @ 420,190 prefix: "f(5) = " size: 28
+num tv = 0 @ 710,190 prefix: "t(13) = " digits: 1 size: 28
+text inside "double it, then add 3" @ 420,375 size: 16 color: grey
+text rule "same input, same output, every time" @ 420,440 size: 17 color: grey
+text order "Other order: f(t(5)) = f(5.5) = 14, not 14.3.|Order matters." @ 480,470 size: 18 color: orange
+
+step: A function is a machine: one number in, one number out. This is the taxi meter f.
+  show f, inside
+step: Put the input x = 5 into the machine, a ride of 5 kilometres.
+  show inp
+  arrow inp -> f : 5
+step: Inside, the rule runs: double 5 to get 10, then add 3 to get 13.
+  show fv
+  count fv -> 10
+  count fv -> 13
+  pulse f
+step: So f(5) = 13 euros. Put 5 in again and 13 comes out again.
+  show rule
+  send inp -> f : 5
+  pulse fv
+step: The output of f becomes the input of a second machine, the tip t.
+  show t
+  hide rule
+  arrow f -> t : 13
+step: The tip machine multiplies by 1.1: t(13) = 14.3 euros. One machine feeding another is composition.
+  show tv
+  count tv -> 14.3
+  highlight t
+step: Swap the order and you get a different machine: f(t(5)) = 14, not 14.3. [3s]
+  hide inside
+  show order
+  pulse order
+:::
+
 | Function | Input | Rule | Output |
 | --- | --- | --- | --- |
 | taxi meter f | distance in km, a number 0 or more | double it and add 3 | price in euros |
@@ -608,6 +684,51 @@ y = 2.3x + 35: 12
 
 The slope measures how fast y changes when x changes. To compute it, pick two points on the line. Subtract the y values to get the rise, the vertical change. Subtract the x values in the same order to get the run, the horizontal change. Divide the rise by the run.
 
+:::anim
+title: Slope is rise over run: the line through houses A and E
+axes ax @ 80,60 size: 540x400 x: 0,150 y: 0,400 xlabel: "size (square metres)" ylabel: "price (thousands)"
+dot A on ax @ 50,150 r: 7 color: white label: "A"
+dot B on ax @ 70,200 r: 7 color: white label: "B"
+dot C on ax @ 90,240 r: 7 color: white label: "C"
+dot D on ax @ 110,290 r: 7 color: white label: "D"
+dot E on ax @ 130,330 r: 7 color: white label: "E"
+vector run on ax from 50,150 to 130,150 color: green label: "run = 80"
+vector rise on ax from 130,150 to 130,330 color: orange label: "rise = 180"
+curve fit on ax = 2.25x + 37.5 color: yellow label: "y = 2.25x + 37.5"
+curve eye on ax dashed = 2.3x + 35 color: blue label: "by eye: y = 2.3x + 35"
+dot pred on ax @ 50,150 r: 8 color: blue
+num m = 0 @ 800,130 prefix: "m = " digits: 2 size: 30
+num b = 0 @ 800,230 prefix: "b = " digits: 1 size: 30
+num predv = 0 @ 800,330 prefix: "y(100) = " size: 26 color: blue
+text t1 "rise over run|180 / 80" @ 800,180 size: 17 color: grey
+text t2 "150 = 2.25 x 50 + b|b = 150 - 112.5" @ 800,280 size: 17 color: grey
+text t3 "each extra square metre|adds 2.25 thousand euros" @ 800,430 size: 17 color: grey
+
+step: Five houses. Size goes across, price goes up. Each house is one point.
+  show ax
+  show A, B, C, D, E
+step: Pick two points far apart, A and E. Go across first: the run is 130 minus 50, which is 80.
+  draw run
+step: Then go up: the rise is 330 minus 150, which is 180.
+  draw rise
+step: Slope is rise over run: 180 divided by 80 is 2.25. Each extra square metre adds 2.25 thousand euros.
+  show m, t1
+  count m -> 2.25
+  show t3
+step: Put house A into y = mx + b: 150 = 2.25 times 50 plus b, so b = 37.5.
+  show b, t2
+  count b -> 37.5
+  pulse A
+step: Draw the line y = 2.25x + 37.5. It passes through A and E and runs close to the others.
+  hide run, rise, t1, t2
+  draw fit
+step: Your line by eye, y = 2.3x + 35, is almost the same. Give it 100: it predicts 265. [3s]
+  draw eye
+  show pred, predv
+  walk pred along eye from 50 to 100 (2s)
+  & count predv -> 265 (2s)
+:::
+
 $$m = \\frac{y_2 - y_1}{x_2 - x_1}$$
 
 In words: the slope equals the second y minus the first y, divided by the second x minus the first x. Take houses A and E. The rise is 330 minus 150, which is 180. The run is 130 minus 50, which is 80. The slope is 180 divided by 80, which is 2.25. In everyday words: in this town, each extra square metre adds about 2.25 thousand euros to the price. The slope is a rate, the same idea as a speed or a price per kilometre.
@@ -801,6 +922,62 @@ Here is the running example. You train a model and record its loss every 1,000 s
 | 4,000 | 0.5 |
 | 5,000 | 0.25 |
 | 6,000 | 0.125 |
+
+:::anim
+title: The same halving loss on a normal scale and on a log scale
+text lab1 "loss, normal scale" @ 260,60 size: 19
+text lab2 "log base 2 of loss" @ 710,60 size: 19
+axes ax1 @ 70,90 size: 380x320 x: 0,6 y: 0,8 xlabel: "step (thousands)" ylabel: "loss"
+axes ax2 @ 520,90 size: 380x320 x: 0,6 y: -3,3 xlabel: "step (thousands)" ylabel: "log2(loss)"
+dot d0 on ax1 @ 0,8 r: 6 color: white
+dot d1 on ax1 @ 1,4 r: 6 color: white
+dot d2 on ax1 @ 2,2 r: 6 color: white
+dot d3 on ax1 @ 3,1 r: 6 color: white
+dot d4 on ax1 @ 4,0.5 r: 6 color: white
+dot d5 on ax1 @ 5,0.25 r: 6 color: white
+dot d6 on ax1 @ 6,0.125 r: 6 color: white
+dot e0 on ax2 @ 0,3 r: 6 color: white
+dot e1 on ax2 @ 1,2 r: 6 color: white
+dot e2 on ax2 @ 2,1 r: 6 color: white
+dot e3 on ax2 @ 3,0 r: 6 color: white
+dot e4 on ax2 @ 4,-1 r: 6 color: white
+dot e5 on ax2 @ 5,-2 r: 6 color: white
+dot e6 on ax2 @ 6,-3 r: 6 color: white
+curve lossc on ax1 = 2^(3 - x) color: blue label: "loss"
+curve logc on ax2 = 3 - x color: yellow label: "straight line"
+dot ball on ax1 @ 0,8 r: 9 color: blue
+dot ball2 on ax2 @ 0,3 r: 9 color: yellow
+tangent tn on logc at 3 len: 1.2 color: orange label: slope
+num lossv = 8 @ 260,470 prefix: "loss = " digits: 3 size: 26 color: blue
+num logv = 3 @ 710,470 prefix: "2 to the power of " size: 26 color: yellow
+text q "ask: 2 to the power of what gives 8?|answer: 3, because 2 x 2 x 2 = 8" @ 710,500 size: 15 color: grey
+
+step: The loss halves every 1,000 steps: 8, 4, 2, 1, 0.5, 0.25, 0.125.
+  show ax1, lab1
+  show d0, d1, d2, d3, d4, d5, d6
+step: On a normal scale the curve flattens. The last three points look the same, but the halving continues.
+  draw lossc
+  show ball, lossv
+  walk ball along lossc from 0 to 6 (3s)
+  & count lossv -> 0.125 (3s)
+step: Ask each loss a new question: 2 to the power of what gives it? For 8, that is 3.
+  show ax2, lab2, ball2, logv, q
+  pulse d0, ball2
+step: Each halving subtracts 1 from the answer: 3, 2, 1, 0, -1, -2, -3. Both dots move together.
+  hide q
+  walk ball along lossc from 0 to 6 (4s)
+  & walk ball2 along logc from 0 to 6 (4s)
+  & count logv -> -3 (4s)
+  & count lossv -> 0.125 (4s)
+step: On the log scale the seven points lie on a straight line. Its slope is minus 1 per 1,000 steps.
+  show e0, e1, e2, e3, e4, e5, e6
+  draw logc
+  show tn
+  tangent tn -> 5 (2s)
+step: A straight line on a log scale means steady progress. That is why loss curves are drawn with logs. [3s]
+  highlight logc
+  pulse ball2
+:::
 
 The model is improving at a steady rate: every 1,000 steps the loss halves. But look at the bars below, which draw the losses on a normal scale. The first bar towers over the rest. The last three bars are almost invisible, even though the halving continues. A normal scale hides steady progress when the numbers get small.
 

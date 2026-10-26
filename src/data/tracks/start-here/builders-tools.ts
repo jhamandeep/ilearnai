@@ -72,6 +72,52 @@ Six commands made a folder, entered it, created two files and checked them. The 
 
 The shell does the same four things for every command. First, it splits your line into words. Second, it finds the program named by the first word. Third, it runs that program with the other words as arguments. Fourth, it prints whatever the program outputs and shows the prompt again.
 
+:::anim
+title: What the shell does with one command
+text cmd "cat cities.csv" @ 480,110 size: 26 color: yellow
+rect w1 @ 430,110 size: 90x44 "cat" color: blue
+rect w2 @ 580,110 size: 170x44 "cities.csv" color: blue
+box shell "Shell" @ 170,330 icon: terminal
+text pathtxt "PATH = /usr/local/bin:/usr/bin:/bin" @ 640,270 size: 16 color: grey
+rect f1 @ 420,330 size: 170x50 "/usr/local/bin"
+rect f2 @ 630,330 size: 130x50 "/usr/bin"
+rect f3 @ 810,330 size: 110x50 "/bin"
+box prog "cat program" @ 480,460 icon: program
+box file "cities.csv" @ 790,460 icon: file
+box screen "Screen" @ 170,460 icon: screen
+text wd "working directory: /Users/ada/weather" @ 790,395 size: 15 color: grey
+
+step: You type cat cities.csv and press Enter. The shell reads the whole line.
+  show cmd, shell
+  pulse shell
+step: First, the shell splits the line into words: the program name cat, then one argument, cities.csv.
+  show w1, w2
+  move w1 -> 420,200
+  & move w2 -> 580,200
+step: Second, it finds the program. It checks each PATH folder in order: not here, not here, found in /bin.
+  show pathtxt, f1, f2, f3
+  arrow shell -> f1 : cat?
+  color f1 grey
+  arrow f1 -> f2 : cat?
+  color f2 grey
+  arrow f2 -> f3 : cat?
+  color f3 green
+  label f3 "/bin/cat"
+step: Third, it runs the program /bin/cat and passes the argument cities.csv to it.
+  show prog
+  arrow f3 -> prog : run
+  move w2 -> 480,460 (1.5s)
+  hide w2, w1, f1, f2
+step: The program looks for cities.csv in the working directory, /Users/ada/weather, and reads its one line.
+  show wd, file
+  arrow prog -> file : open
+  arrow file -> prog : city,temp
+step: Fourth, the shell prints the output on the screen and shows the prompt again.
+  show screen
+  arrow prog -> screen : city,temp
+  highlight screen
+:::
+
 ### The twelve commands
 
 The table lists the commands with the running example. Type each one in your weather folder.
@@ -288,6 +334,56 @@ Three commits, three captions, one folder. The command git log --oneline shows o
 ## How it works
 
 Git works in a fixed rhythm: edit, add, commit, repeat. The table lists the eight commands of this lesson with the running example.
+
+:::anim
+title: A file passes through three places, and the commits form a chain
+box work "Working folder" @ 170,150 icon: file
+box stage "Staging area" @ 480,150 icon: queue
+box hist "History (.git)" @ 790,150 icon: database
+rect app @ 170,260 size: 150x50 "app.py" color: blue
+rect csv @ 170,330 size: 160x50 "data/cities.csv" color: blue
+rect c1 @ 790,260 size: 120x50 "a1f3c9e" color: yellow
+rect c2 @ 790,340 size: 120x50 "b7d02e4" color: yellow
+rect c3 @ 790,420 size: 120x50 "c92e1a0" color: yellow
+box hub "GitHub (origin)" @ 480,450 icon: cloud
+text log "git log --oneline:|newest first" @ 715,300 size: 15 color: grey anchor: end
+
+step: A file passes through three places. You edit in the working folder, which holds app.py and data/cities.csv.
+  show work, stage, hist, app, csv
+step: git add copies both files into the staging area, the waiting room. Nothing is saved yet.
+  arrow work -> stage : git add
+  & move app -> 480,260
+  & move csv -> 480,330
+step: git commit saves a snapshot of the staged files. Commit a1f3c9e enters the history; the staging area empties.
+  arrow stage -> hist : git commit -m
+  & move app -> 790,260
+  & move csv -> 790,260
+  hide app, csv
+  show c1
+step: You edit app.py and add it again. git status reports it as modified, waiting in the staging area.
+  label app "app.py, edited"
+  color app orange
+  move app -> 170,260 (0.1s)
+  show app
+  wait 0.5
+  send work -> stage : git add app.py
+  & move app -> 480,260
+step: The second commit b7d02e4 remembers its parent a1f3c9e, so the history is a chain.
+  send stage -> hist : git commit -m
+  & move app -> 790,340
+  hide app
+  show c2
+  arrow c2 -> c1 : parent
+step: A third commit, c92e1a0, adds .gitignore. git log --oneline prints the chain, newest first.
+  show c3
+  arrow c3 -> c2 : parent
+  show log
+step: git push sends the chain to GitHub, the remote copy named origin. git pull brings new commits back.
+  show hub
+  arrow c3 -> hub : git push
+  arrow hub -> c3 : git pull
+  highlight hub
+:::
 
 | Command | What it does | Example |
 | --- | --- | --- |
@@ -519,6 +615,49 @@ Here is the running example. Open-Meteo is a free weather API that needs no acco
 https://api.open-meteo.com/v1/forecast?latitude=-12.05&longitude=-77.04&current=temperature_2m
 
 Read the address in four parts. The scheme https says to use encrypted HTTP. The host api.open-meteo.com names the server. The path /v1/forecast is the endpoint. Everything after the question mark is the parameters: three name and value pairs separated by ampersands. Paste the address into a browser and you see the answer, a block of text in curly braces. That text is JSON.
+
+:::anim
+title: One API call: the request goes out, the response comes back, one number comes out
+text url "GET /v1/forecast?latitude=-12.05&longitude=-77.04&current=temperature_2m" @ 480,90 size: 15 color: yellow
+box app "app.py" @ 170,180 icon: code
+box lib "requests library" @ 480,180 icon: tool
+box srv "Open-Meteo" @ 790,180 icon: server
+rect bd @ 170,320 size: 150x50 "JSON body" color: blue
+rect hd @ 480,320 size: 290x50 "Content-Type: application/json" color: blue
+rect st @ 790,320 size: 150x50 "status 200" color: green
+rect j1 @ 170,450 size: 110x50 "data"
+rect j2 @ 420,450 size: 130x50 "current"
+rect j3 @ 670,450 size: 190x50 "temperature_2m"
+num temp = 0 @ 870,450 suffix: " C" digits: 1 size: 28 color: yellow
+
+step: app.py builds the address from three parameters and hands it to the requests library.
+  show app, url, lib
+  arrow app -> lib : requests.get(url, params)
+step: requests opens a connection and sends GET /v1/forecast across the internet to the Open-Meteo server.
+  show srv
+  arrow lib -> srv : GET /v1/forecast (2s)
+step: The server looks up the forecast for latitude -12.05, longitude -77.04 and builds a JSON answer.
+  highlight srv
+  wait 1
+  restore srv
+step: The response comes back in three parts: a body, a Content-Type header and the status code 200.
+  arrow srv -> lib : response (2s)
+  show bd, hd, st
+step: Check the status first. 200 means it worked, so the body holds data, not an error message.
+  highlight st
+  arrow lib -> app : Response object
+step: response.json() turns the body into a Python dictionary. Follow the keys from the outside in: current.
+  show j1
+  arrow bd -> j1 : response.json()
+  show j2
+  arrow j1 -> j2 : ["current"]
+step: Inside current, the key temperature_2m holds 19.3. app.py prints Lima: 19.3 C.
+  show j3
+  arrow j2 -> j3 : ["temperature_2m"]
+  show temp
+  count temp -> 19.3
+  highlight temp
+:::
 
 :::flow
 title: One API call from Python
@@ -766,6 +905,59 @@ Every model API charges money per request and identifies you with a key. A leake
 A secret is any value that must stay private because it gives access or costs money. API keys, passwords and tokens are secrets. The rule for secrets has two halves. The code never contains the secret. The code reads the secret from its surroundings at the moment it runs.
 
 Here is the running example. A pretend model provider, Example AI, gives you a key when you sign up. The key is sk-live-7f3a9c2e4b8d1a6f5e0c3b9d2a7f4e1c, 40 characters long. You want app.py from the weather repository to call Example AI and turn the temperatures into a one-line summary. The call needs the key in an Authorization header. The question is where the string lives.
+
+:::anim
+title: Two places for the key: in the code, or in the environment
+text t1 "Way 1: the key in the code" @ 480,70 size: 18 color: grey
+box code1 "app.py" @ 130,150 icon: code
+box hub "GitHub" @ 350,150 icon: cloud
+box scan "Scanner" @ 570,150 icon: robot
+num bill = 0 @ 790,150 prefix: "USD " size: 30 color: red
+text t2 "Way 2: the key in the environment" @ 480,340 size: 18 color: grey
+box env ".env" @ 130,430 icon: key
+box osenv "os.environ" @ 350,430 icon: env
+box code2 "app.py" @ 570,430 icon: code
+box ai "Example AI" @ 790,430 icon: model
+rect key @ 480,270 size: 170x44 "sk-live-7f3a..." color: yellow
+text gi ".gitignore holds .env|so git skips the file" @ 130,370 size: 14 color: grey
+
+step: Way 1. You write the 40-character key at the top of app.py. The program works at once.
+  show t1, code1, key
+  move key -> 130,210
+step: You add, commit and push, as every day. The key travels to GitHub inside a public commit.
+  show hub
+  arrow code1 -> hub : git push
+  & move key -> 350,210
+step: Within minutes a scanning program reads every new commit, finds the pattern sk-live and copies the key.
+  show scan
+  arrow hub -> scan : scans new commits
+  & move key -> 570,210
+  color key red
+step: The scanner sends requests with your key. Your account shows USD 140 that you did not spend.
+  show bill
+  pulse scan
+  count bill -> 140 (2s)
+  pulse bill
+step: Way 2. You delete the line from app.py and put MODEL_API_KEY=sk-live-7f3a... in a .env file.
+  show t2, env
+  dim code1, hub, scan, bill
+  hide key
+  color key yellow
+  move key -> 130,330 (0.1s)
+  show key
+  move key -> 130,490
+step: load_dotenv() copies the line into os.environ. app.py asks for the name MODEL_API_KEY and gets the value.
+  show osenv, code2
+  arrow env -> osenv : load_dotenv()
+  & move key -> 350,490
+  arrow osenv -> code2 : os.environ.get
+  & move key -> 570,490
+step: app.py sends the key in an Authorization header to Example AI. Git skips .env, so GitHub holds no key.
+  show ai
+  arrow code2 -> ai : Authorization header
+  show gi
+  highlight env
+:::
 
 :::flow
 title: How the key reaches the program
@@ -1019,6 +1211,62 @@ Here is the problem Docker solves. You write app.py on your laptop with Python 3
 Docker fixes this by shipping the surroundings with the program. An image is a read-only package that holds a small operating system, a Python interpreter, your libraries and your files. A container is a running copy of an image, with its own files and its own processes, kept apart from the rest of the computer. The image is the box; the container is the plate.
 
 Here is the running example. You take app.py from the weather repository, the version that fetches three temperatures with requests. You write a Dockerfile, build an image called weather, and run it. Then your colleague runs the same image and gets the same three lines of output on a computer with no Python at all.
+
+:::anim
+title: From Dockerfile to image to container
+text cmdb "docker build -t weather ." @ 480,110 size: 22 color: yellow
+box df "Dockerfile" @ 170,290 icon: file
+box hub "Docker Hub" @ 170,430 icon: cloud
+num sz = 0 @ 480,190 prefix: "image weather: " suffix: " MB" size: 22
+rect l1 @ 480,430 size: 230x36 "FROM python:3.12-slim" color: blue
+rect l2 @ 480,390 size: 230x36 "WORKDIR /app" color: blue
+rect l3 @ 480,350 size: 230x36 "COPY . ." color: blue
+rect l4 @ 480,310 size: 230x36 "RUN pip install requests" color: blue
+rect l5 @ 480,270 size: 230x36 "CMD python app.py" color: green
+box col "Colleague's PC" @ 760,130 icon: user
+box c1 "Container 1" @ 760,270 size: 220x64 icon: container
+box c2 "Container 2" @ 760,410 size: 220x64 icon: container
+text o1 "Lima: 19.3 C   Oslo: 4.1 C   Cairo: 31.0 C" @ 760,335 size: 14 color: green
+text o2 "Lima: 19.3 C   Oslo: 4.1 C   Cairo: 31.0 C" @ 760,475 size: 14 color: green
+text o3 "the same three lines, no Python installed" @ 760,195 size: 14 color: green
+
+step: The Dockerfile has 5 lines. docker build -t weather . reads them from top to bottom.
+  show df, cmdb
+  pulse df
+step: FROM pulls the base image python:3.12-slim, about 150 MB, from Docker Hub. It is the first layer.
+  show hub, sz, l1
+  arrow hub -> l1 : docker pull
+  & count sz -> 150
+step: WORKDIR, COPY and RUN each add a layer: the folder /app, your files, and the requests library.
+  show l2
+  show l3
+  arrow df -> l3 : COPY . .
+  show l4
+  & count sz -> 160
+step: CMD is the last layer. It names the command to run later, not now. The image is complete and read-only.
+  show l5
+  highlight l5
+  wait 0.5
+  restore l5
+step: docker run weather starts container 1, a fresh copy of the image, and runs python app.py inside it.
+  show c1
+  arrow l4 -> c1 : docker run weather
+step: app.py prints three temperatures. The program ends and the container stops. The image did not change.
+  show o1
+  label c1 "Container 1: stopped"
+  color c1 grey
+step: docker run weather again: a second, separate container starts from the same image and prints three new lines.
+  show c2
+  arrow l1 -> c2 : docker run weather
+  show o2
+  label c2 "Container 2: stopped"
+  color c2 grey
+step: Your colleague runs the same image on a computer with no Python. Python 3.12 travels inside the image.
+  show col
+  arrow l5 -> col : docker run weather
+  show o3
+  highlight l1
+:::
 
 :::arch
 title: Where a container sits on a computer

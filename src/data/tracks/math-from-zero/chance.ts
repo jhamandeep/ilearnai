@@ -90,6 +90,98 @@ Every probability obeys three rules. You can check any answer against them.
 2. The probabilities of all the outcomes in the sample space add up to 1. For a die, 1/6 added six times is 6/6, which is 1.
 3. If two events cannot both happen, the probability that one or the other happens is the sum of their probabilities. "Roll a 5" and "roll a 6" cannot both happen on one roll, so P(5 or 6) = 1/6 + 1/6 = 2/6.
 
+The animation rolls the two dice and counts the "at least one 6" cells both ways.
+
+:::anim
+title: Two dice: 36 outcomes, the product rule and the complement
+text b1 "blue 1" @ 140,112 size: 14 color: grey
+text b2 "blue 2" @ 196,112 size: 14 color: grey
+text b3 "blue 3" @ 252,112 size: 14 color: grey
+text b4 "blue 4" @ 308,112 size: 14 color: grey
+text b5 "blue 5" @ 364,112 size: 14 color: grey
+text b6 "blue 6" @ 420,112 size: 14 color: grey
+text r1 "red 1" @ 85,150 size: 14 color: grey
+text r2 "red 2" @ 85,202 size: 14 color: grey
+text r3 "red 3" @ 85,254 size: 14 color: grey
+text r4 "red 4" @ 85,306 size: 14 color: grey
+text r5 "red 5" @ 85,358 size: 14 color: grey
+text r6 "red 6" @ 85,410 size: 14 color: grey
+rect c11 @ 140,150 size: 48x40 "1,1"
+rect c12 @ 196,150 size: 48x40 "1,2"
+rect c13 @ 252,150 size: 48x40 "1,3"
+rect c14 @ 308,150 size: 48x40 "1,4"
+rect c15 @ 364,150 size: 48x40 "1,5"
+rect c16 @ 420,150 size: 48x40 "1,6"
+rect c21 @ 140,202 size: 48x40 "2,1"
+rect c22 @ 196,202 size: 48x40 "2,2"
+rect c23 @ 252,202 size: 48x40 "2,3"
+rect c24 @ 308,202 size: 48x40 "2,4"
+rect c25 @ 364,202 size: 48x40 "2,5"
+rect c26 @ 420,202 size: 48x40 "2,6"
+rect c31 @ 140,254 size: 48x40 "3,1"
+rect c32 @ 196,254 size: 48x40 "3,2"
+rect c33 @ 252,254 size: 48x40 "3,3"
+rect c34 @ 308,254 size: 48x40 "3,4"
+rect c35 @ 364,254 size: 48x40 "3,5"
+rect c36 @ 420,254 size: 48x40 "3,6"
+rect c41 @ 140,306 size: 48x40 "4,1"
+rect c42 @ 196,306 size: 48x40 "4,2"
+rect c43 @ 252,306 size: 48x40 "4,3"
+rect c44 @ 308,306 size: 48x40 "4,4"
+rect c45 @ 364,306 size: 48x40 "4,5"
+rect c46 @ 420,306 size: 48x40 "4,6"
+rect c51 @ 140,358 size: 48x40 "5,1"
+rect c52 @ 196,358 size: 48x40 "5,2"
+rect c53 @ 252,358 size: 48x40 "5,3"
+rect c54 @ 308,358 size: 48x40 "5,4"
+rect c55 @ 364,358 size: 48x40 "5,5"
+rect c56 @ 420,358 size: 48x40 "5,6"
+rect c61 @ 140,410 size: 48x40 "6,1"
+rect c62 @ 196,410 size: 48x40 "6,2"
+rect c63 @ 252,410 size: 48x40 "6,3"
+rect c64 @ 308,410 size: 48x40 "6,4"
+rect c65 @ 364,410 size: 48x40 "6,5"
+rect c66 @ 420,410 size: 48x40 "6,6"
+num total = 0 @ 740,150 suffix: " outcomes" size: 26
+num cells = 0 @ 740,230 suffix: " cells" size: 26 color: red
+num prob = 0 @ 740,310 prefix: "P = " digits: 3 size: 32
+text note "6 x 6 = 36" @ 740,390 size: 18 color: grey
+
+step: Roll a red and a blue die. Each cell is one pair of faces: 6 times 6 is 36 outcomes.
+  show b1, b2, b3, b4, b5, b6, r1, r2, r3, r4, r5, r6
+  show c11, c12, c13, c14, c15, c16, c21, c22, c23, c24, c25, c26, c31, c32, c33, c34, c35, c36, c41, c42, c43, c44, c45, c46, c51, c52, c53, c54, c55, c56, c61, c62, c63, c64, c65, c66
+  show total, note
+  count total -> 36
+step: Both show 6 in one cell. The dice are independent: 1/6 times 1/6 is 1/36, about 0.028.
+  show cells, prob
+  color c66 yellow
+  count cells -> 1
+  & count prob -> 0.028
+  label note "1/6 x 1/6 = 1/36"
+step: At least one 6: the last row and the last column, corner counted once. That is 11 cells, 11/36.
+  color c16, c26, c36, c46, c56, c66, c61, c62, c63, c64, c65 red
+  count cells -> 11
+  & count prob -> 0.306
+  label note "6 + 6 - 1 = 11 cells"
+step: The complement is easier. Mark the cells with no 6 at all: 5 times 5 is 25 cells.
+  color c16, c26, c36, c46, c56, c66, c61, c62, c63, c64, c65 grey
+  color c11, c12, c13, c14, c15, c21, c22, c23, c24, c25, c31, c32, c33, c34, c35, c41, c42, c43, c44, c45, c51, c52, c53, c54, c55 green
+  count cells -> 25
+  & count prob -> 0.694
+  label note "5/6 x 5/6 = 25/36"
+step: Subtract from the whole pie: 1 minus 25/36 is 11/36, about 0.306. Both ways agree.
+  color c11, c12, c13, c14, c15, c21, c22, c23, c24, c25, c31, c32, c33, c34, c35, c41, c42, c43, c44, c45, c51, c52, c53, c54, c55 grey
+  color c16, c26, c36, c46, c56, c66, c61, c62, c63, c64, c65 red
+  count cells -> 11
+  & count prob -> 0.306
+  label note "1 - 25/36 = 11/36"
+  highlight prob
+step: Check the rules: 0.306 lies between 0 and 1, and 25/36 plus 11/36 is 1.
+  label note "25/36 + 11/36 = 1"
+  pulse prob
+  restore prob
+:::
+
 ### The complement
 
 The complement of an event A is the event that A does not happen. We write it as "not A". Because A either happens or does not, the two probabilities add up to 1.
@@ -339,6 +431,64 @@ The zoom has a formula. The probability of A given B is the probability that bot
 $$P(A \\mid B) = \\frac{P(A \\text{ and } B)}{P(B)}$$
 
 In words: the probability of A given B equals the probability of A and B together, divided by the probability of B. Check it on the table. P(spam and free) = 150/1,000 = 0.15. P(free) = 190/1,000 = 0.19. Divide: 0.15 / 0.19 = 0.789. The formula and the zoom give the same answer, because dividing both counts by 1,000 does not change the ratio.
+
+The animation runs the zoom on the table and then changes the base rate.
+
+:::anim
+title: Zoom in on the clue, then change the base rate
+text hfree "with the word free" @ 250,110 size: 17 color: yellow
+text hno "without free" @ 470,110 size: 17 color: grey
+text rspam "Spam" @ 95,180 size: 17
+text rnot "Not spam" @ 95,290 size: 17
+rect sf @ 250,180 size: 170x72 "150" color: red
+rect sn @ 470,180 size: 170x72 "50" color: red
+rect nf @ 250,290 size: 170x72 "40" color: blue
+rect nn @ 470,290 size: 170x72 "760" color: blue
+text tf "190 with free" @ 250,380 size: 15 color: grey
+text tn "810 without" @ 470,380 size: 15 color: grey
+num emails = 0 @ 780,140 suffix: " emails" size: 26
+num spam = 0 @ 780,210 suffix: " spam" size: 26 color: red
+num p = 0 @ 780,290 prefix: "P(spam) = " digits: 3 size: 28
+text note "200 / 1,000 = 0.2" @ 780,380 size: 17 color: grey
+
+step: A company sorts 1,000 emails into spam or not, and checks each one for the word free.
+  show hfree, hno, rspam, rnot, sf, sn, nf, nn, tf, tn, emails
+  count emails -> 1000
+step: Before any clue, 200 of the 1,000 emails are spam. The base rate is 0.2.
+  show spam, p
+  highlight sf, sn
+  count spam -> 200
+  & count p -> 0.2
+  show note
+step: A new email contains free. Zoom in on that column: only 190 emails remain.
+  restore sf, sn
+  dim hno, sn, nn, tn
+  highlight hfree
+  count emails -> 190
+  label note "keep the 190 with free"
+step: Inside the column, 150 of the 190 emails are spam.
+  highlight sf
+  count spam -> 150
+  label note "150 of the 190"
+step: Divide 150 by 190: P(spam given free) is 0.789. The clue raised it from 0.2.
+  count p -> 0.789
+  pulse p
+  label note "150 / 190 = 0.789"
+step: Bayes' rule gives the same answer: 0.75 times 0.2, divided by 0.19, is 0.789.
+  label note "0.75 x 0.2 / 0.19 = 0.789"
+  pulse p
+step: Now make spam rare: 1 percent of 10,000 emails. The same clue gives only 0.13.
+  label sf "75"
+  label sn "25"
+  label nf "495"
+  label nn "9,405"
+  label tf "570 with free"
+  label tn "9,430 without"
+  count emails -> 570
+  & count spam -> 75
+  & count p -> 0.132
+  label note "75 / 570 = 0.13"
+:::
 
 The direction matters. P(spam | free) and P(free | spam) are different questions with different answers. P(free | spam) zooms in on the spam row: 150 of the 200 spam emails contain "free", so P(free | spam) = 150/200 = 0.75. Swapping the two is one of the most common errors in reasoning, and the next section shows how to move between them correctly.
 
@@ -612,6 +762,113 @@ state: sd=3.46
 
 Compute the same numbers for the hugging list 6, 7, 7, 7, 7, 8. The mean is 42 / 6 = 7. The distances are -1, 0, 0, 0, 0, 1. The squares are 1, 0, 0, 0, 0, 1, with sum 2. The variance is 2 / 6, about 0.33, and the standard deviation is about 0.58. The two lists share a mean of 7, but one has a standard deviation of 3.46 and the other of 0.58. A person with the first inbox cannot plan their day; a person with the second one can.
 
+The animation computes both lists on a number line, from the mean to the standard deviation.
+
+:::anim
+title: Same mean, different spread
+line nl1 from 100,190 to 660,190 color: grey
+text k0 "0" @ 100,232 size: 12 color: grey
+text k2 "2" @ 170,232 size: 12 color: grey
+text k4 "4" @ 240,232 size: 12 color: grey
+text k6 "6" @ 310,232 size: 12 color: grey
+text k8 "8" @ 380,232 size: 12 color: grey
+text k10 "10" @ 450,232 size: 12 color: grey
+text k12 "12" @ 520,232 size: 12 color: grey
+text k14 "14" @ 590,232 size: 12 color: grey
+text k16 "16" @ 660,232 size: 12 color: grey
+dot a3 @ 205,190 r: 8 color: blue label: "3"
+dot a5 @ 275,190 r: 8 color: blue label: "5"
+dot a6 @ 310,190 r: 8 color: blue label: "6"
+dot a6b @ 310,170 r: 8 color: blue label: "6"
+dot a8 @ 380,190 r: 8 color: blue label: "8"
+dot a14 @ 590,190 r: 8 color: blue label: "14"
+dot m1 @ 100,207 r: 9 color: yellow label: "mean 7"
+line ml from 345,100 to 345,195 color: yellow dashed
+vector d3 from 345,110 to 205,110 color: red
+vector d5 from 345,135 to 275,135 color: red
+vector d6 from 345,160 to 310,160 color: red
+vector d8 from 345,160 to 380,160 color: green
+vector d14 from 345,110 to 590,110 color: green
+text x3 "-4" @ 275,98 size: 14 color: red
+text x5 "-2" @ 310,123 size: 14 color: red
+text x6 "-1 and -1" @ 318,148 size: 14 color: red
+text x8 "+1" @ 372,148 size: 14 color: green
+text x14 "+7" @ 467,98 size: 14 color: green
+vector s1 from 345,250 to 466,250 color: yellow label: "sd = 3.46"
+text cap "distances" @ 125,300 size: 15 color: grey anchor: end
+rect q1 @ 180,300 size: 70x44 "-4"
+rect q2 @ 260,300 size: 70x44 "-2"
+rect q3 @ 340,300 size: 70x44 "-1"
+rect q4 @ 420,300 size: 70x44 "-1"
+rect q5 @ 500,300 size: 70x44 "1"
+rect q6 @ 580,300 size: 70x44 "7"
+line nl2 from 100,400 to 660,400 color: grey
+text j0 "0" @ 100,442 size: 12 color: grey
+text j4 "4" @ 240,442 size: 12 color: grey
+text j8 "8" @ 380,442 size: 12 color: grey
+text j12 "12" @ 520,442 size: 12 color: grey
+text j16 "16" @ 660,442 size: 12 color: grey
+dot b6 @ 310,400 r: 8 color: purple label: "6"
+dot b7 @ 345,400 r: 8 color: purple
+dot b7b @ 345,380 r: 8 color: purple
+dot b7c @ 345,360 r: 8 color: purple
+dot b7d @ 345,340 r: 8 color: purple label: "7 four times"
+dot b8 @ 380,400 r: 8 color: purple label: "8"
+dot m2 @ 100,417 r: 9 color: yellow label: "mean 7"
+vector s2 from 345,460 to 365,460 color: yellow label: "sd = 0.58"
+text l1 "List 1: 3 · 5 · 6 · 6 · 8 · 14" @ 800,100 size: 17 color: blue
+num sum1 = 0 @ 800,140 prefix: "sum = " size: 24
+num mean1 = 0 @ 800,180 prefix: "mean = " size: 24
+num var1 = 0 @ 800,220 prefix: "variance = " size: 24
+num sd1 = 0 @ 800,260 prefix: "sd = " digits: 2 size: 24
+text l2 "List 2: 6 · 7 · 7 · 7 · 7 · 8" @ 800,330 size: 17 color: purple
+num mean2 = 0 @ 800,370 prefix: "mean = " size: 24
+num var2 = 0 @ 800,410 prefix: "variance = " digits: 2 size: 24
+num sd2 = 0 @ 800,450 prefix: "sd = " digits: 2 size: 24
+
+step: Six days of email: 3, 5, 6, 6, 8 and 14. Each count is a dot on a number line.
+  show nl1, k0, k2, k4, k6, k8, k10, k12, k14, k16
+  show a3, a5, a6, a6b, a8, a14, l1
+step: Add them: 42. Divide by 6: the mean is 7, the balance point of the line.
+  show sum1, mean1, m1
+  count sum1 -> 42
+  move m1 -> 345,207 (1.5s)
+  & count mean1 -> 7 (1.5s)
+  show ml
+step: Measure each distance from the mean: -4, -2, -1, -1, 1 and 7. They add up to 0.
+  draw d3, d5, d6, d8, d14
+  show x3, x5, x6, x8, x14
+  show cap, q1, q2, q3, q4, q5, q6
+step: Square each distance: 16, 4, 1, 1, 1 and 49. The sum is 72, and 72 over 6 is 12.
+  label q1 "16"
+  label q2 "4"
+  label q3 "1"
+  label q4 "1"
+  label q5 "1"
+  label q6 "49"
+  label cap "squares"
+  show var1
+  count var1 -> 12
+step: The square root of 12 is 3.46: the standard deviation, the typical distance from the mean.
+  show sd1
+  count sd1 -> 3.46
+  & draw s1
+step: A second list, 6, 7, 7, 7, 7, 8, also adds up to 42, so its mean is also 7.
+  hide d3, d5, d6, d8, d14, x3, x5, x6, x8, x14
+  show nl2, j0, j4, j8, j12, j16, b6, b7, b7b, b7c, b7d, b8, l2
+  show mean2, m2
+  move m2 -> 345,417 (1.5s)
+  & count mean2 -> 7 (1.5s)
+step: Its distances are -1, 0, 0, 0, 0 and 1. The squares add up to 2: variance 0.33.
+  show var2
+  count var2 -> 0.33
+step: Its standard deviation is 0.58. Same mean, much less spread: the second inbox is predictable.
+  show sd2
+  count sd2 -> 0.58
+  & draw s2
+  pulse sd1, sd2
+:::
+
 :::bars
 title: Standard deviation of two lists with mean 7
 unit: emails
@@ -805,6 +1062,65 @@ Every probability is the same, so this is a uniform distribution. Uniform means 
 Here is the running example for softmax. An image classifier looks at a photo and must say whether it shows a cat, a dog or a bird. Inside, the model computes one raw score per class. The scores for this photo are 2 for cat, 1 for dog and 0 for bird. A raw score is any number, positive or negative, and the three do not add up to anything useful. Softmax turns them into a distribution.
 
 Softmax has two steps. First, raise the number e to the power of each score. The number e is about 2.718, and you met it in the lesson on exponents. Raising e to a power makes every score positive, and it makes gaps bigger. Second, divide each result by the sum of all of them, so the results add up to 1.
+
+The animation pushes the three scores through both steps of softmax.
+
+:::anim
+title: Softmax turns the scores 2, 1, 0 into a distribution
+text h1 "raw score" @ 140,90 size: 16 color: grey
+text h2 "e to the score" @ 420,90 size: 16 color: grey
+text h3 "probability" @ 700,90 size: 16 color: grey
+box s_cat "cat: 2" @ 140,170 size: 150x60 icon: none
+box s_dog "dog: 1" @ 140,280 size: 150x60 icon: none
+box s_bird "bird: 0" @ 140,390 size: 150x60 icon: none
+num e_cat = 0 @ 420,170 digits: 3 size: 28
+num e_dog = 0 @ 420,280 digits: 3 size: 28
+num e_bird = 0 @ 420,390 digits: 3 size: 28
+num p_cat = 0 @ 700,170 digits: 3 size: 28 color: green
+num p_dog = 0 @ 700,280 digits: 3 size: 28 color: green
+num p_bird = 0 @ 700,390 digits: 3 size: 28 color: green
+num sum = 0 @ 420,470 prefix: "sum = " digits: 3 size: 22
+text check "0.665 + 0.245 + 0.090 = 1" @ 700,470 size: 16 color: grey
+
+step: The model gives one raw score per class: cat 2, dog 1 and bird 0.
+  show h1, s_cat, s_dog, s_bird
+step: Raise e to each score. The scores become 7.389, 2.718 and 1.000, all positive.
+  show h2, e_cat, e_dog, e_bird
+  arrow s_cat -> e_cat : e to the 2
+  & count e_cat -> 7.389
+  arrow s_dog -> e_dog : e to the 1
+  & count e_dog -> 2.718
+  arrow s_bird -> e_bird : e to the 0
+  & count e_bird -> 1
+step: Add the three results: 7.389 plus 2.718 plus 1.000 is 11.107.
+  show sum
+  pulse e_cat, e_dog, e_bird
+  count sum -> 11.107
+step: Divide each result by the sum. Cat gets 7.389 over 11.107, which is 0.665.
+  show h3, p_cat
+  arrow e_cat -> p_cat : / 11.107
+  & count p_cat -> 0.665
+step: Dog gets 2.718 over 11.107, which is 0.245. Bird gets 1 over 11.107, which is 0.090.
+  show p_dog, p_bird
+  arrow e_dog -> p_dog : / 11.107
+  & count p_dog -> 0.245
+  arrow e_bird -> p_bird : / 11.107
+  & count p_bird -> 0.09
+step: The three add up to 1: a categorical distribution. Cat still leads, and the gaps grew.
+  show check
+  highlight p_cat
+step: Double the scores to 4, 2, 0. Softmax gets sharper: cat 0.867, dog 0.117, bird 0.016.
+  label s_cat "cat: 4"
+  label s_dog "dog: 2"
+  restore p_cat
+  count e_cat -> 54.598 (1.5s)
+  & count e_dog -> 7.389 (1.5s)
+  & count sum -> 62.987 (1.5s)
+  & count p_cat -> 0.867 (1.5s)
+  & count p_dog -> 0.117 (1.5s)
+  & count p_bird -> 0.016 (1.5s)
+  label check "sharper: the model is more confident"
+:::
 
 | Class | Score | e to the score | Divided by the sum 11.107 |
 | --- | --- | --- | --- |
@@ -1110,6 +1426,52 @@ Entropy uses one distribution, the true one. Cross-entropy uses two. The truth f
 $$H(p, q) = -\\sum_{i} p_i \\log_2(q_i)$$
 
 In words: the cross-entropy equals the sum over outcomes of the true probability times the surprise under the predicted probability. If your prediction q equals the truth p, the cross-entropy equals the entropy. If your prediction is wrong, the cross-entropy is larger. It is never smaller. The gap between the cross-entropy and the entropy is called the Kullback-Leibler (KL) divergence, and it measures how far q is from p.
+
+The animation reads the loss off the surprise curve for the cat photo, the bird photo and a batch.
+
+:::anim
+title: Cross-entropy is the surprise at the probability given to the truth
+axes ax @ 110,70 size: 520x370 x: 0,1 y: 0,7 xlabel: "probability the model gave the true class" ylabel: "surprise in bits"
+curve s on ax = -log2(x) color: blue label: "-log2(p)"
+dot ball on ax @ 1,0 r: 9 color: yellow
+dot d1 on ax @ 0.665,0.589 r: 7 color: green
+dot d2 on ax @ 0.5,1 r: 7 color: green
+dot d3 on ax @ 0.1,3.322 r: 7 color: green
+text truth "truth: cat" @ 800,110 size: 22 color: yellow
+num q = 1 @ 800,170 prefix: "q(truth) = " digits: 3 size: 26
+num loss = 0 @ 800,230 prefix: "loss = " suffix: " bits" digits: 3 size: 26
+text note "model: cat 0.665|dog 0.245|bird 0.090" @ 800,320 size: 16 color: grey
+text note2 "surprises 0.589, 1 and 3.322|sum 4.911" @ 800,320 size: 16 color: grey
+num batch = 0 @ 800,420 prefix: "mean = " suffix: " bits" digits: 3 size: 24
+
+step: Surprise is minus log base 2 of a probability. The curve climbs steeply as the probability falls.
+  show ax
+  draw s
+step: The model predicted cat 0.665, dog 0.245 and bird 0.090. The photo shows a cat.
+  show note, truth
+step: A sure right answer costs 0 bits. Slide to 0.665, the cat probability: the loss is 0.589 bits.
+  show ball, q, loss
+  walk ball along s from 1 to 0.665 (2s)
+  & count q -> 0.665 (2s)
+  & count loss -> 0.589 (2s)
+step: Now suppose the photo shows a bird. The model gave bird only 0.090.
+  label truth "truth: bird"
+  walk ball along s from 0.665 to 0.09 (2.5s)
+  & count q -> 0.09 (2.5s)
+  & count loss -> 3.474 (2.5s)
+step: The same prediction now costs 3.474 bits. Confidence in a wrong answer is punished hard.
+  highlight ball
+  pulse loss
+step: A batch of 3 photos gives its true class 0.665, 0.5 and 0.1: surprises 0.589, 1 and 3.322.
+  hide ball, truth, q, loss, note
+  show d1, d2, d3, note2
+step: The training loss is the mean: 4.911 over 3 is 1.637 bits. Training pushes every dot down the curve.
+  show batch
+  count batch -> 1.637
+  walk d3 along s from 0.1 to 0.25 (2s)
+  & walk d2 along s from 0.5 to 0.6 (2s)
+  & walk d1 along s from 0.665 to 0.75 (2s)
+:::
 
 Now the running example. The classifier predicted cat 0.665, dog 0.245, bird 0.090 for a photo. The photo shows a cat. The true distribution p is cat 1, dog 0, bird 0, because the truth is certain. Put it into the formula. The terms for dog and bird vanish, because their true probability is 0. Only the cat term survives:
 

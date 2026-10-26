@@ -78,6 +78,53 @@ Each step removes one guess. The model never became smarter. The prompt became c
 
 A good prompt has up to five parts. You do not always need all five, but you should know which one you left out and why. The table lists the parts with the bicycle shop text for each.
 
+:::anim
+title: Five prompt parts remove the guesses the model would make
+rect role @ 180,110 size: 230x60 "Role: Hill Cycles agent" color: purple
+rect instr @ 180,190 size: 230x60 "Instruction: write a reply" color: blue
+rect ctx @ 180,270 size: 230x60 "Context: ships in 2 days" color: green
+rect ex @ 180,350 size: 230x60 "Example: order 4318 reply" color: teal
+rect fmt @ 180,430 size: 230x60 "Format: 3 sentences" color: orange
+box model "Model" @ 480,270 icon: model
+text msg "Customer: bent wheel, race on|Saturday, order 4471" @ 480,130 size: 15 color: grey
+rect reply @ 780,270 size: 240x130 "Generic apology|180 words|invents a refund policy"
+num guesses = 4 @ 780,110 prefix: "guesses left: " size: 26 color: yellow
+
+step: The vague prompt is only the instruction and the customer message. The model guesses tone, policy and length.
+  show instr, msg, model, guesses
+  arrow instr -> model : prompt
+  show reply
+  arrow model -> reply : reply
+step: Add a role in the system prompt. The reply now sounds like a bicycle shop, not a bank.
+  show role
+  arrow role -> model : role
+  send model -> reply : reply
+  label reply "Shop tone|150 words|still invents a refund"
+  & count guesses -> 3
+step: Add context: wheels ship in 2 working days and today is Wednesday. The reply promises Friday.
+  show ctx
+  arrow ctx -> model : facts
+  send model -> reply : reply
+  label reply "Shop tone|promises Friday|no invented refund"
+  & count guesses -> 2
+step: Add one finished reply for order 4318. The new reply copies its short, warm style.
+  show ex
+  arrow ex -> model : pattern
+  send model -> reply : reply
+  label reply "Shop style|5 sentences|promises Friday"
+  & count guesses -> 1
+step: Add the format rule. The reply is 3 sentences, names order 4471 and ends with one next step.
+  show fmt
+  arrow fmt -> model : format
+  send model -> reply : reply
+  label reply "3 sentences|names order 4471|one next step"
+  & count guesses -> 0
+  highlight reply
+step: Each part removed one guess. The model never became smarter. The prompt became clearer.
+  highlight role, instr, ctx, ex, fmt
+  pulse reply
+:::
+
 | Part | What it gives the model | Bicycle shop example |
 | --- | --- | --- |
 | Role | who the model is and how it speaks | You are the support agent of Hill Cycles. You are warm and brief. |
@@ -269,6 +316,69 @@ why: Watch all 11 minutes. StatQuest shows softmax turning raw scores into proba
 A language model ends each step with one number per token in its vocabulary. That number is a logit, a raw score that can be any value, positive or negative. The model does not pick a token from logits directly. It first turns them into probabilities with softmax, and then it samples: it draws one token at random with those probabilities.
 
 Here is the running example. The prompt is "The cat sat on the". Pretend the vocabulary has only 3 tokens: mat, floor and moon. The model gives them the logits 2, 1 and 0. These 3 numbers are the whole input to this lesson.
+
+:::anim
+title: Softmax turns the logits into probabilities and temperature reshapes them
+rect mat @ 150,170 size: 110x50 "mat" color: blue
+rect floor @ 150,270 size: 110x50 "floor" color: blue
+rect moon @ 150,370 size: 110x50 "moon" color: blue
+text h1 "logit" @ 330,110 size: 16 color: grey
+text h2 "e to the power" @ 530,110 size: 16 color: grey
+text h3 "probability" @ 760,110 size: 16 color: grey
+num l1 = 2 @ 330,170 digits: 1 size: 26
+num l2 = 1 @ 330,270 digits: 1 size: 26
+num l3 = 0 @ 330,370 digits: 1 size: 26
+num e1 = 0 @ 530,170 digits: 3 size: 26
+num e2 = 0 @ 530,270 digits: 3 size: 26
+num e3 = 0 @ 530,370 digits: 3 size: 26
+num p1 = 0 @ 760,170 digits: 3 size: 28 color: yellow
+num p2 = 0 @ 760,270 digits: 3 size: 28 color: yellow
+num p3 = 0 @ 760,370 digits: 3 size: 28 color: yellow
+num temp = 1 @ 220,470 prefix: "temperature = " digits: 1 size: 24 color: yellow
+num sum = 0 @ 530,470 prefix: "sum = " digits: 3 size: 22 color: grey
+
+step: The prompt is "The cat sat on the". The model scores three tokens with the logits 2, 1 and 0.
+  show mat, floor, moon, h1, l1, l2, l3
+step: At temperature 1 the logits stay as they are. Raise e to each one: 7.389, 2.718 and 1.000.
+  show temp, h2, e1, e2, e3
+  count e1 -> 7.389
+  & count e2 -> 2.718
+  & count e3 -> 1
+step: Divide each result by their sum, 11.107. The probabilities are 0.665, 0.245 and 0.090.
+  show sum
+  count sum -> 11.107
+  show h3, p1, p2, p3
+  count p1 -> 0.665
+  & count p2 -> 0.245
+  & count p3 -> 0.090
+step: Set the temperature to 0.5. Every logit is divided by 0.5, so they become 4, 2 and 0.
+  count temp -> 0.5
+  count l1 -> 4
+  & count l2 -> 2
+step: The powers of e become 54.598, 7.389 and 1.000. Mat takes 0.867 of the total. Moon almost vanishes.
+  count e1 -> 54.598
+  & count e2 -> 7.389
+  & count sum -> 62.987
+  count p1 -> 0.867
+  & count p2 -> 0.117
+  & count p3 -> 0.016
+  color moon grey
+step: Set the temperature to 2. The logits become 1, 0.5 and 0, so the scores sit close together.
+  count temp -> 2
+  count l1 -> 1
+  & count l2 -> 0.5
+  color moon blue
+step: Mat now wins only half the time, 0.506, and moon appears in 0.186 of the draws.
+  count e1 -> 2.718
+  & count e2 -> 1.649
+  & count sum -> 5.367
+  count p1 -> 0.506
+  & count p2 -> 0.307
+  & count p3 -> 0.186
+step: The order never changes: mat first, moon last. Temperature changes how much the leader wins, not who leads.
+  highlight mat
+  pulse p1, p2, p3
+:::
 
 ### Softmax by hand
 
@@ -518,6 +628,54 @@ why: Watch the first 12 minutes. NetworkChuck installs Ollama and runs an open m
 
 Here is the running example. Hill Cycles, the bicycle shop from the last two lessons, wants a model to draft support replies. The shop receives 2,000 messages per day. Each message with its prompt is about 400 tokens of input, and each reply is about 100 tokens of output. The replies are read by a person before they are sent, so a mistake is caught but costs time. Customer messages contain names and addresses.
 
+:::anim
+title: Pricing the three model paths for Hill Cycles
+box shop "Support app" @ 160,290 icon: browser
+num msgs = 0 @ 170,150 suffix: " messages per day" size: 22 color: yellow
+num intok = 0 @ 170,410 suffix: "M input tokens a month" size: 18
+num outtok = 0 @ 170,450 suffix: "M output tokens a month" size: 18
+box small "Small API model" @ 560,150 icon: model color: green
+box large "Large API model" @ 560,290 icon: model color: red
+box local "Local 7B model" @ 560,430 icon: gpu
+text psmall "0.25 in, 1.25 out per million tokens" @ 560,200 size: 14 color: grey
+text plarge "3 in, 15 out per million tokens" @ 560,340 size: 14 color: grey
+num csmall = 0 @ 820,150 suffix: " dollars a month" digits: 2 size: 26 color: green
+num clarge = 0 @ 820,290 suffix: " dollars a month" digits: 2 size: 26 color: red
+num mins = 0 @ 820,430 suffix: " min of laptop a day" size: 20
+num total = 0 @ 820,430 prefix: "about " suffix: " dollars a month" size: 26 color: yellow
+
+step: Hill Cycles receives 2,000 messages per day. Each one is about 400 tokens in and 100 tokens out.
+  show shop, msgs
+  count msgs -> 2000
+step: Over 30 days that is 60,000 messages: 24 million input tokens and 6 million output tokens.
+  show intok, outtok
+  count intok -> 24
+  & count outtok -> 6
+step: A small API model charges 0.25 dollars per million input tokens and 1.25 per million output tokens.
+  show small, psmall
+  arrow shop -> small : 24M in, 6M out
+step: 24 times 0.25 plus 6 times 1.25 is 6 plus 7.50: 13.50 dollars a month.
+  show csmall
+  count csmall -> 13.5 (2s)
+step: A large model charges 3 and 15 dollars per million. The same tokens cost 72 plus 90: 162 dollars.
+  show large, plarge
+  arrow shop -> large : same tokens
+  show clarge
+  count clarge -> 162 (2s)
+step: A local 7B model costs 0 dollars per token but ties up the shop laptop for 100 minutes a day.
+  show local, mins
+  arrow a3 = shop -> local : 2,000 messages
+  count mins -> 100
+step: Decide: send 95 percent of messages to the small model and the 5 percent about refunds to the large one.
+  hide local, mins, a3
+  send shop -> small : 95 percent
+  send shop -> large : 5 percent
+  highlight small
+step: The expected bill is about 21 dollars a month. Arithmetic made the choice, not opinion.
+  show total
+  count total -> 21 (1.5s)
+:::
+
 The table is the decision table for this lesson. Each row is one question, and the last column is the shop's answer.
 
 | Question | Option A | Option B | Hill Cycles |
@@ -765,6 +923,55 @@ A benchmark is a fixed public set of questions with known answers. Every model a
 Benchmarks have two limits. First, the questions are public, so some of them appear in training data, and a model can score well by memory. Second, no benchmark contains your task. Nobody has a benchmark for bicycle shop replies. So you build an eval set: your own test inputs with expected outputs and a scoring rule.
 
 Here is the running example. Hill Cycles writes 30 real customer messages into a table. For each one, the shop records what a correct reply must contain and must not contain. The scoring rules are simple checks a program can run: the reply names the order number, it has at most 3 sentences, and it does not promise a refund. The diagram shows the loop.
+
+:::anim
+title: Scoring the eval set, fixing the prompt and running it again
+box evalset "Eval set" @ 160,150 icon: dataset
+box model "Model" @ 480,150 icon: model
+box scorer "Scorer" @ 800,150 icon: check
+box prompt "System prompt" @ 480,470 icon: file
+rect r1 @ 110,300 size: 70x50 "4471" color: blue
+rect r2 @ 190,300 size: 70x50 "no order" color: blue
+rect r3 @ 270,300 size: 70x50 "refund" color: blue
+text rules "names the order number|at most 3 sentences|no refund promise" @ 800,220 size: 14 color: grey
+num passed = 0 @ 160,410 prefix: "passed " suffix: " of 30" size: 24
+num pct = 0 @ 160,470 prefix: "score " suffix: "%" size: 30 color: yellow
+
+step: The eval set holds 30 real customer messages. Each row says what a correct reply must contain.
+  show evalset, r1, r2, r3
+step: Row 1, the bent wheel for order 4471, goes to the model, which writes a reply.
+  show model
+  move r1 -> 480,300
+step: The scorer checks three rules: names 4471, at most 3 sentences, no refund promise. Row 1 passes.
+  show scorer, rules, passed
+  move r1 -> 800,300
+  color r1 green
+  move r1 -> 700,410
+  & count passed -> 1
+step: Row 2 has no order number. The reply asks for it in 2 sentences. Pass.
+  move r2 -> 480,300
+  move r2 -> 800,300
+  color r2 green
+  move r2 -> 780,410
+  & count passed -> 2
+step: Row 3 demands a refund. The reply says "we will refund you in full". That breaks a rule. Fail.
+  move r3 -> 480,300
+  move r3 -> 800,300
+  color r3 red
+  move r3 -> 860,410
+step: After all 30 rows, 24 pass: a score of 80 percent. Five of the six failures promise a refund.
+  show pct
+  count passed -> 24 (2s)
+  & count pct -> 80 (2s)
+step: The fix is one line in the system prompt: never promise a refund. Run the 30 rows again.
+  show prompt
+  arrow scorer -> prompt : fix the worst failure
+  arrow prompt -> model : run again
+step: Now 29 rows pass, 97 percent. The one failure goes to human review. The shop knows its number.
+  count passed -> 29
+  & count pct -> 97
+  highlight pct
+:::
 
 :::flow
 title: The evaluation loop

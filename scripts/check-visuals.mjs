@@ -14,13 +14,13 @@ const only = fileIdx < 0 ? args[0] : null
 
 const vite = await createServer({ root: process.cwd(), server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' })
 const comps = {}
-for (const n of ['Flow', 'Timeline', 'Scenario', 'Bars', 'Matrix', 'Quiz', 'Video', 'Code', 'Arch', 'Exercise']) comps[n.toLowerCase()] = (await vite.ssrLoadModule(`/src/components/rich/${n}.tsx`))[n]
+for (const n of ['Flow', 'Timeline', 'Scenario', 'Bars', 'Matrix', 'Quiz', 'Video', 'Code', 'Arch', 'Exercise', 'Graph']) comps[n.toLowerCase()] = (await vite.ssrLoadModule(`/src/components/rich/${n}.tsx`))[n]
 const { videos } = await vite.ssrLoadModule('/src/data/videos.ts')
 const videoIds = new Set(videos.filter((v) => v.id).map((v) => v.id))
 const { parseQuiz } = await vite.ssrLoadModule('/src/lib/quiz.ts')
 const { dedent } = await vite.ssrLoadModule('/src/components/rich/index.tsx')
 
-const KINDS = 'flow|timeline|scenario|bars|matrix|quiz|video|code|arch|exercise'
+const KINDS = 'flow|timeline|scenario|bars|matrix|quiz|video|code|arch|exercise|graph'
 const HEADINGS = ['## What this lesson covers', '## Why it matters', '## The idea with an example', '## How it works', '## Try it', '## Common mistakes', '## Check your understanding', '## Go further']
 
 let problems = 0
@@ -76,6 +76,12 @@ function checkLesson(path, l, strict) {
       if (!/^why\s*:/m.test(src)) problem(path, 'video has no why:')
     }
     if (kind === 'code' && !/^lang\s*:/m.test(src)) problem(path, 'code block has no lang:')
+    if (kind === 'graph') {
+      if (!/^x\s*:/m.test(src)) problem(path, 'graph has no x: range')
+      if (!/^(f|points)\s*:/m.test(src)) problem(path, 'graph has no f: or points: line')
+      if (!html.includes('gr-line') && !html.includes('gr-dot')) problem(path, 'graph draws no curve or points (check the expression)')
+    }
+    if (kind === 'timeline') for (const ln of src.split('\n')) { const t = ln.trim(); if (t && !/^(title|unit)\s*:/.test(t) && !/^lane\s+/.test(t) && !/@/.test(t)) problem(path, `timeline line has no @time: "${t.slice(0, 40)}"`) }
     if (kind === 'exercise') {
       if (!/^task\s*:/m.test(src)) problem(path, 'exercise has no task:')
       if (!/^solution\s*:\s*$/m.test(src)) problem(path, 'exercise has no solution:')
@@ -84,7 +90,7 @@ function checkLesson(path, l, strict) {
   }
   const hasTable = /^\|.*\|\s*\n\|\s*-+/m.test(body)
   const missing = []
-  if (!(kinds.has('flow') || kinds.has('timeline') || kinds.has('matrix') || kinds.has('arch'))) missing.push('diagram')
+  if (!(kinds.has('flow') || kinds.has('timeline') || kinds.has('matrix') || kinds.has('arch') || kinds.has('graph'))) missing.push('diagram')
   if (!kinds.has('scenario')) missing.push('scenario')
   if (!hasTable) missing.push('table')
   if (!kinds.has('quiz')) missing.push('quiz')
@@ -129,7 +135,7 @@ if (file) {
       total++
       const r = checkLesson(`${t.slug}/${m.slug}/${l.slug}`, l, false)
       blocks += r.blocks; questions += r.quizQuestions
-      if (r.kinds.has('flow') || r.kinds.has('timeline') || r.kinds.has('matrix') || r.kinds.has('arch')) withDiagram++
+      if (r.kinds.has('flow') || r.kinds.has('timeline') || r.kinds.has('matrix') || r.kinds.has('arch') || r.kinds.has('graph')) withDiagram++
       if (r.kinds.has('scenario')) withScenario++
       if (r.kinds.has('quiz')) withQuiz++
       if (r.kinds.has('video')) withVideo++

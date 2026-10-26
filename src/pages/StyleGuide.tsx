@@ -21,7 +21,7 @@ const rules: { title: string; text: string; bad: string; good: string }[] = [
 
 
 const demo = `
-Every lesson uses five kinds of visual block in addition to tables. The reader can press Play, step through, or replay each one.
+Lessons use eleven kinds of visual block in addition to tables. Diagrams animate, charts answer to the pointer, and every one can be replayed or stepped through.
 
 **Flow.** Boxes and arrows. A packet travels along each arrow in the order the data moves. Press the arrows to step.
 
@@ -155,6 +155,20 @@ why: True without quotes is a boolean. With quotes it is text.
 :::video
 id: aircAruvnKk
 why: Watch the first ten minutes. It shows the layers that the lesson describes in words.
+:::
+
+**Graph.** A function plot with an animated curve, a point series that appears step by step, a tangent, and a hover readout.
+
+:::graph
+title: Gradient descent on f(x) = (x - 3)^2 with learning rate 0.1
+x: -1, 7
+y: 0, 16
+xlabel: x
+ylabel: f(x)
+f: loss = (x-3)^2
+points: descent steps | 0 9, 0.6 5.76, 1.08 3.686, 1.464 2.359, 1.771 1.51, 2.017 0.966
+tangent: 0
+vline: 3 = minimum
 :::
 
 **Table.** For any set of numbers or definitions.

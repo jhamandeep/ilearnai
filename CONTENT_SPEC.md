@@ -50,7 +50,7 @@ Rules per section:
 
 1. **What this lesson covers.** 2 to 4 sentences. Name the one thing the reader learns and what they will be able to do.
 2. **Why it matters.** Connect it to the end goal (building an AI system) and to the next lesson. Include a `:::video` block here or in the next section when a matching video exists in the bank (section 7).
-3. **The idea with an example.** Start with an **everyday analogy** (one short paragraph, a `>` blockquote beginning with `**Analogy.**`). Then one **worked example with concrete numbers or concrete text**, carried through every step. Include at least one `:::flow`, `:::arch`, `:::timeline` or `:::matrix` diagram and one `:::scenario` step player that walks the example.
+3. **The idea with an example.** Start with an **everyday analogy** (one short paragraph, a `>` blockquote beginning with `**Analogy.**`). Then one **worked example with concrete numbers or concrete text**, carried through every step. Include at least one `:::flow`, `:::arch`, `:::timeline`, `:::matrix` or `:::graph` diagram and one `:::scenario` step player that walks the example. Any lesson that has a function, a line, a loss curve or a distribution draws it with `:::graph`.
 4. **How it works.** The general mechanism. Use numbered steps. Include a table. Include code (`:::code`) whenever code exists for the topic. Mathematics uses `$...$` inline and `$$...$$` display, but at Level 0 and 1 each formula is **also written out in words** in the sentence that follows.
 5. **Try it.** At least one `:::exercise` block with a task, a hint and a solution. Level 0 to 1: an exercise the reader can do in under ten minutes on their own computer or on paper.
 6. **Common mistakes.** 3 to 5 bullets in the form "Mistake: … Fix: …".
@@ -216,6 +216,23 @@ why: Watch the first ten minutes. It shows the layers that this lesson describes
 :::
 ```
 `id:` **must be one of the ids in section 7** (they are verified). `why:` says what to watch for and how much to watch. Optional `start: 90` (seconds). One or two videos per lesson at most; at Level 0 and 1 almost every lesson should have one.
+
+### graph: a function plot or point series with a hover readout
+
+```
+:::graph
+title: Gradient descent on f(x) = (x - 3)^2
+x: -1, 7
+y: 0, 16
+xlabel: x
+ylabel: f(x)
+f: loss = (x-3)^2
+points: steps | 0 9, 0.6 5.76, 1.08 3.69, 1.464 2.36, 1.771 1.51
+tangent: 0
+vline: 3 = minimum
+:::
+```
+`x: min, max` is required. `y:` is optional (computed from the data). Up to three `f:` lines, each `name = expression` or just the expression, drawn as animated curves. Expressions use `x`, numbers, `+ - * / ^`, parentheses, `e`, `pi`, and the functions sin, cos, tan, exp, log (natural), log2, log10, sqrt, abs, tanh, max, min, relu, sigmoid; implicit multiplication such as `2x` works. `points: name | x y, x y, ...` draws a point series that appears one point at a time (good for descent steps or data). `tangent: x0` draws the tangent of the first curve at x0 with its slope. `vline: x = label` draws a labelled vertical guide. The reader moves the pointer over the plot to read every curve at that x. Use `graph` for any function, line, loss curve, activation, distribution or small data set; it counts as the lesson's diagram.
 
 ## 5. Pedagogy rules (course design)
 

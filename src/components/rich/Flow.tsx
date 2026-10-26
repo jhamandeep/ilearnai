@@ -129,7 +129,7 @@ export function Flow({ src }: { src: string }) {
     <figure className="rich rich-flow">
       {title && <figcaption><span className="rich-kind">Flow</span>{title}</figcaption>}
       <div className="rich-stage rich-scroll" ref={tip.host}>
-        <svg viewBox={`0 0 ${width} ${fullHeight}`} width={width} height={fullHeight} role="img" aria-label={title ?? 'Flow diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
+        <svg viewBox={`0 0 ${width} ${fullHeight}`} width={width} height={fullHeight} style={{ width: "100%", maxWidth: width * 1.25 }} role="img" aria-label={title ?? 'Flow diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
           <defs>
             <marker id="rf-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--text-dim)" opacity="0.6" /></marker>
             <marker id="rf-arrow-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--primary)" /></marker>

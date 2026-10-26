@@ -233,10 +233,13 @@ export function parseAnim(src: string): Scene {
           const on = onAxes(rest, o, where)
           if (!on) { errors.push(`${where}: curve "${id}" needs "on AXES"`); continue }
           const eq = rest.indexOf('=')
-          const expr = eq >= 0 ? rest.slice(eq + 1).join(' ') : ''
+          const exprTokens = eq >= 0 ? rest.slice(eq + 1) : []
+          const dashed = rest.slice(0, Math.max(0, eq)).includes('dashed') || exprTokens[exprTokens.length - 1] === 'dashed'
+          if (exprTokens[exprTokens.length - 1] === 'dashed') exprTokens.pop()
+          const expr = exprTokens.join(' ')
           const f = compileExpr(expr)
           if (!f) { errors.push(`${where}: curve "${id}" has no valid expression (${expr || 'empty'})`); continue }
-          add({ kind: 'curve', id, x: 0, y: 0, w: 0, h: 0, label: o.label ?? '', on, expr, f, color, dashed: rest.includes('dashed') })
+          add({ kind: 'curve', id, x: 0, y: 0, w: 0, h: 0, label: o.label ?? '', on, expr, f, color, dashed })
           break
         }
         case 'vector':

@@ -41,7 +41,8 @@ function centerOf(scene: Scene, o: Obj, pos: XY): XY {
   if (o.kind === 'vector' || o.kind === 'line') { const a = toStage(scene, o, o.from!); const b = toStage(scene, o, o.to!); return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }
   return pos
 }
-function connector(a: Obj, ac: XY, b: Obj, bc: XY, off = 0) {
+interface Obstacle { x: number; y: number; hw: number; hh: number }
+function connector(a: Obj, ac: XY, b: Obj, bc: XY, off = 0, obstacles: Obstacle[] = []) {
   const [ahw, ahh] = halfSize(a)
   const [bhw, bhh] = halfSize(b)
   const dx = bc[0] - ac[0]
@@ -65,6 +66,29 @@ function connector(a: Obj, ac: XY, b: Obj, bc: XY, off = 0) {
     angle = s > 0 ? 90 : -90
     const left = off !== 0 && s > 0
     lx = (p1[0] + p2[0]) / 2 + (left ? -12 : 12); ly = my; anchor = left ? 'end' : 'start'
+  }
+  // if a box sits in the way, bow the connector around it
+  const lo = (i: number) => Math.min(p1[i], p2[i])
+  const hi = (i: number) => Math.max(p1[i], p2[i])
+  const hit = obstacles.find((o) => o.x + o.hw > lo(0) + 4 && o.x - o.hw < hi(0) - 4 && o.y + o.hh > lo(1) + 4 && o.y - o.hh < hi(1) - 4)
+  if (hit) {
+    const mx = (p1[0] + p2[0]) / 2
+    const my = (p1[1] + p2[1]) / 2
+    if (horizontal) {
+      const up = hit.y >= my // obstacle below or level: go above
+      const reach = hit.hh + 40
+      const cy = my + (up ? -1 : 1) * reach * 2
+      d = `M ${p1[0]} ${p1[1]} Q ${mx} ${cy}, ${p2[0]} ${p2[1]}`
+      angle = (Math.atan2(p2[1] - cy, p2[0] - mx) * 180) / Math.PI
+      ly = my + (up ? -1 : 1) * reach - (up ? 10 : -18)
+    } else {
+      const leftSide = hit.x >= mx
+      const reach = hit.hw + 40
+      const cx = mx + (leftSide ? -1 : 1) * reach * 2
+      d = `M ${p1[0]} ${p1[1]} Q ${cx} ${my}, ${p2[0]} ${p2[1]}`
+      angle = (Math.atan2(p2[1] - my, p2[0] - cx) * 180) / Math.PI
+      lx = mx + (leftSide ? -1 : 1) * reach + (leftSide ? -8 : 8); anchor = leftSide ? 'end' : 'start'
+    }
   }
   return { d, p2, angle, lx, ly, anchor }
 }
@@ -142,6 +166,9 @@ export function Anim({ src }: { src: string }) {
     const pos = new Map<string, XY>() // current stage position of movable objects
     for (const o of scene.objects) pos.set(o.id, o.kind === 'axes' ? [o.x, o.y] : toStage(scene, o, [o.x, o.y]))
     const meas = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    meas.setAttribute('fill', 'none')
+    meas.setAttribute('stroke', 'none')
+    meas.setAttribute('visibility', 'hidden')
     svg.appendChild(meas)
     const lengthOf = (d: string) => { meas.setAttribute('d', d); return meas.getTotalLength() }
     const labelIndex = new Map<string, number>()
@@ -357,7 +384,8 @@ export function Anim({ src }: { src: string }) {
       const B = objs.get(o.b!)
       if (!el || !A || !B) return
       const twoWay = scene.objects.some((x) => x.kind === 'arrow' && x.a === o.b && x.b === o.a)
-      const g = connector(A, centerOf(scene, A, pos.get(A.id)!), B, centerOf(scene, B, pos.get(B.id)!), twoWay ? 11 : 0)
+      const obstacles: Obstacle[] = scene.objects.filter((x) => (x.kind === 'box' || x.kind === 'rect') && x.id !== A.id && x.id !== B.id).map((x) => { const c = centerOf(scene, x, pos.get(x.id)!); return { x: c[0], y: c[1], hw: x.w / 2, hh: x.h / 2 } })
+      const g = connector(A, centerOf(scene, A, pos.get(A.id)!), B, centerOf(scene, B, pos.get(B.id)!), twoWay ? 11 : 0, obstacles)
       const path = el.querySelector('path')!
       const head = el.querySelector('[data-head]')!
       const lab = el.querySelector('text')

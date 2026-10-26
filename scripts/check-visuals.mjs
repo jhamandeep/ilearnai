@@ -14,13 +14,14 @@ const only = fileIdx < 0 ? args[0] : null
 
 const vite = await createServer({ root: process.cwd(), server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' })
 const comps = {}
-for (const n of ['Flow', 'Timeline', 'Scenario', 'Bars', 'Matrix', 'Quiz', 'Video', 'Code', 'Arch', 'Exercise', 'Graph']) comps[n.toLowerCase()] = (await vite.ssrLoadModule(`/src/components/rich/${n}.tsx`))[n]
+for (const n of ['Flow', 'Timeline', 'Scenario', 'Bars', 'Matrix', 'Quiz', 'Video', 'Code', 'Arch', 'Exercise', 'Graph', 'Anim']) comps[n.toLowerCase()] = (await vite.ssrLoadModule(`/src/components/rich/${n}.tsx`))[n]
 const { videos } = await vite.ssrLoadModule('/src/data/videos.ts')
 const videoIds = new Set(videos.filter((v) => v.id).map((v) => v.id))
 const { parseQuiz } = await vite.ssrLoadModule('/src/lib/quiz.ts')
 const { dedent } = await vite.ssrLoadModule('/src/components/rich/index.tsx')
+const { parseAnim } = await vite.ssrLoadModule('/src/components/rich/anim-parse.ts')
 
-const KINDS = 'flow|timeline|scenario|bars|matrix|quiz|video|code|arch|exercise|graph'
+const KINDS = 'flow|timeline|scenario|bars|matrix|quiz|video|code|arch|exercise|graph|anim'
 const HEADINGS = ['## What this lesson covers', '## Why it matters', '## The idea with an example', '## How it works', '## Try it', '## Common mistakes', '## Check your understanding', '## Go further']
 
 let problems = 0
@@ -81,6 +82,47 @@ function checkLesson(path, l, strict) {
       if (!/^(f|points)\s*:/m.test(src)) problem(path, 'graph has no f: or points: line')
       if (!html.includes('gr-line') && !html.includes('gr-dot')) problem(path, 'graph draws no curve or points (check the expression)')
     }
+    if (kind === 'anim') {
+      const sc = parseAnim(src)
+      for (const e of sc.errors) problem(path, `anim: ${e}`)
+      if (sc.steps.length < 3) problem(path, 'anim has fewer than 3 steps')
+      if (sc.steps.some((st) => st.actions.length === 0)) problem(path, 'anim step has no actions')
+      if (!sc.steps.some((st) => st.actions.some((a) => ['arrow', 'send', 'move', 'walk', 'vector', 'tangent', 'count', 'draw', 'zoom'].includes(a.op)))) problem(path, 'anim has no motion (arrow, move, walk, count, draw…)')
+      const shown = new Set(sc.steps.flatMap((st) => st.actions.filter((a) => ['show', 'draw', 'arrow', 'send'].includes(a.op)).flatMap((a) => a.ids)))
+      for (const o of sc.objects) if (o.kind !== 'arrow' && !shown.has(o.id)) problem(path, `anim object "${o.id}" is never shown (add it to a show line)`)
+      // stage bounds for objects in stage units
+      for (const o of sc.objects) {
+        if (o.on || ['curve', 'vector', 'line', 'tangent', 'arrow'].includes(o.kind)) continue
+        const hw = o.kind === 'axes' ? 0 : (o.w || 40) / 2, hh = o.kind === 'axes' ? 0 : (o.h || 30) / 2
+        const right = o.kind === 'axes' ? o.x + o.w : o.x + hw, bottom = o.kind === 'axes' ? o.y + o.h : o.y + hh
+        if (o.x - hw < 0 || o.y - hh < 0 || right > 960 || bottom > 540) problem(path, `anim object "${o.id}" is off the 960x540 stage`)
+      }
+      // boxes and rects must not overlap each other
+      const solid = sc.objects.filter((o) => o.kind === 'box' || o.kind === 'rect')
+      for (let i = 0; i < solid.length; i++) for (let j = i + 1; j < solid.length; j++) {
+        const a = solid[i], b = solid[j]
+        if (Math.abs(a.x - b.x) < (a.w + b.w) / 2 && Math.abs(a.y - b.y) < (a.h + b.h) / 2) problem(path, `anim boxes "${a.id}" and "${b.id}" overlap`)
+      }
+      // arrows need both ends visible; count total length
+      const visible = new Set()
+      let total = 0
+      for (const st of sc.steps) {
+        for (const a of st.actions) {
+          if (['show', 'draw'].includes(a.op)) for (const id of a.ids) visible.add(id)
+          if (a.op === 'hide') for (const id of a.ids) visible.delete(id)
+          if (a.op === 'arrow' || a.op === 'send') {
+            const ar = sc.objects.find((o) => o.id === a.ids[0])
+            if (ar) for (const end of [ar.a, ar.b]) if (end && !visible.has(end)) problem(path, `anim arrow ${ar.a} -> ${ar.b}: "${end}" is not shown yet (show it first)`)
+          }
+          if (!a.parallel) total += a.dur ?? 1
+        }
+        total += st.hold ?? Math.min(6, Math.max(1.4, st.text.split(/\s+/).length * 0.3))
+        const words = st.text.split(/\s+/).filter(Boolean).length
+        if (words > 32) problem(path, `anim narration is too long (${words} words): "${st.text.slice(0, 40)}..."`)
+      }
+      if (sc.steps.length > 9) problem(path, `anim has ${sc.steps.length} steps (keep 4 to 8)`)
+      if (total > 100) problem(path, `anim runs about ${Math.round(total)} s (keep it under 90 s)`)
+    }
     if (kind === 'timeline') for (const ln of src.split('\n')) { const t = ln.trim(); if (t && !/^(title|unit)\s*:/.test(t) && !/^lane\s+/.test(t) && !/@/.test(t)) problem(path, `timeline line has no @time: "${t.slice(0, 40)}"`) }
     if (kind === 'exercise') {
       if (!/^task\s*:/m.test(src)) problem(path, 'exercise has no task:')
@@ -90,7 +132,7 @@ function checkLesson(path, l, strict) {
   }
   const hasTable = /^\|.*\|\s*\n\|\s*-+/m.test(body)
   const missing = []
-  if (!(kinds.has('flow') || kinds.has('timeline') || kinds.has('matrix') || kinds.has('arch') || kinds.has('graph'))) missing.push('diagram')
+  if (!(kinds.has('flow') || kinds.has('timeline') || kinds.has('matrix') || kinds.has('arch') || kinds.has('graph') || kinds.has('anim'))) missing.push('diagram')
   if (!kinds.has('scenario')) missing.push('scenario')
   if (!hasTable) missing.push('table')
   if (!kinds.has('quiz')) missing.push('quiz')
@@ -130,12 +172,13 @@ if (file) {
   const { tracks } = await vite.ssrLoadModule('/src/data/tracks.ts')
   for (const t of tracks) {
     if (only && t.slug !== only) continue
-    let withDiagram = 0, withScenario = 0, withTable = 0, withQuiz = 0, withVideo = 0, withCode = 0, withExercise = 0, total = 0, blocks = 0, questions = 0
+    let withAnim = 0, withDiagram = 0, withScenario = 0, withTable = 0, withQuiz = 0, withVideo = 0, withCode = 0, withExercise = 0, total = 0, blocks = 0, questions = 0
     for (const m of t.modules) for (const l of m.lessons) {
       total++
       const r = checkLesson(`${t.slug}/${m.slug}/${l.slug}`, l, false)
       blocks += r.blocks; questions += r.quizQuestions
-      if (r.kinds.has('flow') || r.kinds.has('timeline') || r.kinds.has('matrix') || r.kinds.has('arch') || r.kinds.has('graph')) withDiagram++
+      if (r.kinds.has('flow') || r.kinds.has('timeline') || r.kinds.has('matrix') || r.kinds.has('arch') || r.kinds.has('graph') || r.kinds.has('anim')) withDiagram++
+      if (r.kinds.has('anim')) withAnim++
       if (r.kinds.has('scenario')) withScenario++
       if (r.kinds.has('quiz')) withQuiz++
       if (r.kinds.has('video')) withVideo++
@@ -143,7 +186,7 @@ if (file) {
       if (r.kinds.has('exercise')) withExercise++
       if (r.hasTable) withTable++
     }
-    console.log(`${t.slug}: ${total} lessons · diagram ${withDiagram} · scenario ${withScenario} · table ${withTable} · quiz ${withQuiz} (${questions} q) · video ${withVideo} · code ${withCode} · exercise ${withExercise} · blocks ${blocks}`)
+    console.log(`${t.slug}: ${total} lessons · anim ${withAnim} · diagram ${withDiagram} · scenario ${withScenario} · table ${withTable} · quiz ${withQuiz} (${questions} q) · video ${withVideo} · code ${withCode} · exercise ${withExercise} · blocks ${blocks}`)
   }
 }
 console.log(problems ? `${problems} problems` : 'no problems')

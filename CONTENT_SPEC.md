@@ -232,7 +232,83 @@ tangent: 0
 vline: 3 = minimum
 :::
 ```
-`x: min, max` is required. `y:` is optional (computed from the data). Up to three `f:` lines, each `name = expression` or just the expression, drawn as animated curves. Expressions use `x`, numbers, `+ - * / ^`, parentheses, `e`, `pi`, and the functions sin, cos, tan, exp, log (natural), log2, log10, sqrt, abs, tanh, max, min, relu, sigmoid; implicit multiplication such as `2x` works. `points: name | x y, x y, ...` draws a point series that appears one point at a time (good for descent steps or data). `tangent: x0` draws the tangent of the first curve at x0 with its slope. `vline: x = label` draws a labelled vertical guide. The reader moves the pointer over the plot to read every curve at that x. Use `graph` for any function, line, loss curve, activation, distribution or small data set; it counts as the lesson's diagram.
+`x: min, max` is required. `y:` is optional (computed from the data). Up to three `f:` lines, each `name = expression` or just the expression, drawn as animated curves. Expressions use `x`, numbers, `+ - * / ^`, parentheses, `e`, `pi`, and the functions sin, cos, tan, exp, log (natural), log2, log10, sqrt, abs, tanh, max, min, relu, sigmoid; implicit multiplication such as `2x` works. `points: name | x y, x y, ...` draws a point series that appears one point at a time (good for descent steps or data). `tangent: x0` draws the tangent of the first curve at x0 with its slope. `vline: x = label` draws a labelled vertical guide. The reader moves the pointer over the plot to read every curve at that x. Use `graph` for any function, line, loss curve, activation, distribution or small data set; it counts as the lesson's diagram. For an explanation that moves (a point descending a curve, a request crossing a system), use `anim` instead.
+
+### anim: a narrated, continuous animation (the main explainer of a lesson)
+
+An `anim` block is a short animated film with subtitles, in the style of 3Blue1Brown: one dark stage of 960 x 540 units, objects that appear, move, connect and change, and one narration line per scene. It plays when it scrolls into view, and the reader can pause, scrub, step and change speed. Use it for the one idea the lesson exists to teach. Every lesson should have one; put it under "How it works" (or "The idea with an example" for Level 0). It counts as the lesson's diagram.
+
+```
+:::anim
+title: One question through a chat app with retrieval
+box user "You" @ 110,270 icon: user
+box api "API server" @ 420,270 icon: server
+box vdb "Vector database" @ 420,450 icon: database
+box llm "LLM" @ 790,270 icon: model
+text q "What is a token?" @ 110,170 size: 18 color: yellow
+num chunks = 0 @ 650,450 suffix: " chunks" size: 24
+text note "The prompt holds the question|and the 5 chunks" @ 790,150 size: 16 color: grey
+
+step: You type a question in the browser. It goes to the API server.
+  show user, q, api
+  arrow user -> api : question
+step: The server turns the question into numbers and asks the vector database for similar text.
+  show vdb
+  arrow api -> vdb : embedding
+step: The database returns the five closest chunks.
+  show chunks
+  arrow vdb -> api : 5 chunks
+  & count chunks -> 5
+step: The server builds a prompt from the question and the chunks and sends it to the model.
+  show llm, note
+  arrow api -> llm : prompt
+step: The model writes an answer. The server streams it back to you.
+  arrow llm -> api : answer
+  arrow api -> user : answer
+  highlight llm
+:::
+```
+
+**Structure.** Objects are declared first, one per line. Then `step: narration` lines, each followed by its actions (indent them for readability). Objects start hidden; `show` them in the step where they matter so the picture builds up with the narration. Coordinates are stage units: x from 0 (left) to 960, y from 0 (top) to 540. Keep 60 units from the edges. Put the main objects on a grid (for example x = 110, 420, 790 and y = 150, 270, 450) so arrows are straight.
+
+**Objects** (`[...]` optional; strings with spaces go in double quotes; `|` in a string makes a line break):
+
+```
+box ID "Label" @ x,y [icon: name] [size: WxH] [color: c]      rounded box with an icon chosen from the label (server, database, model, user, browser, queue, cache, gpu, ...); icon: none hides it
+rect ID @ x,y size: WxH ["Label"] [color: c]                   plain rounded rectangle (a memory cell, a batch, a slot)
+text ID "Words" @ x,y [size: 20] [color: c] [anchor: start|middle|end]
+num ID = 0 @ x,y [prefix: "x = "] [suffix: " ms"] [digits: 2] [size: 30] [color: c]   a number that can count
+dot ID @ x,y [r: 7] [color: c] [label: "p"]                    a point; add "on AX" to use axes coordinates
+axes AX @ x,y size: WxH x: min,max y: min,max [xlabel: "x"] [ylabel: "y"]   a coordinate system; @ is its top-left corner
+curve ID on AX = expression [label: "loss"] [color: c] [dashed]   a function of x (same expression language as graph)
+vector ID on AX from x,y to x,y [label: "v"] [color: c]        an arrow with a head; also works without "on AX" in stage units
+line ID on AX from x,y to x,y [color: c] [dashed]
+tangent ID on CURVE at x0 [len: 1.5] [label: slope]           tangent of a curve; label: slope prints the live slope
+arrow ID from A to B ["label"] [color: c] [dashed]             a connector you can show later (arrows are usually made by the arrow action instead)
+```
+
+**Actions** (one per line under a step; a line that starts with `&` runs together with the previous action; add `(2s)` at the end to set the duration):
+
+```
+show IDS              fade and pop in (comma-separated ids; curves and vectors draw themselves)
+hide IDS
+draw IDS              trace a curve, vector or line
+arrow A -> B : label  draw a connector from the edge of A to the edge of B, then send a glowing packet along it
+send A -> B : label   send another packet along an existing connector
+move ID -> x,y        slide an object (axes coordinates if the object is on axes)
+walk ID along CURVE from x0 to x1     slide a dot along a curve
+vector ID -> x,y      move the tip of a vector
+tangent ID -> x1      slide a tangent along its curve
+count ID -> 42        animate a num to a new value
+label ID "new text"   change the words of a box, rect, text or vector
+highlight IDS         thick yellow outline        dim IDS   fade to 30%        restore IDS   undo both
+color IDS red         recolour (blue, yellow, green, red, purple, orange, teal, pink, white, grey or #hex)
+pulse IDS             a quick scale pulse
+zoom x,y 1.6          move the camera to a point at a scale; zoom reset returns
+wait 1.5
+```
+
+**Rules.** 4 to 8 steps; one sentence of narration per step (at most 20 words, STE); every step has at least one action; the scene must contain motion (arrows, moves, walks, counts, draws), not only shows. The narration says what the reader sees now, in the present tense. Name objects after the lesson's own terms. Numbers in a `num` must match the numbers in the prose. The validator reports unknown ids, bad coordinates, steps without actions and objects that are never shown. Add `[3s]` after a narration line to hold it longer.
 
 ## 5. Pedagogy rules (course design)
 

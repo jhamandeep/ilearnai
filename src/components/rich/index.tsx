@@ -11,8 +11,9 @@ const Code = lazy(() => import('./Code').then((m) => ({ default: m.Code })))
 const Arch = lazy(() => import('./Arch').then((m) => ({ default: m.Arch })))
 const Exercise = lazy(() => import('./Exercise').then((m) => ({ default: m.Exercise })))
 const Graph = lazy(() => import('./Graph').then((m) => ({ default: m.Graph })))
+const Anim = lazy(() => import('./Anim').then((m) => ({ default: m.Anim })))
 
-export const richKinds = ['flow', 'timeline', 'scenario', 'bars', 'matrix', 'quiz', 'video', 'code', 'arch', 'exercise', 'graph'] as const
+export const richKinds = ['flow', 'timeline', 'scenario', 'bars', 'matrix', 'quiz', 'video', 'code', 'arch', 'exercise', 'graph', 'anim'] as const
 export type RichKind = (typeof richKinds)[number]
 
 export function RichBlock({ kind, src }: { kind: RichKind; src: string }) {
@@ -27,6 +28,7 @@ export function RichBlock({ kind, src }: { kind: RichKind; src: string }) {
     kind === 'code' ? <Code src={src} /> :
     kind === 'arch' ? <Arch src={src} /> :
     kind === 'graph' ? <Graph src={src} /> :
+    kind === 'anim' ? <Anim src={src} /> :
     <Exercise src={src} />
   return <Suspense fallback={<div className="rich rich-loading">Loading…</div>}>{el}</Suspense>
 }

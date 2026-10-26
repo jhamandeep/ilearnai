@@ -21,7 +21,105 @@ const rules: { title: string; text: string; bad: string; good: string }[] = [
 
 
 const demo = `
-Lessons use eleven kinds of visual block in addition to tables. Diagrams animate, charts answer to the pointer, and every one can be replayed or stepped through.
+Lessons use twelve kinds of visual block in addition to tables. The animation block is a narrated film that plays when it scrolls into view; the other diagrams animate, charts answer to the pointer, and every one can be replayed or stepped through.
+
+**Animation.** A continuous, narrated scene. Objects appear with the narration, arrows connect edges, packets travel, numbers count and points slide along curves. Pause, scrub, step with the arrow keys, or change the speed.
+
+:::anim
+title: One question through a chat app with retrieval
+box user "You" @ 110,270 icon: user
+box api "API server" @ 420,270 icon: server
+box vdb "Vector database" @ 420,450 icon: database
+box llm "LLM" @ 790,270 icon: model
+text q "What is a token?" @ 110,170 size: 18 color: yellow
+num chunks = 0 @ 650,450 suffix: " chunks" size: 24
+text note "The prompt holds the question|and the 5 chunks" @ 790,150 size: 16 color: grey
+
+step: You type a question in the browser. It goes to the API server.
+  show user, q, api
+  arrow user -> api : question
+step: The server turns the question into numbers and asks the vector database for similar text.
+  show vdb
+  arrow api -> vdb : embedding
+step: The database returns the five closest chunks.
+  show chunks
+  arrow vdb -> api : 5 chunks
+  & count chunks -> 5
+step: The server builds a prompt from the question and the chunks and sends it to the model.
+  show llm, note
+  arrow api -> llm : prompt
+step: The model writes an answer. The server streams it back to you.
+  arrow llm -> api : answer
+  arrow api -> user : answer
+  highlight llm
+:::
+
+:::anim
+title: Gradient descent finds the lowest point of the loss
+axes ax @ 110,50 size: 540x380 x: -1,7 y: 0,16 xlabel: "x" ylabel: "loss"
+curve loss on ax = (x-3)^2 color: blue label: "loss"
+dot ball on ax @ 0,9 r: 9 color: yellow
+tangent tan on loss at 0 len: 1.3 color: orange label: slope
+text t1 "Start anywhere,|say x = 0" @ 800,130 size: 19
+text t2 "The slope points uphill.|Step the other way." @ 800,130 size: 19
+num xval = 0 @ 800,300 prefix: "x = " digits: 2 size: 28
+num lossval = 9 @ 800,350 prefix: "loss = " digits: 2 size: 22 color: blue
+
+step: This is the loss curve. Low is good. The model cannot see the whole curve, only where it stands.
+  show ax
+  draw loss
+step: Start anywhere, say at x = 0, where the loss is 9.
+  show ball, xval, lossval
+  show t1
+step: Measure the slope under the ball. It is minus 6: the curve falls to the right.
+  show tan
+  hide t1
+  show t2
+step: Step the other way: new x = x minus 0.1 times the slope. The ball rolls downhill.
+  walk ball along loss from 0 to 0.6
+  & tangent tan -> 0.6
+  & count xval -> 0.6
+  & count lossval -> 5.76
+step: Repeat. Each step is smaller because the slope shrinks near the bottom.
+  walk ball along loss from 0.6 to 2.6 (3s)
+  & tangent tan -> 2.6 (3s)
+  & count xval -> 2.6 (3s)
+  & count lossval -> 0.16 (3s)
+step: At the minimum the slope is zero, so the steps stop. That is what training does, millions of times.
+  walk ball along loss from 2.6 to 3 (1.5s)
+  & tangent tan -> 3 (1.5s)
+  & count xval -> 3 (1.5s)
+  & count lossval -> 0 (1.5s)
+  highlight ball
+:::
+
+:::anim
+title: Vectors add tip to tail and scale by a number
+axes ax @ 120,40 size: 440x440 x: -1,7 y: -1,7 xlabel: "x" ylabel: "y"
+vector a on ax from 0,0 to 3,1 color: blue label: "a = (3, 1)"
+vector b on ax from 0,0 to 1,2 color: green label: "b = (1, 2)"
+vector b2 on ax from 3,1 to 4,3 color: green dashed
+vector sum on ax from 0,0 to 4,3 color: yellow label: "a + b = (4, 3)"
+text t "Add: slide b to the tip of a" @ 760,120 size: 19
+text t2 "Scale: 2a is twice as long" @ 760,120 size: 19
+
+step: A vector is an arrow from the origin. Its two numbers say how far to go right and up.
+  show ax
+  draw a
+step: Here is a second vector, b.
+  draw b
+step: To add vectors, slide b so it starts at the tip of a.
+  show t
+  draw b2
+step: The sum goes from the origin to the tip of the moved arrow: (3 + 1, 1 + 2) = (4, 3).
+  draw sum
+  pulse sum
+step: Multiplying by a number scales the arrow. 2a points the same way and is twice as long.
+  hide t, b2, sum, b
+  show t2
+  vector a -> 6,2
+  & label a "2a = (6, 2)"
+:::
 
 **Flow.** Boxes and arrows. A packet travels along each arrow in the order the data moves. Press the arrows to step.
 

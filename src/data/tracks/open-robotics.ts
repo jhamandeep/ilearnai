@@ -129,6 +129,44 @@ state: tick=50, gripper=open, block=in the bowl
 
 A VLA model starts from a vision-language model (VLM). A VLM is a network pretrained to connect images and text. RT-2 started from PaLI-X. OpenVLA started from Prismatic, a 7-billion-weight VLM built on Llama 2.
 
+:::anim
+title: One pass through a VLA model, from camera frame to motors
+box cam "Camera" @ 150,150 icon: camera size: 180x64
+box instr "Instruction" @ 150,290 icon: prompt size: 180x64
+box venc "Vision encoder" @ 440,150 icon: model size: 200x64
+box llm "Language model" @ 440,290 icon: model size: 200x64
+box drv "Driver" @ 740,290 icon: controller size: 180x64
+box motors "Motors" @ 740,430 icon: arm size: 180x64
+text task "put the red block in the bowl" @ 150,350 size: 16 color: yellow
+num toks = 0 @ 740,150 suffix: " action tokens" size: 24
+text act "(0.01, -0.02, 0.00, 0.0, 0.0, 0.1, 1.0)" @ 740,215 size: 15 color: grey
+text tick "10 ticks per second" @ 440,430 size: 18 color: grey
+
+step: The camera takes a 224 by 224 image. The vision encoder turns it into image tokens.
+  show cam, venc
+  arrow cam -> venc : 224 by 224 image
+step: The instruction "put the red block in the bowl" becomes about 8 text tokens.
+  show instr, task, llm
+  arrow instr -> llm : 8 text tokens
+step: The image tokens join the text tokens inside the language model.
+  arrow venc -> llm : image tokens
+step: The language model writes 7 action tokens, one per joint and one for the gripper.
+  show toks, drv
+  arrow llm -> drv : 7 tokens
+  & count toks -> 7
+step: The driver converts each token to its bin centre. The result is an action of 7 numbers.
+  show act
+  highlight drv
+step: The motors move the gripper 1 cm along x and 2 cm along y, then close it.
+  show motors
+  restore drv
+  arrow drv -> motors : 7 joint commands
+step: A new frame arrives and the loop repeats, 10 times per second.
+  show tick
+  send cam -> venc : next frame
+  send llm -> drv : 7 tokens
+:::
+
 The developers then fine-tune the VLM on robot episodes. An episode is a sequence of (image, instruction, action) triples recorded while a person teleoperates the robot. The model learns to predict the action from the image and the instruction.
 
 The output must be text-like for a language model. The developers convert each action number to a token. The procedure is:
@@ -293,6 +331,52 @@ The conversion sets the precision of the robot. Too few bins and the gripper can
 ## The idea with an example
 
 Take one action dimension: the change in gripper height. The allowed range is -0.05 m to +0.05 m. We use 256 bins.
+
+:::anim
+title: The value 0.012 m becomes bin 158, token 32158, and 0.0118 m again
+line range from 110,300 to 620,300 color: grey
+text lo "-0.05 m" @ 110,340 size: 16 color: grey
+text mid "0" @ 365,340 size: 16 color: grey
+text hi "+0.05 m" @ 620,340 size: 16 color: grey
+text bins "256 bins, each 0.00039 m wide" @ 365,230 size: 17 color: grey
+dot v @ 426,300 r: 9 color: yellow label: "0.012 m"
+dot c @ 426,300 r: 9 color: green label: "bin centre 0.0118 m"
+num shifted = 0.012 @ 790,120 prefix: "shifted = " digits: 3 size: 22
+num quot = 0 @ 790,185 prefix: "/ 0.00039 = " digits: 1 size: 22
+num idx = 0 @ 790,250 prefix: "bin index = " size: 22
+num tok = 32000 @ 790,315 prefix: "token id = " size: 22
+num dec = 0 @ 790,380 prefix: "decoded = " suffix: " m" digits: 4 size: 22 color: green
+num err = 0 @ 790,445 prefix: "error = " suffix: " mm" digits: 1 size: 22 color: red
+
+step: One action dimension, the change in gripper height, has a range from -0.05 m to +0.05 m.
+  draw range
+  show lo, mid, hi
+step: The range splits into 256 equal bins. Each bin is 0.00039 m wide.
+  show bins
+step: The value to encode is 0.012 m, a little above the middle of the range.
+  show v
+step: Shift the value so the range starts at zero: 0.012 + 0.05 = 0.062.
+  show shifted
+  count shifted -> 0.062
+  & label lo "0"
+  & label mid "0.05"
+  & label hi "0.1 m"
+step: Divide by the bin width: 0.062 / 0.00039 = 158.7. Round down to bin index 158.
+  show quot, idx
+  count quot -> 158.7
+  count idx -> 158
+step: Add the index to the start of the reserved token range, 32000. The token id is 32158.
+  show tok
+  count tok -> 32158
+step: Decode with the bin centre: (158 + 0.5) x 0.00039 - 0.05 = 0.0118 m.
+  hide v
+  show c, dec
+  count dec -> 0.0118
+step: The decoded value sits 0.0002 m from the original. The error is 0.2 mm, half a bin at most.
+  show err
+  count err -> 0.2
+  pulse c
+:::
 
 The bin width is the range divided by the number of bins:
 
@@ -563,6 +647,46 @@ Cross-embodiment training means one model learns from robots with different arms
 4. Train one model on the mixture.
 5. Fine-tune on the target robot with a small set of its own episodes.
 
+:::anim
+title: Episodes from 21 labs train one shared model
+box labA "Lab A episodes" @ 150,150 icon: dataset size: 180x64
+box labB "Lab B episodes" @ 150,290 icon: dataset size: 180x64
+box labC "Lab 21 episodes" @ 150,430 icon: dataset size: 180x64
+box conv "Converter" @ 440,220 size: 170x64
+box samp "Sampler" @ 440,360 size: 170x64
+box model "Shared model" @ 740,290 icon: model size: 200x64
+box robot "Target robot" @ 740,430 icon: robot size: 200x64
+num eps = 0 @ 740,150 suffix: " episodes" size: 26
+text fmt "image, instruction,|7-dimensional action" @ 440,130 size: 16 color: grey
+text res "beats the single-robot model|in 5 of 6 labs" @ 440,470 size: 16 color: green
+
+step: One lab records 10,000 episodes in 20 days. That is small for a general policy.
+  show labA, eps
+  count eps -> 10000
+step: Twenty-one labs with 22 robot types pool their episodes. Together they hold 1 million.
+  show labB, labC
+  count eps -> 1000000 (2s)
+step: A converter puts every episode in one format: image, instruction, and a 7-dimensional action.
+  show conv, fmt
+  arrow labA -> conv : images and actions
+  & arrow labB -> conv : images and actions
+  & arrow labC -> conv : images and actions
+step: A sampler gives each dataset a weight, so the large sets do not drown the small ones.
+  show samp
+  arrow conv -> samp : common format
+step: One shared model trains on the mixed batches. A reach-and-grasp motion looks alike on most arms.
+  show model
+  arrow samp -> model : mixed batches
+  highlight model
+step: A small set of the target robot's own episodes fine-tunes the shared model.
+  show robot
+  restore model
+  arrow model -> robot : fine-tune
+step: In RT-X, the pooled model beats the single-robot model in 5 of 6 labs.
+  show res
+  pulse robot
+:::
+
 The diagram shows how episodes from two labs reach one model.
 
 :::flow
@@ -737,6 +861,55 @@ A robot must know where an object is in metres, not in pixels. The pinhole model
 ## The idea with an example
 
 A camera has an image of 640 by 480 pixels. Its focal length is 500 pixels. Its principal point is at (320, 240), the centre of the image.
+
+:::anim
+title: A block corner at 0.5 m lands on pixel (420, 290)
+rect img @ 330,290 size: 320x240 color: grey
+text cap "image: 640 by 480 pixels" @ 330,140 size: 16 color: grey
+dot pp @ 330,290 r: 6 color: grey label: "c = (320, 240)"
+dot px @ 330,290 r: 9 color: yellow
+vector off from 330,290 to 380,315 color: yellow
+text xyz "corner at X = 0.1, Y = 0.05, Z = 0.5 m" @ 330,450 size: 17 color: yellow
+num nz = 0.5 @ 790,110 prefix: "Z = " suffix: " m" digits: 1 size: 22
+num nxz = 0 @ 790,170 prefix: "X/Z = " digits: 2 size: 22
+num nyz = 0 @ 790,210 prefix: "Y/Z = " digits: 2 size: 22
+num nfx = 0 @ 790,275 prefix: "f X/Z = " size: 22
+num nfy = 0 @ 790,315 prefix: "f Y/Z = " size: 22
+num nu = 320 @ 790,380 prefix: "u = " size: 22 color: yellow
+num nv = 240 @ 790,420 prefix: "v = " size: 22 color: yellow
+
+step: The image is 640 by 480 pixels. The principal point (320, 240) sits at its centre.
+  show img, cap, pp
+step: A block corner sits 0.1 m right, 0.05 m down, and 0.5 m in front of the camera.
+  show xyz, nz
+step: Divide X and Y by Z: 0.1 / 0.5 = 0.2 and 0.05 / 0.5 = 0.1.
+  show nxz, nyz
+  count nxz -> 0.2
+  & count nyz -> 0.1
+step: Multiply by the focal length of 500 pixels: 100 and 50 pixels from the centre.
+  show nfx, nfy
+  count nfx -> 100
+  & count nfy -> 50
+step: Add the principal point: u = 320 + 100 = 420 and v = 240 + 50 = 290.
+  show px, nu, nv
+  move px -> 380,315
+  & draw off
+  & count nu -> 420
+  & count nv -> 290
+step: Move the block to Z = 1.0 m. Every offset halves and the pixel becomes (370, 265).
+  count nz -> 1.0 (2s)
+  & count nxz -> 0.1 (2s)
+  & count nyz -> 0.05 (2s)
+  & count nfx -> 50 (2s)
+  & count nfy -> 25 (2s)
+  & count nu -> 370 (2s)
+  & count nv -> 265 (2s)
+  & move px -> 355,302 (2s)
+  & vector off -> 355,302 (2s)
+  & label xyz "corner at X = 0.1, Y = 0.05, Z = 1.0 m"
+step: Twice as far from the camera means half as far from the image centre.
+  pulse px
+:::
 
 A block corner sits at 0.1 m to the right, 0.05 m down, and 0.5 m in front of the camera. In camera coordinates, the point is $(X, Y, Z) = (0.1, 0.05, 0.5)$.
 
@@ -974,6 +1147,53 @@ A VLA model can work from colour images alone, but a grasp planner needs metres.
 
 A stereo camera has two lenses 6 cm apart. The distance between the lenses is the baseline, $b = 0.06$ m. Each lens has a focal length of 500 pixels.
 
+:::anim
+title: Depth of a cup from the disparity of a stereo pair
+box camL "Left camera" @ 200,450 icon: camera size: 150x64
+box camR "Right camera" @ 460,450 icon: camera size: 150x64
+text base "b = 6 cm" @ 330,450 size: 16 color: grey
+dot cup @ 330,290 r: 10 color: yellow label: "cup"
+vector rayL from 200,418 to 330,290 color: blue
+vector rayR from 460,418 to 330,290 color: blue
+num colL = 0 @ 790,110 prefix: "left column = " size: 22
+num colR = 0 @ 790,155 prefix: "right column = " size: 22
+num disp = 0 @ 790,230 prefix: "disparity d = " suffix: " px" size: 26 color: yellow
+num depth = 0 @ 790,305 prefix: "Z = f b / d = " suffix: " m" digits: 2 size: 26
+text err "a 1-pixel error moves|the cup by 14 cm" @ 790,400 size: 17 color: red
+text near "at 0.5 m the same|error is 8 mm" @ 790,470 size: 16 color: grey
+
+step: Two lenses sit 6 cm apart. This distance is the baseline. Each has a focal length of 500 pixels.
+  show camL, camR, base
+step: A cup stands 0.5 m in front. Each camera sees it along its own ray.
+  show cup
+  draw rayL
+  & draw rayR
+step: The left camera sees the cup at column 400. The right camera sees it at column 340.
+  show colL, colR
+  count colL -> 400
+  & count colR -> 340
+step: The difference is the disparity: 400 - 340 = 60 pixels.
+  show disp
+  count disp -> 60
+step: Depth is f times b over d: 500 x 0.06 / 60 = 0.5 m.
+  show depth
+  count depth -> 0.5
+step: Move the cup to 2.0 m. The rays turn almost parallel and the disparity drops to 15 pixels.
+  hide colL, colR
+  move cup -> 330,100 (2s)
+  & vector rayL -> 330,100 (2s)
+  & vector rayR -> 330,100 (2s)
+  & count disp -> 15 (2s)
+  & count depth -> 2.0 (2s)
+step: The matcher is off by one pixel and reports 14. The depth becomes 2.14 m, an error of 14 cm.
+  count disp -> 14
+  & count depth -> 2.14
+  color depth red
+  show err
+step: At 0.5 m the same one-pixel error gives 8 mm. Stereo error grows with the square of distance.
+  show near
+:::
+
 A cup is 0.5 m away. The left camera sees the cup at column 400. The right camera sees it at column 340. The difference is the disparity, $d = 60$ pixels.
 
 Depth from disparity is:
@@ -1185,6 +1405,50 @@ why: Watch the whole video. The Kalman update is Bayes theorem for a Gaussian be
 ## The idea with an example
 
 A mobile robot moves along a line. At time 0 it is at position 0 with velocity 1 m/s. We estimate its position once per second.
+
+:::anim
+title: One Kalman predict and update on a line
+line track from 110,300 to 650,300 color: grey
+text t0 "0 m" @ 110,340 size: 16 color: grey
+text t1 "1 m" @ 326,340 size: 16 color: grey
+text t2 "2 m" @ 542,340 size: 16 color: grey
+dot robot @ 110,300 r: 11 color: blue label: "estimate"
+dot meas @ 391,300 r: 8 color: yellow label: "camera 1.3 m"
+vector gap from 326,250 to 391,250 color: grey dashed label: "1.3 - 1.0 = 0.3"
+num nx = 0 @ 790,110 prefix: "estimate = " suffix: " m" digits: 2 size: 24 color: blue
+num np = 0 @ 790,175 prefix: "P = " digits: 3 size: 22 color: blue
+num nr = 0 @ 790,240 prefix: "R = " digits: 2 size: 22 color: yellow
+num nk = 0 @ 790,320 prefix: "K = P / (P + R) = " digits: 2 size: 22
+text note "K = 0.31: move 31 percent|of the way to the camera" @ 790,400 size: 16 color: grey
+
+step: The robot starts at 0 m and moves at 1 m/s. We estimate its position once per second.
+  draw track
+  show t0, t1, t2, robot, nx
+step: Predict: the motion model moves the estimate to 1.0 m. Wheel slip adds variance Q = 0.04.
+  show np
+  move robot -> 326,300 (1.5s)
+  & count nx -> 1.0 (1.5s)
+  & count np -> 0.04 (1.5s)
+step: Measure: the camera reports 1.3 m. Its variance R = 0.09 is larger, so it earns less trust.
+  show meas, nr
+  count nr -> 0.09
+  draw gap
+step: The Kalman gain is P over P plus R: 0.04 / 0.13 = 0.31.
+  show nk
+  count nk -> 0.31
+step: Update: the estimate moves 31 percent of the way to the measurement, to 1.09 m.
+  show note
+  move robot -> 345,300 (1.5s)
+  & count nx -> 1.09 (1.5s)
+step: The variance shrinks: (1 - 0.31) x 0.04 = 0.028. Two sources beat one.
+  count np -> 0.028
+  pulse np
+step: Predict again: the estimate becomes 2.09 m and the variance grows to 0.028 + 0.04 = 0.068.
+  hide meas, gap, note, nk
+  move robot -> 561,300 (1.5s)
+  & count nx -> 2.09 (1.5s)
+  & count np -> 0.068 (1.5s)
+:::
 
 Step 1, predict. The motion model says the robot moves 1 m per second. The predicted position is 1.0 m. The wheels slip a little, so the prediction has a variance. We set the process noise variance to $Q = 0.04$, which is a standard deviation of 0.2 m. The prediction variance is $P = 0.04$.
 
@@ -1411,6 +1675,58 @@ A VLA model outputs a target position 10 times per second. The motor driver must
 ## The idea with an example
 
 A joint must move to 90 degrees. It starts at 0 degrees. The setpoint is the desired value, 90. The error is the setpoint minus the current value.
+
+:::anim
+title: Three PID steps toward a setpoint of 90 degrees
+line arc from 110,300 to 650,300 color: grey
+text a0 "0" @ 110,340 size: 16 color: grey
+text a30 "30" @ 245,340 size: 16 color: grey
+text a50 "50" @ 335,340 size: 16 color: grey
+text a90 "90 = setpoint" @ 515,340 size: 16 color: green
+dot target @ 515,300 r: 8 color: green
+dot joint @ 110,300 r: 11 color: yellow label: "joint"
+dot ghost @ 245,300 r: 8 color: grey label: "without D"
+text tm "time 0.0 s" @ 380,220 size: 18 color: grey
+num nerr = 0 @ 790,100 prefix: "error = " size: 24
+num nP = 0 @ 790,165 prefix: "P = 0.5 x e = " suffix: " V" digits: 1 size: 20
+num nI = 0 @ 790,210 prefix: "I = 0.1 x sum = " suffix: " V" digits: 1 size: 20
+num nD = 0 @ 790,255 prefix: "D = 0.2 x rate = " suffix: " V" digits: 1 size: 20
+num ncmd = 0 @ 790,330 prefix: "command = " suffix: " V" digits: 1 size: 26 color: yellow
+
+step: The joint starts at 0 degrees. The setpoint is 90. The error is 90 - 0 = 90.
+  draw arc
+  show a0, a30, a50, a90, target, joint, tm, nerr
+  count nerr -> 90
+step: Step 1: the P term is 45, the I term 0.9, the D term 0. Command 45.9 V.
+  show nP, nI, nD, ncmd
+  count nP -> 45
+  & count nI -> 0.9
+  count ncmd -> 45.9
+step: The joint moves to 30 degrees. The error falls to 60.
+  label tm "time 0.1 s"
+  move joint -> 245,300 (1.5s)
+  & count nerr -> 60 (1.5s)
+step: Step 2: P = 30, I = 1.5. The error fell fast, so D = 0.2 x (-300) = -60.
+  count nP -> 30
+  & count nI -> 1.5
+  count nD -> -60
+  color nD red
+step: The command is 30 + 1.5 - 60 = -28.5 V. The derivative term brakes the joint.
+  count ncmd -> -28.5
+  pulse nD
+step: The joint moves to 50 degrees. Error 40, P 20, I 1.9, D -40. Command -18.1 V.
+  label tm "time 0.2 s"
+  move joint -> 335,300 (1.5s)
+  & count nerr -> 40 (1.5s)
+  & count nP -> 20 (1.5s)
+  & count nI -> 1.9 (1.5s)
+  & count nD -> -40 (1.5s)
+  & count ncmd -> -18.1 (1.5s)
+step: Without the D term, the step-2 command is 31.5 V and the joint passes 90 and comes back.
+  show ghost
+  move ghost -> 582,300 (2s)
+  move ghost -> 515,300
+:::
 
 We use gains $K_p = 0.5$, $K_i = 0.1$, and $K_d = 0.2$. The time step is 0.1 s. The command is in volts.
 
@@ -1654,6 +1970,64 @@ why: Watch the first 30 minutes. Emma Brunskill places imitation learning next t
 
 A person drives a toy car along a lane 100 times. Each run has 50 steps. At each step the logger saves the camera image and the steering angle. The dataset has 5,000 pairs.
 
+:::anim
+title: A cloned policy drifts out of the lane, then DAgger fixes it
+line edgeT from 110,240 to 650,240 color: grey
+line edgeB from 110,360 to 650,360 color: grey
+line centre from 110,300 to 650,300 color: grey dashed
+text lane "lane, 20 cm each side of the centre" @ 380,400 size: 16 color: grey
+dot expert @ 110,300 r: 9 color: green label: "expert"
+dot car @ 110,300 r: 9 color: yellow label: "clone"
+dot car2 @ 110,300 r: 9 color: blue label: "after DAgger"
+num pairs = 0 @ 790,110 suffix: " pairs" size: 24
+num st = 0 @ 790,180 prefix: "step " size: 22
+num off = 0 @ 790,240 prefix: "offset = " suffix: " cm" size: 22 color: yellow
+text seen "a view no training|image shows" @ 790,320 size: 16 color: red
+text lab "the person labels|the correct angle|at every visited state" @ 790,400 size: 16 color: green
+
+step: A person drives 100 runs of 50 steps. Every logged image shows the car near the lane centre.
+  draw edgeT, edgeB, centre
+  show lane, expert, pairs
+  move expert -> 650,300 (2.5s)
+  & count pairs -> 5000 (2.5s)
+step: Now the clone drives. At step 1 its steering is a little off: 1 cm left of centre.
+  hide expert
+  show car, st, off
+  move car -> 121,297
+  & count st -> 1
+  & count off -> 1
+step: At step 2 the car is 2 cm left, a view no training image shows. The error grows.
+  show seen
+  move car -> 132,294
+  & count st -> 2
+  & count off -> 2
+  color car orange
+step: At step 3 it is 6 cm left. Each mistake lands the car in a stranger state.
+  move car -> 142,282
+  & count st -> 3
+  & count off -> 6
+step: By step 20 the car is 40 cm left and out of the lane. This is compounding error.
+  move car -> 326,180 (2.5s)
+  & count st -> 20 (2.5s)
+  & count off -> 40 (2.5s)
+  color car red
+step: DAgger round 1: the policy drives and the person labels the correct angle at every visited state.
+  hide seen, car, off
+  show lab, car2
+  count st -> 1 (0.3s)
+  move car2 -> 326,180 (2s)
+  & count st -> 20 (2s)
+  count pairs -> 5050
+step: After 3 rounds the dataset holds 150 extra pairs. The car stays in the lane for all 50 steps.
+  count pairs -> 5150
+  move car2 -> 110,300 (0.6s)
+  & count st -> 0 (0.6s)
+  show off
+  move car2 -> 650,294 (3s)
+  & count st -> 50 (3s)
+  & count off -> 2 (3s)
+:::
+
 We train a network to predict the steering angle from the image. The loss is mean squared error. After training, the network matches the person on 98 percent of the training images.
 
 Now the car drives itself. At step 1, it picks an angle that is a little off. At step 2, the car is 2 cm further left than any training image. The network has never seen that view. Its error is larger. At step 3, the car is 6 cm left. By step 20, it leaves the lane.
@@ -1874,6 +2248,49 @@ Real robot data is slow and costs money. A simulator on one graphics card can ru
 ## The idea with an example
 
 A four-legged robot must learn to walk. In simulation, the ground friction is set to 1.0 and the motor delay is zero. Training takes 20 minutes on one graphics card. The policy walks in simulation.
+
+:::anim
+title: A walking policy moves from a fixed simulator to a real carpet
+box sim "Simulator" @ 200,290 icon: gpu size: 200x64
+box pol "Policy" @ 480,290 icon: model size: 170x64
+box real "Real robot" @ 760,290 icon: robot size: 200x64
+text simp "friction 1.0|motor delay 0 ms" @ 200,400 size: 17 color: blue
+text realp "carpet friction 0.6|motor delay 20 ms" @ 760,400 size: 17 color: yellow
+text res "falls on the first step" @ 760,470 size: 18 color: red
+text ok "walks on the carpet" @ 760,470 size: 18 color: green
+num mins = 0 @ 480,150 suffix: " min of training" size: 22
+num robots = 1 @ 200,150 suffix: " robots per batch" size: 22
+num steps = 0 @ 480,470 suffix: " steps per update" size: 20 color: grey
+
+step: The simulator runs one robot with friction 1.0 and zero motor delay.
+  show sim, simp, robots
+step: The policy trains for 20 minutes on one graphics card and walks in simulation.
+  show pol, mins
+  arrow sim -> pol : experience
+  & count mins -> 20 (1.4s)
+step: On the real carpet the friction is 0.6 and the motors respond 20 ms late.
+  show real, realp
+step: The policy meets conditions it never saw. It falls on the first step.
+  arrow pol -> real : gait
+  color real red
+  show res
+step: Train again with domain randomisation: every episode draws friction from 0.4 to 1.2 and delay from 0 to 40 ms.
+  hide res
+  color real blue
+  label simp "friction 0.4 to 1.2|motor delay 0 to 40 ms|mass 90 to 110 percent|push up to 5 N"
+  count mins -> 0 (0.5s)
+step: The policy sees 4,096 different robots in each batch and learns one gait that works for all of them.
+  count robots -> 4096 (2s)
+  & send sim -> pol : 4096 variants (2s)
+  count mins -> 20
+step: One update needs 4,096 x 24 = 98,304 steps. At 200,000 steps per second that is 0.5 s.
+  show steps
+  count steps -> 98304
+step: On the carpet the real robot is one more sample from the range. The policy walks.
+  send pol -> real : gait
+  color real green
+  show ok
+:::
 
 On the real robot, the carpet friction is 0.6 and the motors respond 20 ms late. The policy falls on the first step.
 

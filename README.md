@@ -2,6 +2,26 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
+## Narrated explainer sample (review draft)
+
+Open `/preview/narrated-explainer` for a 35-second concept sample from the RAG chapter. It uses a recorded synthetic voice, timed SVG scene builds, synchronized captions, a scrubber, pause/resume, replay, mute, playback speed, scene jumps, and full screen. The audio clock drives every visual frame. Smaller players follow the active part of the diagram; reduced motion disables the camera transition and gradual reveals. Audio starts only after Play and stops on navigation or when the document is hidden.
+
+This is one isolated review route. Existing chapters and their animation controls are unchanged. The sample uses the `af_heart` neural voice from [Kokoro-82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M), rendered locally with [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx). Conversational wording and varied pauses replace the earlier system-voice recording. It does not call a speech service or LLM while playing; only the approximately 287 KB AAC asset ships, with a content hash in its URL to avoid stale cached audio. Model weights and intermediate WAVs stay under ignored `output/`. The sample diagram includes an illustrative refund policy, not real business data. Its conceptual source is [Microsoft's RAG overview](https://learn.microsoft.com/en-ca/azure/ai-foundry/concepts/retrieval-augmented-generation?view=foundry-classic).
+
+To regenerate on macOS (Python 3.13 tested), install the isolated voice dependencies and download the pinned model files. The generator verifies their SHA-256 hashes, records eight scenes, measures each cue from the waveform, and encodes AAC using macOS `afconvert`:
+
+```sh
+python3 -m venv output/neural-voice/venv
+output/neural-voice/venv/bin/python -m pip install -r scripts/explainer-voice-requirements.txt
+curl --fail --location --output output/neural-voice/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
+curl --fail --location --output output/neural-voice/voices-v1.0.bin https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+output/neural-voice/venv/bin/python scripts/build-explainer-sample.py
+```
+
+The previous sample, including its voice asset and cue sheet, is preserved locally at `output/rollback/before-natural-voice-20261028/sample-before-voice-change.tgz`.
+
+`npm run test:explainer-browser` uses installed Chrome and the app at `http://127.0.0.1:5178` (override `APP_URL`). It exercises actual audio decoding/playback, cue synchronization, all controls, navigation cleanup, mobile layout, reduced motion, and blocked-audio recovery. It does not assess how natural the voice sounds. Rollback before this sample: `rollback/before-video-explainer-sample-20261028` at `41a208d`; a ZIP is saved locally under `output/rollback/before-video-explainer-sample-20261028/`.
+
 ## Python startup, course artwork, and gradient lab (28 October 2026)
 
 The Python startup failure was reproduced in Chrome: a module worker created from a `blob:null` URL would not start inside the opaque-origin iframe. The runner now creates the module worker from a data URL and catches runtime-download errors separately from learner-code errors. It retains `sandbox="allow-scripts"`, source/token validation, the CDN-only connection policy, execution limits, and teardown. Failed downloads preserve the draft and offer a retry.

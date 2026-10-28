@@ -10,6 +10,7 @@ import { AuthProvider, RequireAuth } from './lib/auth'
 import { Account } from './pages/Account'
 
 // Markdown + KaTeX and the labs are the heavy chunks, so they load on demand.
+const ExplainerPreview = lazy(() => import('./pages/ExplainerPreview').then(module => ({ default: module.ExplainerPreview })))
 const CodePractice = lazy(() => import('./pages/CodePractice').then(module => ({ default: module.CodePractice })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })))
 const ForWork = lazy(() => import('./pages/ForWork').then(module => ({ default: module.ForWork })))
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/for-work/:industry" element={<IndustryPage />} />
               <Route path="/for-work/:industry/:useCase" element={<WorkCasePage />} />
               <Route path="/code" element={<CodePractice />} />
+              <Route path="/preview/narrated-explainer" element={<ExplainerPreview />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:track" element={<TrackPage />} />
               <Route path="/labs" element={<Labs />} />

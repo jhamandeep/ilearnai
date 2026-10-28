@@ -8,7 +8,7 @@ import { createAccountHandler } from './accounts.mjs'
 const root = fileURLToPath(new URL('../dist/', import.meta.url))
 let curriculum
 const accounts = createAccountHandler({ allowGuestContent: process.env.REQUIRE_LOGIN !== '1', loadCurriculum: async () => curriculum ??= JSON.parse(await readFile(new URL('./content/curriculum.json', import.meta.url), 'utf8')) })
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.ico': 'image/x-icon' }
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.ico': 'image/x-icon', '.m4a': 'audio/mp4' }
 const server = createServer(async (request, response) => {
   const pathname = new URL(request.url ?? '/', 'http://localhost').pathname
   if (pathname === '/api/ai-news') { await newsHandler(request, response); return }

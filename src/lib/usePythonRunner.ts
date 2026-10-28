@@ -8,15 +8,16 @@ export function usePythonRunner() {
   const [busy, setBusy] = useState(false)
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
+  const [errorStage, setErrorStage] = useState<'startup' | 'execution' | null>(null)
   const [results, setResults] = useState<PythonResult[]>([])
   const cleanup = useRef<(() => void) | null>(null)
   useEffect(() => () => cleanup.current?.(), [])
   function stop() { cleanup.current?.(); setBusy(false); setStatus('Stopped. You can edit and run again.'); setResults([]) }
-  function clear() { setResults([]); setError(''); setOutput(''); setStatus('Ready to run') }
+  function clear() { setResults([]); setError(''); setErrorStage(null); setOutput(''); setStatus('Ready to run') }
   function run(code: string, checks: PythonCheck[], onPass: () => void) {
     cleanup.current?.()
-    setOutput(''); setError(''); setResults([])
-    if (code.length > 100000) { setBusy(false); setError('Keep this exercise under 100,000 characters.'); return }
+    setOutput(''); setError(''); setErrorStage(null); setResults([])
+    if (code.length > 100000) { setBusy(false); setErrorStage('execution'); setError('Keep this exercise under 100,000 characters.'); return }
     setBusy(true); setStatus('Loading Python… The first run needs an internet connection.')
     const token = crypto.randomUUID()
     const frame = document.createElement('iframe')
@@ -33,7 +34,7 @@ export function usePythonRunner() {
     }
     function deadline(ms: number, message: string) {
       clearTimeout(timer)
-      timer = setTimeout(() => { finish(); setBusy(false); setError(message); setStatus('Run ended') }, ms)
+      timer = setTimeout(() => { setErrorStage(phase === 'loading' ? 'startup' : 'execution'); finish(); setBusy(false); setError(message); setStatus('Run ended') }, ms)
     }
     function receive(event: MessageEvent) {
       if (event.source !== frame.contentWindow || event.data?.token !== token || phase === 'finished') return
@@ -44,7 +45,7 @@ export function usePythonRunner() {
         const text = data.text.slice(0, Math.max(0, 16000 - totalOutput)); totalOutput += text.length
         if (text) setOutput(previous => previous + text + '\n')
       }
-      if (data.type === 'error') { finish(); setBusy(false); setError(String(data.text).slice(-5000)); setStatus('Check the error below, then try again.') }
+      if (data.type === 'error') { const stage = phase === 'loading' || data.stage === 'startup' ? 'startup' : 'execution'; finish(); setBusy(false); setErrorStage(stage); setError(String(data.text).slice(-5000)); setStatus(stage === 'startup' ? 'Python did not load. Your code has not run.' : 'Check the error below, then try again.') }
       if (data.type === 'done' && phase === 'running' && Array.isArray(data.results)) {
         const checked = checks.map((check, index) => ({ label: check.label, passed: data.results[index]?.passed === true }))
         finish(); setBusy(false); setResults(checked); setStatus('Run complete')
@@ -56,5 +57,5 @@ export function usePythonRunner() {
     deadline(60000, 'Python did not load within a minute. Check your connection, allow the runtime download, and retry.')
     document.body.append(frame)
   }
-  return { status, busy, output, error, results, run, stop, clear }
+  return { status, busy, output, error, errorStage, results, run, stop, clear }
 }

@@ -5,7 +5,7 @@ export const labs: Lab[] = [
   { slug: 'transformer-flow', title: 'Transformer block, animated', blurb: 'Follow one token through embedding, attention, MLP and the residual stream.', category: 'math' },
   { slug: 'attention', title: 'Attention visualiser', blurb: 'Type a sentence and watch the attention matrix sharpen, flatten, and mask.', category: 'math' },
   { slug: 'tokenizer', title: 'Tokenizer trainer', blurb: 'Train byte-pair encoding on your own text and watch merges form, one at a time.', category: 'inference' },
-  { slug: 'gradient-descent', title: 'Gradient descent playground', blurb: 'SGD, momentum and Adam racing down three loss surfaces, animated.', category: 'math' },
+  { slug: 'gradient-descent', title: 'Gradient descent playground', blurb: 'Watch how a model reduces its error. Compare gradient descent, momentum, and Adam on three landscapes.', category: 'math' },
   { slug: 'sampling', title: 'Sampling playground', blurb: 'Temperature, top-k, and top-p applied to a logit vector, visualised.', category: 'math' },
   { slug: 'agent-control-room', title: 'Agent Control Room', blurb: 'Chain per-step success rates with retries and fallbacks to see what multi-step reliability really is.', category: 'agents' },
   { slug: 'pareto-router', title: 'Model router and Pareto explorer', blurb: 'Find the frontier of quality versus cost and route easy requests to the cheap side.', category: 'agents' },

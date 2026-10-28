@@ -113,7 +113,7 @@ try {
     console.log(`ok   ${url}: ${items.length} entries; all track, level, and type filters preserve membership`)
   }
   const home = await page(Home, '/')
-  assert.ok(home.includes('Rosenbrock valley') && home.includes('Optimiser') && home.includes('<canvas'), 'Home must embed the actual gradient descent lab')
+  assert.ok(home.includes('value="rosenbrock"') && home.includes('Optimiser') && home.includes('class="gd-canvas"') && home.includes('One step'), 'Home must embed the actual gradient descent lab')
   assert.ok(!home.includes('Gradient descent, in motion'), 'Home still uses the simplified replacement')
   for (const lab of labs) {
     const html = await page(LabPage, `/labs/${lab.slug}`, '/labs/:slug')

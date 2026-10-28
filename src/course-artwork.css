@@ -1,0 +1,12 @@
+.course-artwork.course-illustration { position:relative; background:#f4f6fb; }
+.course-artwork.course-illustration > img { object-fit:contain; transform:none!important; }
+.course-artwork.course-illustration > svg { position:absolute; inset:0; width:100%; height:100%; margin:0; transform:none!important; pointer-events:none; overflow:visible; }
+.course-art-caption { position:absolute; bottom:10px; left:12px; right:12px; width:fit-content; max-width:calc(100% - 24px); display:flex; align-items:center; gap:7px; padding:6px 9px; background:#ffffffed; border:1px solid #ffffff; border-radius:8px; color:#52617a; font-size:9px; line-height:1.5; box-shadow:0 2px 6px #263b5710; }
+.course-art-caption i { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.artwork-motion-control { display:flex; align-items:center; gap:7px; border:1px solid #dce2ed; border-radius:20px; background:white; padding:9px 12px; font:inherit; font-size:11px; color:#596980; cursor:pointer; white-space:nowrap; }
+.artwork-motion-control > span:first-child { font-size:15px; line-height:1; }
+.artwork-motion-control:disabled { color:#687386; cursor:default; }
+.artwork-motion-control:hover:not(:disabled) { background:#f2f5fa; }
+.topbar-inner > .account { display:flex; align-items:center; gap:8px; }
+@media(max-width:600px) { .topbar .artwork-motion-control { padding:8px; } }
+@media(max-width:1250px) { .artwork-motion-control > span:last-child { display:none; } .artwork-motion-control { padding:10px; } }

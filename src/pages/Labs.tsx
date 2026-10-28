@@ -31,6 +31,7 @@ const registry: Record<string, ComponentType> = {
 
 export function LabContent({ slug }: { slug: string }) {
   const Component = registry[slug]
+  if (slug === 'gradient-descent' && Component) return <><Component /><LabGuide slug={slug} /><LabGuide slug={slug} after /></>
   return Component ? <><LabGuide slug={slug} /><Component /><LabGuide slug={slug} after /></> : <NotFound />
 }
 

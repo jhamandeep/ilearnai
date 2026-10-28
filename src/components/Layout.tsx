@@ -5,6 +5,7 @@ import { AccountMenu } from './AccountMenu'
 import { useAuth } from '../lib/auth'
 import { LearningLayout } from './LearningLayout'
 import { BrandLogo } from './Brand'
+import { ArtworkMotionProvider, ArtworkMotionControl } from './ArtworkMotion'
 
 const groups = [
   { label: 'Learn', links: [{ to: '/for-work', label: 'AI for your work', detail: 'Industry use cases and role-based guidance' }, { to: '/path', label: 'Your learning path', detail: 'Start from zero or find your level' }, { to: '/courses', label: 'All courses', detail: 'Ten tracks, four levels' }, { to: '/roadmaps', label: 'Roadmaps', detail: 'A plan for each track' }] },
@@ -14,7 +15,7 @@ const groups = [
 
 export function Layout() {
   const { pathname } = useLocation()
-  return ['/', '/login', '/signup'].includes(pathname) ? <MarketingLayout /> : <LearningLayout />
+  return <ArtworkMotionProvider>{['/', '/login', '/signup'].includes(pathname) ? <MarketingLayout /> : <LearningLayout />}</ArtworkMotionProvider>
 }
 
 function MarketingLayout() {
@@ -77,6 +78,7 @@ function MarketingLayout() {
           <NavLink to="/ask">Ask</NavLink>
         </nav>
         <div className="account">
+          <ArtworkMotionControl />
           <AccountMenu />
         </div>
         </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react'
 
-export function useLabMotion(ref: RefObject<HTMLDivElement | null>, playing: boolean) {
+export function useLabMotion(ref: RefObject<HTMLDivElement | null>, playing: boolean, allowReducedMotion = false) {
   const [visible, setVisible] = useState(false)
   const [foreground, setForeground] = useState(true)
   const [reduced, setReduced] = useState(false)
@@ -14,5 +14,5 @@ export function useLabMotion(ref: RefObject<HTMLDivElement | null>, playing: boo
     document.addEventListener('visibilitychange', sync)
     return () => { observer.disconnect(); query.removeEventListener('change', sync); document.removeEventListener('visibilitychange', sync) }
   }, [ref])
-  return playing && visible && foreground && !reduced
+  return playing && visible && foreground && (!reduced || allowReducedMotion)
 }

@@ -1,0 +1,21 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { answerSiteQuestion } from '../lib/siteHelp'
+import { useAuth } from '../lib/auth'
+import { CourseArtwork } from '../components/CourseArtwork'
+const suggestions = ['How can AI help in my work?', 'AI use cases for a banking manager', 'AI in healthcare', 'Compare banking and retail', 'How is my progress saved?', 'What is RAG?']
+interface Exchange { question: string }
+export function Ask() {
+  const { preview, user } = useAuth()
+  const [params] = useSearchParams()
+  const initial = params.get('q')?.slice(0, 500) ?? ''
+  const [input, setInput] = useState('')
+  const [history, setHistory] = useState<Exchange[]>(() => initial ? [{ question: initial }] : [])
+  const end = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const previousHistory = useRef(history)
+  useEffect(() => { if (history.length && history !== previousHistory.current) end.current?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); previousHistory.current = history }, [history])
+  function ask(question: string) { const value = question.trim().slice(0, 500); if (!value) return; setHistory(previous => [...previous.slice(-11), { question: value }]); setInput(''); inputRef.current?.focus() }
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); ask(input) }
+  return <div className="ask-page"><header className="ask-header"><div><p className="eyebrow">Your guide to ilearnai</p><h1>A question is<br />a great place to start.</h1><p>Find a course, explore an AI concept, or get help finding your way around.</p><span className="ask-mode">✧ Instant answers from our site guide</span></div><CourseArtwork topic="robotics" /></header><div className="ask-layout"><aside className="ask-topics"><h2>Try asking</h2>{suggestions.map(question => <button type="button" onClick={() => ask(question)} key={question}>{question}<span aria-hidden="true">↗</span></button>)}<div className="ask-note"><strong>A guide that stays on topic.</strong><p>Answers come from built-in help, course summaries, and the glossary. For a deeper explanation, follow the suggested lesson.</p></div></aside><section className="ask-conversation" aria-label="Ask ilearnai"><div className="ask-conversation-heading"><strong>Ask ilearnai</strong>{history.length > 0 && <button type="button" onClick={() => { setHistory([]); inputRef.current?.focus() }}>Clear questions</button>}</div><div className="ask-messages" role="log" aria-live="polite" aria-relevant="additions">{!history.length && <div className="ask-welcome"><span aria-hidden="true">?</span><h2>What would you like to know?</h2><p>Ask about learning, navigation, or a topic you’re curious about.</p></div>}{history.map((exchange, i) => { const answer = answerSiteQuestion(exchange.question, { preview, signedIn: !!user }); return <div className="ask-exchange" key={`${i}-${exchange.question}`}><p className="ask-question"><span className="sr-only">You asked: </span>{exchange.question}</p><div className="ask-answer"><span className="ask-answer-label">{answer.kind === 'topic' ? 'From the glossary' : answer.kind === 'search' ? 'From the course index' : 'ilearnai guide'}</span><h3>{answer.title}</h3><p>{answer.text}</p><div className="ask-answer-links">{answer.links.map(link => <Link to={link.to} key={link.to}><span><strong>{link.title}</strong>{link.detail && <small>{link.detail}</small>}</span><span aria-hidden="true">→</span></Link>)}</div></div></div> })}<div ref={end} /></div><form className="ask-form" onSubmit={submit}><label className="sr-only" htmlFor="ask-question">Your question</label><input ref={inputRef} id="ask-question" type="text" maxLength={500} value={input} onChange={event => setInput(event.target.value)} placeholder="Ask a question about ilearnai or AI…" autoComplete="off" /><button type="submit" disabled={!input.trim()} aria-label="Ask question">↑</button></form><p className="ask-privacy">Your questions stay in this page. Answers appear instantly.</p></section></div></div>
+}

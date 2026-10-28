@@ -94,6 +94,151 @@ step: Compare each number with one machine. The reads fit, and the storage does 
 
 ## How it works
 
+
+:::anim
+title: Size the photo service step by step
+# Worked values and narration follow the scenario in this lesson.
+text heading "Size the photo service step by step" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "requests per day"
+  & label value0 "0"
+  & highlight card0
+  label key1 "average QPS"
+  & label value1 "0"
+  & highlight card1
+  label key2 "peak QPS"
+  & label value2 "0"
+  & highlight card2
+  label key3 "read bandwidth"
+  & label value3 "0"
+  & highlight card3
+  label key4 "storage per year"
+  & label value4 "0"
+  & highlight card4
+
+step: Multiply 10 million users by 20 requests.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "requests per day"
+  & label value0 "200 million"
+  & highlight card0
+  label key1 "average QPS"
+  & label value1 "0"
+  label key2 "peak QPS"
+  & label value2 "0"
+  label key3 "read bandwidth"
+  & label value3 "0"
+  label key4 "storage per year"
+  & label value4 "0"
+
+step: Divide by 86,400 seconds.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "average QPS"
+  & label value0 "2300"
+  & highlight card0
+  label key1 "requests per day"
+  & label value1 "200 million"
+  label key2 "peak QPS"
+  & label value2 "0"
+  label key3 "read bandwidth"
+  & label value3 "0"
+  label key4 "storage per year"
+  & label value4 "0"
+
+step: Multiply by the peak factor of 3.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "peak QPS"
+  & label value0 "7000"
+  & highlight card0
+  label key1 "average QPS"
+  & label value1 "2300"
+  label key2 "requests per day"
+  & label value2 "200 million"
+  label key3 "read bandwidth"
+  & label value3 "0"
+  label key4 "storage per year"
+  & label value4 "0"
+
+step: Multiply 7,000 QPS by 10 KB.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "read bandwidth"
+  & label value0 "70 MB per second"
+  & highlight card0
+  label key1 "peak QPS"
+  & label value1 "7000"
+  label key2 "average QPS"
+  & label value2 "2300"
+  label key3 "requests per day"
+  & label value3 "200 million"
+  label key4 "storage per year"
+  & label value4 "0"
+
+step: Multiply 10 million users by 2 photos by 2 MB by 365 days.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "storage per year"
+  & label value0 "15 PB"
+  & highlight card0
+  label key1 "read bandwidth"
+  & label value1 "70 MB per second"
+  label key2 "peak QPS"
+  & label value2 "7000"
+  label key3 "average QPS"
+  & label value3 "2300"
+  label key4 "requests per day"
+  & label value4 "200 million"
+
+step: Compare each number with one machine.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "storage per year"
+  & label value0 "15 PB"
+  label key1 "read bandwidth"
+  & label value1 "70 MB per second"
+  label key2 "peak QPS"
+  & label value2 "7000"
+  label key3 "average QPS"
+  & label value3 "2300"
+  label key4 "requests per day"
+  & label value4 "200 million"
+:::
+
 Keep these reference numbers in memory. Each one is correct within a factor of 2.
 
 | Operation | Approximate time |
@@ -323,6 +468,102 @@ step: The last request waited 0 ms. Its latency is 12 ms. Throughput rose and la
 
 ## How it works
 
+
+:::anim
+title: Throughput from latency and concurrency
+# Worked values and narration follow the scenario in this lesson.
+text heading "Throughput from latency and concurrency" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "concurrency"
+  & label value0 "1"
+  & highlight card0
+  label key1 "latency"
+  & label value1 "10 ms"
+  & highlight card1
+  label key2 "throughput"
+  & label value2 "100 per second"
+  & highlight card2
+
+step: One server handles one request at a time in 10 ms.
+  restore card0, card1, card2
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "concurrency"
+  & label value0 "1"
+  label key1 "latency"
+  & label value1 "10 ms"
+  label key2 "throughput"
+  & label value2 "100 per second"
+
+step: The server now handles 8 requests at once, each still in 10 ms.
+  restore card0, card1, card2
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "concurrency"
+  & label value0 "8"
+  & highlight card0
+  label key1 "throughput"
+  & label value1 "800 per second"
+  & highlight card1
+  label key2 "latency"
+  & label value2 "10 ms"
+
+step: The server now waits for 8 requests and processes them together in 12 ms.
+  restore card0, card1, card2
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "latency"
+  & label value0 "12 ms to 82 ms"
+  & highlight card0
+  label key1 "throughput"
+  & label value1 "667 per second"
+  & highlight card1
+  label key2 "concurrency"
+  & label value2 "8"
+
+step: The first request waited 70 ms for 7 others.
+  restore card0, card1, card2
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "latency"
+  & label value0 "12 ms to 82 ms"
+  label key1 "throughput"
+  & label value1 "667 per second"
+  label key2 "concurrency"
+  & label value2 "8"
+
+step: The last request waited 0 ms.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "latency"
+  & label value0 "12 ms to 82 ms"
+  label key1 "throughput"
+  & label value1 "667 per second"
+  label key2 "concurrency"
+  & label value2 "8"
+:::
+
 The link between the three quantities is:
 
 $$\\text{throughput} = \\frac{\\text{concurrency}}{\\text{latency}}$$
@@ -527,6 +768,120 @@ state: query time=rising, L=rising
 :::
 
 ## How it works
+
+
+:::anim
+title: Size the connection pool with Little's law
+# Worked values and narration follow the scenario in this lesson.
+text heading "Size the connection pool with Little's law" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "arrival rate"
+  & label value0 "1000 per second"
+  & highlight card0
+  label key1 "query time"
+  & label value1 "5 ms"
+  & highlight card1
+  label key2 "L"
+  & label value2 "0"
+  & highlight card2
+  label key3 "pool"
+  & label value3 "0"
+  & highlight card3
+
+step: Queries arrive at 1,000 per second.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "L"
+  & label value0 "5"
+  & highlight card0
+  label key1 "arrival rate"
+  & label value1 "1000 per second"
+  label key2 "query time"
+  & label value2 "5 ms"
+  label key3 "pool"
+  & label value3 "0"
+
+step: L is 5.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "pool"
+  & label value0 "10"
+  & highlight card0
+  label key1 "L"
+  & label value1 "5"
+  label key2 "arrival rate"
+  & label value2 "1000 per second"
+  label key3 "query time"
+  & label value3 "5 ms"
+
+step: The database slows to 20 ms per query under load.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "query time"
+  & label value0 "20 ms"
+  & highlight card0
+  label key1 "L"
+  & label value1 "20"
+  & highlight card1
+  label key2 "pool"
+  & label value2 "10"
+  label key3 "arrival rate"
+  & label value3 "1000 per second"
+
+step: L is now 20, but the pool has 10.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "query time"
+  & label value0 "20 ms"
+  label key1 "L"
+  & label value1 "20"
+  label key2 "pool"
+  & label value2 "10"
+  label key3 "arrival rate"
+  & label value3 "1000 per second"
+
+step: The wait raises W, and a higher W raises L again.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "query time"
+  & label value0 "rising"
+  & highlight card0
+  label key1 "L"
+  & label value1 "rising"
+  & highlight card1
+  label key2 "pool"
+  & label value2 "10"
+  label key3 "arrival rate"
+  & label value3 "1000 per second"
+:::
 
 Little's law holds for any stable system, with any arrival pattern, as long as the long-run averages exist. Stable means the arrival rate is below the service rate.
 
@@ -768,6 +1123,122 @@ unit: minutes
 
 ## How it works
 
+
+:::anim
+title: Spend the error budget over one month
+# Worked values and narration follow the scenario in this lesson.
+text heading "Spend the error budget over one month" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "budget"
+  & label value0 "10000 failed requests"
+  & highlight card0
+  label key1 "spent"
+  & label value1 "0"
+  & highlight card1
+  label key2 "remaining"
+  & label value2 "10000"
+  & highlight card2
+  label key3 "releases"
+  & label value3 "open"
+  & highlight card3
+
+step: The SLO is 99.9 percent of 10 million requests.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "budget"
+  & label value0 "10000 failed requests"
+  label key1 "spent"
+  & label value1 "0"
+  label key2 "remaining"
+  & label value2 "10000"
+  label key3 "releases"
+  & label value3 "open"
+
+step: In week 1 a bad deploy fails 4,000 requests.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "spent"
+  & label value0 "4000"
+  & highlight card0
+  label key1 "remaining"
+  & label value1 "6000"
+  & highlight card1
+  label key2 "budget"
+  & label value2 "10000 failed requests"
+  label key3 "releases"
+  & label value3 "open"
+
+step: In week 2 a database failover fails 3,000 requests.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "spent"
+  & label value0 "7000"
+  & highlight card0
+  label key1 "remaining"
+  & label value1 "3000"
+  & highlight card1
+  label key2 "budget"
+  & label value2 "10000 failed requests"
+  label key3 "releases"
+  & label value3 "open"
+
+step: 30 percent of the budget remains.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "releases"
+  & label value0 "frozen"
+  & highlight card0
+  label key1 "spent"
+  & label value1 "7000"
+  label key2 "remaining"
+  & label value2 "3000"
+  label key3 "budget"
+  & label value3 "10000 failed requests"
+
+step: The team works on reliability until the next month resets the budget.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "spent"
+  & label value0 "0"
+  & highlight card0
+  label key1 "remaining"
+  & label value1 "10000"
+  & highlight card1
+  label key2 "releases"
+  & label value2 "open"
+  & highlight card2
+  label key3 "budget"
+  & label value3 "10000 failed requests"
+:::
+
 Good SLIs are ratios of good events to total events, measured where the user is:
 
 - Availability: successful requests / total requests.
@@ -987,6 +1458,121 @@ state: model=eventual, client 2 sees=100 for a while then 50
 Now add a network partition. Replica C cannot reach A or B. A client writes to C. Under linearizability, C must refuse the write, because it cannot know the latest value. Under eventual consistency, C accepts the write and merges it later.
 
 ## How it works
+
+
+:::anim
+title: What client 2 may see under each model
+# Worked values and narration follow the scenario in this lesson.
+text heading "What client 2 may see under each model" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "balance on A"
+  & label value0 "50"
+  & highlight card0
+  label key1 "balance on B"
+  & label value1 "100 or 50"
+  & highlight card1
+  label key2 "model"
+  & label value2 "none"
+  & highlight card2
+  label key3 "client 2 sees"
+  & label value3 "unknown"
+  & highlight card3
+
+step: Client 1 wrote 50 to replica A and got an acknowledgement at time 2.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "balance on A"
+  & label value0 "50"
+  label key1 "balance on B"
+  & label value1 "100 or 50"
+  label key2 "model"
+  & label value2 "none"
+  label key3 "client 2 sees"
+  & label value3 "unknown"
+
+step: Under linearizability the write completed before the read started.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "model"
+  & label value0 "linearizable"
+  & highlight card0
+  label key1 "client 2 sees"
+  & label value1 "50"
+  & highlight card1
+  label key2 "balance on A"
+  & label value2 "50"
+  label key3 "balance on B"
+  & label value3 "100 or 50"
+
+step: Under sequential consistency client 2 may see 100 or 50.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "model"
+  & label value0 "sequential"
+  & highlight card0
+  label key1 "client 2 sees"
+  & label value1 "100 or 50"
+  & highlight card1
+  label key2 "balance on A"
+  & label value2 "50"
+  label key3 "balance on B"
+  & label value3 "100 or 50"
+
+step: Under causal consistency nothing links the two clients.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "model"
+  & label value0 "causal"
+  & highlight card0
+  label key1 "client 2 sees"
+  & label value1 "100 or 50"
+  label key2 "balance on A"
+  & label value2 "50"
+  label key3 "balance on B"
+  & label value3 "100 or 50"
+
+step: Under eventual consistency client 2 may see 100 for minutes.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "model"
+  & label value0 "eventual"
+  & highlight card0
+  label key1 "client 2 sees"
+  & label value1 "100 for a while then 50"
+  & highlight card1
+  label key2 "balance on A"
+  & label value2 "50"
+  label key3 "balance on B"
+  & label value3 "100 or 50"
+:::
 
 Linearizability means every operation appears to happen at one instant between its start and its end, and all clients see the same order. It is the model a single-machine variable gives you. Systems provide it with a leader and a consensus protocol such as Raft, which the replication module covers.
 
@@ -1223,6 +1809,113 @@ step: The read became cheap and the write became costly. This is the core trade.
 
 ## How it works
 
+
+:::anim
+title: The same feed query in two stores
+# Worked values and narration follow the scenario in this lesson.
+text heading "The same feed query in two stores" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "store"
+  & label value0 "relational"
+  & highlight card0
+  label key1 "disk reads"
+  & label value1 "0"
+  & highlight card1
+  label key2 "latency"
+  & label value2 "0"
+  & highlight card2
+
+step: Query 1 asks for the 10 newest posts of user 42.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "disk reads"
+  & label value0 "11"
+  & highlight card0
+  label key1 "latency"
+  & label value1 "1 ms"
+  & highlight card1
+  label key2 "store"
+  & label value2 "relational"
+
+step: Query 2 asks for the 10 newest posts from the 50 users that user 42 follows.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "disk reads"
+  & label value0 "550"
+  & highlight card0
+  label key1 "latency"
+  & label value1 "55 ms"
+  & highlight card1
+  label key2 "store"
+  & label value2 "relational"
+
+step: Now switch to a key-value store.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "store"
+  & label value0 "key-value"
+  & highlight card0
+  label key1 "disk reads"
+  & label value1 "0"
+  & highlight card1
+  label key2 "latency"
+  & label value2 "0.1 ms"
+  & highlight card2
+
+step: User 7 posts.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "writes per post"
+  & label value0 "200"
+  & highlight card0
+  label key1 "store"
+  & label value1 "key-value"
+  label key2 "disk reads"
+  & label value2 "0"
+  label key3 "latency"
+  & label value3 "0.1 ms"
+
+step: The read became cheap and the write became costly.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "writes per post"
+  & label value0 "200"
+  label key1 "store"
+  & label value1 "key-value"
+  label key2 "disk reads"
+  & label value2 "0"
+  label key3 "latency"
+  & label value3 "0.1 ms"
+:::
+
 The relational model has a schema: a fixed set of tables and column types. A query language, SQL, describes what to fetch. The database plans how to fetch it, using indexes. A transaction groups several writes so that all of them happen or none of them does. The database also keeps the writes isolated from each other and durable after a crash.
 
 The key-value model has no schema and no joins. The operations are get(key), put(key, value), and delete(key). Some stores add ordered scans over keys, sets, lists, and counters. Redis keeps the data in memory. Cassandra and DynamoDB keep it on many disks with partitioning by key.
@@ -1434,6 +2127,155 @@ Row page -> Query: the order row
 :::
 
 ## How it works
+
+
+:::anim
+title: Build the index level by level
+# Worked values and narration follow the scenario in this lesson.
+text heading "Build the index level by level" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "keys"
+  & label value0 "100 million"
+  & highlight card0
+  label key1 "fan-out"
+  & label value1 "500"
+  & highlight card1
+  label key2 "levels"
+  & label value2 "0"
+  & highlight card2
+  label key3 "reads per lookup"
+  & label value3 "1.25 million pages"
+  & highlight card3
+
+step: Without an index the database reads half of 2.5 million pages.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "keys"
+  & label value0 "100 million"
+  label key1 "fan-out"
+  & label value1 "500"
+  label key2 "levels"
+  & label value2 "0"
+  label key3 "reads per lookup"
+  & label value3 "1.25 million pages"
+
+step: One 8 KB index page holds 500 pairs of id and pointer.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "keys"
+  & label value0 "100 million"
+  label key1 "fan-out"
+  & label value1 "500"
+  label key2 "levels"
+  & label value2 "0"
+  label key3 "reads per lookup"
+  & label value3 "1.25 million pages"
+
+step: The bottom level needs 100 million divided by 500, which is 200,000 pages.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "levels"
+  & label value0 "1"
+  & highlight card0
+  label key1 "bottom level"
+  & label value1 "200000 pages"
+  & highlight card1
+  label key2 "keys"
+  & label value2 "100 million"
+  label key3 "fan-out"
+  & label value3 "500"
+  label key4 "reads per lookup"
+  & label value4 "1.25 million pages"
+
+step: The next level needs 200,000 divided by 500, which is 400 pages.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "levels"
+  & label value0 "2"
+  & highlight card0
+  label key1 "level 2"
+  & label value1 "400 pages"
+  & highlight card1
+  label key2 "bottom level"
+  & label value2 "200000 pages"
+  label key3 "keys"
+  & label value3 "100 million"
+  label key4 "fan-out"
+  & label value4 "500"
+  label key5 "reads per lookup"
+  & label value5 "1.25 million pages"
+
+step: 400 pointers fit in one root page.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "levels"
+  & label value0 "3"
+  & highlight card0
+  label key1 "root"
+  & label value1 "1 page"
+  & highlight card1
+  label key2 "level 2"
+  & label value2 "400 pages"
+  label key3 "bottom level"
+  & label value3 "200000 pages"
+  label key4 "keys"
+  & label value4 "100 million"
+  label key5 "fan-out"
+  & label value5 "500"
+
+step: A lookup reads the root, a level 2 page, a leaf, then the row page.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "reads per lookup"
+  & label value0 "4 pages"
+  & highlight card0
+  label key1 "levels"
+  & label value1 "3"
+  label key2 "root"
+  & label value2 "1 page"
+  label key3 "level 2"
+  & label value3 "400 pages"
+  label key4 "bottom level"
+  & label value4 "200000 pages"
+  label key5 "keys"
+  & label value5 "100 million"
+:::
 
 A B-tree keeps keys in sorted order inside pages. Each page has up to $f$ children, where $f$ is the fan-out. The height of the tree is:
 
@@ -1658,6 +2500,120 @@ state: disk reads=2, found=yes
 :::
 
 ## How it works
+
+
+:::anim
+title: Read the key user:42 through the levels
+# Worked values and narration follow the scenario in this lesson.
+text heading "Read the key user:42 through the levels" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "place"
+  & label value0 "memtable"
+  & highlight card0
+  label key1 "files checked"
+  & label value1 "0"
+  & highlight card1
+  label key2 "disk reads"
+  & label value2 "0"
+  & highlight card2
+  label key3 "found"
+  & label value3 "no"
+  & highlight card3
+
+step: Check the memtable in memory.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "place"
+  & label value0 "level 0"
+  & highlight card0
+  label key1 "files checked"
+  & label value1 "0"
+  label key2 "disk reads"
+  & label value2 "0"
+  label key3 "found"
+  & label value3 "no"
+
+step: Level 0 has 10 files.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "files checked"
+  & label value0 "10"
+  & highlight card0
+  label key1 "place"
+  & label value1 "level 0"
+  label key2 "disk reads"
+  & label value2 "0"
+  label key3 "found"
+  & label value3 "no"
+
+step: One filter says maybe.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "disk reads"
+  & label value0 "1"
+  & highlight card0
+  label key1 "files checked"
+  & label value1 "10"
+  label key2 "place"
+  & label value2 "level 0"
+  label key3 "found"
+  & label value3 "no"
+
+step: Move to level 1.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "place"
+  & label value0 "level 1"
+  & highlight card0
+  label key1 "disk reads"
+  & label value1 "1"
+  label key2 "files checked"
+  & label value2 "10"
+  label key3 "found"
+  & label value3 "no"
+
+step: Read the block and find the value.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "disk reads"
+  & label value0 "2"
+  & highlight card0
+  label key1 "found"
+  & label value1 "yes"
+  & highlight card1
+  label key2 "place"
+  & label value2 "level 1"
+  label key3 "files checked"
+  & label value3 "10"
+:::
 
 The levels form a geometric series. With a size ratio $T$ between levels and $L$ levels, the total capacity is about $T^L$ times the first level. With $T = 10$ and a 64 MB memtable, 5 levels hold 640 GB.
 
@@ -1895,6 +2851,133 @@ step: If the power had failed before the commit record, recovery would ignore 50
 :::
 
 ## How it works
+
+
+:::anim
+title: Crash and recovery of transaction 501
+# Worked values and narration follow the scenario in this lesson.
+text heading "Crash and recovery of transaction 501" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "log"
+  & label value0 "empty"
+  & highlight card0
+  label key1 "page 17"
+  & label value1 "A 100"
+  & highlight card1
+  label key2 "page 92"
+  & label value2 "B 50"
+  & highlight card2
+  label key3 "client"
+  & label value3 "waiting"
+  & highlight card3
+
+step: The database appends the record for page 17, A from 100 to 70.
+  restore card0, card1, card2, card3
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "log"
+  & label value0 "1 record"
+  & highlight card0
+  label key1 "page 17"
+  & label value1 "A 100"
+  label key2 "page 92"
+  & label value2 "B 50"
+  label key3 "client"
+  & label value3 "waiting"
+
+step: It appends the record for page 92, B from 50 to 80, then the commit record.
+  restore card0, card1, card2, card3
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "log"
+  & label value0 "3 records"
+  & highlight card0
+  label key1 "page 17"
+  & label value1 "A 100"
+  label key2 "page 92"
+  & label value2 "B 50"
+  label key3 "client"
+  & label value3 "waiting"
+
+step: It calls fsync on the log and reports commit to the client.
+  restore card0, card1, card2, card3
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "client"
+  & label value0 "got commit"
+  & highlight card0
+  label key1 "log"
+  & label value1 "3 records"
+  label key2 "page 17"
+  & label value2 "A 100"
+  label key3 "page 92"
+  & label value3 "B 50"
+
+step: The power fails before the pages reach disk.
+  restore card0, card1, card2, card3
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "page 17"
+  & label value0 "A 100"
+  label key1 "page 92"
+  & label value1 "B 50"
+  label key2 "client"
+  & label value2 "got commit"
+  label key3 "log"
+  & label value3 "3 records"
+
+step: The log has a commit record for 501.
+  restore card0, card1, card2, card3
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "page 17"
+  & label value0 "A 70"
+  & highlight card0
+  label key1 "page 92"
+  & label value1 "B 80"
+  & highlight card1
+  label key2 "client"
+  & label value2 "got commit"
+  label key3 "log"
+  & label value3 "3 records"
+
+step: If the power had failed before the commit record, recovery would ignore 501 and the client would retry.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "page 17"
+  & label value0 "A 70"
+  label key1 "page 92"
+  & label value1 "B 80"
+  label key2 "client"
+  & label value2 "got commit"
+  label key3 "log"
+  & label value3 "3 records"
+:::
 
 The log works because appending is sequential and small. One commit appends a few hundred bytes. The data pages are large and random, so the database writes them later in batches.
 
@@ -2151,6 +3234,119 @@ state: follower 2=paid, client sees=paid
 
 ## How it works
 
+
+:::anim
+title: A read during replication lag
+# Worked values and narration follow the scenario in this lesson.
+text heading "A read during replication lag" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "leader"
+  & label value0 "order 501 unpaid"
+  & highlight card0
+  label key1 "follower 1"
+  & label value1 "unpaid"
+  & highlight card1
+  label key2 "follower 2"
+  & label value2 "unpaid"
+  & highlight card2
+  label key3 "client sees"
+  & label value3 "unknown"
+  & highlight card3
+
+step: A client writes order 501 paid to the leader.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "leader"
+  & label value0 "order 501 paid"
+  & highlight card0
+  label key1 "follower 1"
+  & label value1 "unpaid"
+  label key2 "follower 2"
+  & label value2 "unpaid"
+  label key3 "client sees"
+  & label value3 "unknown"
+
+step: The leader replies to the client at once, because replication is asynchronous.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "leader"
+  & label value0 "order 501 paid"
+  label key1 "follower 1"
+  & label value1 "unpaid"
+  label key2 "follower 2"
+  & label value2 "unpaid"
+  label key3 "client sees"
+  & label value3 "unknown"
+
+step: The leader streams the record to both followers.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "follower 1"
+  & label value0 "paid"
+  & highlight card0
+  label key1 "leader"
+  & label value1 "order 501 paid"
+  label key2 "follower 2"
+  & label value2 "unpaid"
+  label key3 "client sees"
+  & label value3 "unknown"
+
+step: At 0.5 ms after the write, the client reads order 501 from follower 2.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "client sees"
+  & label value0 "unpaid"
+  & highlight card0
+  label key1 "follower 1"
+  & label value1 "paid"
+  label key2 "leader"
+  & label value2 "order 501 paid"
+  label key3 "follower 2"
+  & label value3 "unpaid"
+
+step: Follower 2 applies the record at 1 ms.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "follower 2"
+  & label value0 "paid"
+  & highlight card0
+  label key1 "client sees"
+  & label value1 "paid"
+  & highlight card1
+  label key2 "follower 1"
+  & label value2 "paid"
+  label key3 "leader"
+  & label value3 "order 501 paid"
+:::
+
 The leader keeps a log of every write in order. Each record has a position number. A follower asks for records from its last position. The leader streams them. The follower applies them in the same order. A follower that was down for an hour catches up from its last position.
 
 Replication lag is the time between a write on the leader and its visibility on a follower. Under normal load it is milliseconds. Under heavy writes, or on a slow follower, it grows to seconds or minutes. Monitor it as a number of seconds or a number of log bytes behind.
@@ -2375,6 +3571,118 @@ W=3: 1, 1, 1
 
 ## How it works
 
+
+:::anim
+title: Quorum write and read with N=3, W=2, R=2
+# Worked values and narration follow the scenario in this lesson.
+text heading "Quorum write and read with N=3, W=2, R=2" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "A"
+  & label value0 "v1"
+  & highlight card0
+  label key1 "B"
+  & label value1 "v1"
+  & highlight card1
+  label key2 "C"
+  & label value2 "v1"
+  & highlight card2
+  label key3 "read result"
+  & label value3 "none"
+  & highlight card3
+
+step: A client writes version 2 to all three replicas and waits for 2 confirmations.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "A"
+  & label value0 "v2"
+  & highlight card0
+  label key1 "B"
+  & label value1 "v2"
+  & highlight card1
+  label key2 "C"
+  & label value2 "v1"
+  label key3 "read result"
+  & label value3 "none"
+
+step: A and B confirm.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "A"
+  & label value0 "v2"
+  label key1 "B"
+  & label value1 "v2"
+  label key2 "C"
+  & label value2 "v1"
+  label key3 "read result"
+  & label value3 "none"
+
+step: Another client reads from all three and waits for 2 answers.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "A"
+  & label value0 "v2"
+  label key1 "B"
+  & label value1 "v2"
+  label key2 "C"
+  & label value2 "v1"
+  label key3 "read result"
+  & label value3 "none"
+
+step: The client keeps the highest version.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "read result"
+  & label value0 "v2"
+  & highlight card0
+  label key1 "A"
+  & label value1 "v2"
+  label key2 "B"
+  & label value2 "v2"
+  label key3 "C"
+  & label value3 "v1"
+
+step: Read repair writes v2 back to C, so C is no longer stale.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "C"
+  & label value0 "v2"
+  & highlight card0
+  label key1 "read result"
+  & label value1 "v2"
+  label key2 "A"
+  & label value2 "v2"
+  label key3 "B"
+  & label value3 "v2"
+:::
+
 The quorum condition is:
 
 $$W + R > N$$
@@ -2593,6 +3901,120 @@ step: A read that overlaps a write may return the old or the new value. The orde
 :::
 
 ## How it works
+
+
+:::anim
+title: Try to place each operation at one instant
+# Worked values and narration follow the scenario in this lesson.
+text heading "Try to place each operation at one instant" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "write 5 at"
+  & label value0 "unplaced"
+  & highlight card0
+  label key1 "read by client 2 at"
+  & label value1 "unplaced"
+  & highlight card1
+  label key2 "read by client 3 at"
+  & label value2 "unplaced"
+  & highlight card2
+  label key3 "verdict"
+  & label value3 "unknown"
+  & highlight card3
+
+step: Client 2 read 5 between 4 and 6 ms.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "write 5 at"
+  & label value0 "unplaced"
+  label key1 "read by client 2 at"
+  & label value1 "unplaced"
+  label key2 "read by client 3 at"
+  & label value2 "unplaced"
+  label key3 "verdict"
+  & label value3 "unknown"
+
+step: Place the write at 3 ms and the read of client 2 at 5 ms.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "write 5 at"
+  & label value0 "3 ms"
+  & highlight card0
+  label key1 "read by client 2 at"
+  & label value1 "5 ms"
+  & highlight card1
+  label key2 "read by client 3 at"
+  & label value2 "unplaced"
+  label key3 "verdict"
+  & label value3 "unknown"
+
+step: Client 3 read 0 between 12 and 14 ms.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "read by client 3 at"
+  & label value0 "impossible"
+  & highlight card0
+  label key1 "verdict"
+  & label value1 "not linearizable"
+  & highlight card1
+  label key2 "write 5 at"
+  & label value2 "3 ms"
+  label key3 "read by client 2 at"
+  & label value3 "5 ms"
+
+step: Change the read of client 3 to return 5.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "read by client 3 at"
+  & label value0 "13 ms"
+  & highlight card0
+  label key1 "verdict"
+  & label value1 "linearizable"
+  & highlight card1
+  label key2 "write 5 at"
+  & label value2 "3 ms"
+  label key3 "read by client 2 at"
+  & label value3 "5 ms"
+
+step: A read that overlaps a write may return the old or the new value.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "read by client 3 at"
+  & label value0 "13 ms"
+  label key1 "verdict"
+  & label value1 "linearizable"
+  label key2 "write 5 at"
+  & label value2 "3 ms"
+  label key3 "read by client 2 at"
+  & label value3 "5 ms"
+:::
 
 The check procedure for a small history is:
 
@@ -2832,6 +4254,121 @@ state: leader=S3, S3 role=leader
 
 ## How it works
 
+
+:::anim
+title: Election after the leader S1 crashes
+# Worked values and narration follow the scenario in this lesson.
+text heading "Election after the leader S1 crashes" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "term"
+  & label value0 "3"
+  & highlight card0
+  label key1 "leader"
+  & label value1 "S1"
+  & highlight card1
+  label key2 "votes for S3"
+  & label value2 "0"
+  & highlight card2
+  label key3 "S3 role"
+  & label value3 "follower"
+  & highlight card3
+
+step: S1 crashes.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "leader"
+  & label value0 "none"
+  & highlight card0
+  label key1 "term"
+  & label value1 "3"
+  label key2 "votes for S3"
+  & label value2 "0"
+  label key3 "S3 role"
+  & label value3 "follower"
+
+step: S3 times out first after a random wait between 150 and 300 ms.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "term"
+  & label value0 "4"
+  & highlight card0
+  label key1 "S3 role"
+  & label value1 "candidate"
+  & highlight card1
+  label key2 "votes for S3"
+  & label value2 "1"
+  & highlight card2
+  label key3 "leader"
+  & label value3 "none"
+
+step: S3 sends RequestVote to all nodes with its last log index 10 and term 3.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "term"
+  & label value0 "4"
+  label key1 "S3 role"
+  & label value1 "candidate"
+  label key2 "votes for S3"
+  & label value2 "1"
+  label key3 "leader"
+  & label value3 "none"
+
+step: S2 and S4 see that the log of S3 is at least as complete as theirs.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "votes for S3"
+  & label value0 "3"
+  & highlight card0
+  label key1 "term"
+  & label value1 "4"
+  label key2 "S3 role"
+  & label value2 "candidate"
+  label key3 "leader"
+  & label value3 "none"
+
+step: 3 of 5 is a majority.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "leader"
+  & label value0 "S3"
+  & highlight card0
+  label key1 "S3 role"
+  & label value1 "leader"
+  & highlight card1
+  label key2 "votes for S3"
+  & label value2 "3"
+  label key3 "term"
+  & label value3 "4"
+:::
+
 Each node is in one of three roles: leader, follower, or candidate. The leader handles all client writes and sends heartbeats. Followers only reply. A candidate is a follower that is asking for votes.
 
 A majority of $N$ nodes is $\\lfloor N / 2 \\rfloor + 1$. The cluster survives $f$ failures when:
@@ -3067,6 +4604,148 @@ Consistent hashing: 20
 
 ## How it works
 
+
+:::anim
+title: Add node E to a ring of 4 nodes
+# Worked values and narration follow the scenario in this lesson.
+text heading "Add node E to a ring of 4 nodes" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "key 17"
+  & label value0 "B"
+  & highlight card0
+  label key1 "key 22"
+  & label value1 "B"
+  & highlight card1
+  label key2 "key 35"
+  & label value2 "B"
+  & highlight card2
+  label key3 "key 40"
+  & label value3 "C"
+  & highlight card3
+  label key4 "key 90"
+  & label value4 "A"
+  & highlight card4
+  label key5 "moved"
+  & label value5 "0"
+  & highlight card5
+
+step: Nodes sit at positions A 10, B 35, C 60, and D 85.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "key 17"
+  & label value0 "B"
+  label key1 "key 22"
+  & label value1 "B"
+  label key2 "key 35"
+  & label value2 "B"
+  label key3 "key 40"
+  & label value3 "C"
+  label key4 "key 90"
+  & label value4 "A"
+  label key5 "moved"
+  & label value5 "0"
+
+step: Keys 17, 22, and 35 reach B at 35 first.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "key 17"
+  & label value0 "B"
+  label key1 "key 22"
+  & label value1 "B"
+  label key2 "key 35"
+  & label value2 "B"
+  label key3 "key 40"
+  & label value3 "C"
+  label key4 "key 90"
+  & label value4 "A"
+  label key5 "moved"
+  & label value5 "0"
+
+step: Add node E at position 50.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "key 17"
+  & label value0 "B"
+  label key1 "key 22"
+  & label value1 "B"
+  label key2 "key 35"
+  & label value2 "B"
+  label key3 "key 40"
+  & label value3 "C"
+  label key4 "key 90"
+  & label value4 "A"
+  label key5 "moved"
+  & label value5 "0"
+
+step: Key 40 now reaches E at 50 before C at 60.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "key 40"
+  & label value0 "E"
+  & highlight card0
+  label key1 "moved"
+  & label value1 "1"
+  & highlight card1
+  label key2 "key 17"
+  & label value2 "B"
+  label key3 "key 22"
+  & label value3 "B"
+  label key4 "key 35"
+  & label value4 "B"
+  label key5 "key 90"
+  & label value5 "A"
+
+step: The other 4 keys keep their owner.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "key 40"
+  & label value0 "E"
+  label key1 "moved"
+  & label value1 "1"
+  label key2 "key 17"
+  & label value2 "B"
+  label key3 "key 22"
+  & label value3 "B"
+  label key4 "key 35"
+  & label value4 "B"
+  label key5 "key 90"
+  & label value5 "A"
+:::
+
 A hash function maps a key to a number in a fixed range, for example 0 to $2^{32} - 1$. A good hash spreads keys evenly and does not change over time. Use a stable function such as MurmurHash or xxHash, not the language's built-in hash, because that can differ between processes.
 
 The lookup procedure on a ring is:
@@ -3263,6 +4942,152 @@ step: The routing table switches 8 partitions to node 4. Clients refresh the tab
 :::
 
 ## How it works
+
+
+:::anim
+title: Add a fourth node to a 30-partition store
+# Worked values and narration follow the scenario in this lesson.
+text heading "Add a fourth node to a 30-partition store" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "node 1"
+  & label value0 "10 partitions"
+  & highlight card0
+  label key1 "node 2"
+  & label value1 "10"
+  & highlight card1
+  label key2 "node 3"
+  & label value2 "10"
+  & highlight card2
+  label key3 "node 4"
+  & label value3 "0"
+  & highlight card3
+  label key4 "copied"
+  & label value4 "0 GB"
+  & highlight card4
+  label key5 "time"
+  & label value5 "0 min"
+  & highlight card5
+
+step: Each partition holds 10 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "node 1"
+  & label value0 "10 partitions"
+  label key1 "node 2"
+  & label value1 "10"
+  label key2 "node 3"
+  & label value2 "10"
+  label key3 "node 4"
+  & label value3 "0"
+  label key4 "copied"
+  & label value4 "0 GB"
+  label key5 "time"
+  & label value5 "0 min"
+
+step: The plan moves 2 partitions from node 1, 3 from node 2, and 3 from node 3 to node 4.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "node 1"
+  & label value0 "10 partitions"
+  label key1 "node 2"
+  & label value1 "10"
+  label key2 "node 3"
+  & label value2 "10"
+  label key3 "node 4"
+  & label value3 "0"
+  label key4 "copied"
+  & label value4 "0 GB"
+  label key5 "time"
+  & label value5 "0 min"
+
+step: The copy is throttled to 50 MB per second.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "node 1"
+  & label value0 "8 partitions"
+  & highlight card0
+  label key1 "node 2"
+  & label value1 "7"
+  & highlight card1
+  label key2 "node 3"
+  & label value2 "7"
+  & highlight card2
+  label key3 "node 4"
+  & label value3 "8"
+  & highlight card3
+  label key4 "copied"
+  & label value4 "80 GB"
+  & highlight card4
+  label key5 "time"
+  & label value5 "27 min"
+  & highlight card5
+
+step: During the copy the sources serve writes and log them.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "node 1"
+  & label value0 "8 partitions"
+  label key1 "node 2"
+  & label value1 "7"
+  label key2 "node 3"
+  & label value2 "7"
+  label key3 "node 4"
+  & label value3 "8"
+  label key4 "copied"
+  & label value4 "80 GB"
+  label key5 "time"
+  & label value5 "27 min"
+
+step: The routing table switches 8 partitions to node 4.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "node 1"
+  & label value0 "8 partitions"
+  label key1 "node 2"
+  & label value1 "7"
+  label key2 "node 3"
+  & label value2 "7"
+  label key3 "node 4"
+  & label value3 "8"
+  label key4 "copied"
+  & label value4 "80 GB"
+  label key5 "time"
+  & label value5 "27 min"
+:::
 
 A fixed partition count removes the need to rehash keys. Pick a count at the start that is far larger than the node count. A good rule is 10 to 100 partitions per node at the expected final size. Each partition is a unit that moves whole. Kafka topics and Redis Cluster slots work this way; Redis uses 16,384 slots.
 
@@ -3493,6 +5318,121 @@ state: fix=aggregate then flush
 
 ## How it works
 
+
+:::anim
+title: One celebrity key on a 10-node cache
+# Worked values and narration follow the scenario in this lesson.
+text heading "One celebrity key on a 10-node cache" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "reads per second on key"
+  & label value0 "60000"
+  & highlight card0
+  label key1 "busiest node"
+  & label value1 "64000"
+  & highlight card1
+  label key2 "limit"
+  & label value2 "50000"
+  & highlight card2
+  label key3 "fix"
+  & label value3 "none"
+  & highlight card3
+
+step: 100,000 reads per second spread over 10 nodes is 10,000 each.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "reads per second on key"
+  & label value0 "60000"
+  label key1 "busiest node"
+  & label value1 "64000"
+  label key2 "limit"
+  & label value2 "50000"
+  label key3 "fix"
+  & label value3 "none"
+
+step: The node that owns the key serves 60,000 for that key plus 4,000 for the rest.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "reads per second on key"
+  & label value0 "60000"
+  label key1 "busiest node"
+  & label value1 "64000"
+  label key2 "limit"
+  & label value2 "50000"
+  label key3 "fix"
+  & label value3 "none"
+
+step: Fix 1, each of 200 application servers caches the value for 1 second.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "reads per second on key"
+  & label value0 "200"
+  & highlight card0
+  label key1 "busiest node"
+  & label value1 "4200"
+  & highlight card1
+  label key2 "fix"
+  & label value2 "local cache"
+  & highlight card2
+  label key3 "limit"
+  & label value3 "50000"
+
+step: Fix 2, store the value under 10 salted keys.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "reads per second on key"
+  & label value0 "6000 per copy"
+  & highlight card0
+  label key1 "busiest node"
+  & label value1 "10000"
+  & highlight card1
+  label key2 "fix"
+  & label value2 "salting"
+  & highlight card2
+  label key3 "limit"
+  & label value3 "50000"
+
+step: Fix 3, for a hot counter, each server sums locally and flushes every 100 ms.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "fix"
+  & label value0 "aggregate then flush"
+  & highlight card0
+  label key1 "reads per second on key"
+  & label value1 "6000 per copy"
+  label key2 "busiest node"
+  & label value2 "10000"
+  label key3 "limit"
+  & label value3 "50000"
+:::
+
 Detect hot keys from per-partition metrics. Compare the request rate of the busiest partition with the average. A ratio above 3 is skew. Then sample requests on the busy partition and count keys. Redis has a built-in hot key scan in its command-line tool.
 
 Key salting procedure:
@@ -3708,6 +5648,124 @@ step: One replica cannot serve 10,000 reads per second. The database fails. Plan
 :::
 
 ## How it works
+
+
+:::anim
+title: Database load and latency at each hit rate
+# Worked values and narration follow the scenario in this lesson.
+text heading "Database load and latency at each hit rate" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "hit rate"
+  & label value0 "0 percent"
+  & highlight card0
+  label key1 "database reads per|second"
+  & label value1 "10000"
+  & highlight card1
+  label key2 "average latency"
+  & label value2 "5 ms"
+  & highlight card2
+  label key3 "replicas"
+  & label value3 "5"
+  & highlight card3
+
+step: With no cache, all 10,000 reads per second reach the database.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "hit rate"
+  & label value0 "0 percent"
+  label key1 "database reads per|second"
+  & label value1 "10000"
+  label key2 "average latency"
+  & label value2 "5 ms"
+  label key3 "replicas"
+  & label value3 "5"
+
+step: Add a cache with a 90 percent hit rate.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "hit rate"
+  & label value0 "90 percent"
+  & highlight card0
+  label key1 "database reads per|second"
+  & label value1 "1000"
+  & highlight card1
+  label key2 "average latency"
+  & label value2 "0.7 ms"
+  & highlight card2
+  label key3 "replicas"
+  & label value3 "1"
+  & highlight card3
+
+step: Raise the hit rate to 99 percent.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "hit rate"
+  & label value0 "99 percent"
+  & highlight card0
+  label key1 "database reads per|second"
+  & label value1 "100"
+  & highlight card1
+  label key2 "average latency"
+  & label value2 "0.25 ms"
+  & highlight card2
+  label key3 "replicas"
+  & label value3 "1"
+
+step: The cache node restarts.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "hit rate"
+  & label value0 "0 percent"
+  & highlight card0
+  label key1 "database reads per|second"
+  & label value1 "10000"
+  & highlight card1
+  label key2 "average latency"
+  & label value2 "5 ms"
+  & highlight card2
+  label key3 "replicas"
+  & label value3 "1"
+
+step: One replica cannot serve 10,000 reads per second.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "hit rate"
+  & label value0 "0 percent"
+  label key1 "database reads per|second"
+  & label value1 "10000"
+  label key2 "average latency"
+  & label value2 "5 ms"
+  label key3 "replicas"
+  & label value3 "1"
+:::
 
 Four strategies link the cache and the database:
 
@@ -3943,6 +6001,103 @@ Reader -> Cache: set item 7 to 10, stale @5-5.5
 This race needs a slow reader between its database read and its cache fill. It is rare, but it happens. Two fixes exist. A short TTL acts as a safety net. A lease gives the reader a token on the miss, and the delete invalidates the token so the fill is rejected.
 
 ## How it works
+
+
+:::anim
+title: Two writers, update the cache or delete the key
+# Worked values and narration follow the scenario in this lesson.
+text heading "Two writers, update the cache or delete the key" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "database"
+  & label value0 "10"
+  & highlight card0
+  label key1 "cache"
+  & label value1 "empty"
+  & highlight card1
+  label key2 "method"
+  & label value2 "update"
+  & highlight card2
+
+step: Writer 1 sets the price to 20 in the database.
+  restore card0, card1, card2
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "database"
+  & label value0 "30"
+  & highlight card0
+  label key1 "cache"
+  & label value1 "empty"
+  label key2 "method"
+  & label value2 "update"
+
+step: Writer 2 writes 30 to the cache.
+  restore card0, card1, card2
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "cache"
+  & label value0 "20"
+  & highlight card0
+  label key1 "database"
+  & label value1 "30"
+  label key2 "method"
+  & label value2 "update"
+
+step: The database says 30 and the cache says 20.
+  restore card0, card1, card2
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "cache"
+  & label value0 "20"
+  label key1 "database"
+  & label value1 "30"
+  label key2 "method"
+  & label value2 "update"
+
+step: Now use delete instead.
+  restore card0, card1, card2
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "cache"
+  & label value0 "empty"
+  & highlight card0
+  label key1 "method"
+  & label value1 "delete"
+  & highlight card1
+  label key2 "database"
+  & label value2 "30"
+
+step: The next reader misses, reads 30 from the database, and fills the cache.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "cache"
+  & label value0 "30"
+  & highlight card0
+  label key1 "method"
+  & label value1 "delete"
+  label key2 "database"
+  & label value2 "30"
+:::
 
 Three invalidation methods exist, and most systems combine them.
 
@@ -4180,6 +6335,118 @@ One week with 3 replicas: 18
 
 ## How it works
 
+
+:::anim
+title: Offsets, a crash, and at-least-once delivery
+# Worked values and narration follow the scenario in this lesson.
+text heading "Offsets, a crash, and at-least-once delivery" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "partition 3 end"
+  & label value0 "88210"
+  & highlight card0
+  label key1 "committed offset"
+  & label value1 "88200"
+  & highlight card1
+  label key2 "processed by"
+  & label value2 "none"
+  & highlight card2
+  label key3 "repeats"
+  & label value3 "0"
+  & highlight card3
+
+step: The producer appends order 501 to partition 3.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "partition 3 end"
+  & label value0 "88210"
+  label key1 "committed offset"
+  & label value1 "88200"
+  label key2 "processed by"
+  & label value2 "none"
+  label key3 "repeats"
+  & label value3 "0"
+
+step: Instance 2 reads from the committed offset 88,200 and processes 10 events up to 88,210.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "processed by"
+  & label value0 "instance 2 up to 88205"
+  & highlight card0
+  label key1 "partition 3 end"
+  & label value1 "88210"
+  label key2 "committed offset"
+  & label value2 "88200"
+  label key3 "repeats"
+  & label value3 "0"
+
+step: Instance 2 crashes after 88,205 and before the commit.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "processed by"
+  & label value0 "instance 2 up to 88205"
+  label key1 "partition 3 end"
+  & label value1 "88210"
+  label key2 "committed offset"
+  & label value2 "88200"
+  label key3 "repeats"
+  & label value3 "0"
+
+step: The broker gives partition 3 to instance 4.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "processed by"
+  & label value0 "instance 4 from 88200"
+  & highlight card0
+  label key1 "partition 3 end"
+  & label value1 "88210"
+  label key2 "committed offset"
+  & label value2 "88200"
+  label key3 "repeats"
+  & label value3 "0"
+
+step: Events 88,200 to 88,205 are processed a second time.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "repeats"
+  & label value0 "6"
+  & highlight card0
+  label key1 "committed offset"
+  & label value1 "88210"
+  & highlight card1
+  label key2 "processed by"
+  & label value2 "instance 4 from 88200"
+  label key3 "partition 3 end"
+  & label value3 "88210"
+:::
+
 A topic is a named stream. A partition is one append-only file of the topic. The broker writes each event once and never changes it. Each partition has a leader broker and follower replicas, as in the replication module. A producer waits for acknowledgement from the leader only, or from all in-sync replicas, by setting acks.
 
 A consumer group is a set of instances that share the partitions of a topic. Each partition goes to exactly one instance in the group. Two groups read the same topic independently. The offset is stored per group and per partition.
@@ -4390,6 +6657,139 @@ state: producer rate=800 per second, user sees=503 on some requests
 :::
 
 ## How it works
+
+
+:::anim
+title: A queue between a 1,000 per second producer and an 800 per second consumer
+# Worked values and narration follow the scenario in this lesson.
+text heading "A queue between a 1,000 per second producer and an 800 per|second consumer" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "queue"
+  & label value0 "unbounded"
+  & highlight card0
+  label key1 "depth"
+  & label value1 "0"
+  & highlight card1
+  label key2 "memory"
+  & label value2 "0 MB"
+  & highlight card2
+  label key3 "delay"
+  & label value3 "0 s"
+  & highlight card3
+
+step: The queue grows by 200 events per second.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "depth"
+  & label value0 "12000"
+  & highlight card0
+  label key1 "memory"
+  & label value1 "24 MB"
+  & highlight card1
+  label key2 "delay"
+  & label value2 "15 s"
+  & highlight card2
+  label key3 "queue"
+  & label value3 "unbounded"
+
+step: After 1 hour it holds 720,000 events, 1.4 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "depth"
+  & label value0 "720000"
+  & highlight card0
+  label key1 "memory"
+  & label value1 "1400 MB"
+  & highlight card1
+  label key2 "delay"
+  & label value2 "900 s"
+  & highlight card2
+  label key3 "queue"
+  & label value3 "unbounded"
+
+step: After 6 hours the process with 8 GB of memory dies.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "depth"
+  & label value0 "0"
+  & highlight card0
+  label key1 "memory"
+  & label value1 "crashed"
+  & highlight card1
+  label key2 "delay"
+  & label value2 "lost"
+  & highlight card2
+  label key3 "queue"
+  & label value3 "unbounded"
+
+step: Now bound the queue at 10,000 events.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "queue"
+  & label value0 "bounded at 10000"
+  & highlight card0
+  label key1 "depth"
+  & label value1 "10000"
+  & highlight card1
+  label key2 "memory"
+  & label value2 "20 MB"
+  & highlight card2
+  label key3 "delay"
+  & label value3 "12.5 s"
+  & highlight card3
+
+step: The producer slows to 800 per second.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "producer rate"
+  & label value0 "800 per second"
+  & highlight card0
+  label key1 "user sees"
+  & label value1 "503 on some requests"
+  & highlight card1
+  label key2 "queue"
+  & label value2 "bounded at 10000"
+  label key3 "depth"
+  & label value3 "10000"
+  label key4 "memory"
+  & label value4 "20 MB"
+  label key5 "delay"
+  & label value5 "12.5 s"
+:::
 
 Three mechanisms carry the signal:
 
@@ -4631,6 +7031,133 @@ C -> A: retry 1, which causes 3 more calls to B @3.6-3.65
 
 ## How it works
 
+
+:::anim
+title: Load on B as the failure rate rises
+# Worked values and narration follow the scenario in this lesson.
+text heading "Load on B as the failure rate rises" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "calls from A"
+  & label value0 "1000 per second"
+  & highlight card0
+  label key1 "failure rate"
+  & label value1 "10 percent"
+  & highlight card1
+  label key2 "retries"
+  & label value2 "up to 2"
+  & highlight card2
+  label key3 "load on B"
+  & label value3 "1000 per second"
+  & highlight card3
+
+step: B fails 10 percent of calls.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "success rate"
+  & label value0 "99.9 percent"
+  & highlight card0
+  label key1 "calls from A"
+  & label value1 "1000 per second"
+  label key2 "failure rate"
+  & label value2 "10 percent"
+  label key3 "retries"
+  & label value3 "up to 2"
+  label key4 "load on B"
+  & label value4 "1000 per second"
+
+step: Extra calls are 1,000 times 0.1 plus 0.01, which is 110 per second.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "load on B"
+  & label value0 "1110 per second"
+  & highlight card0
+  label key1 "success rate"
+  & label value1 "99.9 percent"
+  label key2 "calls from A"
+  & label value2 "1000 per second"
+  label key3 "failure rate"
+  & label value3 "10 percent"
+  label key4 "retries"
+  & label value4 "up to 2"
+
+step: Now B is overloaded and fails 80 percent.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "failure rate"
+  & label value0 "80 percent"
+  & highlight card0
+  label key1 "load on B"
+  & label value1 "2440 per second"
+  & highlight card1
+  label key2 "success rate"
+  & label value2 "99.9 percent"
+  label key3 "calls from A"
+  & label value3 "1000 per second"
+  label key4 "retries"
+  & label value4 "up to 2"
+
+step: B sees 2.4 times its normal load while it is already overloaded.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "failure rate"
+  & label value0 "80 percent"
+  label key1 "load on B"
+  & label value1 "2440 per second"
+  label key2 "success rate"
+  & label value2 "99.9 percent"
+  label key3 "calls from A"
+  & label value3 "1000 per second"
+  label key4 "retries"
+  & label value4 "up to 2"
+
+step: A 10 percent retry budget caps extra calls at 100 per second.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "retries"
+  & label value0 "10 percent budget"
+  & highlight card0
+  label key1 "load on B"
+  & label value1 "1100 per second"
+  & highlight card1
+  label key2 "failure rate"
+  & label value2 "80 percent"
+  label key3 "success rate"
+  & label value3 "99.9 percent"
+  label key4 "calls from A"
+  & label value4 "1000 per second"
+:::
+
 Set the timeout from the callee's measured latency:
 
 1. Measure the callee's p99.9 latency over a week.
@@ -4864,6 +7391,125 @@ state: state=closed, failures in window=0 of 100, calls to R per second=500, fal
 
 ## How it works
 
+
+:::anim
+title: Breaker with a 100-call window, 50 percent threshold, 30 second open time
+# Worked values and narration follow the scenario in this lesson.
+text heading "Breaker with a 100-call window, 50 percent threshold, 30|second open time" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "state"
+  & label value0 "closed"
+  & highlight card0
+  label key1 "failures in window"
+  & label value1 "0 of 100"
+  & highlight card1
+  label key2 "calls to R per second"
+  & label value2 "500"
+  & highlight card2
+  label key3 "fallback"
+  & label value3 "off"
+  & highlight card3
+
+step: R goes down.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "failures in window"
+  & label value0 "100 of 100"
+  & highlight card0
+  label key1 "state"
+  & label value1 "closed"
+  label key2 "calls to R per second"
+  & label value2 "500"
+  label key3 "fallback"
+  & label value3 "off"
+
+step: The breaker opens.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "state"
+  & label value0 "open"
+  & highlight card0
+  label key1 "calls to R per second"
+  & label value1 "0"
+  & highlight card1
+  label key2 "fallback"
+  & label value2 "on"
+  & highlight card2
+  label key3 "failures in window"
+  & label value3 "100 of 100"
+
+step: After 30 seconds the breaker goes half-open and lets 10 calls through.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "state"
+  & label value0 "half-open"
+  & highlight card0
+  label key1 "calls to R per second"
+  & label value1 "10 per 30 s"
+  & highlight card1
+  label key2 "fallback"
+  & label value2 "on"
+  label key3 "failures in window"
+  & label value3 "100 of 100"
+
+step: R is still down.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "state"
+  & label value0 "open"
+  & highlight card0
+  label key1 "calls to R per second"
+  & label value1 "10 per 30 s"
+  label key2 "fallback"
+  & label value2 "on"
+  label key3 "failures in window"
+  & label value3 "100 of 100"
+
+step: At second 91 R is back.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "state"
+  & label value0 "closed"
+  & highlight card0
+  label key1 "failures in window"
+  & label value1 "0 of 100"
+  & highlight card1
+  label key2 "calls to R per second"
+  & label value2 "500"
+  & highlight card2
+  label key3 "fallback"
+  & label value3 "off"
+  & highlight card3
+:::
+
 The breaker has three states:
 
 | State | Calls | Transition |
@@ -5094,6 +7740,135 @@ state: payments done=500 per second, feed reads done=500 per second
 
 ## How it works
 
+
+:::anim
+title: Goodput at 2,000 offered on a 1,000 per second server
+# Worked values and narration follow the scenario in this lesson.
+text heading "Goodput at 2,000 offered on a 1,000 per second server" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "offered"
+  & label value0 "2000 per second"
+  & highlight card0
+  label key1 "queue limit"
+  & label value1 "none"
+  & highlight card1
+  label key2 "queue wait"
+  & label value2 "0 s"
+  & highlight card2
+  label key3 "goodput"
+  & label value3 "1000 per second"
+  & highlight card3
+
+step: The server accepts everything.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "queue wait"
+  & label value0 "1 s"
+  & highlight card0
+  label key1 "offered"
+  & label value1 "2000 per second"
+  label key2 "queue limit"
+  & label value2 "none"
+  label key3 "goodput"
+  & label value3 "1000 per second"
+
+step: After 2 seconds the wait is 2 seconds.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "queue wait"
+  & label value0 "2 s"
+  & highlight card0
+  label key1 "goodput"
+  & label value1 "0"
+  & highlight card1
+  label key2 "offered"
+  & label value2 "2000 per second"
+  label key3 "queue limit"
+  & label value3 "none"
+
+step: The server still processes abandoned requests at 1,000 per second.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "queue wait"
+  & label value0 "2 s"
+  label key1 "goodput"
+  & label value1 "0"
+  label key2 "offered"
+  & label value2 "2000 per second"
+  label key3 "queue limit"
+  & label value3 "none"
+
+step: Now cap the queue at 100.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "queue limit"
+  & label value0 "100"
+  & highlight card0
+  label key1 "queue wait"
+  & label value1 "0.1 s"
+  & highlight card1
+  label key2 "goodput"
+  & label value2 "1000 per second"
+  & highlight card2
+  label key3 "rejected"
+  & label value3 "1000 per second"
+  & highlight card3
+  label key4 "offered"
+  & label value4 "2000 per second"
+
+step: Add priority.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "payments done"
+  & label value0 "500 per second"
+  & highlight card0
+  label key1 "feed reads done"
+  & label value1 "500 per second"
+  & highlight card1
+  label key2 "queue limit"
+  & label value2 "100"
+  label key3 "queue wait"
+  & label value3 "0.1 s"
+  label key4 "goodput"
+  & label value4 "1000 per second"
+  label key5 "rejected"
+  & label value5 "1000 per second"
+:::
+
 Three signals tell a server it is overloaded:
 
 - Queue depth or queue wait time. The most direct. Shed when the wait exceeds a fraction of the deadline.
@@ -5322,6 +8097,128 @@ state: per-shard slow fraction=1 percent, hedging=on, extra load=1 percent
 :::
 
 ## How it works
+
+
+:::anim
+title: Fan-out of one request to many shards
+# Worked values and narration follow the scenario in this lesson.
+text heading "Fan-out of one request to many shards" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "fan-out"
+  & label value0 "100"
+  & highlight card0
+  label key1 "per-shard slow fraction"
+  & label value1 "1 percent"
+  & highlight card1
+  label key2 "users that wait 1 s"
+  & label value2 "unknown"
+  & highlight card2
+  label key3 "hedging"
+  & label value3 "off"
+  & highlight card3
+
+step: Each shard is fast 99 percent of the time.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "fan-out"
+  & label value0 "100"
+  label key1 "per-shard slow fraction"
+  & label value1 "1 percent"
+  label key2 "users that wait 1 s"
+  & label value2 "unknown"
+  label key3 "hedging"
+  & label value3 "off"
+
+step: 0.99 to the power 100 is 0.366.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "users that wait 1 s"
+  & label value0 "63 percent"
+  & highlight card0
+  label key1 "fan-out"
+  & label value1 "100"
+  label key2 "per-shard slow fraction"
+  & label value2 "1 percent"
+  label key3 "hedging"
+  & label value3 "off"
+
+step: Cut the fan-out to 10.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "fan-out"
+  & label value0 "10"
+  & highlight card0
+  label key1 "users that wait 1 s"
+  & label value1 "10 percent"
+  & highlight card1
+  label key2 "per-shard slow fraction"
+  & label value2 "1 percent"
+  label key3 "hedging"
+  & label value3 "off"
+
+step: Keep fan-out 100 but cut each shard tail to 0.01 percent.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "fan-out"
+  & label value0 "100"
+  & highlight card0
+  label key1 "per-shard slow fraction"
+  & label value1 "0.01 percent"
+  & highlight card1
+  label key2 "users that wait 1 s"
+  & label value2 "1 percent"
+  & highlight card2
+  label key3 "hedging"
+  & label value3 "off"
+
+step: Or hedge.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "per-shard slow fraction"
+  & label value0 "1 percent"
+  & highlight card0
+  label key1 "hedging"
+  & label value1 "on"
+  & highlight card1
+  label key2 "extra load"
+  & label value2 "1 percent"
+  & highlight card2
+  label key3 "fan-out"
+  & label value3 "100"
+  label key4 "users that wait 1 s"
+  & label value4 "1 percent"
+:::
 
 The general rule for fan-out to $n$ servers with a per-server slow fraction $p$ is:
 
@@ -5589,6 +8486,150 @@ Web server -> Key-value store: write key and URL
 
 ## How it works
 
+
+:::anim
+title: Create a short link and serve a redirect
+# Worked values and narration follow the scenario in this lesson.
+text heading "Create a short link and serve a redirect" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "next id"
+  & label value0 "1000"
+  & highlight card0
+  label key1 "local range"
+  & label value1 "1000 to 1999"
+  & highlight card1
+  label key2 "key"
+  & label value2 "none"
+  & highlight card2
+  label key3 "cache"
+  & label value3 "empty"
+  & highlight card3
+  label key4 "store rows"
+  & label value4 "0"
+  & highlight card4
+
+step: A client sends a long URL.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "next id"
+  & label value0 "1000"
+  label key1 "local range"
+  & label value1 "1000 to 1999"
+  label key2 "key"
+  & label value2 "none"
+  label key3 "cache"
+  & label value3 "empty"
+  label key4 "store rows"
+  & label value4 "0"
+
+step: The server takes id 1000 from its local range.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "next id"
+  & label value0 "1001"
+  & highlight card0
+  label key1 "local range"
+  & label value1 "1000 to 1999"
+  label key2 "key"
+  & label value2 "none"
+  label key3 "cache"
+  & label value3 "empty"
+  label key4 "store rows"
+  & label value4 "0"
+
+step: The server encodes 1000 in base62.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "key"
+  & label value0 "00000g8"
+  & highlight card0
+  label key1 "next id"
+  & label value1 "1001"
+  label key2 "local range"
+  & label value2 "1000 to 1999"
+  label key3 "cache"
+  & label value3 "empty"
+  label key4 "store rows"
+  & label value4 "0"
+
+step: The server stores the key, URL, creation date, and expiry, then returns the short URL.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "store rows"
+  & label value0 "1"
+  & highlight card0
+  label key1 "key"
+  & label value1 "00000g8"
+  label key2 "next id"
+  & label value2 "1001"
+  label key3 "local range"
+  & label value3 "1000 to 1999"
+  label key4 "cache"
+  & label value4 "empty"
+
+step: A visitor opens the short URL.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "cache"
+  & label value0 "1 entry"
+  & highlight card0
+  label key1 "store rows"
+  & label value1 "1"
+  label key2 "key"
+  & label value2 "00000g8"
+  label key3 "next id"
+  & label value3 "1001"
+  label key4 "local range"
+  & label value4 "1000 to 1999"
+
+step: The server returns a 302 redirect.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "cache"
+  & label value0 "1 entry"
+  label key1 "store rows"
+  & label value1 "1"
+  label key2 "key"
+  & label value2 "00000g8"
+  label key3 "next id"
+  & label value3 "1001"
+  label key4 "local range"
+  & label value4 "1000 to 1999"
+:::
+
 The redirect returns HTTP status 302, not 301. A 301 tells the browser to cache the redirect forever, so you lose the visit count and cannot change the target. A 302 brings every visit through the service.
 
 Hot links. One link in a viral post can take 50,000 reads per second. That is one key on one cache node. Use a local in-process cache with a 1-second TTL on each web server, as the hot keys lesson described. 200 web servers at 1 read per second each put 200 reads on the cache node.
@@ -5826,6 +8867,138 @@ state: B online=yes, B server=31, delivered=yes
 
 ## How it works
 
+
+:::anim
+title: Deliver one message with acknowledgement and resend
+# Worked values and narration follow the scenario in this lesson.
+text heading "Deliver one message with acknowledgement and resend" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "B online"
+  & label value0 "yes"
+  & highlight card0
+  label key1 "B server"
+  & label value1 "47"
+  & highlight card1
+  label key2 "message"
+  & label value2 "stored"
+  & highlight card2
+  label key3 "delivered"
+  & label value3 "no"
+  & highlight card3
+  label key4 "resends"
+  & label value4 "0"
+  & highlight card4
+
+step: Server 12 writes the message to the store and asks the presence registry for B.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "B online"
+  & label value0 "yes"
+  label key1 "B server"
+  & label value1 "47"
+  label key2 "message"
+  & label value2 "stored"
+  label key3 "delivered"
+  & label value3 "no"
+  label key4 "resends"
+  & label value4 "0"
+
+step: Server 47 pushes the message to B.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "resends"
+  & label value0 "1"
+  & highlight card0
+  label key1 "B online"
+  & label value1 "yes"
+  label key2 "B server"
+  & label value2 "47"
+  label key3 "message"
+  & label value3 "stored"
+  label key4 "delivered"
+  & label value4 "no"
+
+step: Server 47 resends.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "delivered"
+  & label value0 "yes"
+  & highlight card0
+  label key1 "resends"
+  & label value1 "1"
+  label key2 "B online"
+  & label value2 "yes"
+  label key3 "B server"
+  & label value3 "47"
+  label key4 "message"
+  & label value4 "stored"
+
+step: B goes offline.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "B online"
+  & label value0 "no"
+  & highlight card0
+  label key1 "B server"
+  & label value1 "none"
+  & highlight card1
+  label key2 "delivered"
+  & label value2 "no"
+  & highlight card2
+  label key3 "resends"
+  & label value3 "1"
+  label key4 "message"
+  & label value4 "stored"
+
+step: Server 12 stores the message as undelivered and sends a push notification.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "B online"
+  & label value0 "yes"
+  & highlight card0
+  label key1 "B server"
+  & label value1 "31"
+  & highlight card1
+  label key2 "delivered"
+  & label value2 "yes"
+  & highlight card2
+  label key3 "resends"
+  & label value3 "1"
+  label key4 "message"
+  & label value4 "stored"
+:::
+
 Message storage. The key is the conversation id. Within a conversation, messages are sorted by a time-ordered message id. A wide-column store such as Cassandra fits: partition by conversation id, cluster by message id. A query "last 50 messages of conversation X" reads one partition in order.
 
 Message ids must be unique and sortable. Use an id with a timestamp in the high bits and a sequence number in the low bits, as in Twitter's Snowflake format. Clients sort by id. Two messages sent in the same millisecond from two devices get ids that differ in the sequence bits, so the order is defined.
@@ -6023,6 +9196,122 @@ step: The feed load stays under 20 ms and the celebrity post costs 1 write.
 :::
 
 ## How it works
+
+
+:::anim
+title: One post from a normal user and one from a celebrity
+# Worked values and narration follow the scenario in this lesson.
+text heading "One post from a normal user and one from a celebrity" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "author followers"
+  & label value0 "300"
+  & highlight card0
+  label key1 "timeline writes"
+  & label value1 "0"
+  & highlight card1
+  label key2 "feed load lookups"
+  & label value2 "1"
+  & highlight card2
+  label key3 "delay for last follower"
+  & label value3 "0 s"
+  & highlight card3
+
+step: A normal user posts.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "timeline writes"
+  & label value0 "300"
+  & highlight card0
+  label key1 "delay for last follower"
+  & label value1 "under 1 s"
+  & highlight card1
+  label key2 "author followers"
+  & label value2 "300"
+  label key3 "feed load lookups"
+  & label value3 "1"
+
+step: A celebrity with 50 million followers posts.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "author followers"
+  & label value0 "50 million"
+  & highlight card0
+  label key1 "timeline writes"
+  & label value1 "50 million"
+  & highlight card1
+  label key2 "delay for last follower"
+  & label value2 "500 s"
+  & highlight card2
+  label key3 "feed load lookups"
+  & label value3 "1"
+
+step: At 100,000 writes per second, the last follower falls eight minutes behind and blocks other posts.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "author followers"
+  & label value0 "50 million"
+  label key1 "timeline writes"
+  & label value1 "50 million"
+  label key2 "delay for last follower"
+  & label value2 "500 s"
+  label key3 "feed load lookups"
+  & label value3 "1"
+
+step: Switch the celebrity to fan-out on read.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "timeline writes"
+  & label value0 "1"
+  & highlight card0
+  label key1 "feed load lookups"
+  & label value1 "about 10"
+  & highlight card1
+  label key2 "delay for last follower"
+  & label value2 "0 s"
+  & highlight card2
+  label key3 "author followers"
+  & label value3 "50 million"
+
+step: The feed load stays under 20 ms and the celebrity post costs 1 write.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "timeline writes"
+  & label value0 "1"
+  label key1 "feed load lookups"
+  & label value1 "about 10"
+  label key2 "delay for last follower"
+  & label value2 "0 s"
+  label key3 "author followers"
+  & label value3 "50 million"
+:::
 
 The write path for a normal user:
 
@@ -6281,6 +9570,150 @@ Gateway -> Usage log: token counts
 :::
 
 ## How it works
+
+
+:::anim
+title: From KV cache memory to the fleet size
+# Worked values and narration follow the scenario in this lesson.
+text heading "From KV cache memory to the fleet size" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "weights"
+  & label value0 "140 GB"
+  & highlight card0
+  label key1 "KV cache"
+  & label value1 "20 GB"
+  & highlight card1
+  label key2 "tokens in flight"
+  & label value2 "0"
+  & highlight card2
+  label key3 "concurrent requests"
+  & label value3 "0"
+  & highlight card3
+  label key4 "requests per second per|replica"
+  & label value4 "0"
+  & highlight card4
+  label key5 "replicas"
+  & label value5 "0"
+  & highlight card5
+
+step: Two 80 GB GPUs hold 160 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "weights"
+  & label value0 "140 GB"
+  label key1 "KV cache"
+  & label value1 "20 GB"
+  label key2 "tokens in flight"
+  & label value2 "0"
+  label key3 "concurrent requests"
+  & label value3 "0"
+  label key4 "requests per second per|replica"
+  & label value4 "0"
+  label key5 "replicas"
+  & label value5 "0"
+
+step: Each token in flight needs about 320 KB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "tokens in flight"
+  & label value0 "62500"
+  & highlight card0
+  label key1 "weights"
+  & label value1 "140 GB"
+  label key2 "KV cache"
+  & label value2 "20 GB"
+  label key3 "concurrent requests"
+  & label value3 "0"
+  label key4 "requests per second per|replica"
+  & label value4 "0"
+  label key5 "replicas"
+  & label value5 "0"
+
+step: A request holds 1,300 tokens at its end.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "concurrent requests"
+  & label value0 "48"
+  & highlight card0
+  label key1 "tokens in flight"
+  & label value1 "62500"
+  label key2 "weights"
+  & label value2 "140 GB"
+  label key3 "KV cache"
+  & label value3 "20 GB"
+  label key4 "requests per second per|replica"
+  & label value4 "0"
+  label key5 "replicas"
+  & label value5 "0"
+
+step: Each request decodes 300 tokens at 40 per second, 7.5 seconds.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "requests per second per|replica"
+  & label value0 "6.4"
+  & highlight card0
+  label key1 "concurrent requests"
+  & label value1 "48"
+  label key2 "tokens in flight"
+  & label value2 "62500"
+  label key3 "weights"
+  & label value3 "140 GB"
+  label key4 "KV cache"
+  & label value4 "20 GB"
+  label key5 "replicas"
+  & label value5 "0"
+
+step: 1,000 requests per second divided by 6.4 is 156 replicas.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "replicas"
+  & label value0 "200"
+  & highlight card0
+  label key1 "requests per second per|replica"
+  & label value1 "6.4"
+  label key2 "concurrent requests"
+  & label value2 "48"
+  label key3 "tokens in flight"
+  & label value3 "62500"
+  label key4 "weights"
+  & label value4 "140 GB"
+  label key5 "KV cache"
+  & label value5 "20 GB"
+:::
 
 Routing. The gateway keeps a view of each replica: free KV cache tokens, queue depth, and in-flight requests. It routes to the replica with the most free cache. For prompts that share a long prefix, such as a system prompt, it routes to the replica that already holds that prefix in its cache. vLLM and SGLang reuse cached prefixes.
 

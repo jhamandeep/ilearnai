@@ -6,6 +6,7 @@ import { createContext } from 'react'
 export interface LessonCtx {
   route: string
   nextQuizIndex: () => number
+  quizIndex?: number
 }
 
 export const LessonContext = createContext<LessonCtx | null>(null)

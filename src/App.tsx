@@ -1,12 +1,21 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Home } from './pages/Home'
 import { Courses, TrackPage } from './pages/Courses'
 import { Glossary, TermPage } from './pages/Glossary'
 import { NotFound } from './pages/NotFound'
 
+import { AuthProvider, RequireAuth } from './lib/auth'
+import { Account } from './pages/Account'
+
 // Markdown + KaTeX and the labs are the heavy chunks, so they load on demand.
+const CodePractice = lazy(() => import('./pages/CodePractice').then(module => ({ default: module.CodePractice })))
+const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })))
+const ForWork = lazy(() => import('./pages/ForWork').then(module => ({ default: module.ForWork })))
+const IndustryPage = lazy(() => import('./pages/ForWork').then(module => ({ default: module.IndustryPage })))
+const WorkCasePage = lazy(() => import('./pages/ForWork').then(module => ({ default: module.WorkCasePage })))
+const Ask = lazy(() => import('./pages/Ask').then(module => ({ default: module.Ask })))
 const LessonPage = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.LessonPage })))
 const Papers = lazy(() => import('./pages/Papers').then((m) => ({ default: m.Papers })))
 const PaperPage = lazy(() => import('./pages/Papers').then((m) => ({ default: m.PaperPage })))
@@ -33,18 +42,30 @@ function Loading() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<Loading />}>
+      <AuthProvider><Suspense fallback={<Loading />}>
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/for-work" element={<ForWork />} />
+              <Route path="/for-work/:industry" element={<IndustryPage />} />
+              <Route path="/for-work/:industry/:useCase" element={<WorkCasePage />} />
+              <Route path="/code" element={<CodePractice />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:track" element={<TrackPage />} />
+              <Route path="/labs" element={<Labs />} />
+              <Route path="/path" element={<Path />} />
+              <Route path="/style" element={<StyleGuide />} />
+              <Route path="/ask" element={<Ask />} />
+              <Route path="/login" element={<Account />} />
+              <Route path="/signup" element={<Account register />} />
+              <Route element={<RequireAuth><Outlet /></RequireAuth>}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/courses/:track/:module/:lesson/:activity" element={<LessonPage />} />
               <Route path="/courses/:track/:module/:lesson" element={<LessonPage />} />
               <Route path="/papers" element={<Papers />} />
               <Route path="/papers/:slug" element={<PaperPage />} />
               <Route path="/glossary" element={<Glossary />} />
               <Route path="/glossary/:slug" element={<TermPage />} />
-              <Route path="/labs" element={<Labs />} />
               <Route path="/labs/:slug" element={<LabPage />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
@@ -53,16 +74,15 @@ export default function App() {
               <Route path="/resources" element={<Resources />} />
               <Route path="/roadmaps" element={<Roadmaps />} />
               <Route path="/videos" element={<Videos />} />
-              <Route path="/style" element={<StyleGuide />} />
-              <Route path="/path" element={<Path />} />
               <Route path="/hub" element={<Hub />} />
               <Route path="/practice" element={<Practice />} />
               <Route path="/practice/placement" element={<Placement />} />
               <Route path="/practice/:track/:paper" element={<PracticePaper />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
-        </Suspense>
+        </Suspense></AuthProvider>
     </BrowserRouter>
   )
 }

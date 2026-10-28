@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { LabVisual } from '../components/LabVisual'
 import { scaleLinear, scaleLog } from 'd3-scale'
 import { RangeField, Stat } from '../components/Field'
 
@@ -54,6 +55,7 @@ export function ParetoRouterLab() {
         </div>
       </div>
       <div className="lab-results">
+        <LabVisual title="How the router splits requests" mode="pipeline" caption="The routes below use the same constraints and model choices as the scatter plot." items={[{ label: 'Easy requests', value: easyShare, display: `${Math.round(easyShare * 100)}%`, detail: `Route to ${easyModel?.name ?? 'no eligible model'}.` }, { label: 'Hard requests', value: 1 - easyShare, display: `${Math.round((1 - easyShare) * 100)}%`, detail: `Route to ${chosen?.name ?? 'no eligible model'}.` }, { label: 'Blended cost', value: routedCost, display: chosen ? `$${routedCost.toFixed(2)}/M` : 'No eligible route', detail: 'Illustrative cost per million output tokens.' }]} />
         <svg viewBox={`0 0 ${W} ${H}`} className="chart" style={{ gridColumn: '1 / -1' }} role="img" aria-label="Quality versus cost scatter">
           {[0.1, 1, 10, 100].map((c) => (
             <g key={c}>

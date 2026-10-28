@@ -1,28 +1,11 @@
 import type { Track } from './types'
-import { track as StartHere } from './tracks/start-here'
-import { track as MathFromZero } from './tracks/math-from-zero'
-import { track as AiFoundations } from './tracks/ai-foundations'
-import { track as BuildAiEcosystem } from './tracks/build-ai-ecosystem'
-import { track as MlMath } from './tracks/ml-math'
-import { track as AiEngineering } from './tracks/ai-engineering'
-import { track as SystemDesign } from './tracks/system-design'
-import { track as InferenceEngineering } from './tracks/inference-engineering'
-import { track as AiResearch } from './tracks/ai-research'
-import { track as OpenRobotics } from './tracks/open-robotics'
+import catalog from './tracks-catalog.json'
 
-// Ordered along the zero-to-ecosystem path (Track.order).
-export const tracks: Track[] = [
-  StartHere,
-  MathFromZero,
-  AiFoundations,
-  BuildAiEcosystem,
-  MlMath,
-  AiEngineering,
-  SystemDesign,
-  InferenceEngineering,
-  AiResearch,
-  OpenRobotics,
-].sort((a, b) => a.order - b.order)
+// Public outlines only. Full lesson bodies arrive through the authenticated API.
+export const tracks: Track[] = structuredClone(catalog) as Track[]
+
+export function replaceTracks(next: Track[]) { tracks.splice(0, tracks.length, ...next) }
+export function resetTracks() { replaceTracks(structuredClone(catalog) as Track[]) }
 
 export function findTrack(slug: string) {
   return tracks.find((t) => t.slug === slug)

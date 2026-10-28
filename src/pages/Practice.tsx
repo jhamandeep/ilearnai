@@ -12,9 +12,10 @@ export function Practice() {
   return (
     <>
       <header className="page-head">
+        <p className="eyebrow">Turn understanding into confidence</p>
         <h1>Practice papers</h1>
         <p className="lede">
-          Timed papers built from the quiz questions in every lesson. Each paper has {PAPER_MINUTES} minutes and up to 20 questions. Every question links back to the lesson that teaches it. Results stay in this browser.
+          Timed papers built from the quiz questions in every lesson. Each paper has {PAPER_MINUTES} minutes and up to 20 questions. Every question links back to the lesson that teaches it. Results save to your account.
         </p>
       </header>
       <section>
@@ -102,6 +103,7 @@ function Runner({ title, questions, minutes, id, onFinish, back }: { title: stri
         ) : (
           <span style={{ marginLeft: 'auto' }}><strong>{score}/{questions.length}</strong> correct</span>
         )}
+        <div className="exam-progress" role="progressbar" aria-label="Questions answered" aria-valuenow={answered} aria-valuemin={0} aria-valuemax={questions.length}><span style={{ width: `${100 * answered / questions.length}%` }} /></div>
       </div>
       {submitted && (
         <section className="card" style={{ marginBottom: '1.5rem' }}>

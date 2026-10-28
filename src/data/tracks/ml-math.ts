@@ -92,6 +92,116 @@ The table lists each corner of the unit square and the point where the map sends
 
 ## How it works
 
+
+:::anim
+title: Compute W x for x = [3, 2]
+# Worked values and narration follow the scenario in this lesson.
+text heading "Compute W x for x = [3, 2]" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "x"
+  & label value0 "[3 2]"
+  & highlight card0
+  label key1 "W e1"
+  & label value1 "[2 1]"
+  & highlight card1
+  label key2 "W e2"
+  & label value2 "[0 1]"
+  & highlight card2
+
+step: Write x as 3 times e1 plus 2 times e2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "x"
+  & label value0 "[3 2]"
+  label key1 "W e1"
+  & label value1 "[2 1]"
+  label key2 "W e2"
+  & label value2 "[0 1]"
+
+step: Scale the first column by 3 and the second column by 2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "3 W e1"
+  & label value0 "[6 3]"
+  & highlight card0
+  label key1 "2 W e2"
+  & label value1 "[0 2]"
+  & highlight card1
+  label key2 "x"
+  & label value2 "[3 2]"
+  label key3 "W e1"
+  & label value3 "[2 1]"
+  label key4 "W e2"
+  & label value4 "[0 1]"
+
+step: Add the two scaled columns.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "W x"
+  & label value0 "[6 5]"
+  & highlight card0
+  label key1 "3 W e1"
+  & label value1 "[6 3]"
+  label key2 "2 W e2"
+  & label value2 "[0 2]"
+  label key3 "x"
+  & label value3 "[3 2]"
+  label key4 "W e1"
+  & label value4 "[2 1]"
+  label key5 "W e2"
+  & label value5 "[0 1]"
+
+step: Check with the row rule.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "row 1"
+  & label value0 "6"
+  & highlight card0
+  label key1 "row 2"
+  & label value1 "5"
+  & highlight card1
+  label key2 "W x"
+  & label value2 "[6 5]"
+  label key3 "3 W e1"
+  & label value3 "[6 3]"
+  label key4 "2 W e2"
+  & label value4 "[0 2]"
+  label key5 "x"
+  & label value5 "[3 2]"
+:::
+
 A matrix $W$ with $m$ rows and $n$ columns is a map from $\\mathbb{R}^n$ to $\\mathbb{R}^m$:
 
 $$y = W x, \\qquad y_i = \\sum_{j=1}^{n} W_{ij}\\, x_j$$
@@ -310,6 +420,113 @@ That is the whole story of repeated multiplication. Each eigenvector direction g
 
 ## How it works
 
+
+:::anim
+title: Repeated multiplication of x = [1, 0] by A
+# Worked values and narration follow the scenario in this lesson.
+text heading "Repeated multiplication of x = [1, 0] by A" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "x"
+  & label value0 "[1 0]"
+  & highlight card0
+  label key1 "v part"
+  & label value1 "0.5"
+  & highlight card1
+  label key2 "u part"
+  & label value2 "0.5"
+  & highlight card2
+
+step: Write x as half of v plus half of u.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "x"
+  & label value0 "[1 0]"
+  label key1 "v part"
+  & label value1 "0.5"
+  label key2 "u part"
+  & label value2 "0.5"
+
+step: Apply A once.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "A x"
+  & label value0 "[2 1]"
+  & highlight card0
+  label key1 "v part"
+  & label value1 "1.5"
+  & highlight card1
+  label key2 "u part"
+  & label value2 "0.5"
+  label key3 "x"
+  & label value3 "[1 0]"
+
+step: Apply A again.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "A^2 x"
+  & label value0 "[5 4]"
+  & highlight card0
+  label key1 "v part"
+  & label value1 "4.5"
+  & highlight card1
+  label key2 "u part"
+  & label value2 "0.5"
+  label key3 "A x"
+  & label value3 "[2 1]"
+  label key4 "x"
+  & label value4 "[1 0]"
+
+step: After ten applications the v part is about 29,500 and the u part is still 0.5.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "A^10 x"
+  & label value0 "[29525 29524]"
+  & highlight card0
+  label key1 "v part"
+  & label value1 "29524.5"
+  & highlight card1
+  label key2 "u part"
+  & label value2 "0.5"
+  label key3 "A^2 x"
+  & label value3 "[5 4]"
+  label key4 "A x"
+  & label value4 "[2 1]"
+  label key5 "x"
+  & label value5 "[1 0]"
+:::
+
 The definition is:
 
 $$A v = \\lambda v, \\qquad v \\neq 0$$
@@ -524,6 +741,128 @@ Sigma 2 squared: 5 (10 percent)
 :::
 
 ## How it works
+
+
+:::anim
+title: Singular values of M from the Gram matrix
+# Worked values and narration follow the scenario in this lesson.
+text heading "Singular values of M from the Gram matrix" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "M"
+  & label value0 "[3 0; 4 5]"
+  & highlight card0
+
+step: Form M transpose M.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "Gram"
+  & label value0 "[25 20; 20 25]"
+  & highlight card0
+  label key1 "M"
+  & label value1 "[3 0; 4 5]"
+
+step: Solve the characteristic equation (25 - lambda)^2 - 400 = 0.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "lambda 1"
+  & label value0 "45"
+  & highlight card0
+  label key1 "lambda 2"
+  & label value1 "5"
+  & highlight card1
+  label key2 "Gram"
+  & label value2 "[25 20; 20 25]"
+  label key3 "M"
+  & label value3 "[3 0; 4 5]"
+
+step: Take square roots.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "sigma 1"
+  & label value0 "6.71"
+  & highlight card0
+  label key1 "sigma 2"
+  & label value1 "2.24"
+  & highlight card1
+  label key2 "lambda 1"
+  & label value2 "45"
+  label key3 "lambda 2"
+  & label value3 "5"
+  label key4 "Gram"
+  & label value4 "[25 20; 20 25]"
+  label key5 "M"
+  & label value5 "[3 0; 4 5]"
+
+step: Find the unit eigenvectors [0.71, 0.71] and [0.71, -0.71].
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "v1"
+  & label value0 "[0.71 0.71]"
+  & highlight card0
+  label key1 "v2"
+  & label value1 "[0.71 -0.71]"
+  & highlight card1
+  label key2 "sigma 1"
+  & label value2 "6.71"
+  label key3 "sigma 2"
+  & label value3 "2.24"
+  label key4 "lambda 1"
+  & label value4 "45"
+  label key5 "lambda 2"
+  & label value5 "5"
+
+step: Compute u1 as M v1 divided by sigma 1, which is [0.32, 0.95].
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "u1"
+  & label value0 "[0.32 0.95]"
+  & highlight card0
+  label key1 "u2"
+  & label value1 "[0.95 -0.32]"
+  & highlight card1
+  label key2 "v1"
+  & label value2 "[0.71 0.71]"
+  label key3 "v2"
+  & label value3 "[0.71 -0.71]"
+  label key4 "sigma 1"
+  & label value4 "6.71"
+  label key5 "sigma 2"
+  & label value5 "2.24"
+:::
 
 The SVD of an $m \\times n$ matrix is:
 
@@ -767,6 +1106,128 @@ The table compares each target with its fitted value.
 
 ## How it works
 
+
+:::anim
+title: Project b = [3, 1] onto the line through a = [1, 2]
+# Worked values and narration follow the scenario in this lesson.
+text heading "Project b = [3, 1] onto the line through a = [1, 2]" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "a"
+  & label value0 "[1 2]"
+  & highlight card0
+  label key1 "b"
+  & label value1 "[3 1]"
+  & highlight card1
+
+step: Compute the dot product of a and b.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "a dot b"
+  & label value0 "5"
+  & highlight card0
+  label key1 "a"
+  & label value1 "[1 2]"
+  label key2 "b"
+  & label value2 "[3 1]"
+
+step: Compute the dot product of a with itself.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "a dot a"
+  & label value0 "5"
+  & highlight card0
+  label key1 "a dot b"
+  & label value1 "5"
+  label key2 "a"
+  & label value2 "[1 2]"
+  label key3 "b"
+  & label value3 "[3 1]"
+
+step: Divide.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "c"
+  & label value0 "1"
+  & highlight card0
+  label key1 "a dot a"
+  & label value1 "5"
+  label key2 "a dot b"
+  & label value2 "5"
+  label key3 "a"
+  & label value3 "[1 2]"
+  label key4 "b"
+  & label value4 "[3 1]"
+
+step: Scale a by c.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "projection"
+  & label value0 "[1 2]"
+  & highlight card0
+  label key1 "c"
+  & label value1 "1"
+  label key2 "a dot a"
+  & label value2 "5"
+  label key3 "a dot b"
+  & label value3 "5"
+  label key4 "a"
+  & label value4 "[1 2]"
+  label key5 "b"
+  & label value5 "[3 1]"
+
+step: Subtract the projection from b.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "residual"
+  & label value0 "[2 -1]"
+  & highlight card0
+  label key1 "a dot residual"
+  & label value1 "0"
+  & highlight card1
+  label key2 "projection"
+  & label value2 "[1 2]"
+  label key3 "c"
+  & label value3 "1"
+  label key4 "a dot a"
+  & label value4 "5"
+  label key5 "a dot b"
+  & label value5 "5"
+:::
+
 The projection of $b$ onto the column space of a matrix $A$ with independent columns is:
 
 $$\\hat{b} = A (A^\\top A)^{-1} A^\\top b$$
@@ -992,6 +1453,136 @@ The table lists each quantity in the pass with its shape.
 
 ## How it works
 
+
+:::anim
+title: Backward pass through two linear layers
+# Worked values and narration follow the scenario in this lesson.
+text heading "Backward pass through two linear layers" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "h"
+  & label value0 "[1 3]"
+  & highlight card0
+  label key1 "y"
+  & label value1 "2"
+  & highlight card1
+  label key2 "L"
+  & label value2 "2"
+  & highlight card2
+
+step: Start at the loss.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "y bar"
+  & label value0 "2"
+  & highlight card0
+  label key1 "h"
+  & label value1 "[1 3]"
+  label key2 "y"
+  & label value2 "2"
+  label key3 "L"
+  & label value3 "2"
+
+step: Multiply by W2 transpose.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "h bar"
+  & label value0 "[4 0]"
+  & highlight card0
+  label key1 "y bar"
+  & label value1 "2"
+  label key2 "h"
+  & label value2 "[1 3]"
+  label key3 "y"
+  & label value3 "2"
+  label key4 "L"
+  & label value4 "2"
+
+step: Multiply by W1 transpose.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "x bar"
+  & label value0 "[4 0]"
+  & highlight card0
+  label key1 "h bar"
+  & label value1 "[4 0]"
+  label key2 "y bar"
+  & label value2 "2"
+  label key3 "h"
+  & label value3 "[1 3]"
+  label key4 "y"
+  & label value4 "2"
+  label key5 "L"
+  & label value5 "2"
+
+step: Form the weight gradient for W2 as y bar times h transpose.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "W2 grad"
+  & label value0 "[4 6]"
+  & highlight card0
+  label key1 "x bar"
+  & label value1 "[4 0]"
+  label key2 "h bar"
+  & label value2 "[4 0]"
+  label key3 "y bar"
+  & label value3 "2"
+  label key4 "h"
+  & label value4 "[1 3]"
+  label key5 "y"
+  & label value5 "2"
+
+step: Form the weight gradient for W1 as h bar times x transpose.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "W1 grad"
+  & label value0 "[4 8; 0 0]"
+  & highlight card0
+  label key1 "W2 grad"
+  & label value1 "[4 6]"
+  label key2 "x bar"
+  & label value2 "[4 0]"
+  label key3 "h bar"
+  & label value3 "[4 0]"
+  label key4 "y bar"
+  & label value4 "2"
+  label key5 "h"
+  & label value5 "[1 3]"
+:::
+
 A chain of maps $x \\to h \\to y \\to L$ has the derivative:
 
 $$\\frac{\\partial L}{\\partial x} = \\frac{\\partial L}{\\partial y}\\, \\frac{\\partial y}{\\partial h}\\, \\frac{\\partial h}{\\partial x}$$
@@ -1206,6 +1797,106 @@ Use the derivative to predict. At $x = 3$ with slope 6, a step of $0.05$ should 
 Now interpret a loss. Suppose a loss $L(w)$ has derivative $-2$ at the current weight $w$. The loss falls when $w$ increases, at a rate of 2 per unit. To lower the loss, increase $w$. If the derivative were $+2$, decrease $w$. If the derivative were 0, the loss is flat at this point, and a small step in either direction changes it only in second order.
 
 ## How it works
+
+
+:::anim
+title: Slope of x squared at x = 3 from smaller steps
+# Worked values and narration follow the scenario in this lesson.
+text heading "Slope of x squared at x = 3 from smaller steps" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "x"
+  & label value0 "3"
+  & highlight card0
+  label key1 "f(x)"
+  & label value1 "9"
+  & highlight card1
+
+step: Take a step of 0.1.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "step"
+  & label value0 "0.1"
+  & highlight card0
+  label key1 "ratio"
+  & label value1 "6.1"
+  & highlight card1
+  label key2 "x"
+  & label value2 "3"
+  label key3 "f(x)"
+  & label value3 "9"
+
+step: Take a step of 0.01.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "step"
+  & label value0 "0.01"
+  & highlight card0
+  label key1 "ratio"
+  & label value1 "6.01"
+  & highlight card1
+  label key2 "x"
+  & label value2 "3"
+  label key3 "f(x)"
+  & label value3 "9"
+
+step: Take a step of 0.001.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "step"
+  & label value0 "0.001"
+  & highlight card0
+  label key1 "ratio"
+  & label value1 "6.001"
+  & highlight card1
+  label key2 "x"
+  & label value2 "3"
+  label key3 "f(x)"
+  & label value3 "9"
+
+step: The ratio approaches 6 as the step shrinks.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "derivative"
+  & label value0 "6"
+  & highlight card0
+  label key1 "step"
+  & label value1 "0.001"
+  label key2 "ratio"
+  & label value2 "6.001"
+  label key3 "x"
+  & label value3 "3"
+  label key4 "f(x)"
+  & label value4 "9"
+:::
 
 The derivative is defined as a limit:
 
@@ -1445,6 +2136,137 @@ Each factor is a local derivative. The chain rule says: compute every local deri
 
 ## How it works
 
+
+:::anim
+title: Derivatives of y = sigmoid(w x + b) with w = 2, b = -1, x = 1
+# Worked values and narration follow the scenario in this lesson.
+text heading "Derivatives of y = sigmoid(w x + b) with w = 2, b = -1, x = 1" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "w"
+  & label value0 "2"
+  & highlight card0
+  label key1 "b"
+  & label value1 "-1"
+  & highlight card1
+  label key2 "x"
+  & label value2 "1"
+  & highlight card2
+
+step: Compute the inner value z = w x + b = 2 - 1 = 1.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "z"
+  & label value0 "1"
+  & highlight card0
+  label key1 "w"
+  & label value1 "2"
+  label key2 "b"
+  & label value2 "-1"
+  label key3 "x"
+  & label value3 "1"
+
+step: Apply the sigmoid.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "y"
+  & label value0 "0.731"
+  & highlight card0
+  label key1 "z"
+  & label value1 "1"
+  label key2 "w"
+  & label value2 "2"
+  label key3 "b"
+  & label value3 "-1"
+  label key4 "x"
+  & label value4 "1"
+
+step: Compute the local derivative of the sigmoid, y (1 - y) = 0.731 times 0.269 = 0.197.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "dy/dz"
+  & label value0 "0.197"
+  & highlight card0
+  label key1 "y"
+  & label value1 "0.731"
+  label key2 "z"
+  & label value2 "1"
+  label key3 "w"
+  & label value3 "2"
+  label key4 "b"
+  & label value4 "-1"
+  label key5 "x"
+  & label value5 "1"
+
+step: Multiply by dz/dw = x = 1.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "dy/dw"
+  & label value0 "0.197"
+  & highlight card0
+  label key1 "dy/dz"
+  & label value1 "0.197"
+  label key2 "y"
+  & label value2 "0.731"
+  label key3 "z"
+  & label value3 "1"
+  label key4 "w"
+  & label value4 "2"
+  label key5 "b"
+  & label value5 "-1"
+
+step: Multiply by dz/db = 1 and by dz/dx = w = 2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "dy/db"
+  & label value0 "0.197"
+  & highlight card0
+  label key1 "dy/dx"
+  & label value1 "0.393"
+  & highlight card1
+  label key2 "dy/dw"
+  & label value2 "0.197"
+  label key3 "dy/dz"
+  & label value3 "0.197"
+  label key4 "y"
+  & label value4 "0.731"
+  label key5 "z"
+  & label value5 "1"
+:::
+
 For $f(x) = g(h(x))$ the chain rule is:
 
 $$f'(x) = g'(h(x))\\, h'(x)$$
@@ -1666,6 +2488,108 @@ output x + y^2: 1, 4
 :::
 
 ## How it works
+
+
+:::anim
+title: Gradient of f(x, y) = x^2 + 3xy at (1, 2)
+# Worked values and narration follow the scenario in this lesson.
+text heading "Gradient of f(x, y) = x^2 + 3xy at (1, 2)" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "x"
+  & label value0 "1"
+  & highlight card0
+  label key1 "y"
+  & label value1 "2"
+  & highlight card1
+
+step: Hold y fixed and differentiate with respect to x.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "df/dx"
+  & label value0 "2x + 3y"
+  & highlight card0
+  label key1 "x"
+  & label value1 "1"
+  label key2 "y"
+  & label value2 "2"
+
+step: Hold x fixed and differentiate with respect to y.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "df/dy"
+  & label value0 "3x"
+  & highlight card0
+  label key1 "df/dx"
+  & label value1 "2x + 3y"
+  label key2 "x"
+  & label value2 "1"
+  label key3 "y"
+  & label value3 "2"
+
+step: Substitute x = 1 and y = 2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "df/dx"
+  & label value0 "8"
+  & highlight card0
+  label key1 "df/dy"
+  & label value1 "3"
+  & highlight card1
+  label key2 "x"
+  & label value2 "1"
+  label key3 "y"
+  & label value3 "2"
+
+step: Stack the two numbers.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "gradient"
+  & label value0 "[8 3]"
+  & highlight card0
+  label key1 "length"
+  & label value1 "8.54"
+  & highlight card1
+  label key2 "df/dx"
+  & label value2 "8"
+  label key3 "df/dy"
+  & label value3 "3"
+  label key4 "x"
+  & label value4 "1"
+  label key5 "y"
+  & label value5 "2"
+:::
 
 For a scalar function $f$ of $n$ inputs, the gradient is:
 
@@ -1889,6 +2813,142 @@ all other tokens: 0.3
 
 ## How it works
 
+
+:::anim
+title: From joint to marginal to conditional
+# Worked values and narration follow the scenario in this lesson.
+text heading "From joint to marginal to conditional" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "joint A1 Y0"
+  & label value0 "1/6"
+  & highlight card0
+  label key1 "joint A1 Y1"
+  & label value1 "1/6"
+  & highlight card1
+  label key2 "joint A0 Y0"
+  & label value2 "2/6"
+  & highlight card2
+  label key3 "joint A0 Y1"
+  & label value3 "2/6"
+  & highlight card3
+
+step: Count the outcomes for each cell.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "joint A1 Y0"
+  & label value0 "1/6"
+  label key1 "joint A1 Y1"
+  & label value1 "1/6"
+  label key2 "joint A0 Y0"
+  & label value2 "2/6"
+  label key3 "joint A0 Y1"
+  & label value3 "2/6"
+
+step: Sum each row to get the marginal of A.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "P(A1)"
+  & label value0 "2/6"
+  & highlight card0
+  label key1 "P(A0)"
+  & label value1 "4/6"
+  & highlight card1
+  label key2 "joint A1 Y0"
+  & label value2 "1/6"
+  label key3 "joint A1 Y1"
+  & label value3 "1/6"
+  label key4 "joint A0 Y0"
+  & label value4 "2/6"
+  label key5 "joint A0 Y1"
+  & label value5 "2/6"
+
+step: Sum each column to get the marginal of Y.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "P(Y1)"
+  & label value0 "3/6"
+  & highlight card0
+  label key1 "P(Y0)"
+  & label value1 "3/6"
+  & highlight card1
+  label key2 "P(A1)"
+  & label value2 "2/6"
+  label key3 "P(A0)"
+  & label value3 "4/6"
+  label key4 "joint A1 Y0"
+  & label value4 "1/6"
+  label key5 "joint A1 Y1"
+  & label value5 "1/6"
+
+step: Divide the cell by the row total.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "P(Y1 given A1)"
+  & label value0 "1/2"
+  & highlight card0
+  label key1 "P(Y1)"
+  & label value1 "3/6"
+  label key2 "P(Y0)"
+  & label value2 "3/6"
+  label key3 "P(A1)"
+  & label value3 "2/6"
+  label key4 "P(A0)"
+  & label value4 "4/6"
+  label key5 "joint A1 Y0"
+  & label value5 "1/6"
+
+step: Check independence.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "independent"
+  & label value0 "yes"
+  & highlight card0
+  label key1 "P(Y1 given A1)"
+  & label value1 "1/2"
+  label key2 "P(Y1)"
+  & label value2 "3/6"
+  label key3 "P(Y0)"
+  & label value3 "3/6"
+  label key4 "P(A1)"
+  & label value4 "2/6"
+  label key5 "P(A0)"
+  & label value5 "4/6"
+:::
+
 A random variable $X$ maps each outcome of an experiment to a number. For a discrete variable, the probability mass function $p(x) = P(X = x)$ satisfies:
 
 $$p(x) \\ge 0, \\qquad \\sum_x p(x) = 1$$
@@ -2098,6 +3158,137 @@ After two positive tests: 0.91
 :::
 
 ## How it works
+
+
+:::anim
+title: Posterior after one positive test
+# Worked values and narration follow the scenario in this lesson.
+text heading "Posterior after one positive test" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "prior"
+  & label value0 "0.001"
+  & highlight card0
+  label key1 "likelihood"
+  & label value1 "0.99"
+  & highlight card1
+  label key2 "false positive rate"
+  & label value2 "0.01"
+  & highlight card2
+
+step: Multiply the prior by the likelihood.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "prior times likelihood"
+  & label value0 "0.00099"
+  & highlight card0
+  label key1 "prior"
+  & label value1 "0.001"
+  label key2 "likelihood"
+  & label value2 "0.99"
+  label key3 "false positive rate"
+  & label value3 "0.01"
+
+step: Multiply the complement of the prior by the false positive rate.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "healthy times false|positive"
+  & label value0 "0.00999"
+  & highlight card0
+  label key1 "prior times likelihood"
+  & label value1 "0.00099"
+  label key2 "prior"
+  & label value2 "0.001"
+  label key3 "likelihood"
+  & label value3 "0.99"
+  label key4 "false positive rate"
+  & label value4 "0.01"
+
+step: Add the two products to get the evidence P(+) = 0.01098.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "evidence"
+  & label value0 "0.01098"
+  & highlight card0
+  label key1 "healthy times false|positive"
+  & label value1 "0.00999"
+  label key2 "prior times likelihood"
+  & label value2 "0.00099"
+  label key3 "prior"
+  & label value3 "0.001"
+  label key4 "likelihood"
+  & label value4 "0.99"
+  label key5 "false positive rate"
+  & label value5 "0.01"
+
+step: Divide the first product by the evidence.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "posterior"
+  & label value0 "0.09"
+  & highlight card0
+  label key1 "evidence"
+  & label value1 "0.01098"
+  label key2 "healthy times false|positive"
+  & label value2 "0.00999"
+  label key3 "prior times likelihood"
+  & label value3 "0.00099"
+  label key4 "prior"
+  & label value4 "0.001"
+  label key5 "likelihood"
+  & label value5 "0.99"
+
+step: Use 0.09 as the new prior for a second positive test.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "prior"
+  & label value0 "0.09"
+  & highlight card0
+  label key1 "posterior"
+  & label value1 "0.91"
+  & highlight card1
+  label key2 "evidence"
+  & label value2 "0.01098"
+  label key3 "healthy times false|positive"
+  & label value3 "0.00999"
+  label key4 "prior times likelihood"
+  & label value4 "0.00099"
+  label key5 "likelihood"
+  & label value5 "0.99"
+:::
 
 Bayes rule is:
 
@@ -2309,6 +3500,127 @@ title: Standard deviation of the average of n coin flips with p = 0.3
 :::
 
 ## How it works
+
+
+:::anim
+title: Variance of a fair die by the shortcut formula
+# Worked values and narration follow the scenario in this lesson.
+text heading "Variance of a fair die by the shortcut formula" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "values"
+  & label value0 "1 to 6"
+  & highlight card0
+  label key1 "probability"
+  & label value1 "1/6 each"
+  & highlight card1
+
+step: Compute E[X].
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "E[X]"
+  & label value0 "3.5"
+  & highlight card0
+  label key1 "values"
+  & label value1 "1 to 6"
+  label key2 "probability"
+  & label value2 "1/6 each"
+
+step: Compute E[X^2].
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "E[X^2]"
+  & label value0 "15.17"
+  & highlight card0
+  label key1 "E[X]"
+  & label value1 "3.5"
+  label key2 "values"
+  & label value2 "1 to 6"
+  label key3 "probability"
+  & label value3 "1/6 each"
+
+step: Square the mean.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "E[X]^2"
+  & label value0 "12.25"
+  & highlight card0
+  label key1 "E[X^2]"
+  & label value1 "15.17"
+  label key2 "E[X]"
+  & label value2 "3.5"
+  label key3 "values"
+  & label value3 "1 to 6"
+  label key4 "probability"
+  & label value4 "1/6 each"
+
+step: Subtract.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "variance"
+  & label value0 "2.92"
+  & highlight card0
+  label key1 "E[X]^2"
+  & label value1 "12.25"
+  label key2 "E[X^2]"
+  & label value2 "15.17"
+  label key3 "E[X]"
+  & label value3 "3.5"
+  label key4 "values"
+  & label value4 "1 to 6"
+  label key5 "probability"
+  & label value5 "1/6 each"
+
+step: Take the square root.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "standard deviation"
+  & label value0 "1.71"
+  & highlight card0
+  label key1 "variance"
+  & label value1 "2.92"
+  label key2 "E[X]^2"
+  & label value2 "12.25"
+  label key3 "E[X^2]"
+  & label value3 "15.17"
+  label key4 "E[X]"
+  & label value4 "3.5"
+  label key5 "values"
+  & label value5 "1 to 6"
+:::
 
 The expectation of a discrete random variable is:
 
@@ -2538,6 +3850,117 @@ Within 0.06: 99.7
 
 ## How it works
 
+
+:::anim
+title: Softmax of the scores [2, 1, 0, -1]
+# Worked values and narration follow the scenario in this lesson.
+text heading "Softmax of the scores [2, 1, 0, -1]" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "scores"
+  & label value0 "[2 1 0 -1]"
+  & highlight card0
+
+step: Exponentiate each score.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "exponentials"
+  & label value0 "[7.39 2.72 1.00 0.37]"
+  & highlight card0
+  label key1 "scores"
+  & label value1 "[2 1 0 -1]"
+
+step: Add the exponentials.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "sum"
+  & label value0 "11.48"
+  & highlight card0
+  label key1 "exponentials"
+  & label value1 "[7.39 2.72 1.00 0.37]"
+  label key2 "scores"
+  & label value2 "[2 1 0 -1]"
+
+step: Divide each exponential by the sum.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "probabilities"
+  & label value0 "[0.64 0.24 0.09 0.03]"
+  & highlight card0
+  label key1 "sum"
+  & label value1 "11.48"
+  label key2 "exponentials"
+  & label value2 "[7.39 2.72 1.00 0.37]"
+  label key3 "scores"
+  & label value3 "[2 1 0 -1]"
+
+step: Check that the probabilities sum to one.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "total"
+  & label value0 "1.00"
+  & highlight card0
+  label key1 "probabilities"
+  & label value1 "[0.64 0.24 0.09 0.03]"
+  label key2 "sum"
+  & label value2 "11.48"
+  label key3 "exponentials"
+  & label value3 "[7.39 2.72 1.00 0.37]"
+  label key4 "scores"
+  & label value4 "[2 1 0 -1]"
+
+step: Divide the scores by a temperature of 2 and repeat.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "temperature"
+  & label value0 "2"
+  & highlight card0
+  label key1 "probabilities"
+  & label value1 "[0.45 0.27 0.17 0.10]"
+  & highlight card1
+  label key2 "total"
+  & label value2 "1.00"
+  label key3 "sum"
+  & label value3 "11.48"
+  label key4 "exponentials"
+  & label value4 "[7.39 2.72 1.00 0.37]"
+  label key5 "scores"
+  & label value5 "[2 1 0 -1]"
+:::
+
 The three distributions and their parameters:
 
 | Distribution | Parameters | Mass or density | Mean | Variance |
@@ -2752,6 +4175,127 @@ state: estimate=0.7
 Minimising the negative log-likelihood $-\\ell(p)$ gives the same answer. That negative log-likelihood is the loss.
 
 ## How it works
+
+
+:::anim
+title: Maximum likelihood for 7 heads in 10 flips
+# Worked values and narration follow the scenario in this lesson.
+text heading "Maximum likelihood for 7 heads in 10 flips" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "heads"
+  & label value0 "7"
+  & highlight card0
+  label key1 "tails"
+  & label value1 "3"
+  & highlight card1
+
+step: Write the likelihood p^7 (1 - p)^3.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "likelihood"
+  & label value0 "p^7 (1 - p)^3"
+  & highlight card0
+  label key1 "heads"
+  & label value1 "7"
+  label key2 "tails"
+  & label value2 "3"
+
+step: Take the log.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "log-likelihood"
+  & label value0 "7 ln p + 3 ln(1 - p)"
+  & highlight card0
+  label key1 "likelihood"
+  & label value1 "p^7 (1 - p)^3"
+  label key2 "heads"
+  & label value2 "7"
+  label key3 "tails"
+  & label value3 "3"
+
+step: Differentiate with respect to p.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "derivative"
+  & label value0 "7/p - 3/(1 - p)"
+  & highlight card0
+  label key1 "log-likelihood"
+  & label value1 "7 ln p + 3 ln(1 - p)"
+  label key2 "likelihood"
+  & label value2 "p^7 (1 - p)^3"
+  label key3 "heads"
+  & label value3 "7"
+  label key4 "tails"
+  & label value4 "3"
+
+step: Set the derivative to zero.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "equation"
+  & label value0 "7 = 10 p"
+  & highlight card0
+  label key1 "derivative"
+  & label value1 "7/p - 3/(1 - p)"
+  label key2 "log-likelihood"
+  & label value2 "7 ln p + 3 ln(1 - p)"
+  label key3 "likelihood"
+  & label value3 "p^7 (1 - p)^3"
+  label key4 "heads"
+  & label value4 "7"
+  label key5 "tails"
+  & label value5 "3"
+
+step: Solve.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "estimate"
+  & label value0 "0.7"
+  & highlight card0
+  label key1 "equation"
+  & label value1 "7 = 10 p"
+  label key2 "derivative"
+  & label value2 "7/p - 3/(1 - p)"
+  label key3 "log-likelihood"
+  & label value3 "7 ln p + 3 ln(1 - p)"
+  label key4 "likelihood"
+  & label value4 "p^7 (1 - p)^3"
+  label key5 "heads"
+  & label value5 "7"
+:::
 
 For a dataset of $n$ independent and identically distributed examples $x_1, \\dots, x_n$ and a model with parameters $\\theta$, the likelihood is:
 
@@ -2976,6 +4520,132 @@ Uniform Q: 2
 
 ## How it works
 
+
+:::anim
+title: Cross-entropy of Q prime = [0.4, 0.3, 0.2, 0.1] under P
+# Worked values and narration follow the scenario in this lesson.
+text heading "Cross-entropy of Q prime = [0.4, 0.3, 0.2, 0.1] under P" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "P"
+  & label value0 "[0.5 0.25 0.125 0.125]"
+  & highlight card0
+  label key1 "Q prime"
+  & label value1 "[0.4 0.3 0.2 0.1]"
+  & highlight card1
+
+step: Compute the surprise of each token under Q prime.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "surprises"
+  & label value0 "[1.32 1.74 2.32 3.32]"
+  & highlight card0
+  label key1 "P"
+  & label value1 "[0.5 0.25 0.125 0.125]"
+  label key2 "Q prime"
+  & label value2 "[0.4 0.3 0.2 0.1]"
+
+step: Weight each surprise by the true probability.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "term A"
+  & label value0 "0.66"
+  & highlight card0
+  label key1 "surprises"
+  & label value1 "[1.32 1.74 2.32 3.32]"
+  label key2 "P"
+  & label value2 "[0.5 0.25 0.125 0.125]"
+  label key3 "Q prime"
+  & label value3 "[0.4 0.3 0.2 0.1]"
+
+step: Repeat for B, C, and D.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "term B"
+  & label value0 "0.43"
+  & highlight card0
+  label key1 "term C"
+  & label value1 "0.29"
+  & highlight card1
+  label key2 "term D"
+  & label value2 "0.42"
+  & highlight card2
+  label key3 "term A"
+  & label value3 "0.66"
+  label key4 "surprises"
+  & label value4 "[1.32 1.74 2.32 3.32]"
+  label key5 "P"
+  & label value5 "[0.5 0.25 0.125 0.125]"
+
+step: Add the four terms.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "cross-entropy"
+  & label value0 "1.80"
+  & highlight card0
+  label key1 "term B"
+  & label value1 "0.43"
+  label key2 "term C"
+  & label value2 "0.29"
+  label key3 "term D"
+  & label value3 "0.42"
+  label key4 "term A"
+  & label value4 "0.66"
+  label key5 "surprises"
+  & label value5 "[1.32 1.74 2.32 3.32]"
+
+step: Compare with the entropy of P, 1.75 bits.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "entropy"
+  & label value0 "1.75"
+  & highlight card0
+  label key1 "gap"
+  & label value1 "0.05"
+  & highlight card1
+  label key2 "cross-entropy"
+  & label value2 "1.80"
+  label key3 "term B"
+  & label value3 "0.43"
+  label key4 "term C"
+  & label value4 "0.29"
+  label key5 "term D"
+  & label value5 "0.42"
+:::
+
 The entropy of a distribution $P$ is:
 
 $$H(P) = -\\sum_x P(x) \\log P(x)$$
@@ -3185,6 +4855,125 @@ KL(Q || P) for Q = [0.5, 0.5, 0, 0]: 0.5
 :::
 
 ## How it works
+
+
+:::anim
+title: Both directions of KL divergence for Q = [0.5, 0.5, 0, 0]
+# Worked values and narration follow the scenario in this lesson.
+text heading "Both directions of KL divergence for Q = [0.5, 0.5, 0, 0]" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "P"
+  & label value0 "[0.5 0.25 0.125 0.125]"
+  & highlight card0
+  label key1 "Q"
+  & label value1 "[0.5 0.5 0 0]"
+  & highlight card1
+
+step: Compute KL(P || Q).
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "term A"
+  & label value0 "0"
+  & highlight card0
+  label key1 "P"
+  & label value1 "[0.5 0.25 0.125 0.125]"
+  label key2 "Q"
+  & label value2 "[0.5 0.5 0 0]"
+
+step: Token B gives 0.25 times log2(0.25 / 0.5) = -0.25.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "term B"
+  & label value0 "-0.25"
+  & highlight card0
+  label key1 "term A"
+  & label value1 "0"
+  label key2 "P"
+  & label value2 "[0.5 0.25 0.125 0.125]"
+  label key3 "Q"
+  & label value3 "[0.5 0.5 0 0]"
+
+step: Tokens C and D have P above zero and Q equal to zero.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "KL(P || Q)"
+  & label value0 "infinite"
+  & highlight card0
+  label key1 "term B"
+  & label value1 "-0.25"
+  label key2 "term A"
+  & label value2 "0"
+  label key3 "P"
+  & label value3 "[0.5 0.25 0.125 0.125]"
+  label key4 "Q"
+  & label value4 "[0.5 0.5 0 0]"
+
+step: Compute KL(Q || P).
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "term A"
+  & label value0 "0"
+  label key1 "term B"
+  & label value1 "0.5"
+  & highlight card1
+  label key2 "KL(P || Q)"
+  & label value2 "infinite"
+  label key3 "P"
+  & label value3 "[0.5 0.25 0.125 0.125]"
+  label key4 "Q"
+  & label value4 "[0.5 0.5 0 0]"
+
+step: Tokens C and D have Q equal to zero, so they add 0.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "KL(Q || P)"
+  & label value0 "0.5"
+  & highlight card0
+  label key1 "term A"
+  & label value1 "0"
+  label key2 "term B"
+  & label value2 "0.5"
+  label key3 "KL(P || Q)"
+  & label value3 "infinite"
+  label key4 "P"
+  & label value4 "[0.5 0.25 0.125 0.125]"
+  label key5 "Q"
+  & label value5 "[0.5 0.5 0 0]"
+:::
 
 The definition is:
 
@@ -3425,6 +5214,107 @@ Learning rate 1.25: 20.25 (diverges)
 
 ## How it works
 
+
+:::anim
+title: Gradient descent on L(w) = (w - 3)^2 with learning rate 0.25
+# Worked values and narration follow the scenario in this lesson.
+text heading "Gradient descent on L(w) = (w - 3)^2 with learning rate 0.25" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "w"
+  & label value0 "0"
+  & highlight card0
+  label key1 "gradient"
+  & label value1 "-6"
+  & highlight card1
+  label key2 "loss"
+  & label value2 "9"
+  & highlight card2
+
+step: Start at w = 0.
+  restore card0, card1, card2
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "w"
+  & label value0 "0"
+  label key1 "gradient"
+  & label value1 "-6"
+  label key2 "loss"
+  & label value2 "9"
+
+step: Subtract 0.25 times -6.
+  restore card0, card1, card2
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "w"
+  & label value0 "1.5"
+  & highlight card0
+  label key1 "gradient"
+  & label value1 "-3"
+  & highlight card1
+  label key2 "loss"
+  & label value2 "2.25"
+  & highlight card2
+
+step: Subtract 0.25 times -3.
+  restore card0, card1, card2
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "w"
+  & label value0 "2.25"
+  & highlight card0
+  label key1 "gradient"
+  & label value1 "-1.5"
+  & highlight card1
+  label key2 "loss"
+  & label value2 "0.5625"
+  & highlight card2
+
+step: Subtract 0.25 times -1.5.
+  restore card0, card1, card2
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "w"
+  & label value0 "2.625"
+  & highlight card0
+  label key1 "gradient"
+  & label value1 "-0.75"
+  & highlight card1
+  label key2 "loss"
+  & label value2 "0.1406"
+  & highlight card2
+
+step: Each step halves the distance to 3 and divides the loss by 4.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "w"
+  & label value0 "2.625"
+  label key1 "gradient"
+  & label value1 "-0.75"
+  label key2 "loss"
+  & label value2 "0.1406"
+:::
+
 The update is:
 
 $$w_{t+1} = w_t - \\eta\\, \\nabla L(w_t)$$
@@ -3627,6 +5517,89 @@ Along w2 (curvature 2): 180
 Noise adds a second limit. With a mini-batch gradient, the step has a random part of size $\\eta$ times the gradient noise. At a fixed rate the weights jitter around the minimum and the loss stops falling. Decay the rate and the jitter shrinks.
 
 ## How it works
+
+
+:::anim
+title: Gradient descent on the valley with learning rate 0.019
+# Worked values and narration follow the scenario in this lesson.
+text heading "Gradient descent on the valley with learning rate 0.019" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1
+  label key0 "w1"
+  & label value0 "1"
+  & highlight card0
+  label key1 "w2"
+  & label value1 "10"
+  & highlight card1
+
+step: Start at w1 = 1 and w2 = 10.
+  restore card0, card1
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "w1"
+  & label value0 "1"
+  label key1 "w2"
+  & label value1 "10"
+
+step: Take one step.
+  restore card0, card1
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "w1"
+  & label value0 "-0.9"
+  & highlight card0
+  label key1 "w2"
+  & label value1 "9.62"
+  & highlight card1
+
+step: Take a second step.
+  restore card0, card1
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "w1"
+  & label value0 "0.81"
+  & highlight card0
+  label key1 "w2"
+  & label value1 "9.25"
+  & highlight card1
+
+step: After 50 steps the w1 distance is 0.9 to the power 50, about 0.005.
+  restore card0, card1
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "w1"
+  & label value0 "0.005"
+  & highlight card0
+  label key1 "w2"
+  & label value1 "1.44"
+  & highlight card1
+
+step: After 180 steps the w2 distance is about 0.01.
+  restore card0, card1
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "w2"
+  & label value0 "0.01"
+  & highlight card0
+  label key1 "w1"
+  & label value1 "0.005"
+:::
 
 For a quadratic loss with Hessian $H$, the stability condition is:
 
@@ -3859,6 +5832,110 @@ Momentum in the limit: 3.8
 Adam goes further. It keeps a second average $s$ of the squared gradient per weight and divides the step by $\\sqrt{s}$. Along $w_1$ the gradients are large, so the step is scaled down. Along $w_2$ the gradients are small, so the step is scaled up. Each weight gets its own effective learning rate, and the step size is about $\\eta$ in every direction no matter the gradient scale.
 
 ## How it works
+
+
+:::anim
+title: Momentum along w2 with learning rate 0.019 and beta = 0.9
+# Worked values and narration follow the scenario in this lesson.
+text heading "Momentum along w2 with learning rate 0.019 and beta = 0.9" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "w2"
+  & label value0 "10"
+  & highlight card0
+  label key1 "v"
+  & label value1 "0"
+  & highlight card1
+
+step: Start at w2 = 10 with velocity 0.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "g"
+  & label value0 "20"
+  & highlight card0
+  label key1 "w2"
+  & label value1 "10"
+  label key2 "v"
+  & label value2 "0"
+
+step: Update the velocity to 0.9 times 0 plus 20 = 20.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "v"
+  & label value0 "20"
+  & highlight card0
+  label key1 "w2"
+  & label value1 "9.62"
+  & highlight card1
+  label key2 "g"
+  & label value2 "20"
+
+step: The gradient is 19.24.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "g"
+  & label value0 "19.24"
+  & highlight card0
+  label key1 "v"
+  & label value1 "37.24"
+  & highlight card1
+  label key2 "w2"
+  & label value2 "8.91"
+  & highlight card2
+
+step: The gradient is 17.82.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "g"
+  & label value0 "17.82"
+  & highlight card0
+  label key1 "v"
+  & label value1 "51.34"
+  & highlight card1
+  label key2 "w2"
+  & label value2 "7.93"
+  & highlight card2
+
+step: In the limit the velocity reaches 10 times the gradient.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "limit of v"
+  & label value0 "10 times g"
+  & highlight card0
+  label key1 "g"
+  & label value1 "17.82"
+  label key2 "v"
+  & label value2 "51.34"
+  label key3 "w2"
+  & label value3 "7.93"
+:::
 
 Momentum:
 
@@ -4101,6 +6178,129 @@ At x = 2: 40
 
 ## How it works
 
+
+:::anim
+title: Midpoint test on g(x) = x^4 - 4x^2
+# Worked values and narration follow the scenario in this lesson.
+text heading "Midpoint test on g(x) = x^4 - 4x^2" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "g(-2)"
+  & label value0 "0"
+  & highlight card0
+  label key1 "g(0)"
+  & label value1 "0"
+  & highlight card1
+  label key2 "g(2)"
+  & label value2 "0"
+  & highlight card2
+
+step: Pick x = -2 and x = 2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "pair"
+  & label value0 "-2 and 2"
+  & highlight card0
+  label key1 "line height"
+  & label value1 "0"
+  & highlight card1
+  label key2 "g at midpoint"
+  & label value2 "0"
+  & highlight card2
+  label key3 "g(-2)"
+  & label value3 "0"
+  label key4 "g(0)"
+  & label value4 "0"
+  label key5 "g(2)"
+  & label value5 "0"
+
+step: Pick x = -2 and x = 0.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "pair"
+  & label value0 "-2 and 0"
+  & highlight card0
+  label key1 "line height"
+  & label value1 "0"
+  label key2 "g at midpoint"
+  & label value2 "-3"
+  & highlight card2
+  label key3 "g(-2)"
+  & label value3 "0"
+  label key4 "g(0)"
+  & label value4 "0"
+  label key5 "g(2)"
+  & label value5 "0"
+
+step: Pick x = -1 and x = 1.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "pair"
+  & label value0 "-1 and 1"
+  & highlight card0
+  label key1 "line height"
+  & label value1 "-3"
+  & highlight card1
+  label key2 "g at midpoint"
+  & label value2 "0"
+  & highlight card2
+  label key3 "g(-2)"
+  & label value3 "0"
+  label key4 "g(0)"
+  & label value4 "0"
+  label key5 "g(2)"
+  & label value5 "0"
+
+step: One pair breaks the rule, so g is not convex.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "second derivative at 0"
+  & label value0 "-8"
+  & highlight card0
+  label key1 "convex"
+  & label value1 "no"
+  & highlight card1
+  label key2 "pair"
+  & label value2 "-1 and 1"
+  label key3 "line height"
+  & label value3 "-3"
+  label key4 "g at midpoint"
+  & label value4 "0"
+  label key5 "g(-2)"
+  & label value5 "0"
+:::
+
 A function $f$ is convex when for all $x$, $y$ and all $t$ in $[0, 1]$:
 
 $$f(t x + (1 - t) y) \\le t f(x) + (1 - t) f(y)$$
@@ -4342,6 +6542,132 @@ state: w=[0.36 0.88], b=-2.02
 
 ## How it works
 
+
+:::anim
+title: One gradient step with learning rate 0.1
+# Worked values and narration follow the scenario in this lesson.
+text heading "One gradient step with learning rate 0.1" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "w"
+  & label value0 "[0.5 1.0]"
+  & highlight card0
+  label key1 "b"
+  & label value1 "-2"
+  & highlight card1
+
+step: Compute the error for email 1.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "error 1"
+  & label value0 "-0.5"
+  & highlight card0
+  label key1 "w"
+  & label value1 "[0.5 1.0]"
+  label key2 "b"
+  & label value2 "-2"
+
+step: Compute the error for email 2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "error 2"
+  & label value0 "0.95"
+  & highlight card0
+  label key1 "error 1"
+  & label value1 "-0.5"
+  label key2 "w"
+  & label value2 "[0.5 1.0]"
+  label key3 "b"
+  & label value3 "-2"
+
+step: Multiply each error by its input.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "gradient 1"
+  & label value0 "[-1 -0.5]"
+  & highlight card0
+  label key1 "gradient 2"
+  & label value1 "[3.8 2.85]"
+  & highlight card1
+  label key2 "error 2"
+  & label value2 "0.95"
+  label key3 "error 1"
+  & label value3 "-0.5"
+  label key4 "w"
+  & label value4 "[0.5 1.0]"
+  label key5 "b"
+  & label value5 "-2"
+
+step: Average the two.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "weight gradient"
+  & label value0 "[1.4 1.18]"
+  & highlight card0
+  label key1 "bias gradient"
+  & label value1 "0.225"
+  & highlight card1
+  label key2 "gradient 1"
+  & label value2 "[-1 -0.5]"
+  label key3 "gradient 2"
+  & label value3 "[3.8 2.85]"
+  label key4 "error 2"
+  & label value4 "0.95"
+  label key5 "error 1"
+  & label value5 "-0.5"
+
+step: Subtract 0.1 times each gradient.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "w"
+  & label value0 "[0.36 0.88]"
+  & highlight card0
+  label key1 "b"
+  & label value1 "-2.02"
+  & highlight card1
+  label key2 "weight gradient"
+  & label value2 "[1.4 1.18]"
+  label key3 "bias gradient"
+  & label value3 "0.225"
+  label key4 "gradient 1"
+  & label value4 "[-1 -0.5]"
+  label key5 "gradient 2"
+  & label value5 "[3.8 2.85]"
+:::
+
 The model is:
 
 $$\\hat{y} = \\sigma(w \\cdot x + b), \\qquad \\sigma(z) = \\frac{1}{1 + e^{-z}}$$
@@ -4558,6 +6884,123 @@ state: gradient=[0.66 -0.76 0.10]
 :::
 
 ## How it works
+
+
+:::anim
+title: Forward and backward pass for logits [2.0, 1.0, 0.1] with true class dog
+# Worked values and narration follow the scenario in this lesson.
+text heading "Forward and backward pass for logits [2.0, 1.0, 0.1] with true|class dog" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "logits"
+  & label value0 "[2.0 1.0 0.1]"
+  & highlight card0
+
+step: Subtract the largest logit, 2.0, from every logit.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "shifted"
+  & label value0 "[0 -1 -1.9]"
+  & highlight card0
+  label key1 "logits"
+  & label value1 "[2.0 1.0 0.1]"
+
+step: Exponentiate.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "exponentials"
+  & label value0 "[1.00 0.37 0.15]"
+  & highlight card0
+  label key1 "sum"
+  & label value1 "1.52"
+  & highlight card1
+  label key2 "shifted"
+  & label value2 "[0 -1 -1.9]"
+  label key3 "logits"
+  & label value3 "[2.0 1.0 0.1]"
+
+step: Divide by the sum.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "p"
+  & label value0 "[0.66 0.24 0.10]"
+  & highlight card0
+  label key1 "exponentials"
+  & label value1 "[1.00 0.37 0.15]"
+  label key2 "sum"
+  & label value2 "1.52"
+  label key3 "shifted"
+  & label value3 "[0 -1 -1.9]"
+  label key4 "logits"
+  & label value4 "[2.0 1.0 0.1]"
+
+step: Read the probability of the true class, dog, which is 0.24.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "loss"
+  & label value0 "1.43"
+  & highlight card0
+  label key1 "p"
+  & label value1 "[0.66 0.24 0.10]"
+  label key2 "exponentials"
+  & label value2 "[1.00 0.37 0.15]"
+  label key3 "sum"
+  & label value3 "1.52"
+  label key4 "shifted"
+  & label value4 "[0 -1 -1.9]"
+  label key5 "logits"
+  & label value5 "[2.0 1.0 0.1]"
+
+step: Subtract the one-hot target [0, 1, 0] from p.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "gradient"
+  & label value0 "[0.66 -0.76 0.10]"
+  & highlight card0
+  label key1 "loss"
+  & label value1 "1.43"
+  label key2 "p"
+  & label value2 "[0.66 0.24 0.10]"
+  label key3 "exponentials"
+  & label value3 "[1.00 0.37 0.15]"
+  label key4 "sum"
+  & label value4 "1.52"
+  label key5 "shifted"
+  & label value5 "[0 -1 -1.9]"
+:::
 
 For $K$ classes with logits $z_1, \\dots, z_K$, the softmax is:
 
@@ -4784,6 +7227,123 @@ step: All four outputs match the labels. Without the ReLU, h2 would be -1 for in
 :::
 
 ## How it works
+
+
+:::anim
+title: Forward pass of the XOR network
+# Worked values and narration follow the scenario in this lesson.
+text heading "Forward pass of the XOR network" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "h1"
+  & label value0 "ReLU(x1 + x2)"
+  & highlight card0
+  label key1 "h2"
+  & label value1 "ReLU(x1 + x2 - 1)"
+  & highlight card1
+  label key2 "output"
+  & label value2 "h1 - 2 h2"
+  & highlight card2
+
+step: Input (0, 0).
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "input"
+  & label value0 "(0 0)"
+  & highlight card0
+  label key1 "h1"
+  & label value1 "0"
+  & highlight card1
+  label key2 "h2"
+  & label value2 "0"
+  & highlight card2
+  label key3 "output"
+  & label value3 "0"
+  & highlight card3
+
+step: Input (0, 1).
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "input"
+  & label value0 "(0 1)"
+  & highlight card0
+  label key1 "h1"
+  & label value1 "1"
+  & highlight card1
+  label key2 "h2"
+  & label value2 "0"
+  label key3 "output"
+  & label value3 "1"
+  & highlight card3
+
+step: Input (1, 0).
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "input"
+  & label value0 "(1 0)"
+  & highlight card0
+  label key1 "h1"
+  & label value1 "1"
+  label key2 "h2"
+  & label value2 "0"
+  label key3 "output"
+  & label value3 "1"
+
+step: Input (1, 1).
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "input"
+  & label value0 "(1 1)"
+  & highlight card0
+  label key1 "h1"
+  & label value1 "2"
+  & highlight card1
+  label key2 "h2"
+  & label value2 "1"
+  & highlight card2
+  label key3 "output"
+  & label value3 "0"
+  & highlight card3
+
+step: All four outputs match the labels.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "input"
+  & label value0 "(1 1)"
+  label key1 "h1"
+  & label value1 "2"
+  label key2 "h2"
+  & label value2 "1"
+  label key3 "output"
+  & label value3 "0"
+:::
 
 A one-hidden-layer MLP computes:
 
@@ -5026,6 +7586,146 @@ b2: 0.731
 :::
 
 ## How it works
+
+
+:::anim
+title: Backward pass with every number
+# Worked values and narration follow the scenario in this lesson.
+text heading "Backward pass with every number" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "y hat"
+  & label value0 "0.269"
+  & highlight card0
+  label key1 "y"
+  & label value1 "1"
+  & highlight card1
+  label key2 "h"
+  & label value2 "[0 1]"
+  & highlight card2
+  label key3 "z1"
+  & label value3 "[-1 1]"
+  & highlight card3
+
+step: Start at the logit.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "z2 bar"
+  & label value0 "-0.731"
+  & highlight card0
+  label key1 "y hat"
+  & label value1 "0.269"
+  label key2 "y"
+  & label value2 "1"
+  label key3 "h"
+  & label value3 "[0 1]"
+  label key4 "z1"
+  & label value4 "[-1 1]"
+
+step: Compute the output weight gradient as z2 bar times h, which is [0, -0.731].
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "w2 bar"
+  & label value0 "[0 -0.731]"
+  & highlight card0
+  label key1 "b2 bar"
+  & label value1 "-0.731"
+  & highlight card1
+  label key2 "z2 bar"
+  & label value2 "-0.731"
+  label key3 "y hat"
+  & label value3 "0.269"
+  label key4 "y"
+  & label value4 "1"
+  label key5 "h"
+  & label value5 "[0 1]"
+
+step: Pass the gradient to the hidden activation.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "h bar"
+  & label value0 "[-1.462 0.731]"
+  & highlight card0
+  label key1 "w2 bar"
+  & label value1 "[0 -0.731]"
+  label key2 "b2 bar"
+  & label value2 "-0.731"
+  label key3 "z2 bar"
+  & label value3 "-0.731"
+  label key4 "y hat"
+  & label value4 "0.269"
+  label key5 "y"
+  & label value5 "1"
+
+step: Apply the ReLU mask [0, 1] from z1.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "mask"
+  & label value0 "[0 1]"
+  & highlight card0
+  label key1 "z1 bar"
+  & label value1 "[0 0.731]"
+  & highlight card1
+  label key2 "h bar"
+  & label value2 "[-1.462 0.731]"
+  label key3 "w2 bar"
+  & label value3 "[0 -0.731]"
+  label key4 "b2 bar"
+  & label value4 "-0.731"
+  label key5 "z2 bar"
+  & label value5 "-0.731"
+
+step: Compute the hidden weight gradient as z1 bar times x transpose.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "W1 bar"
+  & label value0 "[0 0; 0.731 1.462]"
+  & highlight card0
+  label key1 "b1 bar"
+  & label value1 "[0 0.731]"
+  & highlight card1
+  label key2 "mask"
+  & label value2 "[0 1]"
+  label key3 "z1 bar"
+  & label value3 "[0 0.731]"
+  label key4 "h bar"
+  & label value4 "[-1.462 0.731]"
+  label key5 "w2 bar"
+  & label value5 "[0 -0.731]"
+:::
 
 The backward pass applies two rules at each layer:
 

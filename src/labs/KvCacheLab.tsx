@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NumberField, SelectField, Stat } from '../components/Field'
 import { bytes, num } from '../lib/format'
+import { LabVisual } from '../components/LabVisual'
 
 type Preset = 'llama3-8b' | 'llama3-70b' | 'mistral-7b' | 'custom'
 type Dtype = 'fp16' | 'fp8' | 'int4'
@@ -68,6 +69,7 @@ export function KvCacheLab() {
         <NumberField label="GPUs" value={gpus} min={1} onChange={setGpus} />
       </div>
       <div className="lab-results">
+        <LabVisual title="GPU memory budget" caption={weights > total ? 'The model weights exceed the available GPU memory.' : 'Compare the model weights and one full sequence against available GPU memory.'} maximum={Math.max(total, weights, perSeq)} items={[{ label: 'Available GPU memory', value: total, display: bytes(total) }, { label: 'Model weights', value: weights, display: bytes(weights) }, { label: 'One sequence of KV cache', value: perSeq, display: bytes(perSeq) }, { label: 'Free after weights', value: free, display: bytes(free), detail: `${fits} full-context sequences fit before framework overhead.` }]} />
         <Stat label="KV cache per token" value={bytes(perToken)} sub={`2 × ${layers} × ${kvHeads} × ${headDim} × ${dtypeBytes[cacheDtype]} B`} />
         <Stat label="KV cache per sequence" value={bytes(perSeq)} sub={`${num(tokens)} tokens`} />
         <Stat label="Weights" value={bytes(weights)} sub={`${params}B params × ${dtypeBytes[weightDtype]} B`} />

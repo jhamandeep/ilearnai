@@ -1,6 +1,12 @@
 # ilearnai
 
-A free, complete learning site that takes a person with no coding and no AI background to building a complete AI system. Ten tracks in four levels (Level 0 foundations to Level 3 advanced), full lessons written in ASD-STE100 Simplified Technical English with animated diagrams, inline videos, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. No accounts, no paywall.
+A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Ten tracks in four levels (Level 0 foundations to Level 3 advanced), full lessons written in ASD-STE100 Simplified Technical English with animated diagrams, inline videos, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
+
+## Current draft: open access
+
+Sign-in is optional during review. `npm run dev`, `npm run preview`, and `npm start` expose all lessons, labs, libraries, practice, and the dashboard without an account. The homepage gradient-descent lab is open too. Signed-out progress saves under `ilearnai:preview-progress:v1` in this browser, separate from account progress; clearing site data removes it. Existing signed-in users continue using their account progress.
+
+For production, start the server with `REQUIRE_LOGIN=1 npm start` (or `REQUIRE_LOGIN=1 npm run dev` to test the gate locally). This single server setting restores both route access checks and the curriculum API requirement. The frontend reads the mode from the session response; no separate client build setting is needed. Account APIs retain their session checks in both modes.
 
 ## The learning path
 
@@ -11,7 +17,7 @@ A free, complete learning site that takes a person with no coding and no AI back
 | Level 2 Intermediate | ML Mathematics · AI Engineering · System Design |
 | Level 3 Advanced | Inference Engineering · AI Research · Open Robotics (preview) |
 
-`/path` shows the whole path with prerequisites and what each track lets you build. `/practice/placement` suggests a level. Progress (lessons done, quiz scores) is stored in the browser (`src/lib/progress.ts`).
+`/path` shows the whole path with prerequisites and what each track lets you build. `/practice/placement` suggests a level. Progress (activities and lessons done, quiz scores, practice results) saves in this browser for draft visitors, or per account in SQLite when signed in. `/dashboard` shows overall and course activity progress, quiz activity, and the next unfinished activity in the most recent lesson.
 
 ## Run
 
@@ -24,11 +30,13 @@ npm run lint
 
 ## Layout
 
+The shared visual style follows the typography and spacing of Google AI's learning page: Google Sans Flex, a centered landing-page cover, rounded course artwork, neutral pill controls, and pale-blue feature sections. `src/google-style.css` contains the marketing appearance; `src/skills-style.css` supplies the Google Skills-inspired application navigation, Google Sans / Google Sans Text typography, navy course headers, searchable catalogue, and activity pages. `src/index.css` retains the component structure. Ten course covers use different subject illustrations; eight new assets and their generation prompts are recorded in `output/imagegen/skills-image-prompts.json`. Font files load from Google Fonts with local system fallbacks. Lesson animations have a theme-aware stage and an interactive player with a transcript. All 220 lessons contain an animation; worked examples in the existing lesson scenarios supply the 120 additions.
+
 - `src/data/` — all content as typed TypeScript: tracks → modules → lessons (Markdown with `$math$`). The four Level 0 and 1 tracks keep one module per file under `src/data/tracks/<track>/<module>.ts` with a matching glossary file in `src/data/glossary/<module>.ts` (all glossary files are merged automatically); the older tracks are one file each. Also papers (with `prereqs` forming the reading-order hierarchy), glossary, blog posts, external resources and tools, roadmaps, the Knowledge Topography graph, and the lab registry.
 - `src/pages/` — one file per route group. Lesson, paper, lab, blog, graph, hierarchy, resources and roadmap routes are lazy-loaded so Markdown/KaTeX, d3 and the labs stay out of the main bundle.
 - `src/labs/` — pure client-side calculators and animations. No network calls. Includes KV cache sizing, an animated transformer block, an attention heat-map, a BPE tokenizer trainer, a gradient-descent race (SGD / momentum / Adam), sampling, the Agent Control Room, a Pareto model router, a timeout architect with log-normal tail simulation, and capacity planning.
 - `/knowledge-graph` — d3-force concept map linking concepts, lessons, papers, labs and glossary terms. `/hierarchy` — papers laid out as a prerequisite DAG per track.
-- `src/lib/auth.tsx` — client-side session and Pro entitlement stored in localStorage.
+- `src/lib/auth.tsx` — server-backed session, protected learning routes, and account progress synchronization.
 
 ## Writing lessons
 
@@ -40,7 +48,7 @@ All lesson text follows ASD-STE100 Simplified Technical English: sentences of at
 
 ## Visual blocks in lessons
 
-Lesson bodies can embed twelve block types between paragraphs using `:::kind … :::` containers (converted to fenced code at render time so lesson text never needs backticks): `flow` (boxes and arrows with a travelling packet), `arch` (layered architecture with an animated request path), `timeline` (lanes, work bars and messages over time), `scenario` (a step player with a live state panel), `bars` (animated comparison), `matrix` (heat-map grid), `code` (code with a copy button), `exercise` (task, hint and hidden solution), `quiz` (multiple choice with explanations, scored and saved locally), `video` (an inline free video from the verified bank) `graph` (function curves and point series with a tangent and a hover readout, drawn from a safe expression parser) and `anim` (a narrated continuous animation in the style of 3Blue1Brown: a 960x540 stage with boxes, axes, curves, dots, vectors and counters, scripted as objects plus narrated steps and played as a GSAP timeline with play, scrub, step, speed and full-screen controls). Renderers live in `src/components/rich/`. The style guide page shows a live example of each. `npm run visuals` validates every block in every lesson and reports coverage per track; `--file <module.ts>` runs the strict per-module check used while writing.
+Lesson bodies can embed twelve block types between paragraphs using `:::kind … :::` containers (converted to fenced code at render time so lesson text never needs backticks): `flow` (boxes and arrows with a travelling packet), `arch` (layered architecture with an animated request path), `timeline` (lanes, work bars and messages over time), `scenario` (a step player with a live state panel), `bars` (animated comparison), `matrix` (heat-map grid), `code` (code with a copy button), `exercise` (task, hint and hidden solution), `quiz` (multiple choice with explanations, scored and saved to the account), `video` (an inline free video from the verified bank) `graph` (function curves and point series with a tangent and a hover readout, drawn from a safe expression parser) and `anim` (a narrated continuous animation in the style of 3Blue1Brown: a 960x540 stage with boxes, axes, curves, dots, vectors and counters, scripted as objects plus narrated steps and played as a GSAP timeline with play, scrub, step, speed and full-screen controls). Renderers live in `src/components/rich/`. The style guide page shows a live example of each. `npm run visuals` validates every block in every lesson and reports coverage per track; `--file <module.ts>` runs the strict per-module check used while writing.
 
 ## Videos
 
@@ -52,8 +60,84 @@ Lesson bodies can embed twelve block types between paragraphs using `:::kind …
 
 ## Not included
 
-No analytics, sitemap, `llms.txt`, or RSS yet.
+No analytics, sitemap, `llms.txt`, or outbound RSS subscription feed yet.
 
 ## Smoke test
 
 `npm run smoke` server-renders every route and fails if any one 404s or throws. It also checks that every roadmap link, graph node link, graph edge, paper prerequisite and glossary cross-reference resolves.
+
+## Full product rendering check
+
+`npm run check:product` waits for lazy lesson blocks, checks all 220 lessons and their source links, checks SVG references and flow-box bounds, verifies every video and resource across level/track/type filters, and confirms that the homepage embeds the original gradient descent lab. Videos and resources use shareable query filters and are grouped by level, track, and topic. Lesson sources are grouped by type in each lesson’s resources activity.
+
+## AI RSS news strip
+
+The bottom news strip aggregates Google Research, Google DeepMind, Hugging Face, MIT News AI, and TechCrunch AI. It scrolls with Pause/Play controls, pauses on hover and focus, respects reduced motion, and has a readable source-filtered headline panel. Only titles, dates, source names, and original article links are retained.
+
+`npm run dev` and `npm run preview` expose `/api/ai-news` through the Vite plugin. For a production Node host, run `npm run build` followed by `npm start`; set `HOST` and `PORT` as required by the host. The server fetches only the fixed source list and caches results for 15 minutes. Browsers check for updates every 15 minutes. Individual feed failures retain that source's cached headlines.
+
+`npm run news:refresh` refreshes `src/data/news-snapshot.json` and `public/ai-news.json`. Pure static hosting uses this dated snapshot rather than a live backend: refresh it in the deployment build or on your hosting schedule. No third-party CORS proxy or API key is required. `npm run test:news` checks RSS/Atom parsing, fallback behavior, and input validation.
+
+## Visual labs
+
+All 11 labs include a live result visualization. Nine use animated bars, probability segments, or process flows tied to their calculated results. Gradient descent retains its original colored surface and adds a recent-loss trace. The transformer diagram's token follows its actual step and pause controls. Animated tours pause offscreen, in hidden tabs, and for reduced-motion preferences.
+
+## Accounts and deployment
+
+Account forms remain at `/signup` and `/login`. With `REQUIRE_LOGIN=1`, course outlines remain public while lessons, lab detail pages, libraries, practice, and the dashboard require a session. In the default open draft, all content and the original homepage gradient-descent lab are available without signing in.
+
+For production with sign-in required, run `npm run build` then `REQUIRE_LOGIN=1 npm start` with Node 24.2+ (Node 26 tested). Deploy the Node server and keep `data/ilearnai.sqlite` on persistent storage; `AUTH_DB_PATH` can point to a mounted volume. The build writes full lesson bodies to private `server/content/curriculum.json`; only body-free course metadata ships in browser assets. Serve the application over HTTPS; when a trusted reverse proxy terminates TLS, set `TRUST_PROXY=1` so session cookies include Secure. Do not expose the database or private curriculum directory through static hosting. Pure static hosting supports the public catalogue and cached news only; account services require the Node backend.
+
+Passwords use salted scrypt hashes. Session tokens are random, stored hashed in SQLite, and delivered through HttpOnly SameSite cookies. Mutations check origin and authenticated writes require CSRF tokens. Pending progress is kept per user in browser storage until saved, with a visible sync status and retry action. Existing anonymous browser progress is not automatically attached to new accounts. Email verification and password recovery are not implemented in this draft.
+
+`npm run test:account-ui` checks sign-in gates, dashboard rendering, logout cleanup, and durable offline/in-flight progress queues. `npm run test:accounts` checks account isolation, CSRF, login/logout, persisted progress after database reopen, and absence of lesson bodies from the browser build. Test accounts exist only in a temporary database.
+
+## Course activities and static Ask
+
+Each lesson has an overview plus separately addressable reading, animation, video, practice, quiz, linked-lab, and resources activities at `/courses/:track/:module/:lesson/:activity`. Reading keeps all authored prose and diagrams, with links where interactive blocks were moved. Quizzes retain their original score indices. Completing every activity completes the lesson; previously completed lessons retain their completion until an activity is reopened. The dashboard and course overview count partial activity progress, including for signed-out draft visitors. Catalogue filters and searches are shareable URL parameters.
+
+`/ask` is a static, browser-local site guide available to guests and signed-in learners. It matches questions against built-in navigation/account FAQs, public course and lesson summaries, lab descriptions, and glossary definitions. It offers relevant page links and an explicit fallback for unknown questions. It does not call an LLM or a question-answering backend, generate answers, or save chat history. The rest of the app still uses its existing account and RSS endpoints.
+
+`npm run test:learning-flow` checks lossless extraction of all 1,294 activities, public/private outline parity, completion migration, static help matching and links, catalogue filters, and distinct course artwork. `npm run check:product` renders every activity and checks all 2,130 authored rich blocks.
+
+The local draft before these course-flow changes is preserved in `output/rollback/before-skills-flow-20261026-193104/project-snapshot.zip`; extract into a separate directory to review or restore. Runtime account data is excluded. Reference inspection notes are in `output/reviews/google-ai-reference-20261026.json`; sign-in-only reference screens and browser visual checks have not been verified.
+
+## AI for your work
+
+`/for-work` is a practical path for nontechnical audiences. It covers banking, insurance, healthcare, retail, manufacturing, education, public services, professional services, technology, logistics, energy, and agriculture. Each of the 12 fields has three illustrative use cases, with benefits, current work, AI assistance, human responsibility, inputs, system connections, pilot scope, measures, and stop conditions. These are planning examples, not claimed deployments or promised outcomes. Industry evidence is linked and dated on each guide.
+
+Choose leadership, managers, team members, architects, delivery, risk/compliance, or operations. The role choice persists in links using `?role=` and changes the action list, industry job context, and downloadable plain-text pilot brief. Compare two fields using the industry comparison; use the capacity calculator to account for review time, corrections, suitable task share, and monthly support. Negative results are shown as extra work rather than hidden.
+
+Routes: `/for-work/:industry` and `/for-work/:industry/:useCase`. The original courses and labs remain available. Ask includes static work/industry/role guidance. Guides marked reviewed appear on the dashboard separately from technical course completion. `work:<industry>/<case>` keys persist in the existing browser preview store or signed-in account.
+
+Content: `src/data/work/`; pages: `src/pages/ForWork.tsx`; interactions: `src/components/WorkTools.tsx`; presentation: `src/work-style.css`. `npm run test:work-learning` renders all 252 industry/use-case/role combinations and verifies brief contents, links, progress, calculator edge cases, and featured videos.
+
+The homepage’s Keep exploring section uses three editorially selected talks and deep dives from `src/data/featuredVideos.ts`, rather than the first three foundation videos. The full library and its filters are unchanged. Original video pages were checked on 26 October 2026; these are editorial selections, not a ranking by views.
+
+Rollback before this change: `output/rollback/before-ai-for-work-20261026-201303/project-snapshot.zip`. No deployment or push is included.
+
+## Guided learning and chapter videos
+
+All 220 lessons now expose matching term definitions and retain the original analogy and relevance explanation beside standalone animation activities. Additional glossary entries explain advanced concepts with examples. The animation format also supports a context, viewing focus, takeaway, and an explanation per scene. The AI terminology introduction separates methods from generative capabilities; twelve further lessons add practical worked examples and checks.
+
+All 11 labs include a visual reading guide, a three-step experiment, a numerical or concrete example, a limitation, and a reflection answer. All 36 work guides include fictional input, proposed output, human review, and outcome examples. Playback is optional, stops at the final step, and has a complete text alternative.
+
+All 56 modules have chapter video sequences with 176 curated selections and a task to complete afterwards. Each selection has a preview. Supported recordings play inside their own cards; selecting another closes the previous player. Titles use the same inline selection, and external links remain separate. Chapter navigation and collapsing a sequence stop playback. Full playlists and unsupported recordings explain their external playback option. The library adds 50 lectures from publisher-listed university courses. Of these, 45 returned YouTube oEmbed metadata; five Stanford recordings use external links because embedded playback could not be verified. Publisher source links and verification records are retained in `output/reviews/`. No timestamp or duration is invented for new recordings.
+
+`npm run test:content-guidance` checks chapter coverage, previews, referenced videos, lesson context, explainer parsing, lab instructions, and all worked examples. `npm run test:chapter-videos` mounts the sequence in a simulated DOM and checks preview clicks, exact selected recording IDs, single-player behaviour, titles, closing, navigation, and collapsed playback. It does not load YouTube or replace a browser playback check. The homepage layout and new logo are unchanged by this content pass.
+
+Rollback before this content pass: `output/rollback/before-content-refinement-20261027-124145/project-snapshot.zip`. No deployment or push is included.
+
+## Learning workspace draft (28 October 2026)
+
+`/code` adds eight standard-library Python exercises with worked examples, a CodeMirror editor, hints, solutions, output, and 24 checks. It uses pinned Pyodide 314.0.7 loaded on Run from jsDelivr, inside a module worker in an opaque-origin sandboxed iframe. The frame has no same-origin permission; its CSP only permits the runtime CDN for scripts and connections. Each run starts fresh. Stop, navigation, errors, and completion tear down the worker/frame; startup times out after 60 seconds and execution after 10 seconds. Output is capped. The runtime is browser-only; no learner code is sent to the application server. This is a practice environment, not a secure examination or a general notebook/package-installation service. Browser/CSP execution still needs live verification before release.
+
+Python drafts and passed-exercise flags use separate localStorage keys (`ilearnai:python:*`) on the current browser/device. They do not sync to an account or count as course mastery. Storage failure is reported, and code can be downloaded. Clear site data to remove those drafts. Keyboard Tab leaves the editor; indentation uses spaces.
+
+`/for-work` exposes a complete example immediately, with field selectors, a labelled animated flow, and an interactive decision question. All 36 case guides include specific incorrect alternatives, retryable feedback, and visible answers about pilot design and measurement. The full text example remains available, and motion is optional and respects reduced-motion preferences.
+
+`/resources` adds 15 project-owned resources with source repositories, level, setup, and a concrete first task. `?collection=open-source` and `?kind=visualization` select the new collections. Related projects appear in course and lesson resource panels. The static Ask guide includes coding and resource navigation; it still uses no LLM.
+
+`npm run test:workspace` executes exercise solutions and starters with the actual Pyodide WASM runtime in Node, checks all 36 questions in a simulated DOM, verifies library collections, and checks runner message filtering and cleanup. It does not replace a real-browser rendering, network, or CSP check. Research and the Microsoft curriculum gap map are in `output/reviews/learning-workspace-20261028/`.
+
+Rollback: `output/rollback/before-learning-workspace-20261028-100606/project-snapshot.zip`. Extract into a separate directory first; account/runtime data and environment secrets were excluded. Homepage content and branding were preserved. No push or deployment is included.

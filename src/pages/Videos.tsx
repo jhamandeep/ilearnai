@@ -1,94 +1,38 @@
-import { useMemo, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { videos, thumb, embedUrl } from '../data/videos'
-import { tracks } from '../data/tracks'
-import { levelInfo, levelOrder, type Level, type Video } from '../data/types'
+import { videos, embedUrl } from '../data/videos'
+import { levelInfo, type Video } from '../data/types'
+import { VideoThumbnail } from '../components/VideoThumbnail'
+import { LibraryFilters } from '../components/LibraryFilters'
+import { groupLibrary } from '../lib/library'
+import { useLibraryFilters } from '../lib/useLibraryFilters'
 
-const kinds: Video['kind'][] = ['video', 'playlist', 'channel']
+const kinds = ['video', 'playlist', 'channel'] as const
 
 export function Videos() {
-  const [track, setTrack] = useState('all')
-  const [level, setLevel] = useState<Level | 'all'>('all')
-  const [kind, setKind] = useState<Video['kind'] | 'all'>('all')
-  const [q, setQ] = useState('')
+  const filters = useLibraryFilters(kinds)
   const [playing, setPlaying] = useState<Video | null>(null)
-  const sortedTracks = useMemo(() => [...tracks].sort((a, b) => a.order - b.order), [])
-
-  const filtered = useMemo(
-    () => videos.filter((x) => (track === 'all' || x.track === track) && (level === 'all' || x.level === level) && (kind === 'all' || x.kind === kind) && (x.title + x.channel + x.topic + x.why).toLowerCase().includes(q.toLowerCase())),
-    [track, level, kind, q],
-  )
-
-  const stanford = videos.filter((v) => /stanford/i.test(v.channel) || /stanford/i.test(v.title))
-
+  const player = useRef<HTMLElement>(null)
+  const query = filters.q.trim().toLowerCase()
+  const filtered = videos.filter((video) => (filters.track === 'all' || video.track === filters.track) && (filters.level === 'all' || video.level === filters.level) && (filters.kind === 'all' || video.kind === filters.kind) && `${video.title} ${video.channel} ${video.topic} ${video.why}`.toLowerCase().includes(query))
+  const groups = groupLibrary(filtered)
+  function play(video: Video) {
+    setPlaying(video)
+    requestAnimationFrame(() => {
+      player.current?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+      player.current?.focus({ preventScroll: true })
+    })
+  }
   return (
     <>
-      <header className="page-head">
-        <h1>Free video lectures and courses</h1>
-        <p className="lede">
-          {videos.length} videos, playlists and channels, all free, grouped by level and then by topic. Every id was verified. Videos with a play button open in a player here; a few university lectures open on YouTube because their owner disabled embedding.
-        </p>
-        <p className="meta">Full university courses: {stanford.length} Stanford lectures and playlists (CS229, CS224N, CS230, CS231n, CS25, CS234, CS336, CS224W, CS330, EE364A, CS109) plus MIT 6.824 and Harvard CS50. Filter by level to find where to start.</p>
-      </header>
-      {playing && (
-        <section>
-          <div className="player">
-            <iframe src={`${embedUrl(playing)}?autoplay=1`} title={playing.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-          </div>
-          <div className="section-head">
-            <h2>{playing.title}</h2>
-            <button className="btn btn-ghost" onClick={() => setPlaying(null)}>Close</button>
-          </div>
-          <p className="meta">{playing.channel} · <a href={playing.url} target="_blank" rel="noreferrer">Open on YouTube</a></p>
-        </section>
-      )}
-      <div className="topo-controls">
-        <input className="search" style={{ margin: 0 }} placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-        <select value={track} onChange={(e) => setTrack(e.target.value)}><option value="all">All tracks</option>{sortedTracks.map((t) => <option key={t.slug} value={t.slug}>{t.title}</option>)}</select>
-        <select value={level} onChange={(e) => setLevel(e.target.value as Level | 'all')}><option value="all">All levels</option>{levelOrder.map((l) => <option key={l} value={l}>{levelInfo[l].short} {levelInfo[l].label}</option>)}</select>
-        <select value={kind} onChange={(e) => setKind(e.target.value as Video['kind'] | 'all')}><option value="all">Videos, playlists, channels</option>{kinds.map((k) => <option key={k} value={k}>{k}</option>)}</select>
-        <span className="meta">{filtered.length} of {videos.length}</span>
-      </div>
-      {levelOrder.map((lv) => {
-        const group = filtered.filter((x) => x.level === lv)
-        if (!group.length) return null
-        const topics = [...new Set(group.map((x) => x.topic))].sort()
-        return (
-          <section key={lv} className="level-group">
-            <div className="level-head"><h2><span className={`lvl lvl-${lv}`}>{levelInfo[lv].short}</span>{levelInfo[lv].label}</h2><p>{levelInfo[lv].who}</p></div>
-            {topics.map((topic) => (
-              <div key={topic} className="module">
-                <h3>{topic} <span className="meta">{group.filter((x) => x.topic === topic).length}</span></h3>
-                <div className="video-grid">
-                  {group.filter((x) => x.topic === topic).map((x) => (
-                    <article key={x.url} className="video">
-                      {x.id && x.embeddable !== false ? (
-                        <button className="thumb-btn" onClick={() => { setPlaying(x); window.scrollTo({ top: 0, behavior: 'smooth' }) }} aria-label={`Play ${x.title}`}>
-                          <img className="thumb" src={thumb(x)} alt="" loading="lazy" />
-                          <span className="play">▶</span>
-                        </button>
-                      ) : x.id ? (
-                        <a className="thumb-btn" href={x.url} target="_blank" rel="noreferrer" aria-label={`Open ${x.title} on YouTube`}>
-                          <img className="thumb" src={thumb(x)} alt="" loading="lazy" />
-                          <span className="play">↗</span>
-                        </a>
-                      ) : (
-                        <a className="thumb thumb-text" href={x.url} target="_blank" rel="noreferrer">{x.kind === 'playlist' ? 'Playlist' : 'Channel'}</a>
-                      )}
-                      <div className="body">
-                        <span className="meta">{x.channel} · <Link to={`/courses/${x.track}`}>{tracks.find((t) => t.slug === x.track)?.title}</Link>{x.minutes ? ` · ${x.minutes} min` : ''}</span>
-                        <h3><a href={x.url} target="_blank" rel="noreferrer">{x.title}</a></h3>
-                        <p>{x.why}</p>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
-        )
-      })}
-      {filtered.length === 0 && <p className="meta">Nothing matches.</p>}
+      <header className="page-head"><p className="eyebrow">Watch and learn</p><h1>Free video lectures and courses</h1><p className="lede">Explore every video, playlist, and channel, organized by level, learning track, and topic. Play supported videos here, or open the original source.</p><div className="hero-actions"><Link to="/resources" className="text-cta">Browse other resources ↗</Link></div></header>
+      {playing && <section className="library-player" ref={player} tabIndex={-1} aria-label={`Now playing: ${playing.title}`}><div className="player"><iframe key={playing.id} src={`${embedUrl(playing)}?autoplay=1`} title={playing.title} referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div><div className="section-head"><h2>{playing.title}</h2><button type="button" className="btn btn-ghost" onClick={() => setPlaying(null)}>Close player</button></div><p className="meta">{playing.channel} · <a href={playing.url} target="_blank" rel="noreferrer">Watch on YouTube ↗</a></p></section>}
+      <LibraryFilters filters={filters} kinds={kinds} count={filtered.length} total={videos.length} label="videos, playlists, and channels" />
+      {groups.map((group) => <section className="level-group" key={group.level} id={`videos-${group.level}`}><div className="level-head"><h2><span className={`lvl lvl-${group.level}`}>{levelInfo[group.level].short}</span>{levelInfo[group.level].label}</h2><p>{levelInfo[group.level].who}</p><span className="meta">{group.count} resources</span></div>{group.tracks.map(({ track, count, topics }) => <section className="library-track" key={track.slug}><div className="library-track-head"><h3><Link to={`/courses/${track.slug}`}>{track.title}</Link></h3><span className="meta">{count} resources</span></div>{topics.map(({ topic, items }) => <div className="module library-topic" key={topic}><h4>{topic} <span className="meta">{items.length}</span></h4><div className="video-grid">{items.map((video, index) => <article className="video" key={`${video.url}-${index}`} data-resource-track={video.track} data-resource-level={video.level}>
+        {video.id && video.embeddable !== false ? <button type="button" className="thumb-btn" onClick={() => play(video)} aria-label={`Play ${video.title}`}><VideoThumbnail id={video.id} title={video.title} /></button> : <a className="thumb-btn" href={video.url} target="_blank" rel="noreferrer" aria-label={`Open ${video.title} on YouTube`}><VideoThumbnail id={video.id} title={video.title} kind={video.kind} external /></a>}
+        <div className="body"><span className="meta">{video.channel}{video.minutes ? ` · ${video.minutes} min` : ''} · {video.kind}</span><h3><a href={video.url} target="_blank" rel="noreferrer">{video.title}</a></h3><p>{video.why}</p><a className="video-source" href={video.url} target="_blank" rel="noreferrer">{video.embeddable === false ? 'Watch on YouTube' : video.kind === 'playlist' ? 'Open playlist' : video.kind === 'channel' ? 'Explore channel' : 'Open on YouTube'} ↗</a></div>
+      </article>)}</div></div>)}</section>)}</section>)}
+      {!filtered.length && <div className="library-empty"><h2>No matching videos</h2><p>Try another track, level, or search term.</p><button type="button" className="btn" onClick={filters.clearFilters}>Show all videos</button></div>}
     </>
   )
 }

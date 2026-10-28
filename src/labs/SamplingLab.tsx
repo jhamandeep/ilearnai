@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { RangeField } from '../components/Field'
 import { pct } from '../lib/format'
+import { LabVisual } from '../components/LabVisual'
 
 const vocab = ['the', 'a', 'cat', 'dog', 'sat', 'on', 'mat', 'ran', 'quickly', 'blue', 'is', 'very']
 const baseLogits = [3.2, 2.9, 2.4, 2.3, 1.8, 1.5, 1.2, 0.9, 0.4, 0.1, -0.3, -0.8]
@@ -50,6 +51,7 @@ export function SamplingLab() {
         </div>
       </div>
       <div className="lab-results">
+        <LabVisual title="Where the probability mass goes" mode="segments" caption="The colored strip totals 100%. Pruned tokens have zero probability after renormalization." items={vocab.map((word, i) => ({ label: word, value: result.probs[i], display: pct(result.probs[i]), detail: result.keep.has(i) ? 'This token survives the current top-k and top-p filters.' : 'This token is excluded by the current filters.' }))} />
         <ul className="bars">
           {vocab.map((w, i) => (
             <li key={w} className={result.keep.has(i) ? '' : 'cut'}>

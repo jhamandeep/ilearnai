@@ -20,6 +20,7 @@ export function Path() {
   const done = sorted.reduce((n, t) => n + doneCount(lessonRoutes(t)), 0)
   return (
     <>
+      <div className="work-route-banner"><div><strong>Want to apply AI in your field?</strong><span>Explore benefits and practical implementation for your industry and role. No coding required.</span></div><Link to="/for-work">AI for your work →</Link></div>
       <header className="page-head">
         <p className="eyebrow">One path, four levels, ten tracks</p>
         <h1>From zero to building a complete AI system</h1>

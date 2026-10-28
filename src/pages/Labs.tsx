@@ -13,6 +13,7 @@ import { TimeoutArchitectLab } from '../labs/TimeoutArchitectLab'
 import { SteCheckerLab } from '../labs/SteCheckerLab'
 import { NotFound } from './NotFound'
 import type { ComponentType } from 'react'
+import { LabGuide } from '../components/LabGuide'
 
 const registry: Record<string, ComponentType> = {
   'kv-cache': KvCacheLab,
@@ -28,19 +29,26 @@ const registry: Record<string, ComponentType> = {
   'ste-checker': SteCheckerLab,
 }
 
+export function LabContent({ slug }: { slug: string }) {
+  const Component = registry[slug]
+  return Component ? <><LabGuide slug={slug} /><Component /><LabGuide slug={slug} after /></> : <NotFound />
+}
+
 export function Labs() {
   return (
     <>
       <header className="page-head">
+        <p className="eyebrow">Learn by doing</p>
         <h1>Labs</h1>
         <p className="lede">Browser-local calculators, animations and simulations. Inputs never leave your machine. All free.</p>
       </header>
       <div className="grid">
         {labs.map((l) => (
-          <Link key={l.slug} to={`/labs/${l.slug}`} className="card">
+          <Link key={l.slug} to={`/labs/${l.slug}`} className="card lab-card">
             <span className="meta">{l.category}</span>
             <h3>{l.title}</h3>
             <p>{l.blurb}</p>
+            <span className="journey-action">Open the lab <span aria-hidden="true">→</span></span>
           </Link>
         ))}
       </div>
@@ -62,7 +70,7 @@ export function LabPage() {
         <h1>{lab.title}</h1>
         <p className="lede">{lab.blurb}</p>
       </header>
-      <Component />
+      <LabContent slug={lab.slug} />
     </>
   )
 }

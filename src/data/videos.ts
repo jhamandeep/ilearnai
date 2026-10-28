@@ -1,4 +1,5 @@
 import type { Video } from './types'
+import chapterSourceVideos from './chapterSourceVideos.json'
 
 // Every entry is free to watch. Every video id below was checked against
 // YouTube's oEmbed endpoint (title and channel returned). Entries marked
@@ -16,6 +17,7 @@ const ch = (handle: string, title: string, track: string, topic: string, level: 
 })
 
 export const videos: Video[] = [
+  ...chapterSourceVideos as Video[],
   // ---- Level 0: Start here (computers, code, data) ----
   v('mCq8-xTH7jA', 'How Computers Work: What Makes a Computer, a Computer?', 'Code.org', 'start-here', 'Computers', 'foundations', 'Five minutes on input, storage, processing and output. The whole computer in one picture.', 5),
   v('tpIctyqH29Q', 'Crash Course Computer Science Preview', 'CrashCourse', 'start-here', 'Computers', 'foundations', 'The trailer for a 40-episode series that goes from transistors to the internet. Watch the series when you want depth.', 3),

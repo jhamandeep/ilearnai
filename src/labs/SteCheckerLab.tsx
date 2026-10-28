@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Stat } from '../components/Field'
 import { checkSte, steStats } from '../lib/ste'
+import { LabVisual } from '../components/LabVisual'
 
 const sample = `The KV cache is utilized by the model in order to avoid recomputation of the keys and values for every previous token at each decoding step, which would otherwise be quadratic in the sequence length and is the reason inference engines keep it in GPU memory. It turns out that GQA shrinks it. Should you need more memory, you might want to consider quantizing it.`
 
@@ -42,6 +43,7 @@ export function SteCheckerLab() {
         {pieces.map((p, i) => p.m ? <mark key={i} className={`ste-${p.m.sev}`} title={p.m.msg}>{p.t}</mark> : <span key={i}>{p.t}</span>)}
       </div>
       <div className="lab-results">
+        <LabVisual title="Writing checks at a glance" caption="Inspect detected errors and warnings, then compare average and longest sentences against the word limit." mode="pipeline" items={[{ label: 'Errors', value: errors, display: String(errors), detail: 'Review the red highlighted spans and corresponding issues below.' }, { label: 'Warnings', value: issues.length - errors, display: String(issues.length - errors), detail: 'Warnings identify wording and abbreviations to review.' }, { label: 'Average sentence', value: stats.avg, display: `${stats.avg.toFixed(1)} words` }, { label: 'Longest sentence', value: stats.longest, display: `${stats.longest} / ${procedural ? 20 : 25}`, detail: 'The denominator is the active sentence-length limit.' }]} />
         <Stat label="Sentences" value={stats.sentences} sub={`${stats.words} words`} />
         <Stat label="Average length" value={stats.avg.toFixed(1)} sub="words per sentence" />
         <Stat label="Longest sentence" value={stats.longest} sub={`limit ${procedural ? 20 : 25}`} />

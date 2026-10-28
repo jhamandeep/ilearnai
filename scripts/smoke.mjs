@@ -5,9 +5,21 @@ import { StaticRouter, Routes, Route } from 'react-router-dom'
 
 const root = process.argv[2]
 const vite = await createServer({ root, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' })
+const { tracks: fullTracks } = await vite.ssrLoadModule('/src/data/curriculum.ts')
+const { replaceTracks } = await vite.ssrLoadModule('/src/data/tracks.ts')
+replaceTracks(fullTracks)
 const { Layout } = await vite.ssrLoadModule('/src/components/Layout.tsx')
 const pages = {
   '/': ['/src/pages/Home.tsx', 'Home'],
+  '/login': ['/src/pages/Account.tsx', 'Account'],
+  '/signup': ['/src/pages/Account.tsx', 'Account'],
+  '/for-work': ['/src/pages/ForWork.tsx', 'ForWork'],
+  '/for-work/banking': ['/src/pages/ForWork.tsx', 'IndustryPage'],
+  '/for-work/healthcare/service-information': ['/src/pages/ForWork.tsx', 'WorkCasePage'],
+  '/ask': ['/src/pages/Ask.tsx', 'Ask'],
+  '/courses/ai-research/transformers/why-attention/reading': ['/src/pages/Lesson.tsx', 'LessonPage'],
+  '/courses/ai-research/transformers/why-attention/quiz-1': ['/src/pages/Lesson.tsx', 'LessonPage'],
+  '/dashboard': ['/src/pages/Dashboard.tsx', 'Dashboard'],
   '/courses': ['/src/pages/Courses.tsx', 'Courses'],
   '/courses/ai-research': ['/src/pages/Courses.tsx', 'TrackPage', { track: 'ai-research' }],
   '/courses/ai-research/transformers/why-attention': ['/src/pages/Lesson.tsx', 'LessonPage'],
@@ -55,6 +67,9 @@ for (let [path, [file, name]] of Object.entries(pages)) {
       createElement(StaticRouter, { location: path },
           createElement(Routes, null,
             createElement(Route, { element: createElement(Layout) },
+              createElement(Route, { path: '/for-work/:industry/:useCase', element: createElement(Page) }),
+              createElement(Route, { path: '/for-work/:industry', element: createElement(Page) }),
+              createElement(Route, { path: '/courses/:track/:module/:lesson/:activity', element: createElement(Page) }),
               createElement(Route, { path: '/courses/:track/:module/:lesson', element: createElement(Page) }),
               createElement(Route, { path: '/courses/:track', element: createElement(Page) }),
               createElement(Route, { path: '/papers/:slug', element: createElement(Page) }),

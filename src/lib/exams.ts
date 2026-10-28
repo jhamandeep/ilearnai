@@ -12,17 +12,17 @@ export interface PoolQuestion extends QuizQuestion {
   level: Level
 }
 
-const cache = new Map<string, PoolQuestion[]>()
+const cache = new WeakMap<Track, PoolQuestion[]>()
 
 export function poolForTrack(track: Track): PoolQuestion[] {
-  const hit = cache.get(track.slug)
+  const hit = cache.get(track)
   if (hit) return hit
   const out: PoolQuestion[] = []
   for (const m of track.modules) for (const l of m.lessons) {
     const route = `/courses/${track.slug}/${m.slug}/${l.slug}`
     for (const q of quizzesIn(l.body)) out.push({ ...q, track: track.slug, lessonTitle: l.title, route, level: l.level ?? m.level })
   }
-  cache.set(track.slug, out)
+  cache.set(track, out)
   return out
 }
 

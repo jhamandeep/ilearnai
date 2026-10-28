@@ -1,6 +1,8 @@
 import type { Resource } from './types'
+import { openResources } from './openResources'
 
 export const resources: Resource[] = [
+  ...openResources,
   // ---- AI Research ----
   {
     title: 'Neural Networks: Zero to Hero',

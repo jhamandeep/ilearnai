@@ -7,8 +7,8 @@ export const STAGE_W = 960
 export const STAGE_H = 540
 
 export const PALETTE: Record<string, string> = {
-  blue: '#58C4DD', yellow: '#F5D33D', green: '#83C167', red: '#FC6255', purple: '#B07CC6',
-  orange: '#F39C3C', teal: '#5CD6C0', pink: '#E88BB7', white: '#ECECEC', grey: '#8A8F9E', gray: '#8A8F9E',
+  blue: '#4285f4', yellow: '#c58b00', green: '#188038', red: '#d93025', purple: '#9334e6',
+  orange: '#c26401', teal: '#007b83', pink: '#b9367b', white: 'var(--anim-ink, #202124)', grey: 'var(--anim-axis, #747775)', gray: 'var(--anim-axis, #747775)',
 }
 export function colorOf(c: string | undefined, fallback: string): string {
   if (!c) return fallback
@@ -66,10 +66,13 @@ export interface Action {
   parallel: boolean
 }
 
-export interface Step { text: string; hold?: number; actions: Action[] }
+export interface Step { text: string; explanation?: string; hold?: number; actions: Action[] }
 
 export interface Scene {
   title?: string
+  context?: string
+  focus?: string
+  takeaway?: string
   objects: Obj[]
   steps: Step[]
   errors: string[]
@@ -120,6 +123,7 @@ export function parseAnim(src: string): Scene {
   const steps: Step[] = []
   const errors: string[] = []
   let title: string | undefined
+  const guidance: { context?: string; focus?: string; takeaway?: string } = {}
   const byId = new Map<string, Obj>()
   const add = (o: Obj) => {
     if (byId.has(o.id)) errors.push(`duplicate id "${o.id}"`)
@@ -170,6 +174,10 @@ export function parseAnim(src: string): Scene {
     const where = `line ${lineNo}`
     const tm = /^title\s*:\s*(.*)$/.exec(line)
     if (tm && !cur) { title = tm[1].trim(); continue }
+    const guide = /^(context|focus|takeaway)\s*:\s*(.+)$/.exec(line)
+    if (guide && !cur) { guidance[guide[1] as keyof typeof guidance] = guide[2].trim(); continue }
+    const explanation = /^explain\s*:\s*(.+)$/.exec(line)
+    if (explanation && cur) { cur.explanation = explanation[1].trim(); continue }
     const sm = /^(?:step|say)\s*:\s*(.*)$/.exec(line)
     if (sm) {
       let text = sm[1].trim()
@@ -384,7 +392,7 @@ export function parseAnim(src: string): Scene {
   }
   if (steps.length === 0) errors.push('no steps (add "step: ..." lines)')
   if (objects.length === 0) errors.push('no objects declared')
-  return { title, objects, steps, errors }
+  return { title, ...guidance, objects, steps, errors }
 }
 
 export function defaultDur(op: Action['op']): number { return DEFAULT_DUR[op] }

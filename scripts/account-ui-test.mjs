@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict'
+import { createServer } from 'vite'
+import { createElement } from 'react'
+import { renderToString } from 'react-dom/server'
+import { StaticRouter } from 'react-router-dom'
+const vite = await createServer({server:{middlewareMode:true,hmr:false},appType:'custom',logLevel:'error'})
+const cache = new Map()
+globalThis.localStorage = {getItem:k=>cache.get(k)??null,setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)}
+const oldFetch = globalThis.fetch
+try {
+ const { tracks:full } = await vite.ssrLoadModule('/src/data/curriculum.ts')
+ const catalog = await vite.ssrLoadModule('/src/data/tracks.ts')
+ catalog.replaceTracks(full); catalog.resetTracks()
+ assert.ok(catalog.tracks.every(t=>t.modules.every(m=>m.lessons.every(l=>l.body===''))),'Logout must erase lesson bodies from shared state')
+ catalog.replaceTracks(full)
+ const { AuthContext, RequireAuth } = await vite.ssrLoadModule('/src/lib/auth.tsx')
+ const { Account } = await vite.ssrLoadModule('/src/pages/Account.tsx')
+ const { Dashboard } = await vite.ssrLoadModule('/src/pages/Dashboard.tsx')
+ const { Home } = await vite.ssrLoadModule('/src/pages/Home.tsx')
+ const { createAccountProgress, createPreviewProgress } = await vite.ssrLoadModule('/src/lib/accountProgress.ts')
+ const render = (component, auth, path='/')=>renderToString(createElement(StaticRouter,{location:path},createElement(AuthContext.Provider,{value:{loading:false,user:null,syncStatus:'saved',serviceError:'',...auth}},component)))
+ assert.ok(!render(createElement(RequireAuth,null,createElement('p',null,'protected-content')),{}).includes('protected-content'))
+ assert.ok(render(createElement(Account,{register:true}),{},'/signup').includes('Create your account'))
+ assert.ok(render(createElement(Account),{},'/login').includes('Welcome back'))
+ const open = {preview:true}
+ assert.ok(render(createElement(RequireAuth,null,createElement('p',null,'open-learning')),open).includes('open-learning'))
+ assert.ok(!render(createElement(Home),open).includes('Create an account to try the lab'))
+ assert.match(render(createElement(Dashboard),open,'/dashboard'),/Progress saved in this browser/)
+ const { AccountMenu } = await vite.ssrLoadModule('/src/components/AccountMenu.tsx')
+ const menu = render(createElement(AccountMenu),open)
+ assert.ok(menu.includes('My learning') && !menu.includes('Sign in'))
+ const { answerSiteQuestion } = await vite.ssrLoadModule('/src/lib/siteHelp.ts')
+ assert.match(answerSiteQuestion('How do I login?',open).text,/do not need an account/)
+ assert.match(answerSiteQuestion('How is progress saved?',open).text,/this browser/)
+ const user = {id:'test-user',name:'Test Learner',email:'test@example.test'}
+ const dashboard = render(createElement(Dashboard),{user},'/dashboard')
+ assert.match(dashboard,/Overall learning progress/); assert.match(dashboard.replaceAll('<!-- -->',''),/0 of 220/)
+ assert.match(render(createElement(Home),{}),/Create an account to try the lab/)
+ let release
+ globalThis.fetch = async()=>await new Promise(resolve=>{release=()=>resolve({ok:true})})
+ const progress = createAccountProgress(user.id,{},'csrf',()=>{})
+ progress.store.set('done:/courses/test/module/lesson','1')
+ const flight = progress.flush()
+ progress.store.set('quiz:/courses/test/module/lesson#0','1/1')
+ const pending = JSON.parse(cache.get('ilearnai:pending:test-user'))
+ assert.equal(pending['done:/courses/test/module/lesson'],'1','In-flight saves must remain durable')
+ assert.equal(pending['quiz:/courses/test/module/lesson#0'],'1/1')
+ globalThis.fetch = async()=>({ok:true})
+ release(); await flight
+ assert.equal(cache.has('ilearnai:pending:test-user'),false)
+ progress.dispose()
+ globalThis.fetch = async()=>({ok:false})
+ const offline = createAccountProgress(user.id,{},'csrf',()=>{})
+ offline.store.set('done:/courses/test/module/lesson','1')
+ offline.store.set('activity:/courses/test/module/lesson#reading','1')
+ await assert.rejects(offline.flush())
+ offline.dispose()
+ const restored = createAccountProgress(user.id,{},'csrf',()=>{})
+ assert.equal(restored.store.get('done:/courses/test/module/lesson'),'1')
+ assert.equal(restored.store.get('activity:/courses/test/module/lesson#reading'),'1')
+ restored.dispose()
+ const other = createAccountProgress('other-user',{},'csrf',()=>{})
+ assert.equal(other.store.get('done:/courses/test/module/lesson'),null); other.dispose()
+ globalThis.fetch = () => { throw new Error('Preview progress must stay in the browser') }
+ let localStatus
+ const local = createPreviewProgress(status=>{localStatus=status})
+ local.store.set('activity:/courses/test/module/lesson#reading','1')
+ local.store.set('quiz:/courses/test/module/lesson#0','1/1')
+ local.store.set('work:banking/service-assistant','1')
+ await local.flush(); local.dispose()
+ const reloaded = createPreviewProgress(()=>{})
+ assert.equal(reloaded.store.get('activity:/courses/test/module/lesson#reading'),'1')
+ assert.equal(reloaded.store.get('quiz:/courses/test/module/lesson#0'),'1/1')
+ assert.equal(reloaded.store.get('work:banking/service-assistant'),'1')
+ assert.equal(localStatus,'saved')
+ reloaded.store.remove('activity:/courses/test/module/lesson#reading')
+ assert.equal(createPreviewProgress(()=>{}).store.get('activity:/courses/test/module/lesson#reading'),null)
+ const anotherAccount = createAccountProgress('isolated',{},'csrf',()=>{})
+ assert.equal(anotherAccount.store.get('quiz:/courses/test/module/lesson#0'),null); anotherAccount.dispose()
+ globalThis.localStorage.setItem = () => { throw new Error('Storage disabled') }
+ local.store.set('placement','test')
+ assert.equal(localStatus,'offline'); assert.equal(local.store.get('placement'),'test')
+ console.log('Account UI passed: open preview, local progress persistence and isolation, guest gate, signup/login forms, dashboard progress, logout content reset, durable in-flight/offline progress and user-specific queues.')
+} finally { globalThis.fetch=oldFetch; delete globalThis.localStorage; await vite.close() }

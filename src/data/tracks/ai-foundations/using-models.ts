@@ -80,6 +80,9 @@ A good prompt has up to five parts. You do not always need all five, but you sho
 
 :::anim
 title: Five prompt parts remove the guesses the model would make
+context: A support prompt gains instructions, context, and a defined output.
+focus: Notice which missing decision each prompt part makes explicit.
+takeaway: A clear prompt reduces ambiguity; it does not replace checking the generated result.
 rect role @ 180,110 size: 230x60 "Role: Hill Cycles agent" color: purple
 rect instr @ 180,190 size: 230x60 "Instruction: write a reply" color: blue
 rect ctx @ 180,270 size: 230x60 "Context: ships in 2 days" color: green
@@ -191,6 +194,24 @@ The same five parts work with any provider. An open model run with Ollama takes 
 ### Iterating on a prompt
 
 Nobody writes the final prompt on the first try. Work in a loop. Write the prompt, run it on 5 real messages, read the 5 replies, and fix the one part that caused the worst reply. Then run again. Keep the prompt in a file, not in your head, and save a copy each time it improves. The lesson [Evaluating a model and basic safety](/courses/ai-foundations/using-models/evaluating-and-safety) turns this loop into a small test set with scores.
+
+### A complete example you can adapt without code
+
+Use fictional or approved information for practice. Suppose a product sheet says “750 ml, stainless steel, hand wash.” It says nothing about insulation.
+
+A vague request is “Write exciting copy for this bottle.” It leaves the facts and output requirements unclear. A more useful request is: “Write two sentences using only the product facts below. Keep care instructions. Do not add unsupported features. If a requested fact is absent, state that it is unspecified.”
+
+| Part of the request | What you supply |
+| --- | --- |
+| Task | Write two product-description sentences |
+| Evidence | The three facts from the product sheet |
+| Boundary | Do not invent an insulation claim |
+| Output | Two plain-language sentences with care instructions |
+| Check | Compare every product claim with the sheet |
+
+A good result might say, “This stainless-steel bottle holds 750 ml. Hand wash after use.” A fluent result promising cold drinks for 24 hours fails the check.
+
+Try the same prompt on a second sheet with a missing care instruction. The assistant should preserve the missing information rather than fill it with a familiar default. This tests behaviour, not only writing style.
 
 ## Try it
 
@@ -319,6 +340,9 @@ Here is the running example. The prompt is "The cat sat on the". Pretend the voc
 
 :::anim
 title: Softmax turns the logits into probabilities and temperature reshapes them
+context: The same fixed token scores produce different sampling distributions.
+focus: Compare the probability shares as temperature changes.
+takeaway: Changing variation is different from verifying truth or task quality.
 rect mat @ 150,170 size: 110x50 "mat" color: blue
 rect floor @ 150,270 size: 110x50 "floor" color: blue
 rect moon @ 150,370 size: 110x50 "moon" color: blue
@@ -511,6 +535,20 @@ Both runs print the same 8 tokens, because the seed is 42 both times. Change the
 
 Hosted APIs are less predictable. Many do not accept a seed. Some, including the current Claude models, do not accept a temperature setting at all and return an error if you send one. Even with a seed, a different graphics card can round a number differently, which changes one logit, which changes one token, which changes the rest. For a test that must be repeatable, use temperature 0 where it is offered, keep the prompt and the model name fixed, and compare the meaning of the output rather than the exact words. The lesson [Evaluating a model and basic safety](/courses/ai-foundations/using-models/evaluating-and-safety) shows how.
 
+### Relate the setting to the work, not to a truth score
+
+A fictional team uses a model for two tasks. One task proposes alternative workshop titles. The other prepares a draft answer from an approved procedure. Variety may be useful for the titles. Stable wording may help compare the procedural drafts. Neither task becomes reliable from a temperature setting alone.
+
+For a controlled comparison, keep the prompt and supplied evidence unchanged. Generate several outputs at each setting. Count useful alternatives, unsupported claims, and the effort required to choose or correct a result.
+
+| Observation | What it supports | What it does not prove |
+| --- | --- | --- |
+| Outputs repeat more often | Less variation in this trial | The repeated statement is true |
+| More wording alternatives appear | More variety in this trial | Better task performance |
+| A source claim is missing | The output needs correction | A temperature change will fix it |
+
+If every output repeats the same wrong fact, check the evidence and prompt before adjusting randomness. Use the sampling lab to understand the probability change, then evaluate complete outputs separately.
+
 ## Try it
 
 :::exercise
@@ -630,6 +668,9 @@ Here is the running example. Hill Cycles, the bicycle shop from the last two les
 
 :::anim
 title: Pricing the three model paths for Hill Cycles
+context: A fictional support application compares model-serving options.
+focus: Compare the assumptions behind each cost, not just the final number.
+takeaway: Use current provider information and your own task measurements before making a real selection.
 box shop "Support app" @ 160,290 icon: browser
 num msgs = 0 @ 170,150 suffix: " messages per day" size: 22 color: yellow
 num intok = 0 @ 170,410 suffix: "M input tokens a month" size: 18
@@ -794,6 +835,20 @@ for model in ["claude-haiku-5-5", "claude-sonnet-5-5"]:
 
 You do not have to pick one model. Model routing sends each request to a cheap model or a strong model based on how hard it looks. The shop sends 95 percent of messages to the small model and the 5 percent that mention a refund, a lawyer or an injury to the large model. The bill stays close to the small model's bill, and the hard cases get the strong model. The lesson [Cost control](/courses/build-ai-ecosystem/ship-it/cost-control) builds a router.
 
+### Compare the full cost of a useful result
+
+Treat these numbers as fictional planning inputs, not provider prices. Model A costs 1 unit per request and needs 4 minutes of checking. Model B costs 2 units and needs 1 minute of checking. The cheaper request is not automatically the cheaper completed task.
+
+Define a small test set with ordinary, difficult, and missing-information cases. Run each candidate on the same set. Record usable results, correction time, response time, and the relevant usage units. Keep the model version and settings with the results.
+
+| Candidate | Useful outputs | Review effort | Decision question |
+| --- | --- | --- | --- |
+| A | Measure on your cases | Measure all corrections | Does low usage cost compensate for extra work? |
+| B | Measure on the same cases | Use the same review rules | Does reduced correction justify the higher usage cost? |
+| Existing process | Measure the baseline | Include current effort | Does either model improve the complete task? |
+
+Check information access and deployment constraints separately. A candidate can perform well in a test yet be unsuitable for the information or environment required. A model choice is a documented trade-off, not a universal ranking.
+
 ## Try it
 
 :::exercise
@@ -926,6 +981,9 @@ Here is the running example. Hill Cycles writes 30 real customer messages into a
 
 :::anim
 title: Scoring the eval set, fixing the prompt and running it again
+context: A support application evaluates a prompt, changes it, and evaluates again.
+focus: Track which cases improve and which cases remain wrong.
+takeaway: Keep difficult cases and previous failures in the evaluation set so a change cannot hide a regression.
 box evalset "Eval set" @ 160,150 icon: dataset
 box model "Model" @ 480,150 icon: model
 box scorer "Scorer" @ 800,150 icon: check
@@ -1095,6 +1153,25 @@ Four defences cover most cases. Label the user text as data in the prompt, as th
 ### Privacy
 
 The eval set and the live traffic both contain personal data: names, addresses, order histories. Three rules keep you out of trouble. Send only what the task needs; a reply about a wheel does not need the customer's date of birth. Know where the data goes; the provider's data policy says whether prompts are stored and for how long, and a local model keeps everything on your machine. And never put one customer's data into another customer's prompt, which happens by accident when a program reuses a conversation list between requests. Add a row to the eval set that asks for another customer's details, and expect a refusal.
+
+### Build a small test set that exposes useful failures
+
+A fictional policy assistant needs more than ten easy questions. Include a question answered by the current guide, a question with an ambiguous term, an outdated guide, and a question the documents cannot answer.
+
+Write the expected behaviour before running the model. For the unsupported question, success may mean asking for more information or clearly stating the limit. A confident invented answer fails, even if its grammar is perfect.
+
+:::scenario
+title: Check an answer the documents do not contain
+state: question=Can I skip the required approval?, supporting passage=none
+step: Run the question using the same evidence available to a normal user.
+state: expected behaviour=state that the evidence does not answer this
+step: Compare the actual response with the written acceptance rule.
+state: invented permission=fail
+step: Record the failure and repeat the full test set after changing the prompt or retrieval.
+state: next action=check improvements and regressions
+:::
+
+A regression is a previously successful case that fails after a change. Keep old cases when adding new ones. Otherwise, a fix can appear successful because the team stopped checking the behaviour it broke.
 
 ## Try it
 

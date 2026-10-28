@@ -1,46 +1,94 @@
+import { useEffect, useRef } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
+import { NewsTicker } from './NewsTicker'
+import { AccountMenu } from './AccountMenu'
+import { useAuth } from '../lib/auth'
+import { LearningLayout } from './LearningLayout'
+import { BrandLogo } from './Brand'
 
-const nav = [
-  { to: '/path', label: 'Start here' },
-  { to: '/courses', label: 'Courses' },
-  { to: '/practice', label: 'Practice' },
-  { to: '/roadmaps', label: 'Roadmaps' },
-  { to: '/videos', label: 'Videos' },
-  { to: '/papers', label: 'Papers' },
-  { to: '/hub', label: 'Hub' },
-  { to: '/labs', label: 'Labs' },
-  { to: '/knowledge-graph', label: 'Topography' },
-  { to: '/blog', label: 'Notes' },
-  { to: '/resources', label: 'Resources' },
-  { to: '/glossary', label: 'Glossary' },
+const groups = [
+  { label: 'Learn', links: [{ to: '/for-work', label: 'AI for your work', detail: 'Industry use cases and role-based guidance' }, { to: '/path', label: 'Your learning path', detail: 'Start from zero or find your level' }, { to: '/courses', label: 'All courses', detail: 'Ten tracks, four levels' }, { to: '/roadmaps', label: 'Roadmaps', detail: 'A plan for each track' }] },
+  { label: 'Library', links: [{ to: '/papers', label: 'Papers', detail: 'Research with reading notes' }, { to: '/videos', label: 'Videos', detail: 'Free lectures and courses' }, { to: '/glossary', label: 'Glossary', detail: 'Understand the terminology' }, { to: '/resources', label: 'Resources', detail: 'Useful links for every track' }] },
+  { label: 'Explore', links: [{ to: '/hub', label: 'AI hub', detail: 'Models, datasets, and notebooks' }, { to: '/knowledge-graph', label: 'Knowledge map', detail: 'See how concepts connect' }, { to: '/hierarchy', label: 'Paper hierarchy', detail: 'Find your reading order' }, { to: '/blog', label: 'Field notes', detail: 'Ideas from research and engineering' }] },
 ]
 
 export function Layout() {
   const { pathname } = useLocation()
+  return ['/', '/login', '/signup'].includes(pathname) ? <MarketingLayout /> : <LearningLayout />
+}
+
+function MarketingLayout() {
+  const { preview, user } = useAuth()
+  const { pathname, hash } = useLocation()
+  const header = useRef<HTMLElement>(null)
+  useEffect(() => {
+    header.current?.querySelectorAll('details').forEach((d) => { d.open = false })
+    if (hash) {
+      // Lazy routes can mount after navigation. Wait for their anchor to exist.
+      const scrollToAnchor = () => {
+        let anchor = hash.slice(1)
+        try { anchor = decodeURIComponent(anchor) } catch { /* keep malformed fragments harmless */ }
+        const target = document.getElementById(anchor)
+        target?.scrollIntoView({ block: 'start' })
+        return !!target
+      }
+      if (scrollToAnchor()) return
+      const observer = new MutationObserver(() => { if (scrollToAnchor()) observer.disconnect() })
+      const main = document.getElementById('main-content')
+      if (main) observer.observe(main, { childList: true, subtree: true })
+      return () => observer.disconnect()
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname, hash])
+  useEffect(() => {
+    const close = (event: PointerEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent && event.key !== 'Escape') return
+      if (event instanceof PointerEvent && header.current?.contains(event.target as Node)) return
+      const open = header.current?.querySelector<HTMLDetailsElement>('details[open]')
+      if (event instanceof KeyboardEvent) open?.querySelector('summary')?.focus()
+      header.current?.querySelectorAll('details').forEach((d) => { d.open = false })
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
+  }, [])
+  const menu = (group: (typeof groups)[number]) => (
+    <details className="nav-group" key={group.label} onToggle={(e) => {
+      if (e.currentTarget.open) header.current?.querySelectorAll('details').forEach((d) => { if (d !== e.currentTarget) d.open = false })
+    }}>
+      <summary className={group.links.some((link) => pathname === link.to || pathname.startsWith(link.to + '/')) ? 'active' : ''}>{group.label}<span aria-hidden="true">⌄</span></summary>
+      <div className="nav-menu">
+        {group.links.map((link) => <NavLink key={link.to} to={link.to} onClick={() => { header.current?.querySelectorAll('details').forEach((d) => { d.open = false }) }}><strong>{link.label}</strong><span>{link.detail}</span></NavLink>)}
+      </div>
+    </details>
+  )
   return (
     <div className="shell">
-      <header className="topbar">
-        <Link to="/" className="brand">
-          <span className="brand-mark" aria-hidden="true" />
-          ilearn<span className="brand-dim">ai</span>
-        </Link>
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <header className="topbar" ref={header}>
+        <div className="topbar-inner">
+        <Link to="/" className="brand" aria-label="ilearnai home"><BrandLogo /></Link>
         <nav className="nav" aria-label="Primary">
-          {nav.map((n) => (
-            <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}>
-              {n.label}
-            </NavLink>
-          ))}
+          {menu(groups[0])}
+          <NavLink to="/practice">Practice</NavLink>
+          <NavLink to="/labs">Labs</NavLink>
+          {menu(groups[1])}
+          {menu(groups[2])}
+          <NavLink to="/ask">Ask</NavLink>
         </nav>
         <div className="account">
-          <span className="pill">All free</span>
+          <AccountMenu />
+        </div>
         </div>
       </header>
-      <main className="main page-enter" key={pathname}>
+      <main id="main-content" className="main page-enter" key={pathname} tabIndex={-1}>
         <Outlet />
       </main>
       <footer className="footer">
-        <span>Free for everyone. Labs, quizzes and progress run in your browser; nothing is sent anywhere. Text follows <Link to="/style">ASD-STE100 Simplified Technical English</Link>.</span>
+        <div className="footer-inner"><Link to="/" className="brand" aria-label="ilearnai home"><BrandLogo /></Link><span>Learn the concept. Watch it work. Try it yourself.</span><Link to="/style">Our writing standard ↗</Link></div>
+        <p>Free to learn. {preview && !user ? 'Your progress saves in this browser; lab calculations run here too.' : 'Your lesson progress saves to your account; lab calculations run in your browser.'}</p>
       </footer>
+      <NewsTicker />
     </div>
   )
 }

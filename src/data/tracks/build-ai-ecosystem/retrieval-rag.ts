@@ -209,6 +209,20 @@ The first answer is the good case: the model admits it does not know. Some model
 
 One more number to keep. The question plus the pasted file is about 120 tokens. With three files it is about 220. With 300 files it is 20,000, and the model starts to miss facts in the middle of the prompt. The Lost in the middle paper in the links measured this effect. Short, relevant context beats long, complete context.
 
+### A familiar question, with and without the right evidence
+
+Suppose a fictional organisation changes its submission deadline from Monday to Wednesday. The model’s training history does not automatically contain this internal change. Asking it to “remember the latest deadline” does not supply the missing information.
+
+Retrieval can find the current approved notice and place it beside the question. The model then has relevant evidence for this interaction. Staff still check that the notice applies to the requested process and that the answer follows it.
+
+| Missing part | Consequence |
+| --- | --- |
+| The updated notice is absent | Retrieval cannot return it |
+| The wrong notice ranks first | The answer may use the wrong process |
+| The correct notice is supplied but ignored | Generation can still produce an unsupported answer |
+
+Test these failures separately. Retrieval is a way to supply evidence, not a guarantee that every answer is correct. When the evidence is missing, the system needs an explicit unavailable-answer path.
+
 ## Try it
 
 :::exercise
@@ -490,6 +504,16 @@ The number of chunks follows a formula. With n words, size s and overlap o, each
 Start at 40 to 100 words for question answering over notes and manuals. Go larger when the questions need whole sections, such as "summarise the refund policy". Go smaller when the questions ask for single facts. You do not have to guess: the last lesson of this module measures the hit rate, and you can rerun it with a different size. The Chroma research article in the links compares chunking strategies with such measurements.
 
 Two refinements help on real documents. First, split on structure before splitting on size: cut at headings and blank lines, then apply the word rule inside each section, so a chunk rarely crosses from one topic into another. Second, prepend context to each chunk, such as the file name and the heading it sits under. The chunk "Sunday: closed" is clearer as "opening_hours.txt, Sunrise Bakery opening hours: Sunday: closed". Anthropic's contextual retrieval article in the links shows that this one change cuts retrieval failures by a large margin.
+
+### Keep a condition with the statement it limits
+
+A fictional guide contains two consecutive sentences: “Submit requests through the portal. Urgent incidents use the service desk.” A chunking strategy that separates these sentences may retrieve only the first instruction.
+
+The resulting answer can be incomplete even when the retrieved sentence is copied accurately. Inspect boundaries around exceptions, headings, table headers, and lists. Preserve metadata such as document title, version, section, and access permissions.
+
+Take one short document and draw chunk boundaries by hand. Ask an ordinary question and an exception question. For each question, identify which pieces must arrive together for a complete answer.
+
+Larger chunks can preserve context but include distracting material. Smaller chunks can improve specificity but lose important conditions. Choose boundaries using your actual documents and questions rather than assuming one universal size.
 
 ## Try it
 
@@ -792,6 +816,21 @@ The first column is the cosine distance, 1 minus the similarity. The best match 
 
 When you rebuild, delete the old collection first or use the upsert method instead of add, because add refuses an id that already exists. The script above uses add so you see that error once and learn what it means.
 
+### Similar wording can describe a different process
+
+A fictional search collection contains “reset an employee password” and “reset a customer password.” Their wording is similar, but their users and permissions differ.
+
+An embedding places text into a numerical representation used for similarity comparisons. Similarity can help retrieve candidates. It does not decide whether the user may see a passage or whether the passage applies to the request.
+
+| Stored information | Purpose |
+| --- | --- |
+| Passage text | Evidence the answer may use |
+| Embedding | Representation used for similarity search |
+| Document and section | Traceable source location |
+| User group and access metadata | Information used by enforced access controls |
+
+Test a request that contains the right topic but the wrong audience. Verify that access controls and applicable filters are enforced. A strong similarity score cannot replace those checks.
+
 ## Try it
 
 :::exercise
@@ -1062,6 +1101,25 @@ Two refinements are worth knowing. First, a distance threshold: if the best dist
 A word on the create call itself. The model argument names the model, here claude-sonnet-5-5. The max_tokens argument caps the length of the reply; 1024 tokens is about 750 words, which is plenty for an answer with citations. The system argument carries the rules, and messages carries the one user message built from the template. The reply holds a list of content blocks, and your code joins the text blocks. Each request is complete on its own, so the retrieved chunks must be sent every time; the API keeps nothing from the last question.
 
 The cost of one question is small and worth computing once. The system prompt is about 90 tokens, the context about 160 and the question about 10, so the input is about 260 tokens. The answer is about 30 tokens. At 2 dollars per 1,000,000 input tokens and 10 dollars per 1,000,000 output tokens, one question costs about 0.0008 dollars, and 1,000 questions cost 0.82 dollars. Compare that with the 260 dollars from the first lesson for pasting a whole manual.
+
+### Inspect the citation, not only the answer
+
+A fictional answer says, “The portal accepts files up to 20 MB,” and cites a document. Open the cited passage. If it only describes accepted file types, the citation does not support the size claim.
+
+A grounded answer needs a connection between the exact statement and the supplied evidence. Returning a real document link is insufficient when the document says something else.
+
+:::scenario
+title: A real citation can still support the wrong claim
+state: answer=Files up to 20 MB are accepted, cited passage=PDF and CSV formats are accepted
+step: Locate the specific passage used as evidence.
+state: file-size evidence=absent
+step: Compare each answer claim with the words in that passage.
+state: unsupported claim=20 MB limit
+step: Remove the claim or obtain an approved source that establishes the limit.
+state: result=answer only what the evidence supports
+:::
+
+Keep the retrieved passages with a permitted test record. This lets a reviewer distinguish a retrieval failure from a generation failure. It also makes later prompt changes easier to evaluate.
 
 ## Try it
 
@@ -1448,6 +1506,20 @@ BM25 alone scores lower than dense, because it misses the gluten question, which
 | Answer pass rate | the answer states the reference facts | yes, one judge call per question | 0.7 to 0.9 | better prompt rules, reranking, larger k |
 | Missing-answer rate | the model refuses when no chunk helps | yes | often too low | distance threshold, stronger system rule |
 | Citation accuracy | the cited chunk holds the fact | yes, or a human check | 0.8 to 0.95 | ids in every chunk, judge rubric |
+
+### Score the search and the answer separately
+
+Build a fictional set of ten questions with known supporting passages. Suppose retrieval finds useful evidence for eight questions. The model produces a supported answer for six. Reporting only six successful answers hides the reason for the other failures.
+
+Inspect the two questions without useful retrieved evidence. Then inspect the two questions where evidence was available but the answer still failed. These groups need different repairs.
+
+| Evidence retrieved? | Answer supported? | First place to inspect |
+| --- | --- | --- |
+| No | No | Source coverage, filters, and retrieval |
+| Yes | No | Context construction and generation |
+| Yes | Yes | Whether the answer is complete and useful |
+
+Include questions the collection cannot answer. Check whether the system acknowledges the missing evidence. Also include an outdated version and a permission-restricted document. A successful demonstration on ten questions is useful debugging evidence, not proof of reliable deployment across every request.
 
 ## Try it
 

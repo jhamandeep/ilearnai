@@ -17,8 +17,15 @@ function Lvl({ l }: { l: Level }) { return <span className={`lvl lvl-${l}`}>{lev
 
 export function Hub() {
   const [params, setParams] = useSearchParams()
-  const tab = (params.get('tab') as Tab) || 'models'
-  const [track, setTrack] = useState(params.get('track') ?? 'all')
+  const requestedTab = params.get('tab')
+  const tab = tabs.some((item) => item.id === requestedTab) ? requestedTab as Tab : 'models'
+  const track = tracks.some((item) => item.slug === params.get('track')) ? params.get('track')! : 'all'
+  const setTrack = (value: string) => setParams((previous) => {
+    const next = new URLSearchParams(previous)
+    if (value === 'all') next.delete('track')
+    else next.set('track', value)
+    return next
+  }, { preventScrollReset: true })
   const [level, setLevel] = useState<Level | 'all'>('all')
   const [task, setTask] = useState<ModelTask | 'all'>('all')
   const [access, setAccess] = useState<Access | 'all'>('all')
@@ -39,7 +46,7 @@ export function Hub() {
         </p>
       </header>
       <div className="tabs">
-        {tabs.map((t) => <button key={t.id} className={`tab ${tab === t.id ? 'tab-on' : ''}`} onClick={() => setParams({ tab: t.id })}>{t.label}</button>)}
+        {tabs.map((t) => <button key={t.id} className={`tab ${tab === t.id ? 'tab-on' : ''}`} aria-pressed={tab === t.id} onClick={() => setParams((previous) => { const next = new URLSearchParams(previous); next.set('tab', t.id); return next }, { preventScrollReset: true })}>{t.label}</button>)}
       </div>
       {tab !== 'papers' && (
         <div className="topo-controls">

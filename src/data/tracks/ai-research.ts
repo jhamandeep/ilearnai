@@ -89,6 +89,142 @@ step: Token 3 reads mostly from tokens 1 and 3 and a little from token 2.
 
 ## How it works
 
+
+:::anim
+title: One attention step for token 3
+# Worked values and narration follow the scenario in this lesson.
+text heading "One attention step for token 3" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "q3"
+  & label value0 "[1 0]"
+  & highlight card0
+  label key1 "k1"
+  & label value1 "[1 0]"
+  & highlight card1
+  label key2 "k2"
+  & label value2 "[0 1]"
+  & highlight card2
+  label key3 "k3"
+  & label value3 "[1 1]"
+  & highlight card3
+
+step: Compute the dot product of the query with each key.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "scores"
+  & label value0 "[1 0 1]"
+  & highlight card0
+  label key1 "q3"
+  & label value1 "[1 0]"
+  label key2 "k1"
+  & label value2 "[1 0]"
+  label key3 "k2"
+  & label value3 "[0 1]"
+  label key4 "k3"
+  & label value4 "[1 1]"
+
+step: Divide each score by the square root of 2, which is about 1.41.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "scaled"
+  & label value0 "[0.71 0 0.71]"
+  & highlight card0
+  label key1 "scores"
+  & label value1 "[1 0 1]"
+  label key2 "q3"
+  & label value2 "[1 0]"
+  label key3 "k1"
+  & label value3 "[1 0]"
+  label key4 "k2"
+  & label value4 "[0 1]"
+  label key5 "k3"
+  & label value5 "[1 1]"
+
+step: Apply softmax so the weights are positive and sum to one.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "weights"
+  & label value0 "[0.40 0.20 0.40]"
+  & highlight card0
+  label key1 "scaled"
+  & label value1 "[0.71 0 0.71]"
+  label key2 "scores"
+  & label value2 "[1 0 1]"
+  label key3 "q3"
+  & label value3 "[1 0]"
+  label key4 "k1"
+  & label value4 "[1 0]"
+  label key5 "k2"
+  & label value5 "[0 1]"
+
+step: Multiply each value vector by its weight and add the results.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "output"
+  & label value0 "0.40 v1 + 0.20 v2 + 0.40|v3"
+  & highlight card0
+  label key1 "weights"
+  & label value1 "[0.40 0.20 0.40]"
+  label key2 "scaled"
+  & label value2 "[0.71 0 0.71]"
+  label key3 "scores"
+  & label value3 "[1 0 1]"
+  label key4 "q3"
+  & label value4 "[1 0]"
+  label key5 "k1"
+  & label value5 "[1 0]"
+
+step: Token 3 reads mostly from tokens 1 and 3 and a little from token 2.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "output"
+  & label value0 "0.40 v1 + 0.20 v2 + 0.40|v3"
+  label key1 "weights"
+  & label value1 "[0.40 0.20 0.40]"
+  label key2 "scaled"
+  & label value2 "[0.71 0 0.71]"
+  label key3 "scores"
+  & label value3 "[1 0 1]"
+  label key4 "q3"
+  & label value4 "[1 0]"
+  label key5 "k1"
+  & label value5 "[1 0]"
+:::
+
 The general equation is:
 
 $$\\mathrm{Attention}(Q, K, V) = \\mathrm{softmax}\\left(\\frac{QK^\\top}{\\sqrt{d_k}}\\right) V$$
@@ -337,6 +473,116 @@ Compare the cost with one head of width 8. One head computes scores from 8-dimen
 
 ## How it works
 
+
+:::anim
+title: The token sat passes through two heads
+# Worked values and narration follow the scenario in this lesson.
+text heading "The token sat passes through two heads" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "input"
+  & label value0 "8 numbers"
+  & highlight card0
+  label key1 "head 1"
+  & label value1 "idle"
+  & highlight card1
+  label key2 "head 2"
+  & label value2 "idle"
+  & highlight card2
+
+step: The model projects the 8-number input into two 4-number queries, keys, and values.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "head 1"
+  & label value0 "4-number q k v"
+  & highlight card0
+  label key1 "head 2"
+  & label value1 "4-number q k v"
+  & highlight card1
+  label key2 "input"
+  & label value2 "8 numbers"
+
+step: Head 1 looks at the previous token and puts weight 0.9 on cat.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "head 1"
+  & label value0 "weight 0.9 on cat"
+  & highlight card0
+  label key1 "head 2"
+  & label value1 "4-number q k v"
+  label key2 "input"
+  & label value2 "8 numbers"
+
+step: Head 2 looks for the subject of the sentence and puts weight 0.8 on cat.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "head 2"
+  & label value0 "weight 0.8 on cat"
+  & highlight card0
+  label key1 "head 1"
+  & label value1 "weight 0.9 on cat"
+  label key2 "input"
+  & label value2 "8 numbers"
+
+step: Each head outputs 4 numbers.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "concat"
+  & label value0 "8 numbers"
+  & highlight card0
+  label key1 "head 2"
+  & label value1 "weight 0.8 on cat"
+  label key2 "head 1"
+  & label value2 "weight 0.9 on cat"
+  label key3 "input"
+  & label value3 "8 numbers"
+
+step: The output matrix mixes the 8 numbers and returns the result to the stream.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "output"
+  & label value0 "8 numbers"
+  & highlight card0
+  label key1 "concat"
+  & label value1 "8 numbers"
+  label key2 "head 2"
+  & label value2 "weight 0.8 on cat"
+  label key3 "head 1"
+  & label value3 "weight 0.9 on cat"
+  label key4 "input"
+  & label value4 "8 numbers"
+:::
+
 The equation is:
 
 $$\\mathrm{MultiHead}(X) = \\mathrm{Concat}(\\mathrm{head}_1, \\dots, \\mathrm{head}_h) W^O$$
@@ -562,6 +808,132 @@ state: query position=15, key position=12, query angle=1.5 rad, key angle=1.2 ra
 :::
 
 ## How it works
+
+
+:::anim
+title: RoPE with a query at position 5 and a key at position 2
+# Worked values and narration follow the scenario in this lesson.
+text heading "RoPE with a query at position 5 and a key at position 2" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "query position"
+  & label value0 "5"
+  & highlight card0
+  label key1 "key position"
+  & label value1 "2"
+  & highlight card1
+  label key2 "theta"
+  & label value2 "0.1 rad"
+  & highlight card2
+
+step: Pair up the dimensions of the query and the key.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "query position"
+  & label value0 "5"
+  label key1 "key position"
+  & label value1 "2"
+  label key2 "theta"
+  & label value2 "0.1 rad"
+
+step: Rotate the query pair by 5 times theta.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "query angle"
+  & label value0 "0.5 rad"
+  & highlight card0
+  label key1 "query position"
+  & label value1 "5"
+  label key2 "key position"
+  & label value2 "2"
+  label key3 "theta"
+  & label value3 "0.1 rad"
+
+step: Rotate the key pair by 2 times theta.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "key angle"
+  & label value0 "0.2 rad"
+  & highlight card0
+  label key1 "query angle"
+  & label value1 "0.5 rad"
+  label key2 "query position"
+  & label value2 "5"
+  label key3 "key position"
+  & label value3 "2"
+  label key4 "theta"
+  & label value4 "0.1 rad"
+
+step: Take the dot product.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "effective angle"
+  & label value0 "0.3 rad"
+  & highlight card0
+  label key1 "key angle"
+  & label value1 "0.2 rad"
+  label key2 "query angle"
+  & label value2 "0.5 rad"
+  label key3 "query position"
+  & label value3 "5"
+  label key4 "key position"
+  & label value4 "2"
+  label key5 "theta"
+  & label value5 "0.1 rad"
+
+step: Move both tokens 10 positions later.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "query position"
+  & label value0 "15"
+  & highlight card0
+  label key1 "key position"
+  & label value1 "12"
+  & highlight card1
+  label key2 "query angle"
+  & label value2 "1.5 rad"
+  & highlight card2
+  label key3 "key angle"
+  & label value3 "1.2 rad"
+  & highlight card3
+  label key4 "effective angle"
+  & label value4 "0.3 rad"
+  label key5 "theta"
+  & label value5 "0.1 rad"
+:::
 
 The RoPE property is:
 
@@ -804,6 +1176,102 @@ The important point is that each part only adds to the stream. The original $x$ 
 
 ## How it works
 
+
+:::anim
+title: One token vector through the block
+# Worked values and narration follow the scenario in this lesson.
+text heading "One token vector through the block" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "x"
+  & label value0 "[1 2 0 1]"
+  & highlight card0
+
+step: Normalise x to mean 0 and variance 1.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "normalised"
+  & label value0 "[0 1.41 -1.41 0]"
+  & highlight card0
+  label key1 "x"
+  & label value1 "[1 2 0 1]"
+
+step: Attention reads the normalised vector and produces the update a.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "a"
+  & label value0 "[0.5 0 0.5 0]"
+  & highlight card0
+  label key1 "normalised"
+  & label value1 "[0 1.41 -1.41 0]"
+  label key2 "x"
+  & label value2 "[1 2 0 1]"
+
+step: Add a to the stream.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "x"
+  & label value0 "[1.5 2 0.5 1]"
+  & highlight card0
+  label key1 "a"
+  & label value1 "[0.5 0 0.5 0]"
+  label key2 "normalised"
+  & label value2 "[0 1.41 -1.41 0]"
+
+step: Normalise the new stream and run the feed-forward network.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "f"
+  & label value0 "[0 -1 0 1]"
+  & highlight card0
+  label key1 "x"
+  & label value1 "[1.5 2 0.5 1]"
+  label key2 "a"
+  & label value2 "[0.5 0 0.5 0]"
+  label key3 "normalised"
+  & label value3 "[0 1.41 -1.41 0]"
+
+step: Add f to the stream.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "x"
+  & label value0 "[1.5 1 0.5 2]"
+  & highlight card0
+  label key1 "f"
+  & label value1 "[0 -1 0 1]"
+  label key2 "a"
+  & label value2 "[0.5 0 0.5 0]"
+  label key3 "normalised"
+  & label value3 "[0 1.41 -1.41 0]"
+:::
+
 The pre-norm block computes:
 
 $$x' = x + \\mathrm{Attn}(\\mathrm{LN}(x)), \\qquad x'' = x' + \\mathrm{FFN}(\\mathrm{LN}(x'))$$
@@ -1044,6 +1512,119 @@ state: check=58 billion tokens needed
 
 ## How it works
 
+
+:::anim
+title: Plan a run for a budget of 10 to the power 21 FLOPs
+# Worked values and narration follow the scenario in this lesson.
+text heading "Plan a run for a budget of 10 to the power 21 FLOPs" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "budget"
+  & label value0 "1e21 FLOPs"
+  & highlight card0
+  label key1 "N"
+  & label value1 "unknown"
+  & highlight card1
+  label key2 "D"
+  & label value2 "unknown"
+  & highlight card2
+
+step: Set the token count to 20 times the weight count.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "D"
+  & label value0 "20 N"
+  & highlight card0
+  label key1 "budget"
+  & label value1 "1e21 FLOPs"
+  label key2 "N"
+  & label value2 "unknown"
+
+step: Write the compute rule.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "equation"
+  & label value0 "120 N squared = 1e21"
+  & highlight card0
+  label key1 "D"
+  & label value1 "20 N"
+  label key2 "budget"
+  & label value2 "1e21 FLOPs"
+  label key3 "N"
+  & label value3 "unknown"
+
+step: Divide the budget by 120 and take the square root.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "N"
+  & label value0 "2.9 billion"
+  & highlight card0
+  label key1 "equation"
+  & label value1 "120 N squared = 1e21"
+  label key2 "D"
+  & label value2 "20 N"
+  label key3 "budget"
+  & label value3 "1e21 FLOPs"
+
+step: Multiply N by 20 to get the token count.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "D"
+  & label value0 "58 billion"
+  & highlight card0
+  label key1 "N"
+  & label value1 "2.9 billion"
+  label key2 "equation"
+  & label value2 "120 N squared = 1e21"
+  label key3 "budget"
+  & label value3 "1e21 FLOPs"
+
+step: Check the data supply.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "check"
+  & label value0 "58 billion tokens needed"
+  & highlight card0
+  label key1 "D"
+  & label value1 "58 billion"
+  label key2 "N"
+  & label value2 "2.9 billion"
+  label key3 "equation"
+  & label value3 "120 N squared = 1e21"
+  label key4 "budget"
+  & label value4 "1e21 FLOPs"
+:::
+
 The Chinchilla fit is:
 
 $$L(N, D) = E + \\frac{A}{N^{\\alpha}} + \\frac{B}{D^{\\beta}}$$
@@ -1256,6 +1837,104 @@ Plan B, 5 billion weights: 12.4
 
 ## How it works
 
+
+:::anim
+title: Lifetime cost of Plan A and Plan B
+# Worked values and narration follow the scenario in this lesson.
+text heading "Lifetime cost of Plan A and Plan B" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "served tokens"
+  & label value0 "0"
+  & highlight card0
+  label key1 "Plan A cost"
+  & label value1 "1.2e22"
+  & highlight card1
+  label key2 "Plan B cost"
+  & label value2 "2.4e22"
+  & highlight card2
+
+step: Count the training cost first.
+  restore card0, card1, card2
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "served tokens"
+  & label value0 "0"
+  label key1 "Plan A cost"
+  & label value1 "1.2e22"
+  label key2 "Plan B cost"
+  & label value2 "2.4e22"
+
+step: Serve 1 trillion tokens.
+  restore card0, card1, card2
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "served tokens"
+  & label value0 "1 trillion"
+  & highlight card0
+  label key1 "Plan A cost"
+  & label value1 "3.2e22"
+  & highlight card1
+  label key2 "Plan B cost"
+  & label value2 "3.4e22"
+  & highlight card2
+
+step: Plan A is still ahead by a small margin.
+  restore card0, card1, card2
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "served tokens"
+  & label value0 "1 trillion"
+  label key1 "Plan A cost"
+  & label value1 "3.2e22"
+  label key2 "Plan B cost"
+  & label value2 "3.4e22"
+
+step: Serve 10 trillion tokens in total.
+  restore card0, card1, card2
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "served tokens"
+  & label value0 "10 trillion"
+  & highlight card0
+  label key1 "Plan A cost"
+  & label value1 "21.2e22"
+  & highlight card1
+  label key2 "Plan B cost"
+  & label value2 "12.4e22"
+  & highlight card2
+
+step: Plan B now costs about 40 percent less over the life of the product.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "served tokens"
+  & label value0 "10 trillion"
+  label key1 "Plan A cost"
+  & label value1 "21.2e22"
+  label key2 "Plan B cost"
+  & label value2 "12.4e22"
+:::
+
 The combined cost is:
 
 $$C_{\\text{total}} = 6ND_{\\text{train}} + 2ND_{\\text{infer}}$$
@@ -1456,6 +2135,111 @@ Epoch 16: 0.2
 :::
 
 ## How it works
+
+
+:::anim
+title: Plan a run with 100 billion good tokens
+# Worked values and narration follow the scenario in this lesson.
+text heading "Plan a run with 100 billion good tokens" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "unique tokens U"
+  & label value0 "100 billion"
+  & highlight card0
+  label key1 "planned N"
+  & label value1 "20 billion weights"
+  & highlight card1
+  label key2 "D"
+  & label value2 "unknown"
+  & highlight card2
+
+step: Compute the Chinchilla target.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "D"
+  & label value0 "400 billion"
+  & highlight card0
+  label key1 "unique tokens U"
+  & label value1 "100 billion"
+  label key2 "planned N"
+  & label value2 "20 billion weights"
+
+step: Compare D with 4 U.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "epochs"
+  & label value0 "4"
+  & highlight card0
+  label key1 "D"
+  & label value1 "400 billion"
+  label key2 "unique tokens U"
+  & label value2 "100 billion"
+  label key3 "planned N"
+  & label value3 "20 billion weights"
+
+step: Compute the effective data with 3 repeats and R star equal to 15.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "D eff"
+  & label value0 "100 billion x (1 + 15 x|(1 - e^-0.2)) = 372|billion"
+  & highlight card0
+  label key1 "epochs"
+  & label value1 "4"
+  label key2 "D"
+  & label value2 "400 billion"
+  label key3 "unique tokens U"
+  & label value3 "100 billion"
+  label key4 "planned N"
+  & label value4 "20 billion weights"
+
+step: The 400 billion tokens seen are worth about 372 billion fresh tokens.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "decision"
+  & label value0 "train 4 epochs"
+  & highlight card0
+  label key1 "D eff"
+  & label value1 "100 billion x (1 + 15 x|(1 - e^-0.2)) = 372|billion"
+  label key2 "epochs"
+  & label value2 "4"
+  label key3 "D"
+  & label value3 "400 billion"
+  label key4 "unique tokens U"
+  & label value4 "100 billion"
+  label key5 "planned N"
+  & label value5 "20 billion weights"
+:::
 
 The study extends the Chinchilla fit with an effective data term:
 
@@ -1679,6 +2463,125 @@ Stage three is reinforcement learning (RL). The policy, the model under training
 
 ## How it works
 
+
+:::anim
+title: Reward model loss for one preference pair
+# Worked values and narration follow the scenario in this lesson.
+text heading "Reward model loss for one preference pair" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "score chosen"
+  & label value0 "1.0"
+  & highlight card0
+  label key1 "score rejected"
+  & label value1 "0.5"
+  & highlight card1
+  label key2 "gap"
+  & label value2 "0.5"
+  & highlight card2
+
+step: Subtract the rejected score from the chosen score.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "score chosen"
+  & label value0 "1.0"
+  label key1 "score rejected"
+  & label value1 "0.5"
+  label key2 "gap"
+  & label value2 "0.5"
+
+step: Apply the sigmoid to the gap.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "sigmoid"
+  & label value0 "0.62"
+  & highlight card0
+  label key1 "score chosen"
+  & label value1 "1.0"
+  label key2 "score rejected"
+  & label value2 "0.5"
+  label key3 "gap"
+  & label value3 "0.5"
+
+step: Take the negative logarithm.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "loss"
+  & label value0 "0.47"
+  & highlight card0
+  label key1 "sigmoid"
+  & label value1 "0.62"
+  label key2 "score chosen"
+  & label value2 "1.0"
+  label key3 "score rejected"
+  & label value3 "0.5"
+  label key4 "gap"
+  & label value4 "0.5"
+
+step: Now swap the scores so the rejected answer scores higher.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "score chosen"
+  & label value0 "0.5"
+  & highlight card0
+  label key1 "score rejected"
+  & label value1 "1.0"
+  & highlight card1
+  label key2 "gap"
+  & label value2 "-0.5"
+  & highlight card2
+  label key3 "sigmoid"
+  & label value3 "0.38"
+  & highlight card3
+  label key4 "loss"
+  & label value4 "0.47"
+
+step: The loss rises to 0.97.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "loss"
+  & label value0 "0.97"
+  & highlight card0
+  label key1 "score chosen"
+  & label value1 "0.5"
+  label key2 "score rejected"
+  & label value2 "1.0"
+  label key3 "gap"
+  & label value3 "-0.5"
+  label key4 "sigmoid"
+  & label value4 "0.38"
+:::
+
 The reward model loss for one pair is:
 
 $$\\mathcal{L}_{\\text{RM}} = -\\log \\sigma\\big(r_\\phi(x, y_w) - r_\\phi(x, y_l)\\big)$$
@@ -1899,6 +2802,151 @@ B under optimal policy: 0.27
 :::
 
 ## How it works
+
+
+:::anim
+title: Two answers, one reward, and the policy that follows
+# Worked values and narration follow the scenario in this lesson.
+text heading "Two answers, one reward, and the policy that follows" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "ref A"
+  & label value0 "0.5"
+  & highlight card0
+  label key1 "ref B"
+  & label value1 "0.5"
+  & highlight card1
+  label key2 "reward A"
+  & label value2 "1.0"
+  & highlight card2
+  label key3 "reward B"
+  & label value3 "0.0"
+  & highlight card3
+  label key4 "beta"
+  & label value4 "1"
+  & highlight card4
+
+step: Multiply each reference probability by e to the power of reward over beta.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "unnormalised A"
+  & label value0 "1.36"
+  & highlight card0
+  label key1 "unnormalised B"
+  & label value1 "0.5"
+  & highlight card1
+  label key2 "ref A"
+  & label value2 "0.5"
+  label key3 "ref B"
+  & label value3 "0.5"
+  label key4 "reward A"
+  & label value4 "1.0"
+  label key5 "reward B"
+  & label value5 "0.0"
+
+step: Add the two numbers.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "Z"
+  & label value0 "1.86"
+  & highlight card0
+  label key1 "unnormalised A"
+  & label value1 "1.36"
+  label key2 "unnormalised B"
+  & label value2 "0.5"
+  label key3 "ref A"
+  & label value3 "0.5"
+  label key4 "ref B"
+  & label value4 "0.5"
+  label key5 "reward A"
+  & label value5 "1.0"
+
+step: Divide each number by Z to get the optimal policy.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "policy A"
+  & label value0 "0.73"
+  & highlight card0
+  label key1 "policy B"
+  & label value1 "0.27"
+  & highlight card1
+  label key2 "Z"
+  & label value2 "1.86"
+  label key3 "unnormalised A"
+  & label value3 "1.36"
+  label key4 "unnormalised B"
+  & label value4 "0.5"
+  label key5 "ref A"
+  & label value5 "0.5"
+
+step: Reverse the question.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "implicit A"
+  & label value0 "0.38"
+  & highlight card0
+  label key1 "implicit B"
+  & label value1 "-0.62"
+  & highlight card1
+  label key2 "policy A"
+  & label value2 "0.73"
+  label key3 "policy B"
+  & label value3 "0.27"
+  label key4 "Z"
+  & label value4 "1.86"
+  label key5 "unnormalised A"
+  & label value5 "1.36"
+
+step: Subtract.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "difference"
+  & label value0 "1.0"
+  & highlight card0
+  label key1 "implicit A"
+  & label value1 "0.38"
+  label key2 "implicit B"
+  & label value2 "-0.62"
+  label key3 "policy A"
+  & label value3 "0.73"
+  label key4 "policy B"
+  & label value4 "0.27"
+  label key5 "Z"
+  & label value5 "1.86"
+:::
 
 Step one. The KL-regularised objective has the closed-form optimum:
 
@@ -2142,6 +3190,130 @@ Reward model -> RL policy: scores
 
 ## How it works
 
+
+:::anim
+title: A PPO run that hacks the length bias
+# Worked values and narration follow the scenario in this lesson.
+text heading "A PPO run that hacks the length bias" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "step"
+  & label value0 "0"
+  & highlight card0
+  label key1 "reward"
+  & label value1 "1.0"
+  & highlight card1
+  label key2 "KL"
+  & label value2 "0"
+  & highlight card2
+  label key3 "human rating"
+  & label value3 "6.0"
+  & highlight card3
+  label key4 "answer length"
+  & label value4 "200 words"
+  & highlight card4
+
+step: The reward model learned that long answers win.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "step"
+  & label value0 "0"
+  label key1 "reward"
+  & label value1 "1.0"
+  label key2 "KL"
+  & label value2 "0"
+  label key3 "human rating"
+  & label value3 "6.0"
+  label key4 "answer length"
+  & label value4 "200 words"
+
+step: By step 500 the answers grow to 400 words with more detail.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "step"
+  & label value0 "500"
+  & highlight card0
+  label key1 "reward"
+  & label value1 "2.0"
+  & highlight card1
+  label key2 "KL"
+  & label value2 "5"
+  & highlight card2
+  label key3 "human rating"
+  & label value3 "6.8"
+  & highlight card3
+  label key4 "answer length"
+  & label value4 "400 words"
+  & highlight card4
+
+step: By step 1000 the answers reach 600 words and repeat themselves.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "step"
+  & label value0 "1000"
+  & highlight card0
+  label key1 "reward"
+  & label value1 "3.5"
+  & highlight card1
+  label key2 "KL"
+  & label value2 "20"
+  & highlight card2
+  label key3 "human rating"
+  & label value3 "5.1"
+  & highlight card3
+  label key4 "answer length"
+  & label value4 "600 words"
+  & highlight card4
+
+step: The KL passed 20 nats.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "best checkpoint"
+  & label value0 "step 500"
+  & highlight card0
+  label key1 "step"
+  & label value1 "1000"
+  label key2 "reward"
+  & label value2 "3.5"
+  label key3 "KL"
+  & label value3 "20"
+  label key4 "human rating"
+  & label value4 "5.1"
+  label key5 "answer length"
+  & label value5 "600 words"
+:::
+
 Overoptimisation follows an approximate law:
 
 $$R_{\\text{true}}(d) = d\\,(\\alpha - \\beta \\log d)$$
@@ -2354,6 +3526,145 @@ Vocabulary of 50,000: 3
 :::
 
 ## How it works
+
+
+:::anim
+title: Three BPE merges on low, lower, newest
+# Worked values and narration follow the scenario in this lesson.
+text heading "Three BPE merges on low, lower, newest" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "vocabulary"
+  & label value0 "characters only"
+  & highlight card0
+  label key1 "low"
+  & label value1 "l o w _"
+  & highlight card1
+  label key2 "lower"
+  & label value2 "l o w e r _"
+  & highlight card2
+  label key3 "newest"
+  & label value3 "n e w e s t _"
+  & highlight card3
+
+step: Count every adjacent pair across all three words, weighted by word count.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "top pair"
+  & label value0 "w e (8)"
+  & highlight card0
+  label key1 "vocabulary"
+  & label value1 "characters only"
+  label key2 "low"
+  & label value2 "l o w _"
+  label key3 "lower"
+  & label value3 "l o w e r _"
+  label key4 "newest"
+  & label value4 "n e w e s t _"
+
+step: Merge w e into we.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "vocabulary"
+  & label value0 "characters + we"
+  & highlight card0
+  label key1 "lower"
+  & label value1 "l o we r _"
+  & highlight card1
+  label key2 "newest"
+  & label value2 "n e we s t _"
+  & highlight card2
+  label key3 "top pair"
+  & label value3 "l o (7)"
+  & highlight card3
+  label key4 "low"
+  & label value4 "l o w _"
+
+step: Merge l o into lo.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "vocabulary"
+  & label value0 "characters + we + lo"
+  & highlight card0
+  label key1 "low"
+  & label value1 "lo w _"
+  & highlight card1
+  label key2 "lower"
+  & label value2 "lo we r _"
+  & highlight card2
+  label key3 "top pair"
+  & label value3 "e we (6"
+  & highlight card3
+  label key4 "newest"
+  & label value4 "n e we s t _"
+
+step: Merge e we into ewe.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "vocabulary"
+  & label value0 "characters + we + lo +|ewe"
+  & highlight card0
+  label key1 "newest"
+  & label value1 "n ewe s t _"
+  & highlight card1
+  label key2 "low"
+  & label value2 "lo w _"
+  label key3 "lower"
+  & label value3 "lo we r _"
+  label key4 "top pair"
+  & label value4 "e we (6"
+
+step: Stop after three merges.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "lower tokens"
+  & label value0 "lo we r _"
+  & highlight card0
+  label key1 "newest tokens"
+  & label value1 "n ewe s t _"
+  & highlight card1
+  label key2 "vocabulary"
+  & label value2 "characters + we + lo +|ewe"
+  label key3 "newest"
+  & label value3 "n ewe s t _"
+  label key4 "low"
+  & label value4 "lo w _"
+  label key5 "lower"
+  & label value5 "lo we r _"
+:::
 
 The BPE training procedure:
 
@@ -2587,6 +3898,147 @@ state: papers=0.05, papers epochs=2.5
 
 ## How it works
 
+
+:::anim
+title: Move weight from web to code in a 1 trillion token run
+# Worked values and narration follow the scenario in this lesson.
+text heading "Move weight from web to code in a 1 trillion token run" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "web"
+  & label value0 "0.70"
+  & highlight card0
+  label key1 "code"
+  & label value1 "0.15"
+  & highlight card1
+  label key2 "books"
+  & label value2 "0.10"
+  & highlight card2
+  label key3 "papers"
+  & label value3 "0.05"
+  & highlight card3
+  label key4 "code epochs"
+  & label value4 "0.3"
+  & highlight card4
+
+step: Raise the code weight to 0.30 and lower the web weight to 0.55.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "web"
+  & label value0 "0.55"
+  & highlight card0
+  label key1 "code"
+  & label value1 "0.30"
+  & highlight card1
+  label key2 "code epochs"
+  & label value2 "0.6"
+  & highlight card2
+  label key3 "books"
+  & label value3 "0.10"
+  label key4 "papers"
+  & label value4 "0.05"
+
+step: Code now supplies 300 billion tokens, which is 0.6 epochs of the 500 billion available.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "web"
+  & label value0 "0.55"
+  label key1 "code"
+  & label value1 "0.30"
+  label key2 "code epochs"
+  & label value2 "0.6"
+  label key3 "books"
+  & label value3 "0.10"
+  label key4 "papers"
+  & label value4 "0.05"
+
+step: Expect better code benchmarks and a small loss on general knowledge.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "expected"
+  & label value0 "code up and general|knowledge down a little"
+  & highlight card0
+  label key1 "web"
+  & label value1 "0.55"
+  label key2 "code"
+  & label value2 "0.30"
+  label key3 "code epochs"
+  & label value3 "0.6"
+  label key4 "books"
+  & label value4 "0.10"
+  label key5 "papers"
+  & label value5 "0.05"
+
+step: Now try papers at 0.30 instead.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "papers"
+  & label value0 "0.30"
+  & highlight card0
+  label key1 "papers epochs"
+  & label value1 "15"
+  & highlight card1
+  label key2 "expected"
+  & label value2 "code up and general|knowledge down a little"
+  label key3 "web"
+  & label value3 "0.55"
+  label key4 "code"
+  & label value4 "0.30"
+  label key5 "code epochs"
+  & label value5 "0.6"
+
+step: Fifteen epochs is past the useful limit.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "papers"
+  & label value0 "0.05"
+  & highlight card0
+  label key1 "papers epochs"
+  & label value1 "2.5"
+  & highlight card1
+  label key2 "expected"
+  & label value2 "code up and general|knowledge down a little"
+  label key3 "web"
+  & label value3 "0.55"
+  label key4 "code"
+  & label value4 "0.30"
+  label key5 "code epochs"
+  & label value5 "0.6"
+:::
+
 The mixture is a probability vector $w$ over domains. During training, each batch draws from domain $i$ with probability $w_i$. The expected loss is:
 
 $$L(w) = \\sum_i w_i\\, L_i$$
@@ -2789,6 +4241,127 @@ Exact matching finds only identical documents. It uses a hash of the full text a
 MinHash fixes this. Take a hash function and apply it to every shingle in a document. Keep only the minimum hash value. Two documents have the same minimum with probability equal to their Jaccard similarity. Repeat with 100 different hash functions. The fraction of matching minimums estimates the similarity. Each document now carries 100 numbers, its signature, instead of thousands of shingles.
 
 ## How it works
+
+
+:::anim
+title: Jaccard similarity of two six-word documents
+# Worked values and narration follow the scenario in this lesson.
+text heading "Jaccard similarity of two six-word documents" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "A"
+  & label value0 "the cat sat on the mat"
+  & highlight card0
+  label key1 "B"
+  & label value1 "the cat sat on a mat"
+  & highlight card1
+
+step: Split A into shingles of three words.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "shingles A"
+  & label value0 "the cat sat | cat sat on|| sat on the | on the mat"
+  & highlight card0
+  label key1 "A"
+  & label value1 "the cat sat on the mat"
+  label key2 "B"
+  & label value2 "the cat sat on a mat"
+
+step: Split B the same way.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "shingles B"
+  & label value0 "the cat sat | cat sat on|| sat on a | on a mat"
+  & highlight card0
+  label key1 "shingles A"
+  & label value1 "the cat sat | cat sat on|| sat on the | on the mat"
+  label key2 "A"
+  & label value2 "the cat sat on the mat"
+  label key3 "B"
+  & label value3 "the cat sat on a mat"
+
+step: Count the shared shingles.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "shared"
+  & label value0 "2"
+  & highlight card0
+  label key1 "shingles B"
+  & label value1 "the cat sat | cat sat on|| sat on a | on a mat"
+  label key2 "shingles A"
+  & label value2 "the cat sat | cat sat on|| sat on the | on the mat"
+  label key3 "A"
+  & label value3 "the cat sat on the mat"
+  label key4 "B"
+  & label value4 "the cat sat on a mat"
+
+step: Count the distinct shingles across both sets.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "union"
+  & label value0 "6"
+  & highlight card0
+  label key1 "shared"
+  & label value1 "2"
+  label key2 "shingles B"
+  & label value2 "the cat sat | cat sat on|| sat on a | on a mat"
+  label key3 "shingles A"
+  & label value3 "the cat sat | cat sat on|| sat on the | on the mat"
+  label key4 "A"
+  & label value4 "the cat sat on the mat"
+  label key5 "B"
+  & label value5 "the cat sat on a mat"
+
+step: Divide.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "Jaccard"
+  & label value0 "0.33"
+  & highlight card0
+  label key1 "union"
+  & label value1 "6"
+  label key2 "shared"
+  & label value2 "2"
+  label key3 "shingles B"
+  & label value3 "the cat sat | cat sat on|| sat on a | on a mat"
+  label key4 "shingles A"
+  & label value4 "the cat sat | cat sat on|| sat on the | on the mat"
+  label key5 "A"
+  & label value5 "the cat sat on the mat"
+:::
 
 The Jaccard similarity is:
 
@@ -3042,6 +4615,148 @@ state: check=two small runs
 
 ## How it works
 
+
+:::anim
+title: Build a classifier filter for a web corpus
+# Worked values and narration follow the scenario in this lesson.
+text heading "Build a classifier filter for a web corpus" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "positives"
+  & label value0 "0"
+  & highlight card0
+  label key1 "negatives"
+  & label value1 "0"
+  & highlight card1
+  label key2 "classifier"
+  & label value2 "none"
+  & highlight card2
+  label key3 "corpus kept"
+  & label value3 "100 percent"
+  & highlight card3
+
+step: Collect 100,000 documents from a trusted reference source as positives.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "positives"
+  & label value0 "100000"
+  & highlight card0
+  label key1 "negatives"
+  & label value1 "0"
+  label key2 "classifier"
+  & label value2 "none"
+  label key3 "corpus kept"
+  & label value3 "100 percent"
+
+step: Sample 100,000 random web documents as negatives.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "negatives"
+  & label value0 "100000"
+  & highlight card0
+  label key1 "positives"
+  & label value1 "100000"
+  label key2 "classifier"
+  & label value2 "none"
+  label key3 "corpus kept"
+  & label value3 "100 percent"
+
+step: Train a fast linear model on word features.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "classifier"
+  & label value0 "trained"
+  & highlight card0
+  label key1 "negatives"
+  & label value1 "100000"
+  label key2 "positives"
+  & label value2 "100000"
+  label key3 "corpus kept"
+  & label value3 "100 percent"
+
+step: Score every document in the corpus and sort by score.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "corpus"
+  & label value0 "scored"
+  & highlight card0
+  label key1 "classifier"
+  & label value1 "trained"
+  label key2 "negatives"
+  & label value2 "100000"
+  label key3 "positives"
+  & label value3 "100000"
+  label key4 "corpus kept"
+  & label value4 "100 percent"
+
+step: Keep the top 30 percent.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "corpus kept"
+  & label value0 "30 percent"
+  & highlight card0
+  label key1 "corpus"
+  & label value1 "scored"
+  label key2 "classifier"
+  & label value2 "trained"
+  label key3 "negatives"
+  & label value3 "100000"
+  label key4 "positives"
+  & label value4 "100000"
+
+step: Train two small models, one on the filtered corpus and one on the raw corpus, and compare the losses.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "check"
+  & label value0 "two small runs"
+  & highlight card0
+  label key1 "corpus kept"
+  & label value1 "30 percent"
+  label key2 "corpus"
+  & label value2 "scored"
+  label key3 "classifier"
+  & label value3 "trained"
+  label key4 "negatives"
+  & label value4 "100000"
+  label key5 "positives"
+  & label value5 "100000"
+:::
+
 A filter assigns each document a score and a decision:
 
 $$\\text{keep}(d) = \\mathbf{1}\\big[s(d) > \\tau\\big]$$
@@ -3252,6 +4967,124 @@ state: output=0.62 x expert 2 + 0.38 x expert 4
 :::
 
 ## How it works
+
+
+:::anim
+title: One token through a top-2 router with 8 experts
+# Worked values and narration follow the scenario in this lesson.
+text heading "One token through a top-2 router with 8 experts" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "token"
+  & label value0 "4 numbers"
+  & highlight card0
+  label key1 "scores"
+  & label value1 "none"
+  & highlight card1
+  label key2 "chosen"
+  & label value2 "none"
+  & highlight card2
+
+step: Multiply the token by the 4 by 8 router matrix to get 8 scores.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "scores"
+  & label value0 "0.1 2.0 0.3 1.5 0.0 0.2|0.4 0.1"
+  & highlight card0
+  label key1 "token"
+  & label value1 "4 numbers"
+  label key2 "chosen"
+  & label value2 "none"
+
+step: Keep the two highest scores.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "chosen"
+  & label value0 "expert 2 (2.0) and expert|4 (1.5)"
+  & highlight card0
+  label key1 "scores"
+  & label value1 "0.1 2.0 0.3 1.5 0.0 0.2|0.4 0.1"
+  label key2 "token"
+  & label value2 "4 numbers"
+
+step: Apply softmax to the two kept scores only.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "gates"
+  & label value0 "0.62 and 0.38"
+  & highlight card0
+  label key1 "chosen"
+  & label value1 "expert 2 (2.0) and expert|4 (1.5)"
+  label key2 "scores"
+  & label value2 "0.1 2.0 0.3 1.5 0.0 0.2|0.4 0.1"
+  label key3 "token"
+  & label value3 "4 numbers"
+
+step: Run the token through expert 2 and expert 4.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "active weights"
+  & label value0 "256 of 1024"
+  & highlight card0
+  label key1 "gates"
+  & label value1 "0.62 and 0.38"
+  label key2 "chosen"
+  & label value2 "expert 2 (2.0) and expert|4 (1.5)"
+  label key3 "scores"
+  & label value3 "0.1 2.0 0.3 1.5 0.0 0.2|0.4 0.1"
+  label key4 "token"
+  & label value4 "4 numbers"
+
+step: Add the two outputs with the gate weights.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "output"
+  & label value0 "0.62 x expert 2 + 0.38 x|expert 4"
+  & highlight card0
+  label key1 "active weights"
+  & label value1 "256 of 1024"
+  label key2 "gates"
+  & label value2 "0.62 and 0.38"
+  label key3 "chosen"
+  & label value3 "expert 2 (2.0) and expert|4 (1.5)"
+  label key4 "scores"
+  & label value4 "0.1 2.0 0.3 1.5 0.0 0.2|0.4 0.1"
+  label key5 "token"
+  & label value5 "4 numbers"
+:::
 
 The MoE layer computes:
 
@@ -3484,6 +5317,129 @@ The constant $a$ is the weakness. The model forgets every input at the same rate
 
 ## How it works
 
+
+:::anim
+title: Scalar state space recurrence with a equal to 0.5
+# Worked values and narration follow the scenario in this lesson.
+text heading "Scalar state space recurrence with a equal to 0.5" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "h"
+  & label value0 "0"
+  & highlight card0
+  label key1 "x"
+  & label value1 "1 0 0 2"
+  & highlight card1
+  label key2 "t"
+  & label value2 "0"
+  & highlight card2
+
+step: Read x1 equal to 1.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "h"
+  & label value0 "1.0"
+  & highlight card0
+  label key1 "y"
+  & label value1 "1.0"
+  & highlight card1
+  label key2 "t"
+  & label value2 "1"
+  & highlight card2
+  label key3 "x"
+  & label value3 "1 0 0 2"
+
+step: Read x2 equal to 0.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "h"
+  & label value0 "0.5"
+  & highlight card0
+  label key1 "y"
+  & label value1 "0.5"
+  & highlight card1
+  label key2 "t"
+  & label value2 "2"
+  & highlight card2
+  label key3 "x"
+  & label value3 "1 0 0 2"
+
+step: Read x3 equal to 0.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "h"
+  & label value0 "0.25"
+  & highlight card0
+  label key1 "y"
+  & label value1 "0.25"
+  & highlight card1
+  label key2 "t"
+  & label value2 "3"
+  & highlight card2
+  label key3 "x"
+  & label value3 "1 0 0 2"
+
+step: Read x4 equal to 2.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "h"
+  & label value0 "2.125"
+  & highlight card0
+  label key1 "y"
+  & label value1 "2.125"
+  & highlight card1
+  label key2 "t"
+  & label value2 "4"
+  & highlight card2
+  label key3 "x"
+  & label value3 "1 0 0 2"
+
+step: The input from step 1 survives with weight 0.125, which is 0.5 to the power 3.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "weight of x1"
+  & label value0 "0.125"
+  & highlight card0
+  label key1 "h"
+  & label value1 "2.125"
+  label key2 "y"
+  & label value2 "2.125"
+  label key3 "t"
+  & label value3 "4"
+  label key4 "x"
+  & label value4 "1 0 0 2"
+:::
+
 The general discrete state space layer is:
 
 $$h_t = \\bar{A}\\, h_{t-1} + \\bar{B}\\, x_t, \\qquad y_t = C\\, h_t$$
@@ -3692,6 +5648,143 @@ Device 4 -> Device 1: K and V block 4
 :::
 
 ## How it works
+
+
+:::anim
+title: Size the KV cache for one 128,000 token request
+# Worked values and narration follow the scenario in this lesson.
+text heading "Size the KV cache for one 128,000 token request" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "layers"
+  & label value0 "32"
+  & highlight card0
+  label key1 "KV heads"
+  & label value1 "8"
+  & highlight card1
+  label key2 "head width"
+  & label value2 "128"
+  & highlight card2
+  label key3 "bytes per number"
+  & label value3 "2"
+  & highlight card3
+
+step: Multiply the KV heads by the head width.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "numbers per key"
+  & label value0 "1024"
+  & highlight card0
+  label key1 "layers"
+  & label value1 "32"
+  label key2 "KV heads"
+  & label value2 "8"
+  label key3 "head width"
+  & label value3 "128"
+  label key4 "bytes per number"
+  & label value4 "2"
+
+step: Double it for the value.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "numbers per layer"
+  & label value0 "2048"
+  & highlight card0
+  label key1 "numbers per key"
+  & label value1 "1024"
+  label key2 "layers"
+  & label value2 "32"
+  label key3 "KV heads"
+  & label value3 "8"
+  label key4 "head width"
+  & label value4 "128"
+  label key5 "bytes per number"
+  & label value5 "2"
+
+step: Multiply by 32 layers.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "numbers per token"
+  & label value0 "65536"
+  & highlight card0
+  label key1 "numbers per layer"
+  & label value1 "2048"
+  label key2 "numbers per key"
+  & label value2 "1024"
+  label key3 "layers"
+  & label value3 "32"
+  label key4 "KV heads"
+  & label value4 "8"
+  label key5 "head width"
+  & label value5 "128"
+
+step: Multiply by 2 bytes.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "bytes per token"
+  & label value0 "131072"
+  & highlight card0
+  label key1 "numbers per token"
+  & label value1 "65536"
+  label key2 "numbers per layer"
+  & label value2 "2048"
+  label key3 "numbers per key"
+  & label value3 "1024"
+  label key4 "layers"
+  & label value4 "32"
+  label key5 "KV heads"
+  & label value5 "8"
+
+step: Multiply by 128,000 tokens.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "cache for request"
+  & label value0 "16 GB"
+  & highlight card0
+  label key1 "bytes per token"
+  & label value1 "131072"
+  label key2 "numbers per token"
+  & label value2 "65536"
+  label key3 "numbers per layer"
+  & label value3 "2048"
+  label key4 "numbers per key"
+  & label value4 "1024"
+  label key5 "layers"
+  & label value5 "32"
+:::
 
 The online softmax that flash attention uses keeps three values per query row: the running maximum $m$, the running sum $\\ell$, and the running output $o$. For each new block of scores $s$:
 
@@ -3922,6 +6015,84 @@ Answer 29: 1
 
 ## How it works
 
+
+:::anim
+title: The apple problem with a chain of thought
+# Worked values and narration follow the scenario in this lesson.
+text heading "The apple problem with a chain of thought" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 250,145 r: 3 color: grey
+dot mark2 @ 400,145 r: 3 color: grey
+dot mark3 @ 550,145 r: 3 color: grey
+dot mark4 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "apples"
+  & label value0 "23"
+  & highlight card0
+  label key1 "stage"
+  & label value1 "start"
+  & highlight card1
+
+step: The shop starts with 23 apples.
+  restore card0, card1, card2
+  move cursor -> 250,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "stage"
+  & label value0 "read the problem"
+  & highlight card0
+  label key1 "apples"
+  & label value1 "23"
+
+step: It uses 20 for lunch.
+  restore card0, card1, card2
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "apples"
+  & label value0 "3"
+  & highlight card0
+  label key1 "stage"
+  & label value1 "subtract"
+  & highlight card1
+
+step: It buys 6 more.
+  restore card0, card1, card2
+  move cursor -> 550,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "apples"
+  & label value0 "9"
+  & highlight card0
+  label key1 "stage"
+  & label value1 "add"
+  & highlight card1
+
+step: Write the final answer in the fixed format.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "answer"
+  & label value0 "9"
+  & highlight card0
+  label key1 "stage"
+  & label value1 "done"
+  & highlight card1
+  label key2 "apples"
+  & label value2 "9"
+:::
+
 A chain of thought changes the probability the model computes. Without a chain, the model estimates $P(\\text{answer} \\mid \\text{question})$ in one step. With a chain, it estimates:
 
 $$P(\\text{answer} \\mid \\text{question}) = \\sum_{\\text{chain}} P(\\text{answer} \\mid \\text{chain}, \\text{question})\\, P(\\text{chain} \\mid \\text{question})$$
@@ -4149,6 +6320,135 @@ Now sample 10 solutions and score each. Pick the one with the highest score. Thi
 
 ## How it works
 
+
+:::anim
+title: Score the 4-step solution with a process reward model
+# Worked values and narration follow the scenario in this lesson.
+text heading "Score the 4-step solution with a process reward model" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "step 1"
+  & label value0 "unscored"
+  & highlight card0
+  label key1 "step 2"
+  & label value1 "unscored"
+  & highlight card1
+  label key2 "step 3"
+  & label value2 "unscored"
+  & highlight card2
+  label key3 "step 4"
+  & label value3 "unscored"
+  & highlight card3
+  label key4 "solution score"
+  & label value4 "none"
+  & highlight card4
+
+step: Read the problem and step 1.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "step 1"
+  & label value0 "0.98"
+  & highlight card0
+  label key1 "step 2"
+  & label value1 "unscored"
+  label key2 "step 3"
+  & label value2 "unscored"
+  label key3 "step 4"
+  & label value3 "unscored"
+  label key4 "solution score"
+  & label value4 "none"
+
+step: Read up to step 2.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "step 2"
+  & label value0 "0.97"
+  & highlight card0
+  label key1 "step 1"
+  & label value1 "0.98"
+  label key2 "step 3"
+  & label value2 "unscored"
+  label key3 "step 4"
+  & label value3 "unscored"
+  label key4 "solution score"
+  & label value4 "none"
+
+step: Read up to step 3.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "step 3"
+  & label value0 "0.05"
+  & highlight card0
+  label key1 "step 2"
+  & label value1 "0.97"
+  label key2 "step 1"
+  & label value2 "0.98"
+  label key3 "step 4"
+  & label value3 "unscored"
+  label key4 "solution score"
+  & label value4 "none"
+
+step: Read up to step 4.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "step 4"
+  & label value0 "0.90"
+  & highlight card0
+  label key1 "step 3"
+  & label value1 "0.05"
+  label key2 "step 2"
+  & label value2 "0.97"
+  label key3 "step 1"
+  & label value3 "0.98"
+  label key4 "solution score"
+  & label value4 "none"
+
+step: Multiply the four scores.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "solution score"
+  & label value0 "0.04 (product) or 0.05|(minimum)"
+  & highlight card0
+  label key1 "step 4"
+  & label value1 "0.90"
+  label key2 "step 3"
+  & label value2 "0.05"
+  label key3 "step 2"
+  & label value3 "0.97"
+  label key4 "step 1"
+  & label value4 "0.98"
+:::
+
 Both reward models are classifiers on top of a language model. The ORM reads the problem and the full solution and outputs one probability. The PRM reads the problem and the solution up to step $k$ and outputs a probability for step $k$. The solution score is:
 
 $$s(\\text{solution}) = \\prod_{k=1}^{K} p_k \\quad \\text{or} \\quad \\min_k p_k$$
@@ -4375,6 +6675,114 @@ Nothing in this loop needs a reward model or a human label. It needs problems wi
 
 ## How it works
 
+
+:::anim
+title: Group-relative advantage for four samples
+# Worked values and narration follow the scenario in this lesson.
+text heading "Group-relative advantage for four samples" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "rewards"
+  & label value0 "0 1 0 1"
+  & highlight card0
+  label key1 "mean"
+  & label value1 "unknown"
+  & highlight card1
+  label key2 "std"
+  & label value2 "unknown"
+  & highlight card2
+
+step: The checker grades each final answer.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "rewards"
+  & label value0 "0 1 0 1"
+  label key1 "mean"
+  & label value1 "unknown"
+  label key2 "std"
+  & label value2 "unknown"
+
+step: Compute the group mean.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "mean"
+  & label value0 "0.5"
+  & highlight card0
+  label key1 "rewards"
+  & label value1 "0 1 0 1"
+  label key2 "std"
+  & label value2 "unknown"
+
+step: Compute the standard deviation.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "std"
+  & label value0 "0.5"
+  & highlight card0
+  label key1 "mean"
+  & label value1 "0.5"
+  label key2 "rewards"
+  & label value2 "0 1 0 1"
+
+step: Subtract the mean from each reward and divide by the standard deviation.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "advantages"
+  & label value0 "-1 +1 -1 +1"
+  & highlight card0
+  label key1 "std"
+  & label value1 "0.5"
+  label key2 "mean"
+  & label value2 "0.5"
+  label key3 "rewards"
+  & label value3 "0 1 0 1"
+
+step: Raise the probability of every token in samples 2 and 4.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "update"
+  & label value0 "samples 2 and 4 up ||samples 1 and 3 down"
+  & highlight card0
+  label key1 "advantages"
+  & label value1 "-1 +1 -1 +1"
+  label key2 "std"
+  & label value2 "0.5"
+  label key3 "mean"
+  & label value3 "0.5"
+  label key4 "rewards"
+  & label value4 "0 1 0 1"
+:::
+
 The GRPO advantage for sample $i$ in a group of $G$ samples is:
 
 $$A_i = \\frac{r_i - \\mathrm{mean}(r_1, \\dots, r_G)}{\\mathrm{std}(r_1, \\dots, r_G)}$$
@@ -4590,6 +6998,115 @@ A longer chain is the serial option. The model spends more tokens on one attempt
 
 ## How it works
 
+
+:::anim
+title: Coverage for a problem with a 10 percent pass rate
+# Worked values and narration follow the scenario in this lesson.
+text heading "Coverage for a problem with a 10 percent pass rate" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "pass rate"
+  & label value0 "0.10"
+  & highlight card0
+  label key1 "samples"
+  & label value1 "1"
+  & highlight card1
+  label key2 "coverage"
+  & label value2 "0.10"
+  & highlight card2
+
+step: One sample is correct with probability 0.10.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "pass rate"
+  & label value0 "0.10"
+  label key1 "samples"
+  & label value1 "1"
+  label key2 "coverage"
+  & label value2 "0.10"
+
+step: Sample 10 times.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "samples"
+  & label value0 "10"
+  & highlight card0
+  label key1 "all fail"
+  & label value1 "0.35"
+  & highlight card1
+  label key2 "pass rate"
+  & label value2 "0.10"
+  label key3 "coverage"
+  & label value3 "0.10"
+
+step: Subtract from 1.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "coverage"
+  & label value0 "0.65"
+  & highlight card0
+  label key1 "samples"
+  & label value1 "10"
+  label key2 "all fail"
+  & label value2 "0.35"
+  label key3 "pass rate"
+  & label value3 "0.10"
+
+step: Sample 100 times.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "samples"
+  & label value0 "100"
+  & highlight card0
+  label key1 "all fail"
+  & label value1 "0.00003"
+  & highlight card1
+  label key2 "coverage"
+  & label value2 "0.65"
+  label key3 "pass rate"
+  & label value3 "0.10"
+
+step: Coverage is close to 1.0.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "coverage"
+  & label value0 "1.0"
+  & highlight card0
+  label key1 "samples"
+  & label value1 "100"
+  label key2 "all fail"
+  & label value2 "0.00003"
+  label key3 "pass rate"
+  & label value3 "0.10"
+:::
+
 Coverage for $n$ independent samples with pass rate $p$ is:
 
 $$c(n) = 1 - (1 - p)^{n}$$
@@ -4800,6 +7317,149 @@ state: note=written
 :::
 
 ## How it works
+
+
+:::anim
+title: Pass one and pass two on the Chinchilla paper
+# Worked values and narration follow the scenario in this lesson.
+text heading "Pass one and pass two on the Chinchilla paper" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "minutes"
+  & label value0 "0"
+  & highlight card0
+  label key1 "claim"
+  & label value1 "none"
+  & highlight card1
+  label key2 "conditions"
+  & label value2 "none"
+  & highlight card2
+  label key3 "open questions"
+  & label value3 "0"
+  & highlight card3
+
+step: Read the title, the abstract, the headings, every figure caption, and the conclusion.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "minutes"
+  & label value0 "10"
+  & highlight card0
+  label key1 "claim"
+  & label value1 "none"
+  label key2 "conditions"
+  & label value2 "none"
+  label key3 "open questions"
+  & label value3 "0"
+
+step: Write the claim in one sentence.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "claim"
+  & label value0 "weights and tokens grow|at the same rate"
+  & highlight card0
+  label key1 "minutes"
+  & label value1 "10"
+  label key2 "conditions"
+  & label value2 "none"
+  label key3 "open questions"
+  & label value3 "0"
+
+step: Note the conditions.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "conditions"
+  & label value0 "one family + one data mix|+ held-out loss"
+  & highlight card0
+  label key1 "claim"
+  & label value1 "weights and tokens grow|at the same rate"
+  label key2 "minutes"
+  & label value2 "10"
+  label key3 "open questions"
+  & label value3 "0"
+
+step: Read the full text.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "minutes"
+  & label value0 "70"
+  & highlight card0
+  label key1 "baseline"
+  & label value1 "Gopher from the same lab"
+  & highlight card1
+  label key2 "conditions"
+  & label value2 "one family + one data mix|+ held-out loss"
+  label key3 "claim"
+  & label value3 "weights and tokens grow|at the same rate"
+  label key4 "open questions"
+  & label value4 "0"
+
+step: Write down what the paper does not answer, such as the effect of a different tokeniser.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "open questions"
+  & label value0 "1"
+  & highlight card0
+  label key1 "minutes"
+  & label value1 "70"
+  label key2 "baseline"
+  & label value2 "Gopher from the same lab"
+  label key3 "conditions"
+  & label value3 "one family + one data mix|+ held-out loss"
+  label key4 "claim"
+  & label value4 "weights and tokens grow|at the same rate"
+
+step: Write the one-paragraph note with the claim, the conditions, the evidence, and the weakest point.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "note"
+  & label value0 "written"
+  & highlight card0
+  label key1 "open questions"
+  & label value1 "1"
+  label key2 "minutes"
+  & label value2 "70"
+  label key3 "baseline"
+  & label value3 "Gopher from the same lab"
+  label key4 "conditions"
+  & label value4 "one family + one data mix|+ held-out loss"
+  label key5 "claim"
+  & label value5 "weights and tokens grow|at the same rate"
+:::
 
 The three passes are:
 
@@ -5016,6 +7676,137 @@ Chain of thought, yours: 32
 :::
 
 ## How it works
+
+
+:::anim
+title: Reproduce the chain-of-thought gain at small scale
+# Worked values and narration follow the scenario in this lesson.
+text heading "Reproduce the chain-of-thought gain at small scale" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "model"
+  & label value0 "10 billion weight open|model"
+  & highlight card0
+  label key1 "problems"
+  & label value1 "500"
+  & highlight card1
+  label key2 "baseline"
+  & label value2 "none"
+  & highlight card2
+  label key3 "method"
+  & label value3 "none"
+  & highlight card3
+
+step: Run the direct prompt.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "baseline"
+  & label value0 "9 percent (paper 10)"
+  & highlight card0
+  label key1 "model"
+  & label value1 "10 billion weight open|model"
+  label key2 "problems"
+  & label value2 "500"
+  label key3 "method"
+  & label value3 "none"
+
+step: The gap is 1 point on 500 problems, inside the noise.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "baseline check"
+  & label value0 "pass"
+  & highlight card0
+  label key1 "baseline"
+  & label value1 "9 percent (paper 10)"
+  label key2 "model"
+  & label value2 "10 billion weight open|model"
+  label key3 "problems"
+  & label value3 "500"
+  label key4 "method"
+  & label value4 "none"
+
+step: Run the few-shot chain-of-thought prompt from the appendix with 3 seeds.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "method"
+  & label value0 "32 percent (paper 35)"
+  & highlight card0
+  label key1 "baseline check"
+  & label value1 "pass"
+  label key2 "baseline"
+  & label value2 "9 percent (paper 10)"
+  label key3 "model"
+  & label value3 "10 billion weight open|model"
+  label key4 "problems"
+  & label value4 "500"
+
+step: Compute the standard error.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "standard error"
+  & label value0 "2 points"
+  & highlight card0
+  label key1 "method"
+  & label value1 "32 percent (paper 35)"
+  label key2 "baseline check"
+  & label value2 "pass"
+  label key3 "baseline"
+  & label value3 "9 percent (paper 10)"
+  label key4 "model"
+  & label value4 "10 billion weight open|model"
+  label key5 "problems"
+  & label value5 "500"
+
+step: The gap of 3 points is within two standard errors.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "verdict"
+  & label value0 "reproduces"
+  & highlight card0
+  label key1 "standard error"
+  & label value1 "2 points"
+  label key2 "method"
+  & label value2 "32 percent (paper 35)"
+  label key3 "baseline check"
+  & label value3 "pass"
+  label key4 "baseline"
+  & label value4 "9 percent (paper 10)"
+  label key5 "model"
+  & label value5 "10 billion weight open|model"
+:::
 
 A reproduction is itself an experiment with a hypothesis: "the published number holds in my setup". Treat it with the same care.
 
@@ -5238,6 +8029,138 @@ state: method=data filter
 
 ## How it works
 
+
+:::anim
+title: Read the ablation table one row at a time
+# Worked values and narration follow the scenario in this lesson.
+text heading "Read the ablation table one row at a time" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "full method"
+  & label value0 "72.1"
+  & highlight card0
+  label key1 "suspected cause"
+  & label value1 "all three parts"
+  & highlight card1
+
+step: Remove the loss term.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "drop without loss term"
+  & label value0 "0.3"
+  & highlight card0
+  label key1 "verdict loss term"
+  & label value1 "inside seed spread"
+  & highlight card1
+  label key2 "full method"
+  & label value2 "72.1"
+  label key3 "suspected cause"
+  & label value3 "all three parts"
+
+step: Remove the filter.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "drop without filter"
+  & label value0 "5.9"
+  & highlight card0
+  label key1 "verdict filter"
+  & label value1 "carries the gain"
+  & highlight card1
+  label key2 "drop without loss term"
+  & label value2 "0.3"
+  label key3 "verdict loss term"
+  & label value3 "inside seed spread"
+  label key4 "full method"
+  & label value4 "72.1"
+  label key5 "suspected cause"
+  & label value5 "all three parts"
+
+step: Remove the long warmup.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "drop without warmup"
+  & label value0 "0.6"
+  & highlight card0
+  label key1 "verdict warmup"
+  & label value1 "inside seed spread"
+  & highlight card1
+  label key2 "drop without filter"
+  & label value2 "5.9"
+  label key3 "verdict filter"
+  & label value3 "carries the gain"
+  label key4 "drop without loss term"
+  & label value4 "0.3"
+  label key5 "verdict loss term"
+  & label value5 "inside seed spread"
+
+step: Compare each drop with two standard deviations, about 1.4 points.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "suspected cause"
+  & label value0 "the filter alone"
+  & highlight card0
+  label key1 "drop without warmup"
+  & label value1 "0.6"
+  label key2 "verdict warmup"
+  & label value2 "inside seed spread"
+  label key3 "drop without filter"
+  & label value3 "5.9"
+  label key4 "verdict filter"
+  & label value4 "carries the gain"
+  label key5 "drop without loss term"
+  & label value5 "0.3"
+
+step: Shrink the method to one part and say so in the write-up.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "method"
+  & label value0 "data filter"
+  & highlight card0
+  label key1 "suspected cause"
+  & label value1 "the filter alone"
+  label key2 "drop without warmup"
+  & label value2 "0.6"
+  label key3 "verdict warmup"
+  & label value3 "inside seed spread"
+  label key4 "drop without filter"
+  & label value4 "5.9"
+  label key5 "verdict filter"
+  & label value5 "carries the gain"
+:::
+
 An ablation holds everything fixed except one part. The things to hold fixed are:
 
 - Training compute in FLOPs or steps.
@@ -5433,6 +8356,112 @@ state: sections=all eight
 :::
 
 ## How it works
+
+
+:::anim
+title: Build the write-up from the ablation result
+# Worked values and narration follow the scenario in this lesson.
+text heading "Build the write-up from the ablation result" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "claim"
+  & label value0 "none"
+  & highlight card0
+  label key1 "main figure"
+  & label value1 "none"
+  & highlight card1
+  label key2 "abstract"
+  & label value2 "none"
+  & highlight card2
+
+step: Write the claim in one sentence with the condition, the method, the metric, and the size.
+  restore card0, card1, card2, card3
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "claim"
+  & label value0 "filter gives 6 points at|equal compute and the|loss term adds nothing"
+  & highlight card0
+  label key1 "main figure"
+  & label value1 "none"
+  label key2 "abstract"
+  & label value2 "none"
+
+step: Draw the main figure on paper.
+  restore card0, card1, card2, card3
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "main figure"
+  & label value0 "four bars + error bars"
+  & highlight card0
+  label key1 "claim"
+  & label value1 "filter gives 6 points at|equal compute and the|loss term adds nothing"
+  label key2 "abstract"
+  & label value2 "none"
+
+step: Write the method and the experiments around the figure.
+  restore card0, card1, card2, card3
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "sections"
+  & label value0 "method + experiments"
+  & highlight card0
+  label key1 "main figure"
+  & label value1 "four bars + error bars"
+  label key2 "claim"
+  & label value2 "filter gives 6 points at|equal compute and the|loss term adds nothing"
+  label key3 "abstract"
+  & label value3 "none"
+
+step: Write the introduction, then the abstract in four sentences.
+  restore card0, card1, card2, card3
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "abstract"
+  & label value0 "problem + method + number|+ limitation"
+  & highlight card0
+  label key1 "sections"
+  & label value1 "method + experiments"
+  label key2 "main figure"
+  & label value2 "four bars + error bars"
+  label key3 "claim"
+  & label value3 "filter gives 6 points at|equal compute and the|loss term adds nothing"
+
+step: Add related work and a plain limitations section.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "sections"
+  & label value0 "all eight"
+  & highlight card0
+  label key1 "abstract"
+  & label value1 "problem + method + number|+ limitation"
+  label key2 "main figure"
+  & label value2 "four bars + error bars"
+  label key3 "claim"
+  & label value3 "filter gives 6 points at|equal compute and the|loss term adds nothing"
+:::
 
 The standard structure, with the question each section answers:
 

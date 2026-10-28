@@ -132,6 +132,7 @@ function checkLesson(path, l, strict) {
   }
   const hasTable = /^\|.*\|\s*\n\|\s*-+/m.test(body)
   const missing = []
+  if (!kinds.has('anim')) problem(path, 'lesson has no interactive animation')
   if (!(kinds.has('flow') || kinds.has('timeline') || kinds.has('matrix') || kinds.has('arch') || kinds.has('graph') || kinds.has('anim'))) missing.push('diagram')
   if (!kinds.has('scenario')) missing.push('scenario')
   if (!hasTable) missing.push('table')
@@ -169,7 +170,7 @@ if (file) {
   for (const l of mod.lessons) for (const k of l.keyTerms ?? []) if (!have.has(norm(k)) && !all.some((t) => t.term.toLowerCase() === k.toLowerCase())) problem(`${mod.slug}/${l.slug}`, `key term "${k}" has no glossary entry`)
   console.log(`${mod.slug}: ${mod.lessons.length} lessons checked`)
 } else {
-  const { tracks } = await vite.ssrLoadModule('/src/data/tracks.ts')
+  const { tracks } = await vite.ssrLoadModule('/src/data/curriculum.ts')
   for (const t of tracks) {
     if (only && t.slug !== only) continue
     let withAnim = 0, withDiagram = 0, withScenario = 0, withTable = 0, withQuiz = 0, withVideo = 0, withCode = 0, withExercise = 0, total = 0, blocks = 0, questions = 0

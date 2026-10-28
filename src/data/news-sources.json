@@ -1,0 +1,7 @@
+[
+  { "id": "google-research", "name": "Google Research", "feed": "https://research.google/blog/rss/", "website": "https://research.google/blog/" },
+  { "id": "deepmind", "name": "Google DeepMind", "feed": "https://deepmind.google/blog/rss.xml", "website": "https://deepmind.google/blog/" },
+  { "id": "hugging-face", "name": "Hugging Face", "feed": "https://huggingface.co/blog/feed.xml", "website": "https://huggingface.co/blog" },
+  { "id": "mit-ai", "name": "MIT News · AI", "feed": "https://news.mit.edu/rss/topic/artificial-intelligence2", "website": "https://news.mit.edu/" },
+  { "id": "techcrunch-ai", "name": "TechCrunch · AI", "feed": "https://techcrunch.com/category/artificial-intelligence/feed/", "website": "https://techcrunch.com/" }
+]

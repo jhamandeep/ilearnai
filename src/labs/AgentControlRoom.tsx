@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { LabVisual } from '../components/LabVisual'
 import { NumberField, RangeField, Stat } from '../components/Field'
 import { pct } from '../lib/format'
 
@@ -132,6 +133,7 @@ export function AgentControlRoom() {
         <NumberField label="Seed" value={seed} onChange={setSeed} />
       </div>
       <div className="lab-results">
+        <LabVisual title="Reliability across the agent chain" caption="Each bar includes all preceding steps. Retries and fallbacks change the final completion probability." maximum={100} items={steps.map((step, i) => ({ label: step.name, value: 100 * steps.slice(0, i + 1).reduce((probability, item) => probability * stepSuccess(item), 1), display: pct(steps.slice(0, i + 1).reduce((probability, item) => probability * stepSuccess(item), 1)), detail: `${step.retries} retries; ${pct(step.fallback)} fallback success.` }))} />
         <Stat label="Naive success" value={pct(naive)} sub="product of raw rates, no retries" />
         <Stat label="With retries and fallbacks" value={pct(analytic)} sub="closed form" />
         <Stat label="Simulated" value={pct(simulated)} sub={`${runs.toLocaleString()} seeded runs`} />

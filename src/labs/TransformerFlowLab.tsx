@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useRef, useEffect, useId, useState } from 'react'
+import { useLabMotion } from '../lib/useLabMotion'
 
 const stages = [
   { id: 'embed', label: 'Token + position embedding', detail: 'Each token id becomes a d_model vector; position information is added or rotated in.' },
@@ -12,14 +13,17 @@ const stages = [
 ]
 
 export function TransformerFlowLab() {
+  const marker = 'transformer-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const [step, setStep] = useState(0)
   const [playing, setPlaying] = useState(true)
+  const motionRef = useRef<HTMLDivElement>(null)
+  const motionActive = useLabMotion(motionRef, playing)
 
   useEffect(() => {
-    if (!playing) return
+    if (!motionActive) return
     const id = setInterval(() => setStep((s) => (s + 1) % stages.length), 1400)
     return () => clearInterval(id)
-  }, [playing])
+  }, [motionActive])
 
   const H = 60
   const top = 30
@@ -29,7 +33,7 @@ export function TransformerFlowLab() {
   const totalH = y(stages.length - 1) + H + 30
 
   return (
-    <div className="lab">
+    <div className="lab" ref={motionRef}>
       <div className="lab-controls">
         <h3>{stages[step].label}</h3>
         <p className="meta">{stages[step].detail}</p>
@@ -50,9 +54,9 @@ export function TransformerFlowLab() {
         </div>
       </div>
       <div className="lab-results">
-        <svg viewBox={`0 0 ${x + w + 140} ${totalH}`} className="flow" style={{ gridColumn: '1 / -1' }} role="img" aria-label="Transformer block data flow">
+        <svg viewBox={`0 0 ${x + w + 140} ${totalH}`} className="flow" data-lab-visual="transformer" style={{ gridColumn: '1 / -1' }} role="img" aria-label="Transformer block data flow">
           <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <marker id={marker} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
               <path d="M0,0 L10,5 L0,10 z" fill="var(--text-dim)" />
             </marker>
           </defs>
@@ -63,10 +67,10 @@ export function TransformerFlowLab() {
             const active = i === step
             const isRes = s.id.startsWith('res')
             return (
-              <g key={s.id} onClick={() => { setPlaying(false); setStep(i) }} style={{ cursor: 'pointer' }}>
-                {i > 0 && <line x1={x + w / 2} y1={y(i - 1) + H} x2={x + w / 2} y2={y(i) - 2} stroke="var(--text-dim)" strokeWidth={1.5} markerEnd="url(#arrow)" />}
-                <rect x={x} y={y(i)} width={w} height={H} rx={10} fill={active ? 'var(--primary)' : 'var(--surface)'} stroke={active ? 'var(--primary)' : 'var(--border)'} strokeWidth={1.5} className={active ? 'flow-active' : ''} />
-                <text x={x + w / 2} y={y(i) + H / 2 + 5} textAnchor="middle" fontSize="15" fontWeight={600} fill={active ? 'var(--primary-text)' : 'var(--text)'}>
+              <g key={s.id} role="button" tabIndex={0} aria-label={`Inspect ${s.label}`} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPlaying(false); setStep(i) } }} onClick={() => { setPlaying(false); setStep(i) }} style={{ cursor: 'pointer' }}>
+                {i > 0 && <line x1={x + w / 2} y1={y(i - 1) + H} x2={x + w / 2} y2={y(i) - 2} stroke="var(--text-dim)" strokeWidth={1.5} markerEnd={`url(#${marker})`} />}
+                <rect x={x} y={y(i)} width={w} height={H} rx={10} fill={active ? '#4285f4' : isRes ? 'color-mix(in srgb, #188038 10%, var(--surface))' : 'var(--surface)'} stroke={active ? '#4285f4' : isRes ? '#188038' : 'var(--border)'} strokeWidth={1.5} />
+                <text x={x + w / 2} y={y(i) + H / 2 + 5} textAnchor="middle" fontSize="15" fontWeight={600} fill={active ? '#ffffff' : 'var(--text)'}>
                   {s.label}
                 </text>
                 {isRes && (
@@ -81,9 +85,7 @@ export function TransformerFlowLab() {
             )
           })}
           {/* travelling packet */}
-          <circle r={7} fill="var(--accent-inference)" stroke="#fff" strokeWidth={2}>
-            <animateMotion dur={`${stages.length * 1.4}s`} repeatCount="indefinite" path={`M ${x + w / 2} ${y(0) + H / 2} ${stages.map((_, i) => `L ${x + w / 2} ${y(i) + H / 2}`).join(' ')}`} />
-          </circle>
+          <g className="transformer-packet" style={{ transform: `translate(${x + w / 2}px, ${y(step) + H / 2}px)` }}><circle r={7} fill="#f9ab00" stroke="var(--surface)" strokeWidth={2} /></g>
         </svg>
       </div>
     </div>

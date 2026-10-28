@@ -1,4 +1,4 @@
-import { useContext, useMemo, useRef, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
 import { parseQuiz } from '../../lib/quiz'
 import { setQuizScore, quizScore, useProgressVersion } from '../../lib/progress'
 import { LessonContext } from '../LessonContext'
@@ -7,9 +7,8 @@ export function Quiz({ src }: { src: string }) {
   const { title, questions } = useMemo(() => parseQuiz(src), [src])
   const ctx = useContext(LessonContext)
   // Take a block number once, on mount, so re-renders do not shift it.
-  const idx = useRef<number | null>(null)
-  if (idx.current === null) idx.current = ctx ? ctx.nextQuizIndex() : 0
-  const n = idx.current
+  const [idx] = useState(() => ctx?.quizIndex ?? ctx?.nextQuizIndex() ?? 0)
+  const n = ctx?.quizIndex ?? idx
   const route = ctx?.route ?? ''
   useProgressVersion()
   const best = route ? quizScore(route, n) : null
@@ -32,7 +31,7 @@ export function Quiz({ src }: { src: string }) {
 
   return (
     <figure className="rich rich-quiz">
-      <figcaption>{title ?? 'Quiz'} · {questions.length} questions{best ? ` · best ${best.score}/${best.total}` : ''}</figcaption>
+      <figcaption>{title ?? 'Quiz'} · {questions.length} questions{best ? ` · saved ${best.score}/${best.total}` : ''}</figcaption>
       <ol className="qz-list">
         {questions.map((q, qi) => {
           const p = picked[qi]

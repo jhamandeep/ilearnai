@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
+import { LabVisual } from '../components/LabVisual'
+import { useLabMotion } from '../lib/useLabMotion'
 import { RangeField, Stat } from '../components/Field'
 
 // Deterministic pseudo-embeddings so the same word always gets the same vector.
@@ -29,6 +31,8 @@ export function AttentionLab() {
   const [causal, setCausal] = useState(true)
   const [row, setRow] = useState(0)
   const [playing, setPlaying] = useState(true)
+  const motionRef = useRef<HTMLDivElement>(null)
+  const motionActive = useLabMotion(motionRef, playing)
 
   const tokens = useMemo(() => text.trim().split(/\s+/).filter(Boolean).slice(0, 14), [text])
   const dim = 16
@@ -45,16 +49,17 @@ export function AttentionLab() {
   }, [tokens, scale, causal])
 
   useEffect(() => {
-    if (!playing || tokens.length === 0) return
+    if (!motionActive || tokens.length === 0) return
     const id = setInterval(() => setRow((r) => (r + 1) % tokens.length), 700)
     return () => clearInterval(id)
-  }, [playing, tokens.length])
+  }, [motionActive, tokens.length])
 
   const entropy = (w: number[]) => -w.reduce((a, p) => (p > 0 ? a + p * Math.log2(p) : a), 0)
-  const current = weights[Math.min(row, weights.length - 1)] ?? []
+  const activeRow = Math.min(row, Math.max(0, tokens.length - 1))
+  const current = weights[activeRow] ?? []
 
   return (
-    <div className="lab lab-stack">
+    <div className="lab lab-stack" ref={motionRef}>
       <div className="lab-controls">
         <label className="field">
           <span className="field-label">Sentence (up to 14 tokens)</span>
@@ -100,9 +105,10 @@ export function AttentionLab() {
         </div>
       </div>
       <div className="lab-results">
-        <Stat label="Query token" value={tokens[row] ?? '—'} sub={`row ${row + 1} of ${tokens.length}`} />
-        <Stat label="Attends most to" value={tokens[current.indexOf(Math.max(...current))] ?? '—'} sub={`${(Math.max(...current) * 100).toFixed(0)}% of mass`} />
-        <Stat label="Row entropy" value={`${entropy(current).toFixed(2)} bits`} sub={`max ${Math.log2(Math.max(1, causal ? row + 1 : tokens.length)).toFixed(2)}`} />
+        <LabVisual title={`Attention from “${tokens[Math.min(row, tokens.length - 1)] ?? '—'}”`} mode="segments" caption="See how the selected query distributes its attention over the available tokens." items={tokens.map((token, i) => ({ label: `${i + 1}. ${token}`, value: current[i] ?? 0, display: `${((current[i] ?? 0) * 100).toFixed(1)}%`, detail: causal && i > row ? 'The causal mask prevents attention to this future token.' : 'This is the softmax weight for the current query.' }))} />
+        <Stat label="Query token" value={tokens[activeRow] ?? '—'} sub={tokens.length ? `row ${activeRow + 1} of ${tokens.length}` : 'Enter a sentence to begin'} />
+        <Stat label="Attends most to" value={tokens[current.indexOf(Math.max(0, ...current))] ?? '—'} sub={`${(Math.max(0, ...current) * 100).toFixed(0)}% of mass`} />
+        <Stat label="Row entropy" value={`${entropy(current).toFixed(2)} bits`} sub={`max ${Math.log2(Math.max(1, causal ? activeRow + 1 : tokens.length)).toFixed(2)}`} />
       </div>
     </div>
   )

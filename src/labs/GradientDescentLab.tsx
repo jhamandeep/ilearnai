@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { RangeField, SelectField, Stat } from '../components/Field'
+import { LossTrace } from '../components/LossTrace'
+import { useLabMotion } from '../lib/useLabMotion'
 
 type Surface = 'bowl' | 'rosenbrock' | 'saddle'
 type Optimiser = 'sgd' | 'momentum' | 'adam'
@@ -25,16 +27,18 @@ const surfaces: Record<Surface, { f: (x: number, y: number) => number; grad: (x:
   },
 }
 
-export function GradientDescentLab() {
+export function GradientDescentLab({ active = true }: { active?: boolean }) {
   const [surface, setSurface] = useState<Surface>('rosenbrock')
   const [opt, setOpt] = useState<Optimiser>('sgd')
   const [lr, setLr] = useState(0.02)
   const [beta, setBeta] = useState(0.9)
   const [running, setRunning] = useState(true)
   const [tick, setTick] = useState(0)
-  const [latest, setLatest] = useState<{ pos: [number, number]; steps: number }>({ pos: surfaces.rosenbrock.start, steps: 0 })
+  const [latest, setLatest] = useState<{ pos: [number, number]; steps: number; losses: number[] }>({ pos: surfaces.rosenbrock.start, steps: 0, losses: [surfaces.rosenbrock.f(...surfaces.rosenbrock.start)] })
+  const motionRef = useRef<HTMLDivElement>(null)
+  const motionActive = useLabMotion(motionRef, running && active)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const path = useRef<[number, number][]>([])
+  const path = useRef<[number, number][]>([surfaces.rosenbrock.start])
   const state = useRef({ v: [0, 0] as [number, number], m: [0, 0] as [number, number], s: [0, 0] as [number, number], t: 0 })
 
   const S = surfaces[surface]
@@ -42,7 +46,7 @@ export function GradientDescentLab() {
   const resetFor = (surf: Surface) => {
     path.current = [surfaces[surf].start]
     state.current = { v: [0, 0], m: [0, 0], s: [0, 0], t: 0 }
-    setLatest({ pos: surfaces[surf].start, steps: 0 })
+    setLatest({ pos: surfaces[surf].start, steps: 0, losses: [surfaces[surf].f(...surfaces[surf].start)] })
     setTick((t) => t + 1)
   }
   const reset = () => resetFor(surface)
@@ -75,7 +79,7 @@ export function GradientDescentLab() {
   }, [S])
 
   useEffect(() => {
-    if (!running) return
+    if (!motionActive) return
     const id = setInterval(() => {
       const [x, y] = path.current[path.current.length - 1]
       const [gx, gy] = S.grad(x, y)
@@ -106,11 +110,11 @@ export function GradientDescentLab() {
       }
       path.current.push([nx, ny])
       if (path.current.length > 600) path.current.shift()
-      setLatest((l) => ({ pos: [nx, ny], steps: l.steps + 1 }))
+      setLatest((l) => ({ pos: [nx, ny], steps: l.steps + 1, losses: [...l.losses.slice(-99), S.f(nx, ny)] }))
       setTick((t) => t + 1)
     }, 40)
     return () => clearInterval(id)
-  }, [running, S, opt, lr, beta])
+  }, [motionActive, S, opt, lr, beta])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -143,7 +147,7 @@ export function GradientDescentLab() {
   const loss = S.f(cx, cy)
 
   return (
-    <div className="lab">
+    <div className="lab" ref={motionRef}>
       <div className="lab-controls">
         <SelectField
           label="Surface"
@@ -176,12 +180,13 @@ export function GradientDescentLab() {
           </button>
         </div>
         <div className="note">
-          Watch gradient descent zig-zag across the narrow valley, momentum smooth it out, and Adam rescale each axis. Push the learning
-          rate past about 0.1 on the bowl to see divergence.
+          The point shows the current parameters; the trail shows earlier values. Compare loss at the same step count.
+          Try a larger learning rate on the Rosenbrock valley to see how updates can overshoot. The bowl is stable across this slider’s range with plain gradient descent.
         </div>
       </div>
       <div className="lab-results">
-        <canvas ref={canvasRef} width={360} height={360} className="canvas" style={{ gridColumn: '1 / -1' }} />
+        <canvas ref={canvasRef} width={360} height={360} className="canvas" style={{ gridColumn: '1 / -1' }} role="img" aria-label={`Optimization path on the ${surface} loss surface`} />
+        <LossTrace values={latest.losses} step={latest.steps} />
         <Stat label="Step" value={latest.steps} />
         <Stat label="Loss" value={loss.toExponential(2)} />
         <Stat label="Position" value={`${cx.toFixed(2)}, ${cy.toFixed(2)}`} />

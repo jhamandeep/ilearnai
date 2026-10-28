@@ -236,7 +236,7 @@ vline: 3 = minimum
 
 ### anim: a narrated, continuous animation (the main explainer of a lesson)
 
-An `anim` block is a short animated film with subtitles, in the style of 3Blue1Brown: one dark stage of 960 x 540 units, objects that appear, move, connect and change, and one narration line per scene. It plays when it scrolls into view, and the reader can pause, scrub, step and change speed. Use it for the one idea the lesson exists to teach. Every lesson should have one; put it under "How it works" (or "The idea with an example" for Level 0). It counts as the lesson's diagram.
+An `anim` block is a short animated explainer with subtitles: one theme-aware stage of 960 x 540 units, objects that appear, move, connect and change, and one narration line per scene. The opening frame is visible before playback. The reader starts playback, then can pause, scrub, select a scene, change speed, open full screen, or explore the steps in the transcript. Playback pauses offscreen and in a hidden tab. Reduced-motion users can select completed scene frames without transitions. The complete scene fits the lesson width by default. Enlarge switches to a scrollable stage for larger labels; Fit scene restores the full view. Use it for the one idea the lesson exists to teach. Every lesson must have one; put it under "How it works" (or "The idea with an example" for Level 0). It counts as the lesson's diagram. `npm run visuals` enforces animation coverage across all tracks.
 
 ```
 :::anim
@@ -268,6 +268,8 @@ step: The model writes an answer. The server streams it back to you.
   highlight llm
 :::
 ```
+
+**Make the animation understandable on its own.** Optional `context:`, `focus:`, and `takeaway:` lines before object declarations explain the task, what to notice, and the practical conclusion. An `explain:` line after a `step:` gives the reason for that scene. It appears with the current caption and in the transcript. These fields do not change the animation actions. Use specific explanations, not generic encouragement. Keep fictional numbers labelled as examples.
 
 **Structure.** Objects are declared first, one per line. Then `step: narration` lines, each followed by its actions (indent them for readability). Objects start hidden; `show` them in the step where they matter so the picture builds up with the narration. Coordinates are stage units: x from 0 (left) to 960, y from 0 (top) to 540. Keep 60 units from the edges. Put the main objects on a grid (for example x = 110, 420, 790 and y = 150, 270, 450) so arrows are straight.
 
@@ -471,7 +473,7 @@ Module `chance` — Chance: probability and statistics
 ### Track `ai-foundations` — AI Foundations: How Machines Learn (Level 1, order 3, prerequisites: start-here, math-from-zero)
 
 Module `what-ai-is` — What AI is
-- `the-four-circles` — AI, machine learning, deep learning and generative AI — nested circles, one example of each, history in 10 lines
+- `the-four-circles` — AI, machine learning, deep learning and generative AI — distinguish the broad field, learning methods, and content-generation capability; keep the stable slug, but do not portray all four as strictly nested categories
 - `rules-vs-learning` — Rules versus learning — the spam filter written as rules vs learned from examples; when each wins
 - `the-learning-loop` — The learning loop — data, model, loss, update, evaluate; the one picture for the whole field, with the house-price table
 - `the-ai-ecosystem-map` — The AI ecosystem map — data, training, models, serving, apps, agents, tools, evaluation, monitoring; what Level 1 track 4 builds
@@ -542,3 +544,17 @@ Module `ship-it` — Ship it: deploy, monitor, cost
 - `observability` — Observability — logging prompts and responses, tracing, latency and error dashboards, alerts
 - `cost-control` — Cost control — caching, model routing, rate limits, budgets; computing monthly cost
 - `capstone` — Capstone: the full ecosystem — the complete architecture, a checklist, a demo script, and what to learn next in Level 2
+
+## 10. Context, guided labs, and chapter video sequences
+
+Standalone animation activities retain the lesson’s authored analogy and relevance paragraph, plus a term glossary. Do not add rich blocks to this context panel: interactive blocks stay in their own activities.
+
+Every lab needs an everyday explanation, a visual reading guide, a controlled three-step experiment, a worked example, a limitation, and a reflection answer in `src/data/learning/labGuides.ts`. Check instructions against actual control labels and numeric limits.
+
+Every module has a curated sequence in `src/data/learning/chapterVideos.ts`. Include at least three relevant videos or full series, a concrete viewing focus for each, and a practical follow-up. Clearly label source difficulty and full-video duration. A 100-second overview can remain optional orientation; it is not sufficient chapter coverage. Keep publisher course links and verification evidence for additions. Do not invent timestamps, durations, or playback checks.
+
+The work guides use fictional input, draft, review, and outcome examples in `src/data/work/examples.ts`. Preserve uncertainty and separate a suggested output from a verified fact or authorised action.
+
+Chapter previews and titles select the same recording inside its own card. Keep the YouTube link separate. Load one selected player at a time, without a playlist parameter for individual recordings. Show a preview and explicit external-playback explanation when inline playback is unavailable. Stop hidden playback when a sequence is collapsed or a chapter changes.
+
+Run `npm run test:content-guidance` and `npm run test:chapter-videos` alongside the content and product-rendering checks. Simulated-DOM interactions do not verify real external video playback.

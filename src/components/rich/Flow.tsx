@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useId, useEffect, useMemo, useState } from 'react'
 import { parseBlock, parseEdge } from './parse'
 import { glyphFor } from './viz'
 import { useTip } from './Tip'
@@ -16,6 +16,7 @@ const MAXC = 3 // columns per band; longer flows snake into the next band
 const BAND_GAP = 52
 
 export function Flow({ src }: { src: string }) {
+  const svgId = 'rf-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const { title, nodes, edges, cols } = useMemo(() => {
     const b = parseBlock(src)
     const edges: Edge[] = []
@@ -129,18 +130,18 @@ export function Flow({ src }: { src: string }) {
     <figure className="rich rich-flow">
       {title && <figcaption><span className="rich-kind">Flow</span>{title}</figcaption>}
       <div className="rich-stage rich-scroll" ref={tip.host}>
-        <svg viewBox={`0 0 ${width} ${fullHeight}`} width={width} height={fullHeight} style={{ width: "100%", maxWidth: width * 1.25 }} role="img" aria-label={title ?? 'Flow diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
+        <svg viewBox={`-96 -24 ${width + 192} ${fullHeight + 64}`} width={width + 192} height={fullHeight + 64} style={{ width: '100%', maxWidth: (width + 192) * 1.25 }} role="img" aria-label={title ?? 'Flow diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
           <defs>
-            <marker id="rf-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--text-dim)" opacity="0.6" /></marker>
-            <marker id="rf-arrow-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--primary)" /></marker>
-            <filter id="rf-glow" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-            <pattern id="rf-grid" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0H0V16" fill="none" stroke="var(--border)" strokeWidth="0.5" opacity="0.6" /></pattern>
+            <marker id={`${svgId}-arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--text-dim)" opacity="0.6" /></marker>
+            <marker id={`${svgId}-arrow-on`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--primary)" /></marker>
+            <filter id={`${svgId}-glow`} x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+            <pattern id={`${svgId}-grid`} width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0H0V16" fill="none" stroke="var(--border)" strokeWidth="0.5" opacity="0.6" /></pattern>
           </defs>
-          <rect x={0} y={0} width={width} height={fullHeight} fill="url(#rf-grid)" />
+          <rect x={0} y={0} width={width} height={fullHeight} fill={`url(#${svgId}-grid)`} />
           {edges.map((e, i) => {
             const on = i === step
             const cls = on ? 'ra-hop ra-hop-on' : i < step ? 'ra-hop ra-hop-done' : hoverEdge(e) ? 'ra-hop ra-hop-hov' : 'ra-hop'
-            return <path key={i} d={path(e)} className={cls} markerEnd={on || i < step ? 'url(#rf-arrow-on)' : 'url(#rf-arrow)'} />
+            return <path key={i} d={path(e)} className={cls} markerEnd={on || i < step ? `url(#${svgId}-arrow-on)` : `url(#${svgId}-arrow)`} />
           })}
           {edges.map((e, i) => {
             if (!e.label) return null
@@ -161,7 +162,7 @@ export function Flow({ src }: { src: string }) {
                 onPointerEnter={(e) => { setHover(n.id); const outs = edges.filter((x) => x.from === n.id); if (outs.length) tip.show(e, <><strong>{n.id}</strong><span>{outs.map((o) => `→ ${o.to}${o.label ? ': ' + o.label : ''}`).join('\n')}</span></>) }}
                 onPointerLeave={() => { setHover(null); tip.hide() }}
                 style={{ cursor: 'pointer' }}>
-                <rect width={W} height={H} rx={10} className="ra-box-bg" filter={on ? 'url(#rf-glow)' : undefined} />
+                <rect width={W} height={H} rx={10} className="ra-box-bg" filter={on ? `url(#${svgId}-glow)` : undefined} />
                 <rect x={0} y={0} width={4} height={H} rx={2} className="ra-box-tab" />
                 <svg x={12} y={(H - 22) / 2} width={22} height={22} viewBox="0 0 24 24" className="ra-glyph"><path d={glyphFor(n.id)} /></svg>
                 <text x={42} y={H / 2} dominantBaseline="middle" className="ra-label">{n.id.length > 17 ? n.id.slice(0, 16) + '…' : n.id}</text>
@@ -184,10 +185,11 @@ export function Flow({ src }: { src: string }) {
           <button className="btn btn-ghost btn-sm" onClick={() => { setPlaying(false); setStep((s) => (s - 1 + edges.length) % edges.length) }} aria-label="Previous step">←</button>
           <button className="btn btn-primary btn-sm" onClick={() => setPlaying((p) => !p)}>{playing ? 'Pause' : 'Play'}</button>
           <button className="btn btn-ghost btn-sm" onClick={() => { setPlaying(false); setStep((s) => (s + 1) % edges.length) }} aria-label="Next step">→</button>
-          <span className="rich-dots" aria-hidden="true">{edges.map((_, i) => <button key={i} className={i === step ? 'on' : i < step ? 'done' : ''} onClick={() => { setPlaying(false); setStep(i) }} aria-label={`Step ${i + 1}`} />)}</span>
+          <span className="rich-dots" aria-label="Flow steps">{edges.map((_, i) => <button key={i} className={i === step ? 'on' : i < step ? 'done' : ''} onClick={() => { setPlaying(false); setStep(i) }} aria-label={`Step ${i + 1}`} />)}</span>
           <span className="rich-caption"><strong>{step + 1}/{edges.length}</strong> {active?.from} → {active?.to}{active?.label ? <span className="rich-note"> · {active.label}</span> : null}</span>
         </div>
       )}
+      <details className="diagram-outline"><summary>Explore all {edges.length} connections</summary><ol>{edges.map((edge, i) => <li key={i}><button type="button" onClick={() => { setPlaying(false); setStep(i) }} aria-current={i === step ? 'step' : undefined}><span>{edge.from} → {edge.to}</span>{edge.label && <span className="meta">{edge.label}</span>}</button></li>)}</ol></details>
     </figure>
   )
 }

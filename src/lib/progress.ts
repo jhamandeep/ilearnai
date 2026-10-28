@@ -1,10 +1,9 @@
-// Learner progress. Today this is stored in the browser (localStorage) so the
-// site needs no account and no server. The ProgressStore interface is the one
-// seam to replace when the site gets accounts: implement it against a database
-// (or sync localStorage to one) and every page keeps working unchanged.
+// Learner progress uses the current account store and syncs to the server.
+// Browser storage retains only pending changes for the same user.
 //
 // Keys:
 //   done:<route>          "1" when the lesson at <route> is marked complete
+//   activity:<route>#id  "1" when an activity is complete
 //   quiz:<route>#<n>      "score/total" for quiz block n in that lesson
 //   exam:<id>             JSON { score, total, at } for a practice paper
 //   placement             JSON { level, at } from the placement test
@@ -17,44 +16,14 @@ export interface ProgressStore {
   keys(): string[]
 }
 
-const PREFIX = 'ilearnai:'
-
+// Guests start with an empty store. AuthProvider installs the signed-in user's store.
 const memory = new Map<string, string>()
-
-function hasLocalStorage() {
-  try {
-    return typeof window !== 'undefined' && !!window.localStorage
-  } catch {
-    return false
-  }
+let store: ProgressStore = {
+  get: key => memory.get(key) ?? null,
+  set: (key, value) => { memory.set(key, value) },
+  remove: key => { memory.delete(key) },
+  keys: () => [...memory.keys()],
 }
-
-const browserStore: ProgressStore = {
-  get(key) {
-    try { return hasLocalStorage() ? window.localStorage.getItem(PREFIX + key) : memory.get(key) ?? null } catch { return memory.get(key) ?? null }
-  },
-  set(key, value) {
-    memory.set(key, value)
-    try { if (hasLocalStorage()) window.localStorage.setItem(PREFIX + key, value) } catch { /* private mode or quota: keep the in-memory copy */ }
-  },
-  remove(key) {
-    memory.delete(key)
-    try { if (hasLocalStorage()) window.localStorage.removeItem(PREFIX + key) } catch { /* ignore */ }
-  },
-  keys() {
-    try {
-      if (!hasLocalStorage()) return [...memory.keys()]
-      const out: string[] = []
-      for (let i = 0; i < window.localStorage.length; i++) {
-        const k = window.localStorage.key(i)
-        if (k && k.startsWith(PREFIX)) out.push(k.slice(PREFIX.length))
-      }
-      return out
-    } catch { return [...memory.keys()] }
-  },
-}
-
-let store: ProgressStore = browserStore
 export function setProgressStore(s: ProgressStore) { store = s; emit() }
 
 // ---- change notification so React re-renders ----
@@ -97,3 +66,33 @@ export function setPlacement(level: string) { store.set('placement', JSON.string
 export function resetProgress() { for (const k of store.keys()) store.remove(k); emit() }
 
 export function doneCount(routes: string[]) { return routes.filter(isDone).length }
+
+export function isActivityDone(route: string, id: string) {
+  return isDone(route) || store.get(`activity:${route}#${id}`) === '1'
+}
+export function setActivityDone(route: string, id: string, done: boolean, allIds: string[]) {
+  // Preserve previously completed lessons when a learner reopens one activity.
+  if (isDone(route)) for (const activityId of allIds) store.set(`activity:${route}#${activityId}`, '1')
+  if (done) store.set(`activity:${route}#${id}`, '1')
+  else store.remove(`activity:${route}#${id}`)
+  if (allIds.length > 0 && allIds.every(activityId => store.get(`activity:${route}#${activityId}`) === '1')) store.set(`done:${route}`, '1')
+  else store.remove(`done:${route}`)
+  emit()
+}
+
+export function recordLessonVisit(route: string, title: string) {
+  store.set('last-lesson', JSON.stringify({ route, title, at: new Date().toISOString() })); emit()
+}
+export function lastLesson(): { route: string; title: string; at: string } | null {
+  try {
+    const value = JSON.parse(store.get('last-lesson') ?? 'null')
+    return value && typeof value.route === 'string' && value.route.startsWith('/courses/') && typeof value.title === 'string' ? value : null
+  } catch { return null }
+}
+
+export function isWorkReviewed(industry: string, useCase: string) { return store.get(`work:${industry}/${useCase}`) === '1' }
+export function setWorkReviewed(industry: string, useCase: string, reviewed: boolean) {
+  const key = `work:${industry}/${useCase}`
+  if (reviewed) store.set(key, '1'); else store.remove(key)
+  emit()
+}

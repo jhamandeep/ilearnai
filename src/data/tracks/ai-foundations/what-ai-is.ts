@@ -3,277 +3,230 @@ import type { Module } from '../../types'
 export const mod: Module = {
   slug: 'what-ai-is',
   title: 'What AI is',
-  description: 'The four nested circles of AI, rules versus learning, the learning loop on the house-price table, and a map of the whole AI ecosystem.',
+  description: 'Understand AI methods and outputs, compare rules with learning, follow the learning loop, and connect the parts of an AI service.',
   level: 'beginner',
   lessons: [
     {
       slug: 'the-four-circles',
       title: 'AI, machine learning, deep learning and generative AI',
-      summary: 'After this lesson you can place any AI product into one of four nested circles and give one example of each.',
+      summary: 'Describe what an AI tool receives, produces, and learns. Use a familiar service task to separate model capabilities from human decisions.',
       minutes: 20,
       objectives: [
-        'Explain the four nested circles: artificial intelligence, machine learning, deep learning and generative AI.',
-        'Give one concrete example for each circle using the spam filter and the house-price table.',
-        'Choose the right circle for a product by asking three questions.',
-        'Name five events in the history of AI and the circle each one belongs to.',
+        'Explain how AI, machine learning, deep learning, and generative AI relate.',
+        'Separate a tool’s method from the output it produces.',
+        'Choose a rule, prediction, search, or generated draft for a familiar task.',
+        'Name the evidence and human check needed before using a model output.',
       ],
       keyTerms: ['artificial-intelligence', 'machine-learning', 'deep-learning', 'generative-ai', 'neural-network', 'large-language-model', 'rule-based-system'],
       body: `
 ## What this lesson covers
 
-This lesson explains four words that people use as if they mean one thing: artificial intelligence, machine learning, deep learning and generative AI. They do not mean one thing. They are four circles, one inside the other, and each smaller circle adds one idea to the circle around it. At the end you can place any AI product you meet into the right circle, and you can give one example of each circle from the spam filter and the house-price table you already know.
+This lesson helps you describe an AI tool without relying on marketing labels. You will separate its task, learning method, and output. You will also decide where a person must check the result.
+
+You do not need code for this lesson. Keep one work example in mind: a service team answering questions about an organisation’s procedures.
 
 ## Why it matters
 
-You are going to build a complete AI system in the [Build the AI Ecosystem](/courses/build-ai-ecosystem/set-up-your-workshop/the-project-plan) track. That system uses parts from all four circles. The chat model is generative AI. The retrieval step uses deep learning to turn text into vectors. The evaluation step is plain machine learning. The guardrails around the agent are hand-written rules, which is the oldest kind of AI. If you can name the circle a part belongs to, you know what that part needs: rules written by a person, or examples, or a neural network, or a model that produces text. The next lesson, [Rules versus learning](/courses/ai-foundations/what-ai-is/rules-vs-learning), looks closely at the line between the first two circles.
+A service team wants to answer routine questions faster. Its manager considers an “AI assistant.” That name does not explain what the tool does. The team needs to know which information enters, what result comes out, and how staff use it.
+
+Perhaps the team needs a better search box. Perhaps it needs to route requests to the right queue. Perhaps staff need a first draft of an answer. These are different tasks. They can use different methods, even inside one product.
+
+Choosing the task first makes the discussion useful. You can compare the proposed tool with the existing process. You can ask whether its mistakes create extra work. You can also name the person responsible for checking each result.
+
+The same thinking applies across fields. A retailer may prepare product descriptions. A teacher may adapt an exercise. A service desk may group incoming tickets. The details change, but you can still inspect the input, output, and review step.
 
 :::video
-id: PeMlggyqz0Y
-why: Watch all 100 seconds. The video names machine learning, neural networks and deep learning in a row. After this lesson, watch it again and place each thing it mentions into a circle.
+id: i_LwzRVP7bg
+why: Use the opening explanations of machine learning before the coding sections. Identify a model input and its expected output.
 :::
 
 ## The idea with an example
 
-> **Analogy.** Every car is a vehicle, but not every vehicle is a car. Every electric car is a car, but not every car is electric. Every self-driving electric car is an electric car, but most electric cars do not drive themselves. Vehicles, cars, electric cars and self-driving electric cars are four circles, one inside the other. AI, machine learning, deep learning and generative AI nest in the same way.
+> **Analogy.** A kitchen contains recipes, skilled cooks, and finished meals. A recipe describes a method; a meal describes an output. Calling something a “meal” does not tell you which method produced it. AI terms also describe different aspects of a system.
 
-Artificial intelligence (AI) is the outer circle. AI is any program that does a task which needs intelligence when a person does it. Sorting mail into spam and not spam needs a little intelligence. Guessing the price of a house needs some. Playing chess needs a lot. A program that does any of these counts as AI, no matter how it works inside.
+Artificial intelligence (AI) is a broad field of computer systems that perform tasks such as recognising patterns, planning, and generating language. Some approaches use explicit rules. Others learn patterns from data. A basic spreadsheet calculation is useful automation, but calling it AI usually adds little information.
 
-The first running example is the spam filter. In the outer circle, a person writes rules. The rule-based filter says: if the email contains the word prize, or the word free, or more than 3 exclamation marks, mark it as spam. A rule-based system is a program whose decisions follow if-then rules that a person wrote. This is AI. It is not machine learning, because the program did not learn anything. A person did the learning and wrote it down.
+Machine learning (ML) is an approach that fits a model to data. A model is a computational representation used to produce an output from an input. Training adjusts the model using examples or other feedback. Using the trained model on a new input is called inference.
 
-Machine learning (ML) is the second circle. A machine learning program learns its rules from examples instead of having a person write them. Take the 1,000 emails that a person already marked as spam or not spam. A machine learning spam filter counts how often each word appears in spam and in normal mail. It finds on its own that the word free appears in 240 of the 300 spam emails but in only 35 of the 700 normal ones. Nobody wrote that rule. The program found it in the data.
+Deep learning is machine learning that uses neural networks with multiple layers. A neural network transforms numerical inputs through connected calculations. Training adjusts numerical values called parameters. Deep learning can support classification, prediction, or generation.
 
-The second running example is the house-price table from the Start Here track. It has 6 rows. Each row has the size of a house in square metres and its price.
+Generative AI describes systems that create content, such as text, images, or audio. It describes an output capability. Modern language assistants commonly use deep neural networks. However, generative modelling is not limited to deep learning. Avoid treating these four terms as four exclusive product categories.
 
-| id | size_m2 | bedrooms | city | garden | price |
-| --- | --- | --- | --- | --- | --- |
-| 1 | 50 | 1 | Leeds | no | 150000 |
-| 2 | 70 | 2 | Leeds | yes | 210000 |
-| 3 | 90 | 3 | York | yes | 260000 |
-| 4 | 120 | 4 | York | yes | 380000 |
-| 5 | 60 | 2 | Leeds | no | 170000 |
-| 6 | 100 | 3 | York | no | 300000 |
+A single tool can therefore be both machine learning and generative AI. It can also use rules around the model. The labels overlap because they answer different questions.
 
-A rule-based price guesser is a person who says: a house costs 3,000 per square metre. A machine learning price guesser takes the 6 rows and finds the number of pounds per square metre that fits them best, which turns out to be about 3,020. Same task, different circle. The person guessed the rule; the program learned it from the data.
+Our fictional service team receives this request: “Where do I submit an expense receipt?” The approved procedure says to use the expense portal and attach a receipt. Consider three possible tools.
 
-Deep learning is the third circle. Deep learning is machine learning where the model is a neural network with many layers. A neural network is a model built from layers of simple units, where each unit multiplies its inputs by weights, adds them up, and applies a squashing function. Many layers stacked together can read raw data: the pixels of a photo, the sound of a voice, or the full text of an email. The word-count spam filter needs a person to decide that words are the thing to count. A deep learning spam filter reads the raw characters and finds its own features, so it can also catch the misspelling fr33 pr1ze. For the house, a deep learning model could look at the photo of the house and estimate the price from the picture alone.
+| Tool | Input | Output | What the team must check |
+| --- | --- | --- | --- |
+| A routing rule | A form with the category “expenses” | The finance-support queue | The rule matches the approved routing process |
+| A learned classifier | The words in a request | A suggested request category | The category is correct on new requests |
+| A drafting assistant | The question and approved procedure | A proposed answer | The answer matches the source and omits invented conditions |
 
-Generative AI is the fourth and smallest circle. Generative AI is deep learning where the model produces new content, such as text, images, sound or code. All the models so far only score or sort an input: spam or not spam, a price. A generative model writes something that did not exist. Give it row 3 of the house table and it writes: Family house with 3 bedrooms and a garden on a quiet street in York. A large language model (LLM) is a generative model that produces text one token at a time. The chat assistants you have used are large language models.
+A classifier predicts a category. The classifier might use a small statistical model or a deep neural network. Its job remains classification in either case. A drafting assistant creates wording. It might receive a category from the classifier before producing its answer.
+
+Suppose the routing rule sends 20 correctly labelled forms to the finance queue. That shows the rule works for those forms. It says nothing about free-text requests with missing labels. A learned classifier could help with that messier input, but it needs examples and evaluation.
+
+Now suppose a classifier assigns 18 of 20 new requests to the correct queue. The observed accuracy is 18 divided by 20, or 90%. Two requests still need correction. This small teaching sample does not establish performance on every department, language, or unusual request.
+
+The drafting assistant has a different output to check. “Use the expense portal and attach your receipt” follows the fictional source. “Your expense will be paid tomorrow” adds a promise the source never made. Fluent wording does not make that promise true.
 
 :::flow
-title: Each circle adds one idea to the circle around it
-Any program -> AI: does a task that needs intelligence
-AI -> Machine learning: learns its rules from examples
-Machine learning -> Deep learning: uses a neural network with many layers
-Deep learning -> Generative AI: produces new content
+title: A useful answer needs a task, evidence, and review
+Staff question -> Approved guide: find the relevant procedure
+Approved guide -> Draft answer: use the supplied evidence
+Draft answer -> Staff review: check facts and missing conditions
+Staff review -> Checked response: use the existing service process
 :::
 
-Press Next to follow one spam email through all four circles. The panel shows what each circle does with the same input.
+Follow the same request through the steps below. Notice where information becomes a draft and where a person checks it.
 
 :::scenario
-title: One email meets the four circles
-state: email=Free prize! Click now, verdict=none
-step: The rule-based filter checks its list. The word free is on the list, so the rule fires.
-state: circle=AI (rules), verdict=spam, reason=rule for the word free
-step: The machine learning filter looks up its learned word scores. The word free scored 0.87 and prize scored 0.94 on 1,000 examples.
-state: circle=machine learning, verdict=spam, reason=learned scores 0.87 and 0.94
-step: The deep learning filter reads the raw characters through 12 layers. It also catches the variant fr33 pr1ze that the first two filters miss.
-state: circle=deep learning, verdict=spam, reason=pattern in raw text
-step: A generative model is asked to reply. It writes a polite refusal in one sentence. It produced new text instead of a verdict.
-state: circle=generative AI, verdict=spam, output=a written reply
+title: One expense question becomes a checked response
+state: request=Where do I submit a receipt?, status=unanswered
+step: A staff member opens the current expense procedure.
+state: source=current approved procedure, status=evidence found
+step: The assistant drafts an answer from the procedure.
+state: output=Use the portal and attach the receipt, status=draft only
+step: The staff member compares the draft with the source.
+state: unsupported promises=none, status=checked
+step: The staff member sends the checked guidance through the normal service process.
+state: status=answered, payment approval=not decided
 :::
-
-The circles also tell a story in time. The outer circle is the oldest. Each inner circle became practical later, because it needed more data and more computing power than the one before it.
-
-:::timeline
-title: When each circle became practical (years after 1950)
-unit: years
-lane AI
-lane Machine learning
-lane Deep learning
-lane Generative AI
-AI: rules and search programs @6-75
-Machine learning: learning from examples @36-75
-Deep learning: many-layer networks @62-75
-Generative AI: models that write and draw @70-75
-:::
-
-Here is the history of the field in ten lines. The last column names the circle.
-
-| Year | Event | Circle |
-| --- | --- | --- |
-| 1950 | Alan Turing asks whether a machine can think and proposes a test | AI |
-| 1956 | A summer workshop at Dartmouth College names the field artificial intelligence | AI |
-| 1958 | Frank Rosenblatt builds the perceptron, a one-layer neural network | ML |
-| 1986 | Backpropagation, the method that trains many-layer networks, becomes widely known | DL |
-| 1997 | Deep Blue, a rule and search program, beats the world chess champion | AI |
-| 2012 | AlexNet, a deep network, wins the ImageNet photo contest by a wide margin | DL |
-| 2017 | The transformer design is published in the paper Attention Is All You Need | DL |
-| 2020 | GPT-3 shows that a large language model can do many tasks from a text prompt | GenAI |
-| 2022 | ChatGPT puts a chat model in front of 100 million people in 2 months | GenAI |
-| 2025 | Agents: models that call tools and run multi-step tasks become common products | GenAI |
 
 ## How it works
 
-To place a product in a circle, ask three questions in order. Each yes moves you one circle inward.
+Use two questions instead of forcing every product into one circle. First ask what the system must produce. Then ask how it produces that result. Keep the surrounding work process visible too.
 
 :::anim
-title: Three questions move a product inward through the four circles
-box ai "AI|(rules)" @ 145,440 size: 150x64 icon: code
-box ml "Machine|learning" @ 370,440 size: 150x64 icon: training
-box dl "Deep|learning" @ 595,440 size: 150x64 icon: network
-box genai "Generative|AI" @ 820,440 size: 150x64 icon: chat
-rect chat @ 145,340 size: 170x50 "Chat assistant" color: yellow
-rect face @ 145,250 size: 170x50 "Face unlock" color: teal
-rect chess @ 145,160 size: 170x50 "Chess program" color: grey
-text q1 "Question 1: does it learn its rules from examples?" @ 480,80 size: 19 color: yellow
-text q2 "Question 2: is the model a neural network with many layers?" @ 480,80 size: 19 color: yellow
-text q3 "Question 3: does it produce new content?" @ 480,80 size: 19 color: yellow
-text done "Each yes moves a product one circle inward" @ 480,80 size: 19 color: grey
+title: Choose the task before choosing the AI label
+context: A fictional service team wants to answer a question about submitting an expense receipt.
+focus: Follow the question, the source, the proposed answer, and the person who checks it.
+takeaway: A model can prepare an answer. The workflow must still establish which information is correct and who may act.
+box question "Staff question" @ 130,180 size: 170x68 icon: user
+box source "Approved guide" @ 370,180 size: 170x68 icon: database
+box model "Drafting model" @ 620,180 size: 170x68 icon: model
+box review "Staff review" @ 820,360 size: 170x68 icon: user
+box answer "Checked response" @ 370,360 size: 180x68 icon: chat
+text input "Where do I submit|an expense receipt?" @ 130,80 size: 18 color: grey
+text draft "Use the portal.|Attach the receipt." @ 620,80 size: 18 color: teal
+text check "Compare the wording|with the current source." @ 680,470 size: 18 color: grey
 
-step: The four circles lie side by side. AI, the outer circle, is on the left.
-  show ai, ml, dl, genai
-step: Take a chat assistant. Question 1: does it learn its rules from examples? Yes, so it moves inward.
-  show chat, q1
-  arrow ai -> ml : yes
-  & move chat -> 370,340
-step: Question 2: is the model a neural network with many layers? Yes. One circle further in.
-  hide q1
-  show q2
-  arrow ml -> dl : yes
-  & move chat -> 595,340
-step: Question 3: does it produce new content? Yes. A chat assistant is generative AI.
-  hide q2
-  show q3
-  arrow dl -> genai : yes
-  & move chat -> 820,340
-  highlight genai
-step: Face unlock learns and uses many layers, but only answers yes or no. It stops at deep learning.
-  hide q3
-  restore genai
-  show face
-  send ai -> ml : yes
-  & move face -> 370,250
-  send ml -> dl : yes
-  & move face -> 595,250
-  highlight dl
-step: A chess program follows rules a person wrote. It does not learn, so it stays in the outer circle.
-  restore dl
-  show chess, done
-  pulse chess
-  highlight ai
+step: A staff member asks where to submit an expense receipt.
+explain: Start with a specific task. A general request to add AI does not define success.
+  show question, input
+step: The workflow finds the current approved procedure.
+explain: The model needs relevant evidence. A confident answer from memory can still be outdated or wrong.
+  show source
+  arrow question -> source : find evidence
+step: The model drafts an answer using the supplied procedure.
+explain: Drafting creates wording. It does not approve a payment or change the source policy.
+  show model, draft
+  arrow source -> model : source text
+step: A staff member checks the draft against the source.
+explain: The reviewer looks for invented promises, omitted conditions, and the wrong document version.
+  show review, check
+  arrow model -> review : proposed wording
+step: The staff member shares the checked response.
+explain: The final action uses the normal service process. The person remains responsible for the message.
+  show answer
+  arrow review -> answer : reviewed wording
+  highlight answer
 :::
 
-1. Does the program learn its rules from examples, or did a person write every rule? If a person wrote every rule, the product is AI only. Stop here. If it learns, it is at least machine learning.
-2. Is the model a neural network with many layers? If not, it is classic machine learning, such as the word-count spam filter or the line through the house prices. If yes, it is deep learning.
-3. Does the model produce new content, such as text, images or sound? If not, it is deep learning that scores or sorts. If yes, it is generative AI.
+1. Describe the result you need. Name a number, category, retrieved document, draft, or proposed action.
+2. Identify the information available. Check whether the task has explicit rules, useful examples, or approved documents.
+3. Inspect the method. Ask whether it follows rules, learns from data, or combines both.
+4. Inspect the output separately. Ask whether it predicts a value, chooses a category, or generates content.
+5. Define a check before using the result. Compare quality and effort with the current process.
 
-The table applies the three questions to common products.
+| Question | Useful answer | Why it helps |
+| --- | --- | --- |
+| What work changes? | Staff prepare routine answers | Establishes a specific task |
+| What does the model receive? | A question and an approved procedure | Makes the evidence visible |
+| What does it return? | A draft with a source reference | Defines the output to inspect |
+| Who checks it? | The member of staff handling the request | Gives the review an owner |
+| What shows improvement? | Correct answers with less total preparation and correction time | Measures the whole task |
 
-| Product | Learns from examples? | Many-layer network? | Produces content? | Circle |
-| --- | --- | --- | --- | --- |
-| A chess program that searches moves | no | no | no | AI |
-| A route planner in a map app | no | no | no | AI |
-| A spam filter with learned word scores | yes | no | no | Machine learning |
-| The price line through the 6 houses | yes | no | no | Machine learning |
-| Face unlock on a phone | yes | yes | no | Deep learning |
-| Speech to text | yes | yes | no | Deep learning |
-| A chat assistant | yes | yes | yes | Generative AI |
-| An image generator | yes | yes | yes | Generative AI |
+A source reference helps you inspect an answer, but the reference itself is not proof. Open the source. Check whether it supports the exact claim. Also check whether the source is current and applies to the request.
 
-The three questions fit in a small Python function. Run it on your own computer and change the three answers.
+The distinction between training and inference prevents another common confusion. During training, the system adjusts model parameters. During inference, a trained model processes the supplied input. Adding a document to a prompt changes that input; it does not necessarily retrain the model.
 
-:::code
-lang: python
-file: circles.py
-def which_circle(learns, deep, generates):
-    if not learns:
-        return "AI (rules written by a person)"
-    if not deep:
-        return "Machine learning"
-    if not generates:
-        return "Deep learning"
-    return "Generative AI"
+A prompt is the information and instructions provided for a model interaction. A context window is the amount of input and generated material the model can handle in that interaction. A document outside the supplied context is not automatically available to the model. Products may add search and other tools to obtain information before answering.
 
-print(which_circle(learns=False, deep=False, generates=False))  # chess program
-print(which_circle(learns=True, deep=False, generates=False))   # word-count spam filter
-print(which_circle(learns=True, deep=True, generates=False))    # face unlock
-print(which_circle(learns=True, deep=True, generates=True))     # chat assistant
+You do not need to understand every mathematical detail to ask useful implementation questions. A manager can define acceptable answers. A team member can identify common exceptions. An architect can check which information the workflow can access. A delivery team can test the whole process on representative examples.
+
+Greater model complexity is not automatically better. An exact rule may be appropriate when the condition is stable and explicit. Learned models can help when patterns are difficult to specify by hand. Generative tools can help prepare wording when a draft is the desired output. Each choice still needs a suitable test.
+
+:::video
+id: LPZh9BOjkQs
+why: Watch how a language model produces text. Afterwards, explain why generating plausible words differs from checking a policy fact.
 :::
-
-:::code
-lang: text
-AI (rules written by a person)
-Machine learning
-Deep learning
-Generative AI
-:::
-
-Two more facts help you read news about AI. First, the border of the outer circle moves. A calculator does arithmetic faster than any person, but nobody calls it AI today. A route planner was called AI in 1990 and is now a normal map feature. When a task becomes ordinary, people stop calling it AI. Second, the inner circles do not replace the outer ones. A chat assistant is generative AI, but the system around it uses rules to block some requests and plain machine learning to rank results. A real product uses all four circles at once.
-
-The word model appears in every circle from machine learning inward. A model is a function with adjustable numbers that turns an input into a prediction. The price line has 1 adjustable number. The word-count spam filter has 1 number per word. A large language model has billions. The next lessons in this module explain where those numbers come from.
 
 ## Try it
 
 :::exercise
-title: Sort eight products into circles
-task: Use paper. For each product, answer the three questions and write the circle. The products are: a thermostat that turns the heating on below 18 degrees; a bank program that flags a card payment as fraud using 2 million past payments; a translation app; the autocomplete that suggests the next word on your phone keyboard; a vacuum robot that follows walls; a photo app that groups pictures by the face in them; a program that writes a short poem; a spreadsheet formula that adds a column.
-hint: Start with question 1 for every product. A thermostat and a spreadsheet formula do not learn. A translation app and a poem writer produce new text.
+title: Design a small assistance task
+task: Choose a repetitive task from your work or daily life. Write its input, desired output, available evidence, reviewer, and one unacceptable mistake. Decide whether a rule, prediction, search, or generated draft is useful. You can do this on paper in 5 minutes.
+hint: Choose a narrow task, such as drafting a product description from a specification sheet. Do not begin with a tool name.
 lang: text
 solution:
-Thermostat: does not learn, and the task needs no intelligence. Not AI (a plain program).
-Fraud flag from 2 million payments: learns, usually a classic model or a tree. Machine learning.
-Translation app: learns, deep network, produces new text. Generative AI.
-Keyboard autocomplete: learns, a small language model, produces the next word. Generative AI.
-Wall-following vacuum robot: hand-written rules. AI (rules).
-Photo app that groups faces: learns, deep network, does not produce content. Deep learning.
-Poem writer: learns, deep network, produces text. Generative AI.
-Spreadsheet formula: does not learn, no intelligence needed. Not AI.
+Task: Draft a product description.
+Input: Approved specifications for a 750 ml bottle.
+Output: A short description that uses only those facts.
+Evidence: Current product specification sheet.
+Reviewer: The person responsible for product content.
+Unacceptable mistake: Inventing a 24-hour insulation claim.
+Approach: Generate a draft, then check every product claim.
+A template may be enough if every description uses the same fixed fields.
 :::
+
+Explain your choice to another person. Ask them to identify one missing input or exception. Then revise the task description. This conversation often reveals more than comparing tool names alone.
 
 ## Common mistakes
 
-- Mistake: you use AI and machine learning as two names for one thing. Fix: machine learning is the inner circle that learns from examples; a chess program with hand-written rules is AI but not machine learning.
-- Mistake: you think deep learning is a different field from machine learning. Fix: deep learning is machine learning with a many-layer neural network as the model; the learning loop is the same.
-- Mistake: you think every neural network is generative. Fix: face unlock uses a deep network and only answers yes or no; generative models produce new content.
-- Mistake: you think generative AI replaced the older circles. Fix: a chat product uses rules for safety, classic machine learning for ranking, and a deep network for embeddings, all at once.
-- Mistake: you think a bigger circle means a better method. Fix: the circles describe what a method needs, not how good it is; a 10-line rule filter beats a deep network when the rule is exact and the data is tiny.
+- Mistake: treating AI, ML, deep learning, and generative AI as exclusive product categories. Fix: separate the method from the output capability.
+- Mistake: assuming every useful automation needs a model. Fix: compare an explicit rule or template with the proposed model.
+- Mistake: treating fluent wording as verified evidence. Fix: check the claims against suitable sources.
+- Mistake: measuring only draft-generation time. Fix: include review, corrections, and the quality of the finished task.
 
 ## Check your understanding
 
 :::quiz
-title: Check: the four circles
-q: A hospital program follows 200 if-then rules written by doctors to suggest a diagnosis. Which circle is it in?
-* AI only, because a person wrote every rule
-- Machine learning, because it makes decisions
-- Deep learning, because 200 rules is a lot
-why: The program did not learn from examples, so it stays in the outer circle no matter how many rules it has.
-q: A program reads the 6-row house table and finds that 3,020 per square metre fits best. Which circle?
-- AI only
-* Machine learning
-- Generative AI
-why: The program learned the number from examples; the model is a single line, not a many-layer network.
-q: Which product is deep learning but not generative AI?
-- A chatbot that writes answers
-* A camera app that recognises your face
-- A thermostat with a rule at 18 degrees
-why: Face recognition uses a many-layer network but only answers who is in the picture; it produces no new content.
-q: A model is given row 3 of the house table and writes a two-sentence listing. What is the smallest circle it belongs to?
-- Machine learning
-- Deep learning
-* Generative AI
-why: The model produced new text, which is the one idea that generative AI adds.
-q: Why does a route planner count as AI in 1990 but not in a 2026 map app?
-- Route planners stopped using algorithms
-* The task became ordinary, so people stopped calling it AI
-- Route planners now use rules instead of learning
-why: The border of the outer circle moves as tasks become routine; the program did not change its nature.
+title: Choose the useful explanation
+q: A deep neural network classifies damaged product images. Which description fits?
+* It uses deep learning for classification; it need not generate new content.
+- It must be generative AI because all deep learning produces new content.
+- It cannot be machine learning because it uses images.
+why: Deep learning describes the method; classification describes the output task.
+q: An assistant writes a response from an approved guide. Which check matters before using it?
+- Whether the response sounds confident.
+* Whether each claim follows from the current applicable source.
+- Whether the response is longer than the source.
+why: Confidence and length do not establish that a claim is supported.
+q: A stable form field maps directly to one of three queues. What should the team compare first?
+* A clear routing rule with the proposed model.
+- The largest available model with no baseline.
+- A text generator that invents a new queue for every form.
+why: A rule may solve the exact task with less complexity and easier testing.
+q: A model routes 18 of 20 new requests correctly. What can you conclude?
+- Every future request will be routed correctly.
+- The model is ready for every department.
+* It achieved 90% accuracy on this small sample; broader evaluation is still needed.
+why: The sample result does not establish performance on other populations or conditions.
+q: You add a current procedure to a model prompt. What necessarily changes?
+* The information available in this interaction.
+- The model parameters are permanently retrained.
+- Every future user automatically receives the same procedure.
+why: Supplying context changes the interaction input; it does not necessarily change model parameters.
 :::
 
 ## Go further
 
-The Wikipedia pages in the links give the long history behind the ten-line table, and the Google machine learning glossary is a good place to look up any word from this module. Read the first section of the artificial intelligence page and the first section of the machine learning page, and notice how each one defines its circle. The next lesson, [Rules versus learning](/courses/ai-foundations/what-ai-is/rules-vs-learning), takes the spam filter and builds it both ways, as rules and as a learned model, so you can see exactly where the first circle ends and the second begins.
+Use the chapter video sequence to compare an intuitive explanation with a longer worked lesson. The source links include Google’s introduction and terminology guide. Next, [Rules versus learning](/courses/ai-foundations/what-ai-is/rules-vs-learning) compares explicit instructions with a method learned from examples. For a work-focused route, explore [AI for your work](/for-work) and describe one bounded pilot in your own field.
 `,
       links: [
+        { label: 'Google: What is machine learning?', url: 'https://developers.google.com/machine-learning/intro-to-ml/what-is-ml', kind: 'docs' },
+        { label: 'Google: Machine learning glossary', url: 'https://developers.google.com/machine-learning/glossary', kind: 'docs' },
         { label: 'Artificial intelligence (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Artificial_intelligence', kind: 'article' },
         { label: 'Machine learning (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Machine_learning', kind: 'article' },
         { label: 'Generative artificial intelligence (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Generative_artificial_intelligence', kind: 'article' },
@@ -312,6 +265,9 @@ why: Watch the first 12 minutes. The teacher defines machine learning as learnin
 
 :::anim
 title: One email scored two ways: by a written rule and by learned shares
+context: The same email is checked using an explicit rule and numbers learned from example emails.
+focus: Compare where each decision comes from. A learned score is still a quantity that needs evaluation.
+takeaway: Choose a rule when the condition is clear; evaluate learned predictions when the patterns are less explicit.
 rect w1 @ 230,150 size: 160x50 "free" color: yellow
 rect w2 @ 480,150 size: 160x50 "meeting"
 rect w3 @ 730,150 size: 160x50 "tomorrow"
@@ -483,6 +439,22 @@ Here is the house example through the same table. A person can state a rough rul
 
 Real systems mix the two. A bank uses a learned model to score a payment for fraud, and a rule to block any payment above 10,000 while the score is checked. A chat product uses a learned model to write answers, and rules to refuse some requests. When you build your own system, draw the line on purpose: rules where the rule is exact or the risk is high, learning where the pattern is messy and the examples are many.
 
+### Bring the idea into a work decision
+
+Consider a fictional service desk. A form has a required department field. An explicit rule can send “Finance” to the finance queue. The rule is easy to inspect because the field has an agreed meaning.
+
+Now consider free-text requests such as “My receipt upload failed.” The department is not stated. A learned classifier could suggest a queue from examples. Staff must still check uncertain or unusual requests.
+
+| Situation | First approach to compare | Evidence to collect |
+| --- | --- | --- |
+| Exact category already supplied | A routing rule | Correct routing for every allowed category |
+| Category hidden in varied wording | A learned suggestion | Results on new requests and common exceptions |
+| Missing essential information | Ask a clarifying question | Whether the reply resolves the uncertainty |
+
+Do not use learning to hide an undefined process. First agree the categories and who owns them. Then compare the rule and model on the same examples. Include requests that belong to no available category. The system needs a way to leave these unassigned.
+
+A manager can count corrections. A team member can explain the exceptions. A builder can implement the fallback. These contributions address the same work problem from different roles.
+
 ## Try it
 
 :::exercise
@@ -584,6 +556,9 @@ why: Watch the first 12 minutes. StatQuest fits a line to a few points by steppi
 
 :::anim
 title: Three update steps roll w down the loss curve
+context: A small price model adjusts one parameter to reduce its error on example houses.
+focus: Watch the parameter move, then compare the corresponding loss.
+takeaway: Lower training loss is evidence about the training examples. Check separate examples before claiming useful generalisation.
 axes ax @ 90,60 size: 540x400 x: 1.6,4.4 y: 0,16000 xlabel: "w" ylabel: "loss"
 curve loss on ax = 7250*x^2 - 43800*x + 66250 color: blue label: "loss"
 dot ball on ax @ 2,7650 r: 9 color: yellow
@@ -755,6 +730,25 @@ The learning rate is the one number in the loop that you choose, and it decides 
 ### Why evaluate on a house that is not in the table
 
 The loss measures the model on the examples it learned from. That is not the question you care about. You care about the next house, the one the model has never seen. A model can fit its training data very well and still be bad on new data; the lesson [Overfitting, underfitting and cross-validation](/courses/ai-foundations/first-models/overfitting-and-generalisation) shows how. So you keep some examples out of training and measure on them at the end. Here the 80 square metre house is the test. The model predicts 240 and the house sold for 250. An error of 10 on unseen data, after training on only 6 rows, is a good sign.
+
+### What improvement looks like outside the training loop
+
+Imagine a fictional team forecasting the time needed to prepare service reports. Its first model misses the true preparation time by 12 minutes on average. After more training, the average training error falls to 3 minutes.
+
+That improvement is not enough to approve the model. The team also checks reports that did not guide the training. Suppose their average error remains 11 minutes. The model has improved on familiar examples but has not shown a similar improvement on new work.
+
+:::scenario
+title: A better training score does not settle the work decision
+state: training error=12 minutes, new-report error=11 minutes
+step: Train on the existing examples and measure the training error again.
+state: training error=3 minutes, new-report error=11 minutes
+step: Evaluate on separate reports that did not guide the updates.
+state: evidence=small improvement on new work
+step: Inspect failures and revise the plan before using the forecast for staffing.
+state: next action=investigate rather than assume success
+:::
+
+Keep the target definition stable. “Preparation time” could exclude waiting, review, or corrections. If people measure it differently, the model learns from inconsistent examples. Agree the meaning of the target before changing the training settings.
 
 ## Try it
 
@@ -942,6 +936,9 @@ Each part has a job, an input and an output. Read the list once now, and come ba
 
 :::anim
 title: One question travels through the parts of the system in 1.4 seconds
+context: One question passes through several parts of a teaching service.
+focus: Follow the evidence and the request path. The displayed times are illustrative.
+takeaway: A failed answer may come from the data, retrieval, prompt, model, or surrounding service.
 num lat = 0 @ 120,130 prefix: "t = " suffix: " s" digits: 2 size: 34 color: yellow
 box mon "Monitoring" @ 720,130 size: 180x64
 num tin = 0 @ 720,200 suffix: " input tokens" size: 18 color: grey
@@ -1040,6 +1037,21 @@ The [Build the AI Ecosystem](/courses/build-ai-ecosystem/set-up-your-workshop/th
 | Monitoring | Ship it | [Observability](/courses/build-ai-ecosystem/ship-it/observability) and [Cost control](/courses/build-ai-ecosystem/ship-it/cost-control) |
 
 Before that track, the rest of this track fills in the model box. [Your first models](/courses/ai-foundations/first-models/linear-regression) trains the price line properly and measures it. [Neural networks](/courses/ai-foundations/neural-networks/a-neuron) replaces the one-number model with layers. [Language as numbers](/courses/ai-foundations/language-as-numbers/tokens) explains how a language model reads and writes text. [Using models](/courses/ai-foundations/using-models/prompting) teaches you to prompt, sample and choose a model. When you finish, you know the chef. The next track builds the restaurant.
+
+### Use the map to find the source of a bad answer
+
+A fictional help assistant gives an outdated address-change procedure. Several parts of the system could explain the mistake. The model is only one candidate.
+
+| Check | What a failure suggests | Useful next action |
+| --- | --- | --- |
+| Is the current guide in the source collection? | Missing or stale source data | Update the approved collection |
+| Did retrieval return that guide? | Search or filtering problem | Inspect the query and retrieved passages |
+| Did the prompt contain the right passage? | Context-construction problem | Inspect what the model actually received |
+| Does the answer follow the passage? | Unsupported generation | Revise the behaviour and evaluate again |
+
+Inspect these steps in order. Retraining the model cannot fix a document that the workflow never supplies. A new prompt cannot make an obsolete source current. Record one failed request with its permitted inputs and outputs, then identify the stage responsible.
+
+This gives the delivery team a specific repair task. It also helps a nontechnical process owner explain why the answer is unacceptable.
 
 ## Try it
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { LabVisual } from '../components/LabVisual'
 import { NumberField, RangeField, Stat } from '../components/Field'
 import { pct } from '../lib/format'
 
@@ -112,6 +113,7 @@ export function TimeoutArchitectLab() {
         <NumberField label="Seed" value={seed} onChange={setSeed} />
       </div>
       <div className="lab-results">
+        <LabVisual title="Latency against your budget" caption="Compare the simulation's end-to-end latency percentiles with the configured time budget." items={[{ label: 'Median (p50)', value: result.p50, display: `${result.p50.toFixed(0)} ms` }, { label: 'p95 latency', value: result.p95, display: `${result.p95.toFixed(0)} ms` }, { label: 'p99 latency', value: result.p99, display: `${result.p99.toFixed(0)} ms` }, { label: 'Time budget', value: budget, display: `${budget} ms` }]} />
         <Stat label="End-to-end p50" value={`${result.p50.toFixed(0)} ms`} />
         <Stat label="End-to-end p99" value={`${result.p99.toFixed(0)} ms`} sub={`p95 ${result.p95.toFixed(0)} ms`} />
         <Stat label="Within budget" value={pct(result.withinBudget)} />

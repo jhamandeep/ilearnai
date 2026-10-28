@@ -6,6 +6,9 @@ export interface LessonLink {
 
 // Lesson bodies follow ASD-STE100 Simplified Technical English: short sentences,
 // active voice, one instruction per sentence, consistent terms.
+export type ActivityKind = 'reading' | 'animation' | 'video' | 'quiz' | 'exercise' | 'lab' | 'resources'
+export interface ActivityOutline { id: string; kind: ActivityKind; title: string }
+
 export interface Lesson {
   slug: string
   title: string
@@ -16,6 +19,7 @@ export interface Lesson {
   objectives: string[] // what the reader can do after the lesson
   keyTerms: string[] // glossary slugs or plain terms used in the lesson
   body: string // markdown, supports $math$
+  activities?: ActivityOutline[] // public outline; activity content stays in the private curriculum
   links: LessonLink[] // free external resources: videos, papers, docs
 }
 
@@ -44,7 +48,7 @@ export interface Track {
 
 export interface Video {
   id: string // YouTube video id, or '' when only a playlist/channel url is known
-  embeddable?: boolean // false when the owner disabled embedding; the site then links out
+  embeddable?: boolean // false when embedding is unavailable or could not be verified; link out instead
   url: string // canonical YouTube url (video, playlist or channel)
   title: string
   channel: string
@@ -54,6 +58,8 @@ export interface Video {
   minutes?: number
   why: string
   kind: 'video' | 'playlist' | 'channel'
+  sourceUrl?: string // publisher's course page, when available
+  verifiedOn?: string
 }
 
 export interface Paper {
@@ -97,7 +103,7 @@ export interface BlogPost {
   body: string // markdown, supports $math$
 }
 
-export type ResourceKind = 'course' | 'book' | 'lecture' | 'repo' | 'blog' | 'tool' | 'paper-list'
+export type ResourceKind = 'course' | 'book' | 'lecture' | 'repo' | 'blog' | 'tool' | 'paper-list' | 'visualization'
 export type Level = 'foundations' | 'beginner' | 'intermediate' | 'advanced'
 
 export const levelOrder: Level[] = ['foundations', 'beginner', 'intermediate', 'advanced']
@@ -117,6 +123,11 @@ export interface Resource {
   track: string // track slug
   topic: string // short topic label, e.g. "Attention", "Consistency"
   why: string // one sentence on why it is worth the time
+  repoUrl?: string
+  firstTask?: string
+  setup?: string
+  openSource?: boolean
+  checkedOn?: string
 }
 
 export interface RoadmapStage {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NumberField, Stat } from '../components/Field'
 import { bytes, num } from '../lib/format'
+import { LabVisual } from '../components/LabVisual'
 
 export function CapacityLab() {
   const [dau, setDau] = useState(10_000_000)
@@ -36,6 +37,7 @@ export function CapacityLab() {
         <NumberField label="Replication factor" value={replication} min={1} onChange={setReplication} />
       </div>
       <div className="lab-results">
+        <LabVisual title="From users to stored data" mode="pipeline" caption="Follow the workload through requests, peak traffic, and replicated storage." items={[{ label: 'Daily users', value: dau, display: num(dau), detail: `${reqPerUser} requests per person each day.` }, { label: 'Daily requests', value: reqPerDay, display: num(reqPerDay), detail: `${num(avgQps)} requests per second on average.` }, { label: 'Peak traffic', value: peakQps, display: `${num(peakQps)} QPS`, detail: `${num(readQps)} reads and ${num(writeQps)} writes per second.` }, { label: 'Retained storage', value: storageTotal, display: bytes(storageTotal), detail: `${retentionYears} years of retention across ${replication} replicas.` }]} />
         <Stat label="Requests per day" value={num(reqPerDay)} />
         <Stat label="Average QPS" value={num(avgQps)} />
         <Stat label="Peak QPS" value={num(peakQps)} sub={`${num(readQps)} reads · ${num(writeQps)} writes`} />

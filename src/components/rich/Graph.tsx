@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type PointerEvent } from 'react'
+import { useId, useEffect, useMemo, useState, type PointerEvent } from 'react'
 import { parseBlock } from './parse'
 import { compileExpr, fmt, niceTicks } from './viz'
 import { useTip } from './Tip'
@@ -29,6 +29,7 @@ const SAMPLES = 240
 const COLORS = ['var(--primary)', 'var(--accent-inference)', 'var(--accent-engineering)']
 
 export function Graph({ src }: { src: string }) {
+  const svgId = 'graph-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const g = useMemo(() => {
     const b = parseBlock(src)
     let xr: [number, number] = [-5, 5]
@@ -158,7 +159,7 @@ export function Graph({ src }: { src: string }) {
       <div className="rich-stage" ref={tip.host}>
         <svg key={run} viewBox={`0 0 ${W} ${H}`} className="gr-svg" role="img" aria-label={g.title ?? 'Graph'} onPointerMove={onMove} onPointerLeave={() => { setCursor(null); tip.hide() }}>
           <defs>
-            <clipPath id={`gr-clip-${run}`}><rect x={ML} y={MT - 2} width={PW} height={PH + 4} /></clipPath>
+            <clipPath id={`${svgId}-clip-${run}`}><rect x={ML} y={MT - 2} width={PW} height={PH + 4} /></clipPath>
           </defs>
           {yt.map((t) => <line key={'y' + t} x1={ML} x2={ML + PW} y1={sy(t)} y2={sy(t)} className="gr-grid" />)}
           {xt.map((t) => <line key={'x' + t} x1={sx(t)} x2={sx(t)} y1={MT} y2={MT + PH} className="gr-grid" />)}
@@ -174,7 +175,7 @@ export function Graph({ src }: { src: string }) {
               {v.label && <text x={sx(v.x) + 5} y={MT + 12} className="gr-vlabel">{v.label}</text>}
             </g>
           ))}
-          <g clipPath={`url(#gr-clip-${run})`}>
+          <g clipPath={`url(#${svgId}-clip-${run})`}>
             {g.curves.map((c, k) => (
               <path key={c.name + k} d={pathOf(c.pts)} className="gr-line" style={{ stroke: COLORS[k % COLORS.length], animationDelay: `${k * 250}ms` }} pathLength={1} />
             ))}

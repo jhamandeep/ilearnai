@@ -123,6 +123,133 @@ unit: GB
 
 ## How it works
 
+
+:::anim
+title: Admit 8k-token sequences into 16 GB of free memory
+# Worked values and narration follow the scenario in this lesson.
+text heading "Admit 8k-token sequences into 16 GB of free memory" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 186,145 r: 3 color: grey
+dot mark2 @ 271,145 r: 3 color: grey
+dot mark3 @ 357,145 r: 3 color: grey
+dot mark4 @ 443,145 r: 3 color: grey
+dot mark5 @ 529,145 r: 3 color: grey
+dot mark6 @ 614,145 r: 3 color: grey
+dot mark7 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, mark7, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "free"
+  & label value0 "16 GB"
+  & highlight card0
+  label key1 "sequences"
+  & label value1 "0"
+  & highlight card1
+  label key2 "waiting"
+  & label value2 "0"
+  & highlight card2
+
+step: The weights are loaded.
+  restore card0, card1, card2
+  move cursor -> 186,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "free"
+  & label value0 "16 GB"
+  label key1 "sequences"
+  & label value1 "0"
+  label key2 "waiting"
+  & label value2 "0"
+
+step: The scheduler admits sequence 1 and reserves 2.68 GB.
+  restore card0, card1, card2
+  move cursor -> 271,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "free"
+  & label value0 "13.32 GB"
+  & highlight card0
+  label key1 "sequences"
+  & label value1 "1"
+  & highlight card1
+  label key2 "waiting"
+  & label value2 "0"
+
+step: The scheduler admits sequence 2.
+  restore card0, card1, card2
+  move cursor -> 357,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "free"
+  & label value0 "10.64 GB"
+  & highlight card0
+  label key1 "sequences"
+  & label value1 "2"
+  & highlight card1
+  label key2 "waiting"
+  & label value2 "0"
+
+step: The scheduler admits sequence 3.
+  restore card0, card1, card2
+  move cursor -> 443,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "free"
+  & label value0 "7.96 GB"
+  & highlight card0
+  label key1 "sequences"
+  & label value1 "3"
+  & highlight card1
+  label key2 "waiting"
+  & label value2 "0"
+
+step: The scheduler admits sequence 4.
+  restore card0, card1, card2
+  move cursor -> 529,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "free"
+  & label value0 "5.28 GB"
+  & highlight card0
+  label key1 "sequences"
+  & label value1 "4"
+  & highlight card1
+  label key2 "waiting"
+  & label value2 "0"
+
+step: The scheduler admits sequence 5.
+  restore card0, card1, card2
+  move cursor -> 614,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "free"
+  & label value0 "2.6 GB"
+  & highlight card0
+  label key1 "sequences"
+  & label value1 "5"
+  & highlight card1
+  label key2 "waiting"
+  & label value2 "0"
+
+step: Sequence 6 needs 2.68 GB but only 2.6 GB is free.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 8 (0.6s)
+  label key0 "waiting"
+  & label value0 "1"
+  & highlight card0
+  label key1 "free"
+  & label value1 "2.6 GB"
+  label key2 "sequences"
+  & label value2 "5"
+:::
+
 The cache size per sequence is:
 
 $$\\text{bytes} = 2 \\times L \\times H_{kv} \\times d_{head} \\times T \\times b$$
@@ -353,6 +480,140 @@ The first value moved from 0.8 to 0.9. That is the quantisation error. The scale
 
 ## How it works
 
+
+:::anim
+title: Quantise 0.8, -1.2, 0.3 and 2.1 to INT4
+# Worked values and narration follow the scenario in this lesson.
+text heading "Quantise 0.8, -1.2, 0.3 and 2.1 to INT4" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "largest"
+  & label value0 "none"
+  & highlight card0
+  label key1 "scale"
+  & label value1 "none"
+  & highlight card1
+  label key2 "stored"
+  & label value2 "none"
+  & highlight card2
+  label key3 "restored"
+  & label value3 "none"
+  & highlight card3
+
+step: Find the largest absolute value among the four weights.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "largest"
+  & label value0 "2.1"
+  & highlight card0
+  label key1 "scale"
+  & label value1 "none"
+  label key2 "stored"
+  & label value2 "none"
+  label key3 "restored"
+  & label value3 "none"
+
+step: Divide 2.1 by 7, the largest INT4 value.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "scale"
+  & label value0 "0.3"
+  & highlight card0
+  label key1 "largest"
+  & label value1 "2.1"
+  label key2 "stored"
+  & label value2 "none"
+  label key3 "restored"
+  & label value3 "none"
+
+step: Divide 0.8 by 0.3 and round.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "stored"
+  & label value0 "3"
+  & highlight card0
+  label key1 "scale"
+  & label value1 "0.3"
+  label key2 "largest"
+  & label value2 "2.1"
+  label key3 "restored"
+  & label value3 "none"
+
+step: Divide -1.2 by 0.3 and round.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "stored"
+  & label value0 "3 -4"
+  & highlight card0
+  label key1 "scale"
+  & label value1 "0.3"
+  label key2 "largest"
+  & label value2 "2.1"
+  label key3 "restored"
+  & label value3 "none"
+
+step: Divide 0.3 and 2.1 by the scale and round.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "stored"
+  & label value0 "3 -4 1 7"
+  & highlight card0
+  label key1 "scale"
+  & label value1 "0.3"
+  label key2 "largest"
+  & label value2 "2.1"
+  label key3 "restored"
+  & label value3 "none"
+
+step: Multiply each integer by 0.3 to restore the weights.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "restored"
+  & label value0 "0.9 -1.2 0.3 2.1"
+  & highlight card0
+  label key1 "error on first weight"
+  & label value1 "0.1"
+  & highlight card1
+  label key2 "stored"
+  & label value2 "3 -4 1 7"
+  label key3 "scale"
+  & label value3 "0.3"
+  label key4 "largest"
+  & label value4 "2.1"
+:::
+
 The general formula for a quantised weight is:
 
 $$w \\approx s \\times (q - z)$$
@@ -578,6 +839,139 @@ state: average sequences=47
 Note: real requests are shorter than the maximum. If the average sequence has 2,000 tokens, each one needs 0.67 GB and 32 GB holds about 47 sequences.
 
 ## How it works
+
+
+:::anim
+title: Memory budget for a 70B INT4 model on an 80 GB GPU
+# Worked values and narration follow the scenario in this lesson.
+text heading "Memory budget for a 70B INT4 model on an 80 GB GPU" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "remaining"
+  & label value0 "80 GB"
+  & highlight card0
+  label key1 "full sequences"
+  & label value1 "none"
+  & highlight card1
+
+step: Multiply 80 GB by the utilisation fraction 0.9.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "remaining"
+  & label value0 "72 GB"
+  & highlight card0
+  label key1 "full sequences"
+  & label value1 "none"
+
+step: Subtract the INT4 weights, 35 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "remaining"
+  & label value0 "37 GB"
+  & highlight card0
+  label key1 "weights"
+  & label value1 "35 GB"
+  & highlight card1
+  label key2 "full sequences"
+  & label value2 "none"
+
+step: Subtract the engine overhead, 3 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "remaining"
+  & label value0 "34 GB"
+  & highlight card0
+  label key1 "overhead"
+  & label value1 "3 GB"
+  & highlight card1
+  label key2 "weights"
+  & label value2 "35 GB"
+  label key3 "full sequences"
+  & label value3 "none"
+
+step: Subtract the activation workspace, 2 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "remaining"
+  & label value0 "32 GB"
+  & highlight card0
+  label key1 "workspace"
+  & label value1 "2 GB"
+  & highlight card1
+  label key2 "overhead"
+  & label value2 "3 GB"
+  label key3 "weights"
+  & label value3 "35 GB"
+  label key4 "full sequences"
+  & label value4 "none"
+
+step: Divide 32 GB by 2.68 GB per 8k-token sequence.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "full sequences"
+  & label value0 "11"
+  & highlight card0
+  label key1 "remaining"
+  & label value1 "32 GB"
+  label key2 "workspace"
+  & label value2 "2 GB"
+  label key3 "overhead"
+  & label value3 "3 GB"
+  label key4 "weights"
+  & label value4 "35 GB"
+
+step: If the average sequence has 2,000 tokens, each one needs 0.67 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "average sequences"
+  & label value0 "47"
+  & highlight card0
+  label key1 "full sequences"
+  & label value1 "11"
+  label key2 "remaining"
+  & label value2 "32 GB"
+  label key3 "workspace"
+  & label value3 "2 GB"
+  label key4 "overhead"
+  & label value4 "3 GB"
+  label key5 "weights"
+  & label value5 "35 GB"
+:::
 
 Follow this procedure for any model and GPU:
 
@@ -821,6 +1215,151 @@ state: intensity=64 FLOPs per byte, tokens per step=32
 
 ## How it works
 
+
+:::anim
+title: Ridge point and decode floor for a 70B model on an H100
+# Worked values and narration follow the scenario in this lesson.
+text heading "Ridge point and decode floor for a 70B model on an H100" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "peak FLOPS"
+  & label value0 "990 T"
+  & highlight card0
+  label key1 "bandwidth"
+  & label value1 "3.35 TB/s"
+  & highlight card1
+  label key2 "ridge point"
+  & label value2 "none"
+  & highlight card2
+
+step: Divide the peak FLOPS by the bandwidth.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "ridge point"
+  & label value0 "295 FLOPs per byte"
+  & highlight card0
+  label key1 "peak FLOPS"
+  & label value1 "990 T"
+  label key2 "bandwidth"
+  & label value2 "3.35 TB/s"
+
+step: One decode step at batch size 1 does 2 FLOPs per weight.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "FLOPs per step"
+  & label value0 "140 G"
+  & highlight card0
+  label key1 "ridge point"
+  & label value1 "295 FLOPs per byte"
+  label key2 "peak FLOPS"
+  & label value2 "990 T"
+  label key3 "bandwidth"
+  & label value3 "3.35 TB/s"
+
+step: The step reads all 140 GB of weights.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "bytes per step"
+  & label value0 "140 GB"
+  & highlight card0
+  label key1 "FLOPs per step"
+  & label value1 "140 G"
+  label key2 "ridge point"
+  & label value2 "295 FLOPs per byte"
+  label key3 "peak FLOPS"
+  & label value3 "990 T"
+  label key4 "bandwidth"
+  & label value4 "3.35 TB/s"
+
+step: Divide FLOPs by bytes.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "intensity"
+  & label value0 "2 FLOPs per byte"
+  & highlight card0
+  label key1 "bound"
+  & label value1 "memory"
+  & highlight card1
+  label key2 "bytes per step"
+  & label value2 "140 GB"
+  label key3 "FLOPs per step"
+  & label value3 "140 G"
+  label key4 "ridge point"
+  & label value4 "295 FLOPs per byte"
+  label key5 "peak FLOPS"
+  & label value5 "990 T"
+
+step: Divide 140 GB by 3.35 TB/s.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "step time"
+  & label value0 "42 ms"
+  & highlight card0
+  label key1 "intensity"
+  & label value1 "2 FLOPs per byte"
+  label key2 "bound"
+  & label value2 "memory"
+  label key3 "bytes per step"
+  & label value3 "140 GB"
+  label key4 "FLOPs per step"
+  & label value4 "140 G"
+  label key5 "ridge point"
+  & label value5 "295 FLOPs per byte"
+
+step: Batch 32 sequences.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "intensity"
+  & label value0 "64 FLOPs per byte"
+  & highlight card0
+  label key1 "tokens per step"
+  & label value1 "32"
+  & highlight card1
+  label key2 "step time"
+  & label value2 "42 ms"
+  label key3 "bound"
+  & label value3 "memory"
+  label key4 "bytes per step"
+  & label value4 "140 GB"
+  label key5 "FLOPs per step"
+  & label value5 "140 G"
+:::
+
 Batching fixes the intensity. If 32 sequences decode together, the GPU reads the weights once and does 32 times the arithmetic. The intensity rises to $2 \\times 32 = 64$ FLOPs per byte. The step still takes about 42 ms, but it produces 32 tokens.
 
 | Batch size | FLOPs per byte | Tokens per 42 ms step | Tokens per second |
@@ -1056,6 +1595,129 @@ Note: with an empty queue, continuous batching does not help. The gain comes fro
 
 ## How it works
 
+
+:::anim
+title: Four requests of 10, 50, 100 and 200 tokens in 4 slots
+# Worked values and narration follow the scenario in this lesson.
+text heading "Four requests of 10, 50, 100 and 200 tokens in 4 slots" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "active"
+  & label value0 "A B C D"
+  & highlight card0
+  label key1 "empty slots"
+  & label value1 "0"
+  & highlight card1
+  label key2 "wasted slots"
+  & label value2 "0"
+  & highlight card2
+
+step: Static batching starts all four requests together.
+  restore card0, card1, card2, card3
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "active"
+  & label value0 "A B C D"
+  label key1 "empty slots"
+  & label value1 "0"
+  label key2 "wasted slots"
+  & label value2 "0"
+
+step: At step 10 request A finishes.
+  restore card0, card1, card2, card3
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "active"
+  & label value0 "B C D"
+  & highlight card0
+  label key1 "empty slots"
+  & label value1 "1"
+  & highlight card1
+  label key2 "wasted slots"
+  & label value2 "190"
+  & highlight card2
+
+step: At step 50 request B finishes.
+  restore card0, card1, card2, card3
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "active"
+  & label value0 "C D"
+  & highlight card0
+  label key1 "empty slots"
+  & label value1 "2"
+  & highlight card1
+  label key2 "wasted slots"
+  & label value2 "340"
+  & highlight card2
+
+step: At step 100 request C finishes.
+  restore card0, card1, card2, card3
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "active"
+  & label value0 "D"
+  & highlight card0
+  label key1 "empty slots"
+  & label value1 "3"
+  & highlight card1
+  label key2 "wasted slots"
+  & label value2 "440"
+  & highlight card2
+
+step: At step 200 request D finishes.
+  restore card0, card1, card2, card3
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "active"
+  & label value0 "none"
+  & highlight card0
+  label key1 "waste"
+  & label value1 "55 percent"
+  & highlight card1
+  label key2 "empty slots"
+  & label value2 "3"
+  label key3 "wasted slots"
+  & label value3 "440"
+
+step: With continuous batching and a full queue, request E takes the slot of A at step 11.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "waste"
+  & label value0 "0 percent"
+  & highlight card0
+  label key1 "active"
+  & label value1 "none"
+  label key2 "empty slots"
+  & label value2 "3"
+  label key3 "wasted slots"
+  & label value3 "440"
+:::
+
 The scheduler runs a loop. Each pass of the loop produces one decode step for every active sequence:
 
 1. Remove every sequence that produced an end token or hit its length limit.
@@ -1266,6 +1928,170 @@ state: output=the cat sat on, tokens this step=4
 :::
 
 ## How it works
+
+
+:::anim
+title: One speculative step with k = 4
+# Worked values and narration follow the scenario in this lesson.
+text heading "One speculative step with k = 4" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 186,145 r: 3 color: grey
+dot mark2 @ 271,145 r: 3 color: grey
+dot mark3 @ 357,145 r: 3 color: grey
+dot mark4 @ 443,145 r: 3 color: grey
+dot mark5 @ 529,145 r: 3 color: grey
+dot mark6 @ 614,145 r: 3 color: grey
+dot mark7 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, mark7, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "draft"
+  & label value0 "none"
+  & highlight card0
+  label key1 "accepted"
+  & label value1 "none"
+  & highlight card1
+  label key2 "rejected"
+  & label value2 "none"
+  & highlight card2
+  label key3 "output"
+  & label value3 "none"
+  & highlight card3
+
+step: The 1B draft model proposes four tokens one by one: the, cat, sat, down.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 186,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "draft"
+  & label value0 "the cat sat down"
+  & highlight card0
+  label key1 "accepted"
+  & label value1 "none"
+  label key2 "rejected"
+  & label value2 "none"
+  label key3 "output"
+  & label value3 "none"
+
+step: The 70B target model runs one forward pass over the prompt plus the four draft tokens.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 271,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "target passes"
+  & label value0 "1"
+  & highlight card0
+  label key1 "draft"
+  & label value1 "the cat sat down"
+  label key2 "accepted"
+  & label value2 "none"
+  label key3 "rejected"
+  & label value3 "none"
+  label key4 "output"
+  & label value4 "none"
+
+step: Position 1: the target gives p = 0.9 and the draft gave q = 0.8.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 357,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "accepted"
+  & label value0 "the"
+  & highlight card0
+  label key1 "target passes"
+  & label value1 "1"
+  label key2 "draft"
+  & label value2 "the cat sat down"
+  label key3 "rejected"
+  & label value3 "none"
+  label key4 "output"
+  & label value4 "none"
+
+step: Position 2: p = 0.6 and q = 0.5.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 443,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "accepted"
+  & label value0 "the cat"
+  & highlight card0
+  label key1 "target passes"
+  & label value1 "1"
+  label key2 "draft"
+  & label value2 "the cat sat down"
+  label key3 "rejected"
+  & label value3 "none"
+  label key4 "output"
+  & label value4 "none"
+
+step: Position 3: p = 0.4 and q = 0.5.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 529,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "accepted"
+  & label value0 "the cat sat"
+  & highlight card0
+  label key1 "target passes"
+  & label value1 "1"
+  label key2 "draft"
+  & label value2 "the cat sat down"
+  label key3 "rejected"
+  & label value3 "none"
+  label key4 "output"
+  & label value4 "none"
+
+step: Position 4: p = 0.1 and q = 0.6.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 614,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "rejected"
+  & label value0 "down"
+  & highlight card0
+  label key1 "accepted"
+  & label value1 "the cat sat"
+  label key2 "target passes"
+  & label value2 "1"
+  label key3 "draft"
+  & label value3 "the cat sat down"
+  label key4 "output"
+  & label value4 "none"
+
+step: The engine samples a replacement from the adjusted target distribution and gets on.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 8 (0.6s)
+  label key0 "output"
+  & label value0 "the cat sat on"
+  & highlight card0
+  label key1 "tokens this step"
+  & label value1 "4"
+  & highlight card1
+  label key2 "rejected"
+  & label value2 "down"
+  label key3 "accepted"
+  & label value3 "the cat sat"
+  label key4 "target passes"
+  & label value4 "1"
+  label key5 "draft"
+  & label value5 "the cat sat down"
+:::
 
 The acceptance rule keeps the output exact. Let $p(x)$ be the target probability of token $x$ and $q(x)$ the draft probability. Accept with probability $\\min(1, p(x)/q(x))$. If the token is rejected, sample from the adjusted distribution:
 
@@ -1497,6 +2323,106 @@ Within one node the copy is cheap compared with a 300 ms prefill.
 
 ## How it works
 
+
+:::anim
+title: A 4,000-token prompt meets 32 decode streams
+# Worked values and narration follow the scenario in this lesson.
+text heading "A 4,000-token prompt meets 32 decode streams" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "TPOT"
+  & label value0 "30 ms"
+  & highlight card0
+  label key1 "prompt TTFT"
+  & label value1 "none"
+  & highlight card1
+  label key2 "streams"
+  & label value2 "32"
+  & highlight card2
+
+step: The 32 streams decode at 30 ms per token.
+  restore card0, card1, card2
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "TPOT"
+  & label value0 "30 ms"
+  label key1 "prompt TTFT"
+  & label value1 "none"
+  label key2 "streams"
+  & label value2 "32"
+
+step: Choice 1: the shared engine runs the prefill in one step.
+  restore card0, card1, card2
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "TPOT"
+  & label value0 "330 ms for one step"
+  & highlight card0
+  label key1 "prompt TTFT"
+  & label value1 "300 ms"
+  & highlight card1
+  label key2 "streams"
+  & label value2 "32"
+
+step: Choice 2: the shared engine chunks the prefill over 8 steps.
+  restore card0, card1, card2
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "TPOT"
+  & label value0 "about 70 ms for 8 steps"
+  & highlight card0
+  label key1 "prompt TTFT"
+  & label value1 "560 ms"
+  & highlight card1
+  label key2 "streams"
+  & label value2 "32"
+
+step: Choice 3: the prefill GPU takes the prompt.
+  restore card0, card1, card2
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "TPOT"
+  & label value0 "30 ms"
+  & highlight card0
+  label key1 "prompt TTFT"
+  & label value1 "300 ms"
+  & highlight card1
+  label key2 "streams"
+  & label value2 "32"
+
+step: The engine copies the 1.3 GB cache to the decode GPU over NVLink in 3 ms.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "prompt TTFT"
+  & label value0 "303 ms"
+  & highlight card0
+  label key1 "streams"
+  & label value1 "33"
+  & highlight card1
+  label key2 "TPOT"
+  & label value2 "30 ms"
+:::
+
 The request path has five stages:
 
 1. The router sends the prompt to a prefill GPU.
@@ -1703,6 +2629,122 @@ state: direct sum=1.553, match=yes
 :::
 
 ## How it works
+
+
+:::anim
+title: Online softmax over the scores 1, 3, 2, 4 in two blocks
+# Worked values and narration follow the scenario in this lesson.
+text heading "Online softmax over the scores 1, 3, 2, 4 in two blocks" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "running max"
+  & label value0 "none"
+  & highlight card0
+  label key1 "running sum"
+  & label value1 "0"
+  & highlight card1
+  label key2 "direct sum"
+  & label value2 "none"
+  & highlight card2
+
+step: Block 1 arrives with scores 1 and 3.
+  restore card0, card1, card2, card3
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "running max"
+  & label value0 "3"
+  & highlight card0
+  label key1 "running sum"
+  & label value1 "0"
+  label key2 "direct sum"
+  & label value2 "none"
+
+step: Sum the exponentials of 1 - 3 and 3 - 3.
+  restore card0, card1, card2, card3
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "running sum"
+  & label value0 "1.135"
+  & highlight card0
+  label key1 "running max"
+  & label value1 "3"
+  label key2 "direct sum"
+  & label value2 "none"
+
+step: Block 2 arrives with scores 2 and 4.
+  restore card0, card1, card2, card3
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "running max"
+  & label value0 "4"
+  & highlight card0
+  label key1 "running sum"
+  & label value1 "1.135"
+  label key2 "direct sum"
+  & label value2 "none"
+
+step: Rescale the old sum by the exponential of 3 - 4, which is 0.368.
+  restore card0, card1, card2, card3
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "running sum"
+  & label value0 "0.418"
+  & highlight card0
+  label key1 "running max"
+  & label value1 "4"
+  label key2 "direct sum"
+  & label value2 "none"
+
+step: Add the exponentials of 2 - 4 and 4 - 4.
+  restore card0, card1, card2, card3
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "running sum"
+  & label value0 "1.553"
+  & highlight card0
+  label key1 "running max"
+  & label value1 "4"
+  label key2 "direct sum"
+  & label value2 "none"
+
+step: The direct sum over all four scores is also 1.553.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "direct sum"
+  & label value0 "1.553"
+  & highlight card0
+  label key1 "match"
+  & label value1 "yes"
+  & highlight card1
+  label key2 "running sum"
+  & label value2 "1.553"
+  label key3 "running max"
+  & label value3 "4"
+:::
 
 The kernel splits the query, key, and value matrices into blocks. A block is small enough to fit in SRAM. The procedure for one block of queries is:
 
@@ -1940,6 +2982,134 @@ state: tokens=90, blocks=0, empty slots=0, block table=empty, free blocks return
 
 ## How it works
 
+
+:::anim
+title: Block allocation for one sequence with block size 16
+# Worked values and narration follow the scenario in this lesson.
+text heading "Block allocation for one sequence with block size 16" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "tokens"
+  & label value0 "0"
+  & highlight card0
+  label key1 "blocks"
+  & label value1 "0"
+  & highlight card1
+  label key2 "empty slots"
+  & label value2 "0"
+  & highlight card2
+  label key3 "block table"
+  & label value3 "empty"
+  & highlight card3
+
+step: The prompt arrives with 70 tokens.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "tokens"
+  & label value0 "70"
+  & highlight card0
+  label key1 "blocks"
+  & label value1 "5"
+  & highlight card1
+  label key2 "empty slots"
+  & label value2 "10"
+  & highlight card2
+  label key3 "block table"
+  & label value3 "empty"
+
+step: The block table lists five physical blocks, for example 17 3 42 8 25.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "block table"
+  & label value0 "17 3 42 8 25"
+  & highlight card0
+  label key1 "tokens"
+  & label value1 "70"
+  label key2 "blocks"
+  & label value2 "5"
+  label key3 "empty slots"
+  & label value3 "10"
+
+step: Decode adds tokens 71 to 80.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "tokens"
+  & label value0 "80"
+  & highlight card0
+  label key1 "empty slots"
+  & label value1 "0"
+  & highlight card1
+  label key2 "block table"
+  & label value2 "17 3 42 8 25"
+  label key3 "blocks"
+  & label value3 "5"
+
+step: Token 81 arrives.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "tokens"
+  & label value0 "81"
+  & highlight card0
+  label key1 "blocks"
+  & label value1 "6"
+  & highlight card1
+  label key2 "empty slots"
+  & label value2 "15"
+  & highlight card2
+  label key3 "block table"
+  & label value3 "17 3 42 8 25 61"
+  & highlight card3
+
+step: The sequence finishes at 90 tokens.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "tokens"
+  & label value0 "90"
+  & highlight card0
+  label key1 "blocks"
+  & label value1 "0"
+  & highlight card1
+  label key2 "empty slots"
+  & label value2 "0"
+  & highlight card2
+  label key3 "block table"
+  & label value3 "empty"
+  & highlight card3
+  label key4 "free blocks returned"
+  & label value4 "6"
+  & highlight card4
+:::
+
 Two kinds of waste exist. Internal fragmentation is empty space inside a reserved region. The contiguous layout had 1,978 slots of internal fragmentation. External fragmentation is free memory split into pieces too small to use. The contiguous layout suffers from it when sequences of different lengths finish in a random order. Paged attention limits internal fragmentation to less than one block per sequence. It removes external fragmentation because every free block has the same size and fits any request.
 
 The attention kernel reads the block table during the computation. For query token $t$ and key position $j$, the kernel computes the block index $\\lfloor j / B \\rfloor$ and the offset $j \\bmod B$. Here $B$ is the block size. It looks up the physical block address in the table and reads the key and value from that address. The extra lookup costs a little time, so engines tune $B$ between 8 and 32 tokens.
@@ -2169,6 +3339,150 @@ MQA, 1 KV head: 0.34
 
 ## How it works
 
+
+:::anim
+title: KV cache at 8,192 tokens for a 70B-class model
+# Worked values and narration follow the scenario in this lesson.
+text heading "KV cache at 8,192 tokens for a 70B-class model" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "layers"
+  & label value0 "80"
+  & highlight card0
+  label key1 "head size"
+  & label value1 "128"
+  & highlight card1
+  label key2 "tokens"
+  & label value2 "8192"
+  & highlight card2
+  label key3 "bytes per element"
+  & label value3 "2"
+  & highlight card3
+  label key4 "MHA"
+  & label value4 "none"
+  & highlight card4
+  label key5 "GQA"
+  & label value5 "none"
+  & highlight card5
+
+step: Start from the formula: 2 times layers times KV heads times head size times tokens times bytes.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "layers"
+  & label value0 "80"
+  label key1 "head size"
+  & label value1 "128"
+  label key2 "tokens"
+  & label value2 "8192"
+  label key3 "bytes per element"
+  & label value3 "2"
+  label key4 "MHA"
+  & label value4 "none"
+  label key5 "GQA"
+  & label value5 "none"
+
+step: MHA has 64 KV heads.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "MHA"
+  & label value0 "21.5 GB"
+  & highlight card0
+  label key1 "layers"
+  & label value1 "80"
+  label key2 "head size"
+  & label value2 "128"
+  label key3 "tokens"
+  & label value3 "8192"
+  label key4 "bytes per element"
+  & label value4 "2"
+  label key5 "GQA"
+  & label value5 "none"
+
+step: GQA with 8 groups has 8 KV heads.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "GQA"
+  & label value0 "2.7 GB"
+  & highlight card0
+  label key1 "MHA"
+  & label value1 "21.5 GB"
+  label key2 "layers"
+  & label value2 "80"
+  label key3 "head size"
+  & label value3 "128"
+  label key4 "tokens"
+  & label value4 "8192"
+  label key5 "bytes per element"
+  & label value5 "2"
+
+step: MQA has 1 KV head.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "MQA"
+  & label value0 "0.34 GB"
+  & highlight card0
+  label key1 "GQA"
+  & label value1 "2.7 GB"
+  label key2 "MHA"
+  & label value2 "21.5 GB"
+  label key3 "layers"
+  & label value3 "80"
+  label key4 "head size"
+  & label value4 "128"
+  label key5 "tokens"
+  & label value5 "8192"
+
+step: With 40 GB free, MHA fits 1 sequence, GQA fits 14 and MQA fits 119.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "sequences in 40 GB"
+  & label value0 "1 vs 14 vs 119"
+  & highlight card0
+  label key1 "MQA"
+  & label value1 "0.34 GB"
+  label key2 "GQA"
+  & label value2 "2.7 GB"
+  label key3 "MHA"
+  & label value3 "21.5 GB"
+  label key4 "layers"
+  & label value4 "80"
+  label key5 "head size"
+  & label value5 "128"
+:::
+
 The cache size also sets the bytes read per decoded token. For one new token the kernel reads the keys and values of every previous token. For MHA at 8,192 tokens that is 21.5 GB per sequence per step. A GPU with 3.35 TB/s of HBM bandwidth needs 6.4 ms for that read alone. With GQA the read falls to 0.8 ms. With MQA it falls to 0.1 ms. The compute for attention is the same in all three cases, so GQA and MQA raise the arithmetic intensity of the step. Arithmetic intensity is the number of floating-point operations per byte moved.
 
 The bars compare the time to read the cache for one token.
@@ -2358,6 +3672,117 @@ TP 8: 17.5
 :::
 
 ## How it works
+
+
+:::anim
+title: One decode step through one layer at TP = 4 with batch 32
+# Worked values and narration follow the scenario in this lesson.
+text heading "One decode step through one layer at TP = 4 with batch 32" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,260 size: 260x120 color: blue
+text key0 "" @ 180,227 size: 16 color: grey
+text value0 "" @ 180,272 size: 20 color: white
+rect card1 @ 480,260 size: 260x120 color: blue
+text key1 "" @ 480,227 size: 16 color: grey
+text value1 "" @ 480,272 size: 20 color: white
+rect card2 @ 780,260 size: 260x120 color: blue
+text key2 "" @ 780,227 size: 16 color: grey
+text value2 "" @ 780,272 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2
+  label key0 "all-reduce count"
+  & label value0 "0"
+  & highlight card0
+  label key1 "bytes moved per GPU"
+  & label value1 "0 MB"
+  & highlight card1
+  label key2 "added latency"
+  & label value2 "0 ms"
+  & highlight card2
+
+step: Each GPU holds 16 of the 64 attention heads and a quarter of the KV cache.
+  restore card0, card1, card2
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "all-reduce count"
+  & label value0 "0"
+  label key1 "bytes moved per GPU"
+  & label value1 "0 MB"
+  label key2 "added latency"
+  & label value2 "0 ms"
+
+step: The output projection is row-split.
+  restore card0, card1, card2
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "all-reduce count"
+  & label value0 "1"
+  & highlight card0
+  label key1 "bytes moved per GPU"
+  & label value1 "1 MB"
+  & highlight card1
+  label key2 "added latency"
+  & label value2 "0 ms"
+
+step: Each GPU multiplies X by its column block of A and applies GeLU.
+  restore card0, card1, card2
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "all-reduce count"
+  & label value0 "1"
+  label key1 "bytes moved per GPU"
+  & label value1 "1 MB"
+  label key2 "added latency"
+  & label value2 "0 ms"
+
+step: Each GPU multiplies by its row block of B.
+  restore card0, card1, card2
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "all-reduce count"
+  & label value0 "2"
+  & highlight card0
+  label key1 "bytes moved per GPU"
+  & label value1 "2 MB"
+  & highlight card1
+  label key2 "added latency"
+  & label value2 "0 ms"
+
+step: The layer is done.
+  restore card0, card1, card2
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "all-reduce count"
+  & label value0 "160 per token"
+  & highlight card0
+  label key1 "bytes moved per GPU"
+  & label value1 "160 MB"
+  & highlight card1
+  label key2 "added latency"
+  & label value2 "0 ms"
+
+step: Each all-reduce has a fixed latency of about 20 us on NVLink.
+  restore card0, card1, card2
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "added latency"
+  & label value0 "about 3 ms"
+  & highlight card0
+  label key1 "all-reduce count"
+  & label value1 "160 per token"
+  label key2 "bytes moved per GPU"
+  & label value2 "160 MB"
+:::
 
 The communication volume per all-reduce is the size of the activation tensor. Each all-reduce moves about $2 \\times N \\times d \\times b$ bytes per GPU. $N$ is the number of tokens in the batch, $d$ is the hidden size, and $b$ is the bytes per element. The factor 2 comes from the reduce-scatter and the all-gather phases of a ring all-reduce. Take a decode step with 32 sequences, so $N = 32$, $d = 8192$, and $b = 2$:
 
@@ -2576,6 +4001,139 @@ Stage 4: mb 4 @6-7
 :::
 
 ## How it works
+
+
+:::anim
+title: Bubble for 4 stages and 8 micro-batches
+# Worked values and narration follow the scenario in this lesson.
+text heading "Bubble for 4 stages and 8 micro-batches" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "step"
+  & label value0 "0"
+  & highlight card0
+  label key1 "busy stages"
+  & label value1 "0"
+  & highlight card1
+  label key2 "idle units per stage"
+  & label value2 "0"
+  & highlight card2
+  label key3 "bubble"
+  & label value3 "none"
+  & highlight card3
+
+step: Micro-batch 1 enters stage 1.
+  restore card0, card1, card2, card3
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "step"
+  & label value0 "1"
+  & highlight card0
+  label key1 "busy stages"
+  & label value1 "1"
+  & highlight card1
+  label key2 "idle units per stage"
+  & label value2 "0"
+  label key3 "bubble"
+  & label value3 "none"
+
+step: Micro-batch 1 moves to stage 2 and micro-batch 2 enters stage 1.
+  restore card0, card1, card2, card3
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "step"
+  & label value0 "2"
+  & highlight card0
+  label key1 "busy stages"
+  & label value1 "2"
+  & highlight card1
+  label key2 "idle units per stage"
+  & label value2 "0"
+  label key3 "bubble"
+  & label value3 "none"
+
+step: After two more steps all four stages are busy.
+  restore card0, card1, card2, card3
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "step"
+  & label value0 "4"
+  & highlight card0
+  label key1 "busy stages"
+  & label value1 "4"
+  & highlight card1
+  label key2 "idle units per stage"
+  & label value2 "3"
+  & highlight card2
+  label key3 "bubble"
+  & label value3 "none"
+
+step: The pipeline stays full until micro-batch 8 leaves stage 1 at step 8.
+  restore card0, card1, card2, card3
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "step"
+  & label value0 "8"
+  & highlight card0
+  label key1 "busy stages"
+  & label value1 "4"
+  label key2 "idle units per stage"
+  & label value2 "3"
+  label key3 "bubble"
+  & label value3 "none"
+
+step: The last three steps drain the pipeline.
+  restore card0, card1, card2, card3
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "step"
+  & label value0 "11"
+  & highlight card0
+  label key1 "busy stages"
+  & label value1 "0"
+  & highlight card1
+  label key2 "idle units per stage"
+  & label value2 "3"
+  label key3 "bubble"
+  & label value3 "none"
+
+step: Each stage worked 8 units out of 11.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "bubble"
+  & label value0 "27 percent"
+  & highlight card0
+  label key1 "step"
+  & label value1 "11"
+  label key2 "busy stages"
+  & label value2 "0"
+  label key3 "idle units per stage"
+  & label value3 "3"
+:::
 
 With $S$ stages and $M$ micro-batches, each stage spends $M$ time units on useful work. The ramp-up and ramp-down add $S - 1$ idle units. The bubble fraction is:
 
@@ -2824,6 +4382,156 @@ ZeRO stage 3: 14
 
 ## How it works
 
+
+:::anim
+title: Shard the 16 bytes per weight across 8 GPUs
+# Worked values and narration follow the scenario in this lesson.
+text heading "Shard the 16 bytes per weight across 8 GPUs" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "weights"
+  & label value0 "2 B"
+  & highlight card0
+  label key1 "gradients"
+  & label value1 "2 B"
+  & highlight card1
+  label key2 "optimizer state"
+  & label value2 "12 B"
+  & highlight card2
+  label key3 "per GPU"
+  & label value3 "16 B"
+  & highlight card3
+  label key4 "7B model"
+  & label value4 "112 GB"
+  & highlight card4
+  label key5 "communication"
+  & label value5 "1 x plain"
+  & highlight card5
+
+step: Plain data parallelism keeps all 16 bytes per weight on every GPU.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "weights"
+  & label value0 "2 B"
+  label key1 "gradients"
+  & label value1 "2 B"
+  label key2 "optimizer state"
+  & label value2 "12 B"
+  label key3 "per GPU"
+  & label value3 "16 B"
+  label key4 "7B model"
+  & label value4 "112 GB"
+  label key5 "communication"
+  & label value5 "1 x plain"
+
+step: Stage 1 shards the optimizer state.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "optimizer state"
+  & label value0 "1.5 B"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "5.5 B"
+  & highlight card1
+  label key2 "7B model"
+  & label value2 "38.5 GB"
+  & highlight card2
+  label key3 "weights"
+  & label value3 "2 B"
+  label key4 "gradients"
+  & label value4 "2 B"
+  label key5 "communication"
+  & label value5 "1 x plain"
+
+step: Stage 2 also shards the gradients.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "gradients"
+  & label value0 "0.25 B"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "3.75 B"
+  & highlight card1
+  label key2 "7B model"
+  & label value2 "26.25 GB"
+  & highlight card2
+  label key3 "optimizer state"
+  & label value3 "1.5 B"
+  label key4 "weights"
+  & label value4 "2 B"
+  label key5 "communication"
+  & label value5 "1 x plain"
+
+step: Stage 3 also shards the weights.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "weights"
+  & label value0 "0.25 B"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "2 B"
+  & highlight card1
+  label key2 "7B model"
+  & label value2 "14 GB"
+  & highlight card2
+  label key3 "gradients"
+  & label value3 "0.25 B"
+  label key4 "optimizer state"
+  & label value4 "1.5 B"
+  label key5 "communication"
+  & label value5 "1 x plain"
+
+step: Before a layer runs, the GPUs all-gather its weights, use them, and drop them.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "communication"
+  & label value0 "1.5 x plain"
+  & highlight card0
+  label key1 "weights"
+  & label value1 "0.25 B"
+  label key2 "per GPU"
+  & label value2 "2 B"
+  label key3 "7B model"
+  & label value3 "14 GB"
+  label key4 "gradients"
+  & label value4 "0.25 B"
+  label key5 "optimizer state"
+  & label value5 "1.5 B"
+:::
+
 In the table, $N$ is the number of data-parallel GPUs. Each stage adds communication. Stages 1 and 2 cost the same as plain data parallelism. Each step does one reduce-scatter of the gradients and one all-gather of the updated weights. Stage 3 adds more. Before each layer runs, the GPUs all-gather the weights of that layer, use them, and then drop them. This happens in the forward pass and again in the backward pass. The total traffic is about 1.5 times that of plain data parallelism.
 
 The diagram shows one layer of a stage 3 training step on one GPU.
@@ -3021,6 +4729,165 @@ FP8, TP 8, PP 2: 875
 The second layout gives the lowest latency because no request crosses a node. The third gives the highest throughput because the large cache pool holds the most concurrent sequences. The first is the choice when you cannot accept any quantisation loss.
 
 ## How it works
+
+
+:::anim
+title: Fit a 405B model on nodes of eight 80 GB GPUs
+# Worked values and narration follow the scenario in this lesson.
+text heading "Fit a 405B model on nodes of eight 80 GB GPUs" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "weights"
+  & label value0 "810 GB in FP16"
+  & highlight card0
+  label key1 "layout"
+  & label value1 "none"
+  & highlight card1
+  label key2 "per GPU"
+  & label value2 "none"
+  & highlight card2
+  label key3 "fits"
+  & label value3 "none"
+  & highlight card3
+  label key4 "free for cache"
+  & label value4 "none"
+  & highlight card4
+
+step: Try TP = 8 on one node.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "layout"
+  & label value0 "FP16 TP 8"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "101 GB"
+  & highlight card1
+  label key2 "fits"
+  & label value2 "no"
+  & highlight card2
+  label key3 "weights"
+  & label value3 "810 GB in FP16"
+  label key4 "free for cache"
+  & label value4 "none"
+
+step: 101 GB exceeds 80 GB.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "layout"
+  & label value0 "FP16 TP 8 PP 2"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "51 GB"
+  & highlight card1
+  label key2 "fits"
+  & label value2 "yes"
+  & highlight card2
+  label key3 "free for cache"
+  & label value3 "470 GB"
+  & highlight card3
+  label key4 "weights"
+  & label value4 "810 GB in FP16"
+
+step: Alternative: quantise to FP8.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "weights"
+  & label value0 "405 GB in FP8"
+  & highlight card0
+  label key1 "layout"
+  & label value1 "FP16 TP 8 PP 2"
+  label key2 "per GPU"
+  & label value2 "51 GB"
+  label key3 "fits"
+  & label value3 "yes"
+  label key4 "free for cache"
+  & label value4 "470 GB"
+
+step: Try TP = 8 on one node again.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "layout"
+  & label value0 "FP8 TP 8 PP 1"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "51 GB"
+  label key2 "fits"
+  & label value2 "yes"
+  label key3 "free for cache"
+  & label value3 "235 GB"
+  & highlight card3
+  label key4 "weights"
+  & label value4 "405 GB in FP8"
+
+step: Add PP = 2 to the FP8 layout for the largest cache pool.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "layout"
+  & label value0 "FP8 TP 8 PP 2"
+  & highlight card0
+  label key1 "per GPU"
+  & label value1 "25 GB"
+  & highlight card1
+  label key2 "free for cache"
+  & label value2 "875 GB"
+  & highlight card2
+  label key3 "fits"
+  & label value3 "yes"
+  label key4 "weights"
+  & label value4 "405 GB in FP8"
+
+step: Pick by goal.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "choice"
+  & label value0 "depends on the goal"
+  & highlight card0
+  label key1 "layout"
+  & label value1 "FP8 TP 8 PP 2"
+  label key2 "per GPU"
+  & label value2 "25 GB"
+  label key3 "free for cache"
+  & label value3 "875 GB"
+  label key4 "fits"
+  & label value4 "yes"
+  label key5 "weights"
+  & label value5 "405 GB in FP8"
+:::
 
 The general recipe has four steps.
 
@@ -3250,6 +5117,151 @@ Note: a step with a long prefill makes every decode request in the same batch wa
 
 ## How it works
 
+
+:::anim
+title: One scheduler step with a budget of 2,048 tokens
+# Worked values and narration follow the scenario in this lesson.
+text heading "One scheduler step with a budget of 2,048 tokens" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "budget left"
+  & label value0 "2048"
+  & highlight card0
+  label key1 "free blocks"
+  & label value1 "40"
+  & highlight card1
+  label key2 "batch"
+  & label value2 "empty"
+  & highlight card2
+  label key3 "tokens produced"
+  & label value3 "0"
+  & highlight card3
+
+step: Free the blocks of sequences that finished in the last step.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "budget left"
+  & label value0 "2048"
+  label key1 "free blocks"
+  & label value1 "40"
+  label key2 "batch"
+  & label value2 "empty"
+  label key3 "tokens produced"
+  & label value3 "0"
+
+step: Add one decode token for request B.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "budget left"
+  & label value0 "2047"
+  & highlight card0
+  label key1 "free blocks"
+  & label value1 "39"
+  & highlight card1
+  label key2 "batch"
+  & label value2 "B"
+  & highlight card2
+  label key3 "tokens produced"
+  & label value3 "0"
+
+step: Add one decode token for request C.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "budget left"
+  & label value0 "2046"
+  & highlight card0
+  label key1 "free blocks"
+  & label value1 "38"
+  & highlight card1
+  label key2 "batch"
+  & label value2 "B C"
+  & highlight card2
+  label key3 "tokens produced"
+  & label value3 "0"
+
+step: Request A waits with a 500-token prompt.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "budget left"
+  & label value0 "1546"
+  & highlight card0
+  label key1 "free blocks"
+  & label value1 "6"
+  & highlight card1
+  label key2 "batch"
+  & label value2 "B C A"
+  & highlight card2
+  label key3 "tokens produced"
+  & label value3 "0"
+
+step: Run one forward pass over 502 tokens.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "tokens produced"
+  & label value0 "3"
+  & highlight card0
+  label key1 "budget left"
+  & label value1 "1546"
+  label key2 "free blocks"
+  & label value2 "6"
+  label key3 "batch"
+  & label value3 "B C A"
+
+step: Append the tokens.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "A"
+  & label value0 "decode"
+  & highlight card0
+  label key1 "B"
+  & label value1 "decode"
+  & highlight card1
+  label key2 "C"
+  & label value2 "decode"
+  & highlight card2
+  label key3 "tokens produced"
+  & label value3 "3"
+  label key4 "budget left"
+  & label value4 "1546"
+  label key5 "free blocks"
+  & label value5 "6"
+:::
+
 The layers, in the order a request passes through them, are:
 
     API server      accepts an HTTP request in the OpenAI format
@@ -3463,6 +5475,136 @@ The prefill time drops by about 6 times. The number 70 ms is illustrative; the r
 Now scale this to a day. Assume 100,000 requests per day with the same system prompt, and assume the cache keeps the prefix all day. The hit rate is 99,999 / 100,000, so the daily saving is about 120 million prefill tokens.
 
 ## How it works
+
+
+:::anim
+title: Second request with a 1,200-token system prompt
+# Worked values and narration follow the scenario in this lesson.
+text heading "Second request with a 1,200-token system prompt" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3
+  label key0 "blocks matched"
+  & label value0 "0"
+  & highlight card0
+  label key1 "blocks to compute"
+  & label value1 "88"
+  & highlight card1
+  label key2 "prefill tokens"
+  & label value2 "1400"
+  & highlight card2
+  label key3 "prefill time"
+  & label value3 "about 70 ms"
+  & highlight card3
+
+step: The engine splits the 1,400-token prompt into blocks of 16.
+  restore card0, card1, card2, card3
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "blocks matched"
+  & label value0 "0"
+  label key1 "blocks to compute"
+  & label value1 "88"
+  label key2 "prefill tokens"
+  & label value2 "1400"
+  label key3 "prefill time"
+  & label value3 "about 70 ms"
+
+step: It hashes block 1 from its tokens.
+  restore card0, card1, card2, card3
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "blocks matched"
+  & label value0 "1"
+  & highlight card0
+  label key1 "blocks to compute"
+  & label value1 "87"
+  & highlight card1
+  label key2 "prefill tokens"
+  & label value2 "1400"
+  label key3 "prefill time"
+  & label value3 "about 70 ms"
+
+step: It hashes block 2 from its tokens and the hash of block 1.
+  restore card0, card1, card2, card3
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "blocks matched"
+  & label value0 "2"
+  & highlight card0
+  label key1 "blocks to compute"
+  & label value1 "86"
+  & highlight card1
+  label key2 "prefill tokens"
+  & label value2 "1400"
+  label key3 "prefill time"
+  & label value3 "about 70 ms"
+
+step: All 75 system prompt blocks match.
+  restore card0, card1, card2, card3
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "blocks matched"
+  & label value0 "75"
+  & highlight card0
+  label key1 "blocks to compute"
+  & label value1 "13"
+  & highlight card1
+  label key2 "prefill tokens"
+  & label value2 "200"
+  & highlight card2
+  label key3 "prefill time"
+  & label value3 "about 70 ms"
+
+step: Block 76 holds user tokens.
+  restore card0, card1, card2, card3
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "blocks matched"
+  & label value0 "75"
+  label key1 "blocks to compute"
+  & label value1 "13"
+  label key2 "prefill tokens"
+  & label value2 "200"
+  label key3 "prefill time"
+  & label value3 "about 70 ms"
+
+step: The engine runs prefill on the 200 user tokens only.
+  restore card0, card1, card2, card3
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "prefill time"
+  & label value0 "about 12 ms"
+  & highlight card0
+  label key1 "blocks matched"
+  & label value1 "75"
+  label key2 "blocks to compute"
+  & label value2 "13"
+  label key3 "prefill tokens"
+  & label value3 "200"
+:::
 
 The engine does this when a new request arrives:
 
@@ -3695,6 +5837,129 @@ The engine sends the stream as server-sent events over one HTTP response. Each e
 The final [DONE] line tells the client that the response is complete.
 
 ## How it works
+
+
+:::anim
+title: Streaming the text café ok
+# Worked values and narration follow the scenario in this lesson.
+text heading "Streaming the text café ok" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "held bytes"
+  & label value0 "0"
+  & highlight card0
+  label key1 "sent text"
+  & label value1 "none"
+  & highlight card1
+  label key2 "events sent"
+  & label value2 "0"
+  & highlight card2
+  label key3 "request"
+  & label value3 "running"
+  & highlight card3
+
+step: The sampler picks a token for caf.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "sent text"
+  & label value0 "caf"
+  & highlight card0
+  label key1 "events sent"
+  & label value1 "1"
+  & highlight card1
+  label key2 "held bytes"
+  & label value2 "0"
+  label key3 "request"
+  & label value3 "running"
+
+step: The next token holds the first byte of the two-byte character é.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "held bytes"
+  & label value0 "1"
+  & highlight card0
+  label key1 "sent text"
+  & label value1 "caf"
+  label key2 "events sent"
+  & label value2 "1"
+  label key3 "request"
+  & label value3 "running"
+
+step: The next token holds the second byte.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "held bytes"
+  & label value0 "0"
+  & highlight card0
+  label key1 "sent text"
+  & label value1 "café"
+  & highlight card1
+  label key2 "events sent"
+  & label value2 "2"
+  & highlight card2
+  label key3 "request"
+  & label value3 "running"
+
+step: The next token is the word ok with a space in front.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "sent text"
+  & label value0 "café ok"
+  & highlight card0
+  label key1 "events sent"
+  & label value1 "3"
+  & highlight card1
+  label key2 "held bytes"
+  & label value2 "0"
+  label key3 "request"
+  & label value3 "running"
+
+step: The client closes the socket.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "request"
+  & label value0 "cancelled"
+  & highlight card0
+  label key1 "cache blocks"
+  & label value1 "freed"
+  & highlight card1
+  label key2 "sent text"
+  & label value2 "café ok"
+  label key3 "events sent"
+  & label value3 "3"
+  label key4 "held bytes"
+  & label value4 "0"
+:::
 
 The path of one token is short:
 
@@ -3959,6 +6224,150 @@ state: with a 500 ms queue=8.175 s
 
 ## How it works
 
+
+:::anim
+title: End-to-end latency of a 2,000-token prompt with a 300-token answer
+# Worked values and narration follow the scenario in this lesson.
+text heading "End-to-end latency of a 2,000-token prompt with a 300-token|answer" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "prefill"
+  & label value0 "none"
+  & highlight card0
+  label key1 "TTFT"
+  & label value1 "none"
+  & highlight card1
+  label key2 "decode time"
+  & label value2 "none"
+  & highlight card2
+  label key3 "end-to-end"
+  & label value3 "none"
+  & highlight card3
+
+step: Divide the 2,000 prompt tokens by the prefill rate of 10,000 tokens per second.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "prefill"
+  & label value0 "0.2 s"
+  & highlight card0
+  label key1 "TTFT"
+  & label value1 "none"
+  label key2 "decode time"
+  & label value2 "none"
+  label key3 "end-to-end"
+  & label value3 "none"
+
+step: Add the queue time.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "TTFT"
+  & label value0 "200 ms"
+  & highlight card0
+  label key1 "prefill"
+  & label value1 "0.2 s"
+  label key2 "decode time"
+  & label value2 "none"
+  label key3 "end-to-end"
+  & label value3 "none"
+
+step: The first token is already counted.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "decode steps"
+  & label value0 "299"
+  & highlight card0
+  label key1 "TTFT"
+  & label value1 "200 ms"
+  label key2 "prefill"
+  & label value2 "0.2 s"
+  label key3 "decode time"
+  & label value3 "none"
+  label key4 "end-to-end"
+  & label value4 "none"
+
+step: Multiply 299 by 25 ms.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "decode time"
+  & label value0 "7.475 s"
+  & highlight card0
+  label key1 "decode steps"
+  & label value1 "299"
+  label key2 "TTFT"
+  & label value2 "200 ms"
+  label key3 "prefill"
+  & label value3 "0.2 s"
+  label key4 "end-to-end"
+  & label value4 "none"
+
+step: Add TTFT and the decode time.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "end-to-end"
+  & label value0 "7.675 s"
+  & highlight card0
+  label key1 "decode time"
+  & label value1 "7.475 s"
+  label key2 "decode steps"
+  & label value2 "299"
+  label key3 "TTFT"
+  & label value3 "200 ms"
+  label key4 "prefill"
+  & label value4 "0.2 s"
+
+step: A queue wait of 500 ms would raise TTFT to 700 ms and the end-to-end latency to 8.175 s.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "with a 500 ms queue"
+  & label value0 "8.175 s"
+  & highlight card0
+  label key1 "end-to-end"
+  & label value1 "7.675 s"
+  label key2 "decode time"
+  & label value2 "7.475 s"
+  label key3 "decode steps"
+  & label value3 "299"
+  label key4 "TTFT"
+  & label value4 "200 ms"
+  label key5 "prefill"
+  & label value5 "0.2 s"
+:::
+
 The four definitions are:
 
 - TTFT: the time from the request arrival to the first token sent to the client.
@@ -4167,6 +6576,135 @@ Concurrency 128: 0.75
 Throughput rises at every row. Goodput peaks at concurrency 16 and then collapses. The point where goodput stops rising is the knee. Above the knee, extra load adds queue time and larger batches, so both TTFT and TPOT cross their targets. The right capacity for this system is about 16 concurrent requests per replica, not 128.
 
 ## How it works
+
+
+:::anim
+title: Goodput of a system at 100 requests per second
+# Worked values and narration follow the scenario in this lesson.
+text heading "Goodput of a system at 100 requests per second" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 220,145 r: 3 color: grey
+dot mark2 @ 340,145 r: 3 color: grey
+dot mark3 @ 460,145 r: 3 color: grey
+dot mark4 @ 580,145 r: 3 color: grey
+dot mark5 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4
+  label key0 "throughput"
+  & label value0 "100 req/s"
+  & highlight card0
+  label key1 "inside SLO"
+  & label value1 "unknown"
+  & highlight card1
+  label key2 "goodput"
+  & label value2 "unknown"
+  & highlight card2
+  label key3 "wasted"
+  & label value3 "unknown"
+  & highlight card3
+
+step: Write the SLO down: TTFT p99 under 1 s and TPOT p99 under 50 ms.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 220,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "SLO"
+  & label value0 "TTFT under 1 s and TPOT|under 50 ms"
+  & highlight card0
+  label key1 "throughput"
+  & label value1 "100 req/s"
+  label key2 "inside SLO"
+  & label value2 "unknown"
+  label key3 "goodput"
+  & label value3 "unknown"
+  label key4 "wasted"
+  & label value4 "unknown"
+
+step: Measure every request.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 340,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "inside SLO"
+  & label value0 "70 percent"
+  & highlight card0
+  label key1 "SLO"
+  & label value1 "TTFT under 1 s and TPOT|under 50 ms"
+  label key2 "throughput"
+  & label value2 "100 req/s"
+  label key3 "goodput"
+  & label value3 "unknown"
+  label key4 "wasted"
+  & label value4 "unknown"
+
+step: Multiply the throughput by the fraction.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 460,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "goodput"
+  & label value0 "70 req/s"
+  & highlight card0
+  label key1 "inside SLO"
+  & label value1 "70 percent"
+  label key2 "SLO"
+  & label value2 "TTFT under 1 s and TPOT|under 50 ms"
+  label key3 "throughput"
+  & label value3 "100 req/s"
+  label key4 "wasted"
+  & label value4 "unknown"
+
+step: The other 30 requests per second are work the system did but the user did not accept.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 580,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "wasted"
+  & label value0 "30 req/s"
+  & highlight card0
+  label key1 "goodput"
+  & label value1 "70 req/s"
+  label key2 "inside SLO"
+  & label value2 "70 percent"
+  label key3 "SLO"
+  & label value3 "TTFT under 1 s and TPOT|under 50 ms"
+  label key4 "throughput"
+  & label value4 "100 req/s"
+
+step: Raise the load until throughput is 14 requests per second per replica at concurrency 64.
+  restore card0, card1, card2, card3, card4
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "throughput"
+  & label value0 "14 req/s per replica"
+  & highlight card0
+  label key1 "inside SLO"
+  & label value1 "30 percent"
+  & highlight card1
+  label key2 "goodput"
+  & label value2 "4.2 req/s"
+  & highlight card2
+  label key3 "wasted"
+  & label value3 "9.8 req/s"
+  & highlight card3
+  label key4 "SLO"
+  & label value4 "TTFT under 1 s and TPOT|under 50 ms"
+:::
 
 Goodput is:
 
@@ -4426,6 +6964,169 @@ MFU at batch 64: 36
 :::
 
 ## How it works
+
+
+:::anim
+title: MBU and MFU for a 70B FP16 model on an H100
+# Worked values and narration follow the scenario in this lesson.
+text heading "MBU and MFU for a 70B FP16 model on an H100" @ 480,48 size: 23 color: white
+text legend "WORKED EXAMPLE · FOLLOW EACH CHANGE" @ 480,80 size: 13 color: grey
+num scene = 1 @ 850,145 prefix: "Scene " size: 16 color: grey
+dot cursor @ 100,145 r: 8 color: blue
+dot mark0 @ 100,145 r: 3 color: grey
+dot mark1 @ 200,145 r: 3 color: grey
+dot mark2 @ 300,145 r: 3 color: grey
+dot mark3 @ 400,145 r: 3 color: grey
+dot mark4 @ 500,145 r: 3 color: grey
+dot mark5 @ 600,145 r: 3 color: grey
+dot mark6 @ 700,145 r: 3 color: grey
+rect card0 @ 180,255 size: 260x120 color: blue
+text key0 "" @ 180,222 size: 16 color: grey
+text value0 "" @ 180,267 size: 20 color: white
+rect card1 @ 480,255 size: 260x120 color: blue
+text key1 "" @ 480,222 size: 16 color: grey
+text value1 "" @ 480,267 size: 20 color: white
+rect card2 @ 780,255 size: 260x120 color: blue
+text key2 "" @ 780,222 size: 16 color: grey
+text value2 "" @ 780,267 size: 20 color: white
+rect card3 @ 180,405 size: 260x120 color: blue
+text key3 "" @ 180,372 size: 16 color: grey
+text value3 "" @ 180,417 size: 20 color: white
+rect card4 @ 480,405 size: 260x120 color: blue
+text key4 "" @ 480,372 size: 16 color: grey
+text value4 "" @ 480,417 size: 20 color: white
+rect card5 @ 780,405 size: 260x120 color: blue
+text key5 "" @ 780,372 size: 16 color: grey
+text value5 "" @ 780,417 size: 20 color: white
+
+step: Start with the example's initial values.
+  show heading, legend, scene, cursor, mark0, mark1, mark2, mark3, mark4, mark5, mark6, card0, key0, value0, card1, key1, value1, card2, key2, value2, card3, key3, value3, card4, key4, value4, card5, key5, value5
+  label key0 "peak bandwidth"
+  & label value0 "3.35 TB/s"
+  & highlight card0
+  label key1 "peak FLOPS"
+  & label value1 "990 T"
+  & highlight card1
+  label key2 "weights"
+  & label value2 "140 GB"
+  & highlight card2
+  label key3 "MBU"
+  & label value3 "none"
+  & highlight card3
+  label key4 "MFU"
+  & label value4 "none"
+  & highlight card4
+
+step: Measure the decode step at batch size 1.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 200,145 (0.6s)
+  & count scene -> 2 (0.6s)
+  label key0 "step time"
+  & label value0 "60 ms"
+  & highlight card0
+  label key1 "peak bandwidth"
+  & label value1 "3.35 TB/s"
+  label key2 "peak FLOPS"
+  & label value2 "990 T"
+  label key3 "weights"
+  & label value3 "140 GB"
+  label key4 "MBU"
+  & label value4 "none"
+  label key5 "MFU"
+  & label value5 "none"
+
+step: Divide 140 GB by 0.060 s.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 300,145 (0.6s)
+  & count scene -> 3 (0.6s)
+  label key0 "achieved bandwidth"
+  & label value0 "2.33 TB/s"
+  & highlight card0
+  label key1 "step time"
+  & label value1 "60 ms"
+  label key2 "peak bandwidth"
+  & label value2 "3.35 TB/s"
+  label key3 "peak FLOPS"
+  & label value3 "990 T"
+  label key4 "weights"
+  & label value4 "140 GB"
+  label key5 "MBU"
+  & label value5 "none"
+
+step: Divide by the peak.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 400,145 (0.6s)
+  & count scene -> 4 (0.6s)
+  label key0 "MBU"
+  & label value0 "70 percent"
+  & highlight card0
+  label key1 "achieved bandwidth"
+  & label value1 "2.33 TB/s"
+  label key2 "step time"
+  & label value2 "60 ms"
+  label key3 "peak bandwidth"
+  & label value3 "3.35 TB/s"
+  label key4 "peak FLOPS"
+  & label value4 "990 T"
+  label key5 "weights"
+  & label value5 "140 GB"
+
+step: Now measure a batch of 64 sequences.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 500,145 (0.6s)
+  & count scene -> 5 (0.6s)
+  label key0 "step time"
+  & label value0 "25 ms"
+  & highlight card0
+  label key1 "work"
+  & label value1 "8.96 TFLOPs"
+  & highlight card1
+  label key2 "MBU"
+  & label value2 "70 percent"
+  label key3 "achieved bandwidth"
+  & label value3 "2.33 TB/s"
+  label key4 "peak bandwidth"
+  & label value4 "3.35 TB/s"
+  label key5 "peak FLOPS"
+  & label value5 "990 T"
+
+step: Divide the work by the time.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 600,145 (0.6s)
+  & count scene -> 6 (0.6s)
+  label key0 "achieved FLOPS"
+  & label value0 "358 T"
+  & highlight card0
+  label key1 "step time"
+  & label value1 "25 ms"
+  label key2 "work"
+  & label value2 "8.96 TFLOPs"
+  label key3 "MBU"
+  & label value3 "70 percent"
+  label key4 "achieved bandwidth"
+  & label value4 "2.33 TB/s"
+  label key5 "peak bandwidth"
+  & label value5 "3.35 TB/s"
+
+step: Divide by the peak of 990 TFLOPS.
+  restore card0, card1, card2, card3, card4, card5
+  move cursor -> 700,145 (0.6s)
+  & count scene -> 7 (0.6s)
+  label key0 "MFU"
+  & label value0 "36 percent"
+  & highlight card0
+  label key1 "fix"
+  & label value1 "raise the batch or|quantise"
+  & highlight card1
+  label key2 "achieved FLOPS"
+  & label value2 "358 T"
+  label key3 "step time"
+  & label value3 "25 ms"
+  label key4 "work"
+  & label value4 "8.96 TFLOPs"
+  label key5 "MBU"
+  & label value5 "70 percent"
+:::
 
 The two formulas are:
 

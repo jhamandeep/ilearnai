@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useId, useEffect, useMemo, useRef, useState } from 'react'
 import { parseBlock, parseNumber } from './parse'
 import { fmt, niceTicks } from './viz'
 import { useTip } from './Tip'
@@ -13,6 +13,7 @@ const PAD_B = 30
 const DUR = 4200 // ms for one full sweep
 
 export function Timeline({ src }: { src: string }) {
+  const svgId = 'rt-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const { title, unit, lanes, bars, msgs, max } = useMemo(() => {
     const b = parseBlock(src)
     const lanes: string[] = []
@@ -81,8 +82,8 @@ export function Timeline({ src }: { src: string }) {
       <div className="rich-stage rich-scroll" ref={tip.host}>
         <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={title ?? 'Timing diagram'} onPointerLeave={tip.hide}>
           <defs>
-            <marker id="rt-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--accent-inference)" /></marker>
-            <linearGradient id="rt-barfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--primary)" stopOpacity="0.95" /><stop offset="1" stopColor="var(--primary)" stopOpacity="0.7" /></linearGradient>
+            <marker id={`${svgId}-arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--accent-inference)" /></marker>
+            <linearGradient id={`${svgId}-barfill`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--primary)" stopOpacity="0.95" /><stop offset="1" stopColor="var(--primary)" stopOpacity="0.7" /></linearGradient>
           </defs>
           {lanes.map((l, i) => (
             <g key={l}>
@@ -105,7 +106,7 @@ export function Timeline({ src }: { src: string }) {
             const body = <><strong>{fmt(b.start)} to {fmt(b.end)}{unit ? ` ${unit}` : ''}</strong><span>{b.lane}: {b.label}</span></>
             return (
               <g key={i} className={full ? 'rt-bar rt-bar-done' : 'rt-bar'} onPointerEnter={(e) => tip.show(e, body)} onPointerMove={(e) => tip.show(e, body)}>
-                <rect x={x1} y={y(b.lane) + 9} width={w} height={RH - 22} rx={5} fill="url(#rt-barfill)" />
+                <rect x={x1} y={y(b.lane) + 9} width={w} height={RH - 22} rx={5} fill={`url(#${svgId}-barfill)`} />
                 {w > 34 && <text x={x1 + 7} y={y(b.lane) + RH / 2 - 2} dominantBaseline="middle" className="rt-bar-label" clipPath={undefined}>{b.label.length > Math.floor(w / 6.5) ? b.label.slice(0, Math.max(1, Math.floor(w / 6.5) - 1)) + '…' : b.label}</text>}
               </g>
             )
@@ -118,7 +119,7 @@ export function Timeline({ src }: { src: string }) {
             const body = <><strong>{fmt(m.at)}{m.end !== m.at ? ` to ${fmt(m.end)}` : ''}{unit ? ` ${unit}` : ''}</strong><span>{m.from} → {m.to}: {m.label}</span></>
             return (
               <g key={'m' + i} className={on ? 'rt-msg rt-msg-on' : 'rt-msg'} onPointerEnter={(e) => tip.show(e, body)} onPointerMove={(e) => tip.show(e, body)}>
-                <path d={msgPath(m)} markerEnd="url(#rt-arrow)" />
+                <path d={msgPath(m)} markerEnd={`url(#${svgId}-arrow)`} />
                 <text x={mx} y={my - 7} textAnchor="middle" className="rt-msg-label">{m.label.length > 22 ? m.label.slice(0, 21) + '…' : m.label}</text>
               </g>
             )

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { gsap } from 'gsap'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { parseAnim, colorOf, defaultDur, holdFor, STAGE_W, STAGE_H, type Obj, type Scene } from './anim-parse'
@@ -6,10 +6,10 @@ import { glyphFor, fmt, niceTicks } from './viz'
 
 gsap.registerPlugin(MotionPathPlugin)
 
-const BG = '#13172a'
-const GRID = '#262c48'
-const AXIS = '#7d849c'
-const TEXT = '#ECECEC'
+const BG = 'var(--anim-bg, #f8f9fc)'
+const GRID = 'var(--anim-grid, #e8eaed)'
+const AXIS = 'var(--anim-axis, #747775)'
+const TEXT = 'var(--anim-ink, #202124)'
 
 // ---------- geometry ----------
 type XY = [number, number]
@@ -134,6 +134,7 @@ const esc = (id: string) => id.replace(/["\\]/g, '\\$&')
 
 // ---------- component ----------
 export function Anim({ src }: { src: string }) {
+  const idPrefix = 'animation-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const scene = useMemo(() => parseAnim(src), [src])
   const fig = useRef<HTMLElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -142,12 +143,15 @@ export function Anim({ src }: { src: string }) {
   const tlRef = useRef<gsap.core.Timeline | null>(null)
   const starts = useRef<number[]>([])
   const ends = useRef<number[]>([])
-  const userPaused = useRef(false)
+  const userPaused = useRef(true)
   const reduced = useRef(false)
   const [step, setStep] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [done, setDone] = useState(false)
   const [speed, setSpeed] = useState(1)
+  const [duration, setDuration] = useState(1)
+  const [fullscreenError, setFullscreenError] = useState('')
+  const [enlarged, setEnlarged] = useState(false)
 
   // count how many label changes each object gets, so the extra text nodes exist for scrubbing
   const labelVariants = useMemo(() => {
@@ -423,14 +427,29 @@ export function Anim({ src }: { src: string }) {
     tl.eventCallback('onStart', () => setDone(false))
     ui()
 
-    if (reduced.current) { tl.seek(E[0] ?? 0); ui() }
+    // Show a useful opening frame. Playback starts only when requested.
+    tl.seek(E[0] ?? 0)
+    setDuration(tl.duration())
+    ui()
+    let inView = false
+    const syncPlayback = () => {
+      if (inView && !document.hidden && !reduced.current && !userPaused.current && tl.progress() < 1) {
+        tl.play(); setPlaying(true)
+      } else if (tl.isActive()) { tl.pause(); setPlaying(false) }
+    }
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
-        if (e.isIntersecting && e.intersectionRatio >= 0.35) {
-          if (!reduced.current && !userPaused.current && tl.progress() < 1) { tl.play(); setPlaying(true) }
-        } else if (tl.isActive()) { tl.pause(); setPlaying(false) }
+        inView = e.isIntersecting && e.intersectionRatio >= 0.35
+        syncPlayback()
       }
     }, { threshold: [0, 0.35, 0.6] })
+    document.addEventListener('visibilitychange', syncPlayback)
+    const motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
+    const onMotionChange = () => {
+      reduced.current = motionQuery.matches
+      if (reduced.current) { userPaused.current = true; tl.pause(); setPlaying(false); const current = Math.max(0, S.findLastIndex((start) => start <= tl.time())); tl.seek(E[current] ?? 0); ui() }
+    }
+    motionQuery.addEventListener('change', onMotionChange)
     const figEl = fig.current
     if (figEl) io.observe(figEl)
 
@@ -438,6 +457,8 @@ export function Anim({ src }: { src: string }) {
     figEl?.addEventListener('animseek', onSeek)
     return () => {
       io.disconnect()
+      document.removeEventListener('visibilitychange', syncPlayback)
+      motionQuery.removeEventListener('change', onMotionChange)
       figEl?.removeEventListener('animseek', onSeek)
       tl.kill()
       meas.remove()
@@ -464,9 +485,20 @@ export function Anim({ src }: { src: string }) {
     setDone(false)
   }
   const onKey = (e: KeyboardEvent) => {
+    // Let sliders, select menus, and buttons keep their own keyboard behavior.
+    if (e.target !== e.currentTarget) return
     if (e.key === ' ' || e.key === 'k') { e.preventDefault(); if (playing) pause(); else play() }
     if (e.key === 'ArrowRight') { e.preventDefault(); goto(step + 1, !reduced.current) }
     if (e.key === 'ArrowLeft') { e.preventDefault(); goto(step - 1, !reduced.current) }
+  }
+  const toggleFullscreen = async () => {
+    const element = fig.current
+    if (!element) return
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen()
+      else if (element.requestFullscreen) await element.requestFullscreen()
+      else setFullscreenError('Full screen is unavailable in this browser. You can still zoom and scroll the stage.')
+    } catch { setFullscreenError('Full screen is unavailable here. The animation controls still work below.') }
   }
 
   if (scene.errors.length) {
@@ -481,54 +513,60 @@ export function Anim({ src }: { src: string }) {
   const cur = scene.steps[step]
   return (
     <figure className="rich rich-anim" ref={fig} tabIndex={0} onKeyDown={onKey} aria-label={scene.title ?? 'Animation'}>
-      {scene.title && <figcaption><span className="rich-kind">Animation</span>{scene.title}<span className="rich-unit">{scene.steps.length} scenes</span></figcaption>}
-      <div className="an-stage">
+      {scene.title && <figcaption><span className="rich-kind">Interactive explainer</span>{scene.title}<span className="rich-unit">{step + 1} / {scene.steps.length}</span></figcaption>}
+      <div className="an-learning-context">{scene.context && <p>{scene.context}</p>}<p><strong>Watch for:</strong> {scene.focus ?? 'Follow one scene at a time. Read the labels and the explanation below, then predict what changes next.'}</p><details><summary>How to read this animation</summary><ul>{scene.objects.some(item => item.kind === 'box' || item.kind === 'rect') && <li>Labelled boxes name the parts or values in this example.</li>}{scene.steps.some(item => item.actions.some(action => action.op === 'arrow' || action.op === 'send')) && <li>Read the label on each arrow. It tells you what passes between the connected parts.</li>}{scene.objects.some(item => item.kind === 'axes') && <li>Read both axis labels before comparing points. A curve shows how the plotted quantity changes.</li>}<li>The numbered caption explains the current scene. Use Previous and Next to move at your own pace.</li><li>Open the transcript below for the full sequence. Motion is optional.</li></ul></details></div>
+      <div className={`an-stage${enlarged ? ' is-enlarged' : ''}`} role="region" tabIndex={0} aria-label={enlarged ? 'Enlarged animation stage. Scroll horizontally to explore.' : 'Animation stage. The full scene fits the available width.'}>
         <svg ref={svgRef} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} role="img" aria-label={scene.title ?? 'Animation'} className="an-svg">
           <defs>
-            <filter id="an-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-            <radialGradient id="an-vignette" cx="50%" cy="45%" r="75%"><stop offset="0" stopColor="#1a1f3a" /><stop offset="1" stopColor={BG} /></radialGradient>
+            <filter id={`${idPrefix}-glow`} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+            <radialGradient id={`${idPrefix}-vignette`} cx="50%" cy="45%" r="75%"><stop offset="0" stopColor="var(--anim-center, #ffffff)" /><stop offset="1" stopColor={BG} /></radialGradient>
             {scene.objects.filter((o) => o.kind === 'axes').map((ax) => (
-              <clipPath key={ax.id} id={`an-clip-${ax.id}`}><rect x={-4} y={-4} width={ax.w + 8} height={ax.h + 8} /></clipPath>
+              <clipPath key={ax.id} id={`${idPrefix}-clip-${ax.id}`}><rect x={-4} y={-4} width={ax.w + 8} height={ax.h + 8} /></clipPath>
             ))}
             {scene.objects.filter((o) => o.kind === 'axes').map((ax) => (
-              <clipPath key={'s' + ax.id} id={`an-clip-stage-${ax.id}`}><rect x={ax.x - 6} y={ax.y - 6} width={ax.w + 12} height={ax.h + 12} /></clipPath>
+              <clipPath key={'s' + ax.id} id={`${idPrefix}-clip-stage-${ax.id}`}><rect x={ax.x - 6} y={ax.y - 6} width={ax.w + 12} height={ax.h + 12} /></clipPath>
             ))}
           </defs>
-          <rect width={STAGE_W} height={STAGE_H} fill="url(#an-vignette)" />
+          <rect width={STAGE_W} height={STAGE_H} fill={`url(#${idPrefix}-vignette)`} />
           <g data-camera="1">
-            {scene.objects.map((o) => <SceneObject key={o.id} o={o} scene={scene} variants={labelVariants.get(o.id) ?? []} />)}
+            {scene.objects.map((o) => <SceneObject key={o.id} o={o} scene={scene} variants={labelVariants.get(o.id) ?? []} idPrefix={idPrefix} />)}
             {scene.objects.filter((o) => o.kind === 'arrow').map((o) => (
-              <circle key={'p' + o.id} data-packet={o.id} r={7} fill={colorOf(o.color, PALETTE_YELLOW)} stroke={BG} strokeWidth={2} filter="url(#an-glow)" style={{ opacity: 0 }} />
+              <circle key={'p' + o.id} data-packet={o.id} r={6} fill={colorOf(o.color, PALETTE_YELLOW)} stroke={BG} strokeWidth={2} filter={`url(#${idPrefix}-glow)`} style={{ opacity: 0 }} />
             ))}
           </g>
         </svg>
       </div>
-      <div className="an-caption" aria-live="polite">
+      <p className="an-mobile-hint">{enlarged ? 'Scroll across the enlarged stage, or choose Fit scene to see every block.' : 'The whole scene fits above. Choose Enlarge for bigger labels, or explore each step below.'}</p>
+      <div className="an-caption" aria-live={playing ? 'off' : 'polite'}>
         <span className="an-step-no">{step + 1}</span>
-        <p>{cur?.text}</p>
+        <div><p>{cur?.text}</p>{cur?.explanation && <p className="an-explanation"><strong>Why this matters:</strong> {cur.explanation}</p>}</div>
       </div>
       <div className="rich-bar an-bar">
         <button className="btn btn-ghost btn-sm" onClick={() => goto(step - 1, !reduced.current)} aria-label="Previous scene" disabled={step === 0}>←</button>
         <button className="btn btn-primary btn-sm an-play" onClick={() => (playing ? pause() : play())}>{playing ? 'Pause' : done ? 'Replay' : 'Play'}</button>
         <button className="btn btn-ghost btn-sm" onClick={() => goto(step + 1, !reduced.current)} aria-label="Next scene" disabled={step >= scene.steps.length - 1}>→</button>
-        <input ref={scrub} type="range" className="rich-scrub" min={0} max={tlRef.current?.duration() ?? 1} step={0.02} defaultValue={0} aria-label="Scrub"
+        <input ref={scrub} type="range" className="rich-scrub" min={0} max={duration} step={0.02} defaultValue={0} aria-label="Animation timeline"
           onPointerDown={() => { tlRef.current?.pause(); userPaused.current = true; setPlaying(false) }}
-          onInput={(e) => { const tl = tlRef.current; if (!tl) return; tl.time(parseFloat((e.target as HTMLInputElement).value)) }} />
+          onInput={(e) => { const tl = tlRef.current; if (!tl) return; tl.pause(); userPaused.current = true; setPlaying(false); tl.time(parseFloat((e.target as HTMLInputElement).value)) }} />
         <span className="an-clock" ref={clock} />
-        <button className="btn btn-ghost btn-sm" onClick={() => setSpeed(speed === 1 ? 0.5 : speed === 0.5 ? 1.5 : 1)} aria-label="Speed">{speed}×</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => { const f = fig.current; if (!f) return; if (document.fullscreenElement) document.exitFullscreen(); else f.requestFullscreen?.() }} aria-label="Full screen" title="Full screen">⛶</button>
-        <span className="rich-dots" aria-hidden="true">{scene.steps.map((_, i) => <button key={i} className={i === step ? 'on' : i < step ? 'done' : ''} onClick={() => goto(i, !reduced.current)} aria-label={`Scene ${i + 1}`} />)}</span>
+        <select className="an-speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Playback speed">{[0.5, 1, 1.5, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEnlarged((value) => !value)} aria-pressed={enlarged}>{enlarged ? 'Fit scene' : 'Enlarge'}</button>
+        <button className="btn btn-ghost btn-sm" onClick={toggleFullscreen} aria-label="Full screen" title="Full screen">⛶</button>
+        <span className="rich-dots" aria-label="Choose a scene">{scene.steps.map((_, i) => <button key={i} className={i === step ? 'on' : i < step ? 'done' : ''} onClick={() => goto(i, false)} aria-label={`Scene ${i + 1}: ${scene.steps[i].text}`} aria-current={i === step ? 'step' : undefined} />)}</span>
       </div>
+      {fullscreenError && <p className="an-status" role="status">{fullscreenError}</p>}
+      {scene.takeaway && <p className="an-takeaway"><strong>Take this with you:</strong> {scene.takeaway}</p>}
+      <details className="an-transcript"><summary>Explore the steps <span>{scene.steps.length} scenes</span></summary><ol>{scene.steps.map((item, i) => <li key={i}><button type="button" onClick={() => goto(i, false)} aria-current={i === step ? 'step' : undefined}><span className="an-transcript-number">{String(i + 1).padStart(2, '0')}</span><span>{item.text}{item.explanation && <small className="an-transcript-explanation">{item.explanation}</small>}</span><span aria-hidden="true">↗</span></button></li>)}</ol></details>
     </figure>
   )
 }
 
-const PALETTE_YELLOW = '#F5D33D'
+const PALETTE_YELLOW = '#4285f4'
 function baseColor(o: Obj): string {
   const d = o.kind === 'dot' || o.kind === 'vector' || o.kind === 'num' ? 'yellow' : o.kind === 'curve' ? 'blue' : o.kind === 'text' ? 'white' : o.kind === 'tangent' ? 'orange' : o.kind === 'arrow' ? 'grey' : 'blue'
   return colorOf(o.color, colorOf(d, '#58C4DD'))
 }
-function fillFor(stroke: string) { return stroke + '22' }
+function fillFor(stroke: string) { return `color-mix(in srgb, ${stroke} 10%, transparent)` }
 
 function Lines({ text, size, anchor, x = 0, y = 0, cls, fill }: { text: string; size: number; anchor: 'start' | 'middle' | 'end'; x?: number; y?: number; cls?: string; fill?: string }) {
   const parts = text.split('|').map((s) => s.trim())
@@ -541,7 +579,7 @@ function Lines({ text, size, anchor, x = 0, y = 0, cls, fill }: { text: string; 
   )
 }
 
-function SceneObject({ o, scene, variants }: { o: Obj; scene: Scene; variants: string[] }) {
+function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; variants: string[]; idPrefix: string }) {
   const color = baseColor(o)
   const p: XY = o.kind === 'axes' ? [o.x, o.y] : toStage(scene, o, [o.x, o.y])
   const tf = `translate(${p[0]},${p[1]})`
@@ -622,7 +660,7 @@ function SceneObject({ o, scene, variants }: { o: Obj; scene: Scene; variants: s
       const anchor = last && last[0] + 8 > ax.x + ax.w - 70 ? 'end' : 'start'
       return (
         <>
-          <g clipPath={`url(#an-clip-${ax.id})`} transform={`translate(${ax.x},${ax.y})`}>
+          <g clipPath={`url(#${idPrefix}-clip-${ax.id})`} transform={`translate(${ax.x},${ax.y})`}>
             <g transform={`translate(${-ax.x},${-ax.y})`}>
               <path data-id={o.id} d={pathFrom(pts)} fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" pathLength={1} strokeDasharray={o.dashed ? '0.03 0.02' : 1} strokeDashoffset={1} style={hidden} />
             </g>
@@ -636,7 +674,7 @@ function SceneObject({ o, scene, variants }: { o: Obj; scene: Scene; variants: s
       const b = toStage(scene, o, o.to!)
       const ang = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI
       return (
-        <g data-id={o.id} style={hidden} className="an-obj" clipPath={o.on ? `url(#an-clip-stage-${o.on})` : undefined}>
+        <g data-id={o.id} style={hidden} className="an-obj" clipPath={o.on ? `url(#${idPrefix}-clip-stage-${o.on})` : undefined}>
           <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={color} strokeWidth={o.kind === 'vector' ? 3.5 : 2.5} strokeLinecap="round" strokeDasharray={o.dashed ? '8 6' : undefined} />
           {o.kind === 'vector' && <polygon data-head="1" points="2,0 -12,-6 -12,6" fill={color} transform={`translate(${b[0]},${b[1]}) rotate(${ang})`} />}
           {o.label && <text data-id={o.id + '#label'} x={b[0] + 10} y={b[1] - 10} fontSize={16} fill={color} fontStyle="italic" className="an-curve-label">{o.label}</text>}
@@ -648,7 +686,7 @@ function SceneObject({ o, scene, variants }: { o: Obj; scene: Scene; variants: s
       const g = tangentGeom(scene, o, o.at!)
       return (
         <g data-id={o.id} style={hidden} className="an-obj">
-          <g clipPath={o.on ? `url(#an-clip-stage-${o.on})` : undefined}>
+          <g clipPath={o.on ? `url(#${idPrefix}-clip-stage-${o.on})` : undefined}>
             <line x1={g.a[0]} y1={g.a[1]} x2={g.b[0]} y2={g.b[1]} stroke={color} strokeWidth={2.5} strokeDasharray="8 6" strokeLinecap="round" />
           </g>
           <circle cx={g.p[0]} cy={g.p[1]} r={6} fill={color} stroke={BG} strokeWidth={2} />

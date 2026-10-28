@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
 import { RangeField, Stat } from '../components/Field'
+import { LabVisual } from '../components/LabVisual'
+import { useLabMotion } from '../lib/useLabMotion'
 
 // Minimal byte-pair encoding trained in the browser on the text you give it.
 function trainBpe(text: string, merges: number) {
@@ -34,21 +36,23 @@ export function TokenizerLab() {
   const [merges, setMerges] = useState(40)
   const [shown, setShown] = useState(0)
   const [playing, setPlaying] = useState(true)
+  const motionRef = useRef<HTMLDivElement>(null)
+  const motionActive = useLabMotion(motionRef, playing)
 
   const full = useMemo(() => trainBpe(text, merges), [text, merges])
   const view = useMemo(() => trainBpe(text, shown), [text, shown])
 
   useEffect(() => {
-    if (!playing) return
+    if (!motionActive) return
     const id = setInterval(() => setShown((s) => (s >= merges ? 0 : s + 1)), 350)
     return () => clearInterval(id)
-  }, [playing, merges])
+  }, [motionActive, merges])
 
   const chars = Array.from(text).length
   const palette = ['#6c4bd8', '#1f8f6a', '#d9622b', '#1f5eff', '#b8266a', '#8a7a3a']
 
   return (
-    <div className="lab lab-stack">
+    <div className="lab lab-stack" ref={motionRef}>
       <div className="lab-controls">
         <label className="field">
           <span className="field-label">Text</span>
@@ -70,6 +74,7 @@ export function TokenizerLab() {
         ))}
       </div>
       <div className="lab-results">
+        <LabVisual title="From characters to reusable tokens" mode="pipeline" caption="Follow the current byte-pair encoding steps. The counts update with your text and merge slider." items={[{ label: 'Input characters', value: chars, display: String(chars) }, { label: 'Merges applied', value: shown, display: String(shown) }, { label: 'Current tokens', value: view.tokens.length, display: String(view.tokens.length), detail: view.history.length ? `Most recent pair: ${view.history[view.history.length - 1].pair.join(' + ')}.` : 'No learned pair has been applied yet.' }, { label: 'Full vocabulary', value: full.tokens.length, display: `${full.tokens.length} tokens` }]} />
         <Stat label="Characters" value={chars} />
         <Stat label="Tokens now" value={view.tokens.length} sub={`${shown} merges applied`} />
         <Stat label="Tokens at full vocab" value={full.tokens.length} sub={`${(chars / Math.max(1, full.tokens.length)).toFixed(2)} chars per token`} />

@@ -325,7 +325,7 @@ mark.ste-warn { background: color-mix(in srgb, var(--accent-robotics) 28%, trans
 .rich-graph .rich-kind { color: var(--accent-math); background: color-mix(in srgb, var(--accent-math) 12%, transparent); }
 .rich-unit { margin-left: auto; font-weight: 500; color: var(--text-dim); font-size: 0.78rem; }
 .rich-scroll { overflow-x: auto; padding: 0.8rem; }
-.rich-scroll svg { display: block; max-width: 100%; height: auto; }
+.rich-scroll > svg { display: block; max-width: 100%; height: auto; }
 .rich-stage { position: relative; }
 .rich-bar { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; padding: 0.5rem 0.8rem; border-top: 1px solid var(--border); font-size: 0.85rem; background: color-mix(in srgb, var(--surface-2) 45%, var(--surface)); }
 .rich-caption { color: var(--text-dim); margin-left: 0.3rem; }
@@ -347,7 +347,7 @@ mark.ste-warn { background: color-mix(in srgb, var(--accent-robotics) 28%, trans
 .ra-band-alt { fill: color-mix(in srgb, var(--surface-2) 70%, transparent); }
 .ra-layer { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; fill: var(--text-dim); }
 .ra-box { transition: transform 250ms ease; }
-.ra-box-bg { fill: url(#ra-box); stroke: var(--border); stroke-width: 1.2; transition: stroke 250ms, fill 250ms; }
+.ra-box-bg { fill: var(--surface); stroke: var(--border); stroke-width: 1.2; transition: stroke 250ms, fill 250ms; }
 .rich-flow .ra-box-bg { fill: var(--surface); }
 .ra-box-tab { fill: var(--border); transition: fill 250ms; }
 .ra-glyph { fill: none; stroke: var(--text-dim); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: stroke 250ms; }
@@ -358,8 +358,7 @@ mark.ste-warn { background: color-mix(in srgb, var(--accent-robotics) 28%, trans
 .ra-on .ra-box-bg { stroke: var(--primary); stroke-width: 1.8; fill: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
 .ra-on .ra-box-tab { fill: var(--primary); }
 .ra-on .ra-glyph { stroke: var(--primary); }
-.ra-on { animation: ra-lift 400ms ease-out both; }
-@keyframes ra-lift { 0% { transform: translate(var(--tx, 0), var(--ty, 0)); } }
+.ra-on { animation: none; }
 .ra-hop { fill: none; stroke: var(--text-dim); stroke-width: 1.3; opacity: 0.35; stroke-dasharray: 4 4; transition: opacity 250ms, stroke 250ms; }
 .ra-hop-hov { opacity: 0.9; stroke: var(--text); }
 .ra-hop-done { opacity: 0.55; stroke: var(--primary); stroke-dasharray: none; }

@@ -1,56 +1,28 @@
-import { useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { resources, tools } from '../data/resources'
-import { tracks } from '../data/tracks'
-import { levelInfo, levelOrder, type Level, type ResourceKind } from '../data/types'
+import { levelInfo } from '../data/types'
+import { LibraryFilters } from '../components/LibraryFilters'
+import { groupLibrary } from '../lib/library'
+import { useLibraryFilters } from '../lib/useLibraryFilters'
 
-const kinds: ResourceKind[] = ['course', 'book', 'lecture', 'repo', 'blog', 'paper-list', 'tool']
-const levels: Level[] = levelOrder
+const kinds = ['course', 'book', 'lecture', 'repo', 'blog', 'paper-list', 'tool', 'visualization'] as const
+const all = [...resources, ...tools]
 
 export function Resources() {
-  const [track, setTrack] = useState('all')
-  const [kind, setKind] = useState<ResourceKind | 'all'>('all')
-  const [level, setLevel] = useState<Level | 'all'>('all')
-  const [q, setQ] = useState('')
-  const all = useMemo(() => [...resources, ...tools], [])
-  const filtered = all.filter((r) => (track === 'all' || r.track === track) && (kind === 'all' || r.kind === kind) && (level === 'all' || r.level === level) && (r.title + r.topic + r.why).toLowerCase().includes(q.toLowerCase()))
-  const byTopic = useMemo(() => { const m = new Map<string, typeof filtered>(); filtered.forEach((r) => m.set(r.topic, [...(m.get(r.topic) ?? []), r])); return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])) }, [filtered])
+  const filters = useLibraryFilters(kinds)
+  const [params] = useSearchParams()
+  const openOnly = params.get('collection') === 'open-source'
+  const query = filters.q.trim().toLowerCase()
+  const filtered = all.filter((resource) => (!openOnly || resource.openSource) && (filters.track === 'all' || resource.track === filters.track) && (filters.level === 'all' || resource.level === filters.level) && (filters.kind === 'all' || resource.kind === filters.kind) && `${resource.title} ${resource.topic} ${resource.why}`.toLowerCase().includes(query))
+  const groups = groupLibrary(filtered)
   return (
     <>
-      <header className="page-head">
-        <h1>Resources</h1>
-        <p className="lede">Courses, books, lectures, repositories, blogs and tools worth your time, grouped by level and then by topic. Everything is free unless marked as a book.</p>
-      </header>
-      <div className="topo-controls">
-        <input className="search" style={{ margin: 0 }} placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-        <select value={track} onChange={(e) => setTrack(e.target.value)}><option value="all">All tracks</option>{[...tracks].sort((a, b) => a.order - b.order).map((t) => <option key={t.slug} value={t.slug}>{t.title}</option>)}</select>
-        <select value={kind} onChange={(e) => setKind(e.target.value as ResourceKind | 'all')}><option value="all">All kinds</option>{kinds.map((k) => <option key={k} value={k}>{k}</option>)}</select>
-        <select value={level} onChange={(e) => setLevel(e.target.value as Level | 'all')}><option value="all">All levels</option>{levels.map((l) => <option key={l} value={l}>{levelInfo[l].short} {levelInfo[l].label}</option>)}</select>
-        <span className="meta">{filtered.length} of {all.length}</span>
-      </div>
-      {levelOrder.map((lv) => {
-        const inLevel = byTopic.map(([topic, items]) => [topic, items.filter((r) => r.level === lv)] as const).filter(([, items]) => items.length > 0)
-        if (!inLevel.length) return null
-        return (
-          <section key={lv} className="level-group">
-            <div className="level-head"><h2><span className={`lvl lvl-${lv}`}>{levelInfo[lv].short}</span>{levelInfo[lv].label}</h2><p>{levelInfo[lv].who}</p></div>
-            {inLevel.map(([topic, items]) => (
-              <div key={topic} className="module">
-                <h3>{topic}</h3>
-                <ul className="res-list">
-                  {items.map((r) => (
-                    <li key={r.url} className="res">
-                      <a href={r.url} target="_blank" rel="noreferrer"><strong>{r.title}</strong></a>
-                      <span className="meta"><span className="pill" style={{ marginLeft: 0 }}>{r.kind}</span> {tracks.find((t) => t.slug === r.track)?.title}</span>
-                      <p>{r.why}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </section>
-        )
-      })}
-      {filtered.length === 0 && <p className="meta">Nothing matches.</p>}
+      <header className="page-head"><p className="eyebrow">Your learning library</p><h1>Resources</h1><p className="lede">Courses, books, lectures, repositories, reading lists, and tools, organized by level, learning track, and topic. Find something to read, inspect, or build. Open-source libraries are labelled; hosted services and books may have separate costs.</p><div className="hero-actions"><Link to="/videos" className="text-cta">Browse videos and playlists ↗</Link><Link to="/hub" className="text-cta">Explore models and datasets ↗</Link></div></header>
+      <nav className="resource-shortcuts" aria-label="Resource collections"><Link to="/resources?kind=repo">GitHub &amp; repositories ↗</Link><Link to="/resources?kind=visualization">Interactive visualizations ↗</Link><Link to="/resources?collection=open-source">Open-source projects ↗</Link><Link to="/code">Practice Python here →</Link></nav>
+      <LibraryFilters filters={filters} kinds={kinds} count={filtered.length} total={all.length} label="resources" />
+      {openOnly && <p className="meta">Open-source collection · <Link to="/resources">Show all resources</Link></p>}
+      {groups.map((group) => <section className="level-group" key={group.level} id={`resources-${group.level}`}><div className="level-head"><h2><span className={`lvl lvl-${group.level}`}>{levelInfo[group.level].short}</span>{levelInfo[group.level].label}</h2><p>{levelInfo[group.level].who}</p><span className="meta">{group.count} resources</span></div>{group.tracks.map(({ track, count, topics }) => <section className="library-track" key={track.slug}><div className="library-track-head"><h3><Link to={`/courses/${track.slug}`}>{track.title}</Link></h3><span className="meta">{count} resources</span></div>{topics.map(({ topic, items }) => <div className="module library-topic" key={topic}><h4>{topic} <span className="meta">{items.length}</span></h4><ul className="res-list">{items.map((resource, index) => <li className="res" key={`${resource.url}-${index}`} data-resource-track={resource.track} data-resource-level={resource.level}><span className="resource-type">{resource.kind === 'paper-list' ? 'Reading list' : resource.kind === 'repo' ? 'Repository' : resource.kind}</span><a href={resource.url} target="_blank" rel="noreferrer"><strong>{resource.title}</strong></a><p>{resource.why}</p>{resource.setup && <p className="resource-setup">{resource.setup}</p>}{resource.firstTask && <div className="resource-first-task"><strong>Try this first</strong><p>{resource.firstTask}</p></div>}{resource.openSource && <span className="resource-open">Open-source project</span>}<a href={resource.url} target="_blank" rel="noreferrer" className="video-source">Open resource ↗</a>{resource.repoUrl && <a className="video-source resource-repo" href={resource.repoUrl} target="_blank" rel="noreferrer">GitHub source ↗</a>}</li>)}</ul></div>)}</section>)}</section>)}
+      {!filtered.length && <div className="library-empty"><h2>No matching resources</h2><p>Try another track, level, or search term.</p><button type="button" className="btn" onClick={filters.clearFilters}>Show all resources</button></div>}
     </>
   )
 }

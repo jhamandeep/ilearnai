@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { parseBlock } from './parse'
 import { videos } from '../../data/videos'
+import { VideoThumbnail } from '../VideoThumbnail'
 
 // :::video
 // id: aircAruvnKk          (must be an id listed in src/data/videos.ts)
@@ -20,7 +21,6 @@ export function Video({ src }: { src: string }) {
   }, [src])
   const [play, setPlay] = useState(false)
   if (!v.id) return null
-  const thumb = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`
   return (
     <figure className="rich rich-video">
       <figcaption>
@@ -28,17 +28,15 @@ export function Video({ src }: { src: string }) {
       </figcaption>
       {play && v.embeddable ? (
         <div className="player" style={{ margin: 0, borderRadius: 0, border: 0 }}>
-          <iframe src={`https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1${v.start ? `&start=${v.start}` : ''}`} title={v.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+          <iframe src={`https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1${v.start ? `&start=${v.start}` : ''}`} title={v.title} referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
         </div>
       ) : v.embeddable ? (
         <button className="thumb-btn" onClick={() => setPlay(true)} aria-label={`Play ${v.title}`}>
-          <img className="thumb" src={thumb} alt="" loading="lazy" />
-          <span className="play">▶</span>
+          <VideoThumbnail id={v.id} title={v.title} />
         </button>
       ) : (
         <a className="thumb-btn" href={v.url} target="_blank" rel="noreferrer" aria-label={`Open ${v.title} on YouTube`}>
-          <img className="thumb" src={thumb} alt="" loading="lazy" />
-          <span className="play">↗</span>
+          <VideoThumbnail id={v.id} title={v.title} external />
         </a>
       )}
       <div className="rich-bar">

@@ -8,6 +8,7 @@ import './brand-style.css'
 import './learning-guide-style.css'
 import './workspace-style.css'
 import './study-style.css'
+import './course-workspace.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

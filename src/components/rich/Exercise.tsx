@@ -1,4 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { parseExercise } from '../../lib/exercise'
+import { lessonPythonExercises, lessonPythonUrl } from '../../lib/lessonPython'
+import { findLesson } from '../../data/tracks'
+import { LessonContext } from '../LessonContext'
 
 // :::exercise
 // title: Write your first function
@@ -11,31 +16,11 @@ import { useMemo, useState } from 'react'
 // :::
 // task: and hint: may run over several lines. Everything after solution: is code.
 export function Exercise({ src }: { src: string }) {
-  const { title, task, hint, lang, solution } = useMemo(() => {
-    const lines = src.replace(/\n$/, '').split('\n')
-    let title = ''
-    let lang = 'text'
-    const task: string[] = []
-    const hint: string[] = []
-    let mode: 'task' | 'hint' | 'none' = 'none'
-    let solution = ''
-    for (let i = 0; i < lines.length; i++) {
-      const raw = lines[i]
-      const line = raw.trim()
-      if (/^solution\s*:\s*$/.test(line)) { solution = lines.slice(i + 1).join('\n'); break }
-      let m = /^title\s*:\s*(.*)$/.exec(line)
-      if (m) { title = m[1]; mode = 'none'; continue }
-      m = /^lang\s*:\s*(.*)$/.exec(line)
-      if (m) { lang = m[1].trim(); mode = 'none'; continue }
-      m = /^task\s*:\s*(.*)$/.exec(line)
-      if (m) { task.push(m[1]); mode = 'task'; continue }
-      m = /^hint\s*:\s*(.*)$/.exec(line)
-      if (m) { hint.push(m[1]); mode = 'hint'; continue }
-      if (mode === 'task') task.push(line)
-      else if (mode === 'hint') hint.push(line)
-    }
-    return { title, task: task.join(' ').trim(), hint: hint.join(' ').trim(), lang, solution }
-  }, [src])
+  const { title, task, hint, lang, solution } = useMemo(() => parseExercise(src), [src])
+  const context = useContext(LessonContext)
+  const parts = context?.route.split('/') ?? []
+  const found = context ? findLesson(parts[2], parts[3], parts[4]) : undefined
+  const runnable = found && context ? lessonPythonExercises(found.lesson, context.route).find(exercise => exercise.solution.trim() === solution.trim()) : undefined
   const [showHint, setShowHint] = useState(false)
   const [showSol, setShowSol] = useState(false)
   if (!task) return null
@@ -52,6 +37,7 @@ export function Exercise({ src }: { src: string }) {
           </div>
         )}
       </div>
+      {runnable && <div className="exercise-run-link"><Link className="btn btn-primary btn-sm" to={lessonPythonUrl(runnable)}>Write and run this in Python →</Link><p>Use the lesson task in an editable workspace. Your draft stays in this browser.</p></div>}
       <div className="rich-bar">
         {hint && !showHint && <button className="btn btn-ghost btn-sm" onClick={() => setShowHint(true)}>Show hint</button>}
         {solution && <button className="btn btn-ghost btn-sm" onClick={() => setShowSol((s) => !s)}>{showSol ? 'Hide solution' : 'Show solution'}</button>}

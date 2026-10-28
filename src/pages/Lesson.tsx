@@ -9,7 +9,7 @@ import { lessonActivities, activityLabels, activitySymbols } from '../lib/activi
 import { NotFound } from './NotFound'
 import { useAuth } from '../lib/auth'
 import { LearningResources } from '../components/LearningResources'
-import { AnimationContext, LessonTerms } from '../components/LessonGuidance'
+import { AnimationContext, LessonTerms, LessonPreview } from '../components/LessonGuidance'
 import { pythonForChapter } from '../data/pythonExercises'
 import { StudyTools } from '../components/StudyTools'
 import { ChapterVideos } from '../components/ChapterVideos'
@@ -49,6 +49,7 @@ export function LessonPage() {
         {(!active || active.kind === 'exercise') && pythonForChapter(track.slug, module.slug).length > 0 && <section className="lesson-python-links"><p className="eyebrow">Make the idea work</p><h2>Practice this chapter in Python</h2><p>Open a guided exercise with an editor, output, hints, and checks.</p><div className="resource-shortcuts">{pythonForChapter(track.slug, module.slug).map(item => <Link key={item.id} to={`/code?exercise=${item.id}`}>{item.title} →</Link>)}</div></section>}
         {active?.kind === 'animation'  && <AnimationContext lesson={lesson} route={route} />}
         {(!active || active.kind === 'reading') && <LessonTerms lesson={lesson} />}
+        {!active && <LessonPreview lesson={lesson} route={route} />}
         {(!active || active.kind === 'video' || active.kind === 'resources') && <ChapterVideos key={`${track.slug}/${module.slug}/${active?.id ?? 'overview'}`} track={track.slug} module={module.slug} compact={!active} />}
         {!active ? <><section className="lesson-overview-objectives"><h2>What you’ll learn</h2><ul>{lesson.objectives.map(objective => <li key={objective}>{objective}</li>)}</ul></section>{lesson.before?.length ? <div className="before">Recommended first: {lesson.before.map(item => <Link key={item.to} to={item.to}>{item.label}</Link>)}</div> : null}<div className="lesson-overview-start"><Link className="btn btn-primary" to={`${route}/${firstIncomplete.id}`}>{completed === activities.length ? 'Review lesson' : completed ? 'Resume lesson' : 'Start lesson'} →</Link><span>{completed}/{activities.length} complete</span></div><h2>Your activities</h2><div className="activity-card-grid lesson-activity-cards">{activities.map(activity => <Link className="activity-card" to={`${route}/${activity.id}`} key={activity.id}><span className={`activity-icon kind-${activity.kind}`} aria-hidden="true">{activitySymbols[activity.kind]}</span><span><small>{activityLabels[activity.kind]}</small><strong>{activity.title}</strong></span><span className="activity-card-status">{isActivityDone(route, activity.id) ? '✓' : '→'}</span></Link>)}</div></> : <>
           <div className={`activity-content activity-content-${active.kind}`}><LessonContext.Provider value={ctx}>{active.kind === 'resources' ? <LearningResources track={track.slug} links={lesson.links} /> : active.kind === 'lab' ? <Suspense fallback={<p role="status">Opening the lab…</p>}><LabContent slug={active.labSlug!} /></Suspense> : <Markdown>{active.body}</Markdown>}</LessonContext.Provider></div>

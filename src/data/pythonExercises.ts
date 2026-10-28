@@ -5,6 +5,7 @@ export interface PythonExercise {
   id: string; title: string; topic: string; minutes: number; track: string; module: string
   context: string; task: string; example: string; starter: string; solution: string; hint: string; takeaway: string
   checks: PythonCheck[]
+  lessonRoute?: string; activityId?: string
 }
 export const pythonExercises: PythonExercise[] = [
   { id: 'review-time', title: 'Make a fair time comparison', topic: 'Variables & arithmetic', minutes: 6, track: 'start-here', module: 'first-python',

@@ -43,6 +43,7 @@ try {
     for (const module of track.modules) for (const lesson of module.lessons) {
       const url = `/courses/${track.slug}/${module.slug}/${lesson.slug}`
       const overview = await page(LessonPage, url, '/courses/:track/:module/:lesson')
+      assert.ok(overview.includes('lesson-study-tools') && overview.includes('Why this idea matters') && overview.includes('An example from this lesson'), `${url}: missing shared lesson experience`)
       const list = lessonActivities(lesson, url)
       const rendered = []
       for (const activity of list) {
@@ -50,6 +51,8 @@ try {
         assert.ok(overview.includes(`href="${activityUrl}"`), `${url}: missing activity link ${activity.id}`)
         const content = await page(LessonPage, activityUrl, '/courses/:track/:module/:lesson/:activity')
         assert.ok(!content.includes('That page does not exist'), `${activityUrl}: missing activity page`)
+        assert.ok(content.includes('lesson-study-tools'), `${activityUrl}: missing study tools`)
+        if (activity.kind === 'animation') assert.ok(content.includes('Watch with this goal') && content.includes('What to avoid concluding'), `${activityUrl}: missing animation guidance`)
         const ids = [...content.matchAll(/\bid="([^"]+)"/g)].map(match => match[1])
         assert.equal(ids.length, new Set(ids).size, `${activityUrl}: duplicate SVG/DOM ids`)
         for (const [, id] of content.matchAll(/url\(#([^)]*)\)/g)) assert.ok(ids.includes(id), `${activityUrl}: unresolved SVG reference ${id}`)

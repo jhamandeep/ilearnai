@@ -1,14 +1,23 @@
-import { useId, useState } from 'react'
+import { createContext, useContext, useId, useState, type ReactNode } from 'react'
 import { chapterVideoGuide, chapterVideo } from '../data/learning/chapterVideos'
 import { levelInfo } from '../data/types'
 import { VideoThumbnail } from './VideoThumbnail'
 
 interface ChapterVideosProps { track: string; module: string; compact?: boolean }
+const PlaybackContext = createContext<{ selected: string | null; setSelected: (value: string | null) => void } | null>(null)
+
+export function ChapterVideoGroup({ children }: { children: ReactNode }) {
+  const [selected, setSelected] = useState<string | null>(null)
+  return <PlaybackContext.Provider value={{ selected, setSelected }}>{children}</PlaybackContext.Provider>
+}
 
 function ChapterVideoSequence({ track, module, compact = false }: ChapterVideosProps) {
   const guide = chapterVideoGuide(track, module)
   const titleId = useId()
-  const [selected, setSelected] = useState<string | null>(null)
+  const group = useContext(PlaybackContext)
+  const [localSelected, setLocalSelected] = useState<string | null>(null)
+  const selected = group ? group.selected : localSelected
+  const setSelected = group ? group.setSelected : setLocalSelected
   if (!guide) return null
 
   const content = <section className="chapter-videos" aria-labelledby={titleId} data-chapter-videos={`${track}/${module}`}>

@@ -17597,5 +17597,1764 @@
         ]
       }
     ]
+  },
+  {
+    "slug": "complete-ai",
+    "title": "AI from first principles",
+    "tagline": "The whole foundation: reasoning, vision, language, agents, and responsible practice.",
+    "description": "Follow the 24 core topics of Microsoft’s AI for Beginners curriculum, plus its multimodal extension, inside ilearnai. Full attributed readings are paired with original worked examples, animated walkthroughs, practical tasks, and explained quizzes. Framework notebooks remain available with their original setup instructions.",
+    "accent": "#5166b0",
+    "status": "live",
+    "level": "beginner",
+    "order": 11,
+    "audience": "Learners who want a broad AI foundation, with plain-language examples before technical detail.",
+    "outcome": "Explain the main AI approaches, inspect their computations, compare their limits, and plan a relevant experiment.",
+    "prerequisites": [
+      "start-here",
+      "math-from-zero"
+    ],
+    "modules": [
+      {
+        "slug": "ideas-and-reasoning",
+        "title": "Ideas, history, and symbolic reasoning",
+        "description": "Choose between explicit rules and learned patterns; trace facts through an expert system.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "ai-history-and-approaches",
+            "title": "AI history: rules, learning, and generation",
+            "summary": "Distinguish a hand-written rule, a learned prediction, and generated content before choosing an approach.",
+            "minutes": 28,
+            "objectives": [
+              "Distinguish a hand-written rule, a learned prediction, and generated content before choosing an approach.",
+              "Work through the example: test the outcome.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "symbolic-ai"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/1-Intro/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Game Jam",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/1-Intro/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "AI history: rules, learning, and generation"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply ai history: rules, learning, and generation"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "knowledge-and-expert-systems",
+            "title": "Knowledge, expert systems, and ontologies",
+            "summary": "Trace explicit facts through rules and explain the difference between missing knowledge and a false statement.",
+            "minutes": 31,
+            "objectives": [
+              "Trace explicit facts through rules and explain the difference between missing knowledge and a false statement.",
+              "Work through the example: add evidence.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "ontology"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/2-Symbolic/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Animals.ipynb",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/main/lessons/2-Symbolic/Animals.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "FamilyOntology.ipynb",
+                "url": "https://github.com/Ezana135/AI-For-Beginners/blob/main/lessons/2-Symbolic/FamilyOntology.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "MSConceptGraph.ipynb",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/main/lessons/2-Symbolic/MSConceptGraph.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Build an Ontology",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/2-Symbolic/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Knowledge, expert systems, and ontologies"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply knowledge, expert systems, and ontologies"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "neural-networks",
+        "title": "Neural networks and frameworks",
+        "description": "From one decision boundary to backpropagation, PyTorch, TensorFlow, and evaluation.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "perceptron",
+            "title": "A perceptron: one learned boundary",
+            "summary": "Compute a weighted score, apply a threshold, and identify a boundary that one perceptron cannot learn.",
+            "minutes": 20,
+            "objectives": [
+              "Compute a weighted score, apply a threshold, and identify a boundary that one perceptron cannot learn.",
+              "Work through the example: compare with label.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "perceptron"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/03-Perceptron/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Perceptron",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/03-Perceptron/Perceptron.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/03-Perceptron/lab/README.md",
+                "kind": "article"
+              },
+              {
+                "label": "Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/03-Perceptron/lab/PerceptronMultiClass.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "A perceptron: one learned boundary"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply a perceptron: one learned boundary"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "mlp-and-backpropagation",
+            "title": "Layers, loss, and backpropagation",
+            "summary": "Follow a forward pass, measure its error, and trace how gradients guide a parameter update.",
+            "minutes": 20,
+            "objectives": [
+              "Follow a forward pass, measure its error, and trace how gradients guide a parameter update.",
+              "Work through the example: update: 2.6.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "backpropagation"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/04-OwnFramework/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "OwnFramework",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/04-OwnFramework/OwnFramework.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/04-OwnFramework/lab/README.md",
+                "kind": "article"
+              },
+              {
+                "label": "Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/04-OwnFramework/lab/MyFW_MNIST.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Layers, loss, and backpropagation"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply layers, loss, and backpropagation"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "frameworks-and-overfitting",
+            "title": "PyTorch, TensorFlow, and overfitting",
+            "summary": "Recognise a training loop in both frameworks and use validation data to detect memorisation.",
+            "minutes": 22,
+            "objectives": [
+              "Recognise a training loop in both frameworks and use validation data to detect memorisation.",
+              "Work through the example: choose checkpoint.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "validation-set"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/05-Frameworks/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "our framework",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/04-OwnFramework/OwnFramework.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "TensorFlow+Keras Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/05-Frameworks/IntroKerasTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/05-Frameworks/IntroPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Keras",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/05-Frameworks/IntroKeras.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/05-Frameworks/lab/README.md",
+                "kind": "article"
+              },
+              {
+                "label": "Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/3-NeuralNetworks/05-Frameworks/lab/LabFrameworks.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "PyTorch, TensorFlow, and overfitting"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply pytorch, tensorflow, and overfitting"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "computer-vision",
+        "title": "Computer vision from pixels to regions",
+        "description": "OpenCV, CNNs, transfer learning, autoencoders, GANs, detection, and segmentation.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "computer-vision-and-opencv",
+            "title": "Computer vision: pixels, channels, and OpenCV",
+            "summary": "Read an image as a numerical array, distinguish RGB from BGR, and explain preprocessing before inference.",
+            "minutes": 22,
+            "objectives": [
+              "Read an image as a numerical array, distinguish RGB from BGR, and explain preprocessing before inference.",
+              "Work through the example: inspect changes.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "color-channel"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/06-IntroCV/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "OpenCV Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/06-IntroCV/OpenCV.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/06-IntroCV/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Computer vision: pixels, channels, and OpenCV"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply computer vision: pixels, channels, and opencv"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "convolutional-neural-networks",
+            "title": "Convolutional networks: local patterns to categories",
+            "summary": "Compute one convolution response and connect feature maps, pooling, and classification.",
+            "minutes": 20,
+            "objectives": [
+              "Compute one convolution response and connect feature maps, pooling, and classification.",
+              "Work through the example: class scores.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "convolution"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/07-ConvNets/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Convolutional Neural Networks - PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/07-ConvNets/ConvNetsPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Convolutional Neural Networks - TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/07-ConvNets/ConvNetsTF.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Convolutional networks: local patterns to categories"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply convolutional networks: local patterns to categories"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "vision-transfer-learning",
+            "title": "Transfer learning: reuse features, test the new task",
+            "summary": "Distinguish a frozen feature extractor from fine-tuning and design a fair evaluation for a new image task.",
+            "minutes": 21,
+            "objectives": [
+              "Distinguish a frozen feature extractor from fine-tuning and design a fair evaluation for a new image task.",
+              "Work through the example: evaluate and adapt.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "transfer-learning"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/08-TransferLearning/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Transfer Learning - PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/08-TransferLearning/TransferLearningPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Transfer Learning - TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/08-TransferLearning/TransferLearningTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Ideal and Adversarial Cat - TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/08-TransferLearning/AdversarialCat_TF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/08-TransferLearning/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Transfer learning: reuse features, test the new task"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply transfer learning: reuse features, test the new task"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "autoencoders-and-vaes",
+            "title": "Autoencoders and variational autoencoders",
+            "summary": "Explain reconstruction, a bottleneck, and the additional distribution constraint used by a VAE.",
+            "minutes": 21,
+            "objectives": [
+              "Explain reconstruction, a bottleneck, and the additional distribution constraint used by a VAE.",
+              "Work through the example: measure and constrain.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "latent-representation"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/09-Autoencoders/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Autoencoders in TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/09-Autoencoders/AutoencodersTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Autoencoders in PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/09-Autoencoders/AutoEncodersPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "experiments",
+                "url": "https://colab.research.google.com/github/magenta/magenta-demos/blob/master/colab-notebooks/Multitrack_MusicVAE.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Autoencoders and variational autoencoders"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply autoencoders and variational autoencoders"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "gans-and-style-transfer",
+            "title": "GANs and artistic style transfer",
+            "summary": "Separate adversarial generation from transferring visual style onto an existing image.",
+            "minutes": 22,
+            "objectives": [
+              "Separate adversarial generation from transferring visual style onto an existing image.",
+              "Work through the example: alternating updates.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "mode-collapse"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/10-GANs/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "GAN Notebook in TensorFlow/Keras",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/10-GANs/GANTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "GAN Notebook in PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/10-GANs/GANPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "example notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/10-GANs/StyleTransfer.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "GANs and artistic style transfer"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply gans and artistic style transfer"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "object-detection",
+            "title": "Object detection and intersection over union",
+            "summary": "Distinguish detection from classification and compute how well a predicted box overlaps a labelled object.",
+            "minutes": 22,
+            "objectives": [
+              "Distinguish detection from classification and compute how well a predicted box overlaps a labelled object.",
+              "Work through the example: count errors.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "intersection-over-union"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/11-ObjectDetection/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Exercise Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/11-ObjectDetection/ObjectDetection-TF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "ObjectDetection.ipynb",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/11-ObjectDetection/ObjectDetection.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "step-by-step notebook",
+                "url": "https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "step-by-step notebook",
+                "url": "https://github.com/experiencor/keras-yolo2/blob/master/Yolo%20Step-by-Step.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment: Object Detection",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/11-ObjectDetection/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Object detection and intersection over union"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply object detection and intersection over union"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "segmentation-and-unet",
+            "title": "Segmentation and U-Net",
+            "summary": "Explain pixel labels, encoder-decoder paths, and skip connections in a segmentation model.",
+            "minutes": 20,
+            "objectives": [
+              "Explain pixel labels, encoder-decoder paths, and skip connections in a segmentation model.",
+              "Work through the example: pixel mask.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "semantic-segmentation"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/12-Segmentation/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Semantic Segmentation Pytorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/12-Segmentation/SemanticSegmentationPytorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Semantic Segmentation TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/12-Segmentation/SemanticSegmentationTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/4-ComputerVision/12-Segmentation/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Segmentation and U-Net"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply segmentation and u-net"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "language-and-representation",
+        "title": "Language, representations, and generation",
+        "description": "Text baselines, embeddings, recurrent models, Transformers, NER, and LLMs.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "bow-and-tfidf",
+            "title": "Bag of words, n-grams, and TF-IDF",
+            "summary": "Build a simple text representation and explain why a rare term can be more useful than a frequent one.",
+            "minutes": 21,
+            "objectives": [
+              "Build a simple text representation and explain why a rare term can be more useful than a frequent one.",
+              "Work through the example: compare documents.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "tf-idf"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/13-TextRep/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Text Representation with PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/13-TextRep/TextRepresentationPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Text Representation with TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/13-TextRep/TextRepresentationTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment: Notebooks",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/13-TextRep/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Bag of words, n-grams, and TF-IDF"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply bag of words, n-grams, and tf-idf"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "word2vec-and-glove",
+            "title": "Word2Vec, GloVe, and embedding similarity",
+            "summary": "Explain how distributional context produces vectors and distinguish static from contextual word representations.",
+            "minutes": 20,
+            "objectives": [
+              "Explain how distributional context produces vectors and distinguish static from contextual word representations.",
+              "Work through the example: test a use case.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "word-embedding"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/14-Embeddings/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Embeddings with PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/14-Embeddings/EmbeddingsPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Embeddings TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/14-Embeddings/EmbeddingsTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment: Notebooks",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/14-Embeddings/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Word2Vec, GloVe, and embedding similarity"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply word2vec, glove, and embedding similarity"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "training-language-embeddings",
+            "title": "Language modelling and training embeddings",
+            "summary": "Build context-target examples and distinguish CBOW from skip-gram training.",
+            "minutes": 20,
+            "objectives": [
+              "Build context-target examples and distinguish CBOW from skip-gram training.",
+              "Work through the example: update embeddings.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "cbow"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/15-LanguageModeling/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Training CBoW Word2Vec with TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/15-LanguageModeling/CBoW-TF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Training CBoW Word2Vec with PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/15-LanguageModeling/CBoW-PyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment: Train Skip-Gram Model",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/15-LanguageModeling/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Language modelling and training embeddings"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply language modelling and training embeddings"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "recurrent-networks-and-lstm",
+            "title": "Recurrent networks and LSTM memory",
+            "summary": "Trace a recurrent state through a sequence and explain why gated memory helps with long dependencies.",
+            "minutes": 22,
+            "objectives": [
+              "Trace a recurrent state through a sequence and explain why gated memory helps with long dependencies.",
+              "Work through the example: read 0: state 0.5.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "recurrent-state"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/16-RNN/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "RNNs with PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/16-RNN/RNNPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "RNNs with TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/16-RNN/RNNTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment: Notebooks",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/16-RNN/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Recurrent networks and LSTM memory"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply recurrent networks and lstm memory"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "generative-recurrent-networks",
+            "title": "Generating sequences with recurrent networks",
+            "summary": "Follow a next-token generation loop and explain the effect of temperature on sampling.",
+            "minutes": 20,
+            "objectives": [
+              "Follow a next-token generation loop and explain the effect of temperature on sampling.",
+              "Work through the example: feed it back.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "autoregressive-generation"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/17-GenerativeNetworks/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Generative Networks with PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/17-GenerativeNetworks/GenerativePyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Generative Networks with TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/17-GenerativeNetworks/GenerativeTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/17-GenerativeNetworks/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Generating sequences with recurrent networks"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply generating sequences with recurrent networks"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "transformers-and-bert",
+            "title": "Attention, Transformers, and BERT",
+            "summary": "Distinguish an encoder’s contextual representation from a causal decoder’s next-token prediction.",
+            "minutes": 22,
+            "objectives": [
+              "Distinguish an encoder’s contextual representation from a causal decoder’s next-token prediction.",
+              "Work through the example: task output.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "causal-mask"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/18-Transformers/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "TensorFlow Notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/18-Transformers/TransformersTF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Transformers in PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/18-Transformers/TransformersPyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/18-Transformers/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Attention, Transformers, and BERT"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply attention, transformers, and bert"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "named-entity-recognition",
+            "title": "Named entity recognition and BIO tags",
+            "summary": "Mark entity spans rather than whole-document topics and preserve the boundaries of multiword names.",
+            "minutes": 20,
+            "objectives": [
+              "Mark entity spans rather than whole-document topics and preserve the boundaries of multiword names.",
+              "Work through the example: verify extraction.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "named-entity-recognition"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/19-NER/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "NER with TensorFlow",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/19-NER/NER-TF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/19-NER/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Named entity recognition and BIO tags"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply named entity recognition and bio tags"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "llms-and-few-shot-prompting",
+            "title": "Large language models and few-shot tasks",
+            "summary": "Use examples to specify a task, then evaluate the output separately from how fluent it sounds.",
+            "minutes": 20,
+            "objectives": [
+              "Use examples to specify a task, then evaluate the output separately from how fluent it sounds.",
+              "Work through the example: review errors.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "few-shot-prompting"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/20-LangModels/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Playing with OpenAI-GPT",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/5-NLP/20-LangModels/GPT-PyTorch.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Large language models and few-shot tasks"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply large language models and few-shot tasks"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "search-and-agents",
+        "title": "Search, reinforcement learning, and agents",
+        "description": "Explore candidate solutions, learn from interaction, and coordinate multiple decision makers.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "genetic-algorithms",
+            "title": "Genetic algorithms: search over candidates",
+            "summary": "Trace population, fitness, selection, crossover, and mutation without assuming the best result is guaranteed.",
+            "minutes": 20,
+            "objectives": [
+              "Trace population, fitness, selection, crossover, and mutation without assuming the best result is guaranteed.",
+              "Work through the example: check and stop.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "fitness-function"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/21-GeneticAlgorithms/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "this notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/21-GeneticAlgorithms/Genetic.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Assignment: Diophantine Equation",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/21-GeneticAlgorithms/Diophantine.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Genetic algorithms: search over candidates"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply genetic algorithms: search over candidates"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "reinforcement-learning",
+            "title": "Reinforcement learning: states, actions, and rewards",
+            "summary": "Distinguish learning from interaction from supervised labels and compute a simple value update.",
+            "minutes": 23,
+            "objectives": [
+              "Distinguish learning from interaction from supervised labels and compute a simple value update.",
+              "Work through the example: update: 3.3.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "reinforcement-learning"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/22-DeepRL/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "example notebook",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/22-DeepRL/CartPole-RL-TF.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "RL in PyTorch",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/22-DeepRL/CartPole-RL-PyTorch.ipynb",
+                "kind": "repo"
+              },
+              {
+                "label": "Train a Mountain Car",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/22-DeepRL/lab/README.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Reinforcement learning: states, actions, and rewards"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply reinforcement learning: states, actions, and rewards"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          },
+          {
+            "slug": "multi-agent-systems",
+            "title": "Multi-agent systems and coordination",
+            "summary": "Explain how local decisions create collective behaviour and identify where coordination is needed.",
+            "minutes": 26,
+            "objectives": [
+              "Explain how local decisions create collective behaviour and identify where coordination is needed.",
+              "Work through the example: measure the group.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "multi-agent-system"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/23-MultiagentSystems/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "NetLogo Assignment",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/6-Other/23-MultiagentSystems/assignment.md",
+                "kind": "article"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Multi-agent systems and coordination"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply multi-agent systems and coordination"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "responsible-practice",
+        "title": "Responsible AI in practice",
+        "description": "Connect principles to evidence, affected people, review, and accountability.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "responsible-ai",
+            "title": "Responsible AI as an operating practice",
+            "summary": "Turn broad principles into concrete checks for data, people, decisions, and ongoing accountability.",
+            "minutes": 20,
+            "objectives": [
+              "Turn broad principles into concrete checks for data, people, decisions, and ongoing accountability.",
+              "Work through the example: monitor after release.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "disaggregated-evaluation"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/7-Ethics/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Responsible AI as an operating practice"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply responsible ai as an operating practice"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "multimodal-extension",
+        "title": "Extension: image and language together",
+        "description": "Compare image-text matching with image generation and evaluate their different outputs.",
+        "level": "beginner",
+        "lessons": [
+          {
+            "slug": "multimodal-clip-and-generation",
+            "title": "Multimodal learning: CLIP and image generation",
+            "summary": "Explain shared image-text representations and distinguish matching from generating an image.",
+            "minutes": 20,
+            "objectives": [
+              "Explain shared image-text representations and distinguish matching from generating an image.",
+              "Work through the example: rank and evaluate.",
+              "Explain the stated limitation and complete the practice task with evidence."
+            ],
+            "keyTerms": [
+              "contrastive-learning"
+            ],
+            "body": "",
+            "links": [
+              {
+                "label": "Microsoft source lesson and attribution",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/X-Extras/X1-MultiModal/README.md",
+                "kind": "course"
+              },
+              {
+                "label": "Notebook environment setup",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/0-course-setup/how-to-run.md",
+                "kind": "docs"
+              },
+              {
+                "label": "Using CLIP for Image Classification and Image Search",
+                "url": "https://github.com/microsoft/AI-For-Beginners/blob/392d0df1b2647cbee104942390551f1ed9e072c8/lessons/X-Extras/X1-MultiModal/Clip.ipynb",
+                "kind": "repo"
+              }
+            ],
+            "activities": [
+              {
+                "id": "reading",
+                "kind": "reading",
+                "title": "Read the lesson"
+              },
+              {
+                "id": "animation-1",
+                "kind": "animation",
+                "title": "Multimodal learning: CLIP and image generation"
+              },
+              {
+                "id": "exercise-1",
+                "kind": "exercise",
+                "title": "Apply multimodal learning: clip and image generation"
+              },
+              {
+                "id": "quiz-1",
+                "kind": "quiz",
+                "title": "Decide and explain"
+              },
+              {
+                "id": "resources",
+                "kind": "resources",
+                "title": "Explore videos and resources"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 ]

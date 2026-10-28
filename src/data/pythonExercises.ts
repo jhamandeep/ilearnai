@@ -1,3 +1,5 @@
+import { completeAiPython } from './completeAiPython'
+
 export interface PythonCheck { label: string; expression: string }
 export interface PythonExercise {
   id: string; title: string; topic: string; minutes: number; track: string; module: string
@@ -51,6 +53,7 @@ export const pythonExercises: PythonExercise[] = [
     starter: 'import json\n\npayload = \'{"answer": "Open at 9", "source": null}\'\nrecord = {}\nneeds_review = False\nprint(record, needs_review)\n',
     solution: 'import json\n\npayload = \'{"answer": "Open at 9", "source": null}\'\nrecord = json.loads(payload)\nneeds_review = record["source"] is None\nprint(record["answer"], needs_review)\n', hint: 'json.loads(payload) returns a dictionary. Access a field with record["source"].', takeaway: 'Well-formed JSON means the structure can be read. It does not establish that the answer is true.',
     checks: [{ label: 'The answer is parsed from JSON', expression: 'record["answer"] == "Open at 9"' }, { label: 'null is represented as None', expression: 'record["source"] is None' }, { label: 'Missing evidence triggers review', expression: 'needs_review is True' }] },
+  ...completeAiPython,
 ]
 
 export function pythonForChapter(track: string, module: string) {

@@ -65,7 +65,7 @@ try {
   assert.ok(container.querySelector('iframe'))
   await act(() => { details.open = false; details.dispatchEvent(new window.Event('toggle')) })
   assert.equal(container.querySelector('iframe'), null, 'Collapsing a sequence must stop hidden playback')
-  console.log(`PASS: ${previews} previews across 56 chapters; ${played} inline selections match their video IDs; one player at a time; titles, close, chapter navigation and collapse behave correctly. External playback was not tested.`)
+  console.log(`PASS: ${previews} previews across ${Object.keys(chapterVideoGuides).length} chapters; ${played} inline selections match their video IDs; one player at a time; titles, close, chapter navigation and collapse behave correctly. External playback was not tested.`)
 } finally {
   await act(() => root.unmount())
   await vite.close()

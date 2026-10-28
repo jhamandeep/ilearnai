@@ -21,7 +21,8 @@
     "test:work-learning": "node scripts/work-learning-test.mjs",
     "test:content-guidance": "node scripts/content-guidance-test.mjs",
     "test:chapter-videos": "node scripts/chapter-video-interaction-test.mjs",
-    "test:workspace": "node scripts/workspace-test.mjs"
+    "test:workspace": "node scripts/workspace-test.mjs",
+    "test:study-tools": "node scripts/study-tools-test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

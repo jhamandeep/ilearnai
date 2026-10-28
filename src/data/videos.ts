@@ -1,5 +1,6 @@
 import type { Video } from './types'
 import chapterSourceVideos from './chapterSourceVideos.json'
+import completeAiVideos from './completeAiVideos.json'
 
 // Every entry is free to watch. Every video id below was checked against
 // YouTube's oEmbed endpoint (title and channel returned). Entries marked
@@ -17,6 +18,7 @@ const ch = (handle: string, title: string, track: string, topic: string, level: 
 })
 
 export const videos: Video[] = [
+  ...completeAiVideos as Video[],
   ...chapterSourceVideos as Video[],
   // ---- Level 0: Start here (computers, code, data) ----
   v('mCq8-xTH7jA', 'How Computers Work: What Makes a Computer, a Computer?', 'Code.org', 'start-here', 'Computers', 'foundations', 'Five minutes on input, storage, processing and output. The whole computer in one picture.', 5),

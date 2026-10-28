@@ -1,6 +1,20 @@
 # ilearnai
 
-A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Ten tracks in four levels (Level 0 foundations to Level 3 advanced), full lessons written in ASD-STE100 Simplified Technical English with animated diagrams, inline videos, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
+A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
+
+## Completed curriculum and study workspace
+
+`/courses/complete-ai` teaches the 24 core topics of Microsoft's **AI for Beginners**, plus its multimodal extension. The portal includes the full main lesson readings, 95 linked diagrams/images, 25 original worked examples and animated walkthroughs, 25 practice tasks with solutions, and 75 explained questions. Seven chapter sequences add 24 curated video selections. Full framework notebooks and source lab assignments remain external, with environment instructions; they are not represented as completed in-browser notebook implementations.
+
+The readings are adapted from commit `392d0df1b2647cbee104942390551f1ed9e072c8` of [Microsoft AI for Beginners](https://github.com/microsoft/AI-For-Beginners), with copyright, image credits, source links, and the [MIT license](public/licenses/microsoft-ai-for-beginners.txt) retained. These readings include historical models and terminology. Original ilearnai guides explain practical limitations; the OpenCV constant and Gym migration notes identify specific compatibility considerations. The checked-in reading JSON is used at build time. To reproduce the import, run `python3 scripts/import-microsoft-curriculum.py`; its pinned source manifest is checked in and downloads are cached under ignored `output/`.
+
+The YouLearn-inspired learning interface uses white study surfaces, charcoal controls, restrained blue/purple accents, activity tabs, and a responsive study panel. Every lesson has Summary, Flashcards, Notes, and static Ask tabs. Notes save under `ilearnai:note:<account-or-guest>:<lesson-route>` in localStorage and can be downloaded; they do not sync across devices. Flashcard recall does not mark course activities complete. Ask uses built-in content and has no LLM connection. Smaller screens retain chapter navigation in an expandable list. Reduced-motion preferences disable the new reveal and hover effects. The homepage content and logo are preserved.
+
+`/code` now has 16 standard-library Python exercises and 48 checks, including rule evidence, perceptrons, convolution responses, detection overlap, text vectors, recurrent state, Q-learning updates, and disaggregated evaluation. The larger portal has 63 chapter sequences, 200 video selections, 1,419 learning activities, and 2,215 rich lesson blocks.
+
+Validation: production build, lint (16 existing warnings), complete activity server-rendering in guest preview, course-flow checks, chapter video selection checks, study-tool DOM interactions, and real Pyodide/WASM exercise execution in Node. `npm run test:study-tools` checks notes persistence, account/lesson isolation, keyboard tabs, flashcards, storage failure, and static Ask without network calls. All 95 new reading image URLs returned HTTP 200 on 28 October 2026. Browser appearance, actual YouTube playback, and browser Python sandbox/CSP execution remain unverified because this review is limited to code checks.
+
+Rollback before this completion pass: tag **`rollback/pre-complete-curriculum-20261028`**, commit `d35450f`. The additional local snapshot is `output/rollback/before-complete-curriculum-20261028-103453/project-snapshot.zip`; runtime data and environment secrets are excluded. To inspect the checkpoint without disturbing current work, use `git worktree add ../ilearnai-rollback rollback/pre-complete-curriculum-20261028`. Publishing an earlier version should use a reviewed revert commit, not a forced history rewrite. Earlier draft sections below describe their individual implementation stages.
 
 ## Current draft: open access
 
@@ -13,7 +27,7 @@ For production, start the server with `REQUIRE_LOGIN=1 npm start` (or `REQUIRE_L
 | Level | Tracks |
 | --- | --- |
 | Level 0 Foundations | Start Here (computers, Python, tools, data) · Mathematics for AI from Zero |
-| Level 1 Beginner | AI Foundations (first models, neural networks, language models, using models) · Build the AI Ecosystem (a project track: chat app, RAG, agents, fine-tuning, deployment) |
+| Level 1 Beginner | AI Foundations (first models, neural networks, language models, using models) · Build the AI Ecosystem (a project track: chat app, RAG, agents, fine-tuning, deployment) · AI from first principles (Microsoft curriculum readings with original guided practice) |
 | Level 2 Intermediate | ML Mathematics · AI Engineering · System Design |
 | Level 3 Advanced | Inference Engineering · AI Research · Open Robotics (preview) |
 
@@ -44,7 +58,7 @@ The shared visual style follows the typography and spacing of Google AI's learni
 
 ## Writing standard
 
-All lesson text follows ASD-STE100 Simplified Technical English: sentences of at most 20–25 words, active voice, present tense, one term per concept, abbreviations spelled out on first use, no idioms. Every lesson has the same eight sections (what it covers, why it matters, the idea with an example, how it works, try it, common mistakes, check your understanding, go further) plus objectives, key terms and free links. `/style` documents the rules and `/labs/ste-checker` tests any text against the machine-checkable ones (`src/lib/ste.ts`).
+Original lesson text targets ASD-STE100 Simplified Technical English: sentences of at most 20–25 words, active voice, present tense, one term per concept, abbreviations spelled out on first use, no idioms. Attributed Microsoft readings retain their source writing and are not claimed to meet that standard. Every lesson has the same eight sections (what it covers, why it matters, the idea with an example, how it works, try it, common mistakes, check your understanding, go further) plus objectives, key terms and free links. `/style` documents the rules and `/labs/ste-checker` tests any text against the machine-checkable ones (`src/lib/ste.ts`).
 
 ## Visual blocks in lessons
 

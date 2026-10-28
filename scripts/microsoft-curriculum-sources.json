@@ -1,0 +1,131 @@
+{
+  "repository": "https://github.com/microsoft/AI-For-Beginners",
+  "commit": "392d0df1b2647cbee104942390551f1ed9e072c8",
+  "lessons": [
+    {
+      "number": 1,
+      "title": "Introduction and History of AI",
+      "path": "lessons/1-Intro/README.md"
+    },
+    {
+      "number": 2,
+      "title": "Knowledge Representation and Expert Systems",
+      "path": "lessons/2-Symbolic/README.md"
+    },
+    {
+      "number": 3,
+      "title": "Perceptron",
+      "path": "lessons/3-NeuralNetworks/03-Perceptron/README.md"
+    },
+    {
+      "number": 4,
+      "title": "Multi-Layered Perceptron and Creating our own Framework",
+      "path": "lessons/3-NeuralNetworks/04-OwnFramework/README.md"
+    },
+    {
+      "number": 5,
+      "title": "Intro to Frameworks (PyTorch/TensorFlow) and Overfitting",
+      "path": "lessons/3-NeuralNetworks/05-Frameworks/README.md"
+    },
+    {
+      "number": 6,
+      "title": "Intro to Computer Vision. OpenCV",
+      "path": "lessons/4-ComputerVision/06-IntroCV/README.md"
+    },
+    {
+      "number": 7,
+      "title": "Convolutional Neural Networks",
+      "path": "lessons/4-ComputerVision/07-ConvNets/README.md"
+    },
+    {
+      "number": 8,
+      "title": "Pre-trained Networks and Transfer Learning",
+      "path": "lessons/4-ComputerVision/08-TransferLearning/README.md"
+    },
+    {
+      "number": 9,
+      "title": "Autoencoders and VAEs",
+      "path": "lessons/4-ComputerVision/09-Autoencoders/README.md"
+    },
+    {
+      "number": 10,
+      "title": "Generative Adversarial Networks & Artistic Style Transfer",
+      "path": "lessons/4-ComputerVision/10-GANs/README.md"
+    },
+    {
+      "number": 11,
+      "title": "Object Detection",
+      "path": "lessons/4-ComputerVision/11-ObjectDetection/README.md"
+    },
+    {
+      "number": 12,
+      "title": "Semantic Segmentation. U-Net",
+      "path": "lessons/4-ComputerVision/12-Segmentation/README.md"
+    },
+    {
+      "number": 13,
+      "title": "Text Representation. Bow/TF-IDF",
+      "path": "lessons/5-NLP/13-TextRep/README.md"
+    },
+    {
+      "number": 14,
+      "title": "Semantic word embeddings. Word2Vec and GloVe",
+      "path": "lessons/5-NLP/14-Embeddings/README.md"
+    },
+    {
+      "number": 15,
+      "title": "Language Modeling. Training your own embeddings",
+      "path": "lessons/5-NLP/15-LanguageModeling/README.md"
+    },
+    {
+      "number": 16,
+      "title": "Recurrent Neural Networks",
+      "path": "lessons/5-NLP/16-RNN/README.md"
+    },
+    {
+      "number": 17,
+      "title": "Generative Recurrent Networks",
+      "path": "lessons/5-NLP/17-GenerativeNetworks/README.md"
+    },
+    {
+      "number": 18,
+      "title": "Transformers. BERT.",
+      "path": "lessons/5-NLP/18-Transformers/README.md"
+    },
+    {
+      "number": 19,
+      "title": "Named Entity Recognition",
+      "path": "lessons/5-NLP/19-NER/README.md"
+    },
+    {
+      "number": 20,
+      "title": "Large Language Models, Prompt Programming and Few-Shot Tasks",
+      "path": "lessons/5-NLP/20-LangModels/README.md"
+    },
+    {
+      "number": 21,
+      "title": "Genetic Algorithms",
+      "path": "lessons/6-Other/21-GeneticAlgorithms/README.md"
+    },
+    {
+      "number": 22,
+      "title": "Deep Reinforcement Learning",
+      "path": "lessons/6-Other/22-DeepRL/README.md"
+    },
+    {
+      "number": 23,
+      "title": "Multi-Agent Systems",
+      "path": "lessons/6-Other/23-MultiagentSystems/README.md"
+    },
+    {
+      "number": 24,
+      "title": "AI Ethics and Responsible AI",
+      "path": "lessons/7-Ethics/README.md"
+    },
+    {
+      "number": 25,
+      "title": "Multi-Modal Networks, CLIP and VQGAN",
+      "path": "lessons/X-Extras/X1-MultiModal/README.md"
+    }
+  ]
+}

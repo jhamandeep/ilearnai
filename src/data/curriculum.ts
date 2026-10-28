@@ -9,6 +9,7 @@ import { track as SystemDesign } from './tracks/system-design'
 import { track as InferenceEngineering } from './tracks/inference-engineering'
 import { track as AiResearch } from './tracks/ai-research'
 import { track as OpenRobotics } from './tracks/open-robotics'
+import { track as CompleteAi } from './tracks/complete-ai'
 
 // Ordered along the zero-to-ecosystem path (Track.order).
 export const tracks: Track[] = [
@@ -22,6 +23,7 @@ export const tracks: Track[] = [
   InferenceEngineering,
   AiResearch,
   OpenRobotics,
+  CompleteAi,
 ].sort((a, b) => a.order - b.order)
 
 export function findTrack(slug: string) {

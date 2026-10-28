@@ -1,4 +1,5 @@
 import { videos } from '../videos'
+import { completeAiVideoGuides } from './completeAiVideos'
 
 export interface ChapterVideoPick { ref: string; focus: string }
 export interface ChapterVideoGuide { goal: string; picks: ChapterVideoPick[]; practice: string }
@@ -8,6 +9,7 @@ const guide = (goal: string, picks: ChapterVideoPick[], practice: string): Chapt
 // Curated at module level: sequences follow the actual chapter subjects.
 // A reference is a video ID or a verified playlist ID already in the library.
 export const chapterVideoGuides: Record<string, ChapterVideoGuide> = {
+  ...completeAiVideoGuides,
   'start-here/how-a-computer-works': guide('Connect hardware, instructions, and the programs you use each day.', [
     pick('3LPJfIKxwWc', 'Begin with the explanations of how information is represented and how instructions solve a problem.'),
     pick('KkMDCCdjyW8', 'Follow how a large problem becomes a sequence of precise instructions. The programming language differs from this course.'),

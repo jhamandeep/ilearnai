@@ -8,6 +8,7 @@ import { lessonActivities, trackActivities, activityLabels, activitySymbols } fr
 import { NotFound } from './NotFound'
 import { CourseArtwork } from '../components/CourseArtwork'
 import { useAuth } from '../lib/auth'
+import { StudyLaunchpad } from '../components/StudyLaunchpad'
 import { LearningResources } from '../components/LearningResources'
 
 export function courseMinutes(track: Track) { return track.modules.flatMap(module => module.lessons).reduce((sum, lesson) => sum + lesson.minutes, 0) }
@@ -44,8 +45,8 @@ export function Courses() {
   function update(key: string, value: string) { setParams(previous => { const next = new URLSearchParams(previous); if (!value || value === 'all' || value === 'recommended') next.delete(key); else next.set(key, value); return next }, { replace: true }) }
   return <>
     <div className="work-route-banner"><div><strong>Start with the work you do.</strong><span>Visual walkthroughs, decision questions, and practical guides for your industry and role.</span></div><Link to="/for-work">AI for your work →</Link></div>
-    <header className="catalogue-intro"><div><p className="eyebrow">The learning catalogue</p><h1>Explore training<br />your way.</h1><p>Find your first course, go deeper into a topic, or put an idea to work in a hands-on lab. Learn at your own pace.</p></div><div className="catalogue-intro-art"><CourseArtwork seed={7} /></div></header>
-    <div className="resource-shortcuts"><Link to="/code">Write and run Python →</Link><Link to="/resources?collection=open-source">Open-source tools ↗</Link><Link to="/resources?kind=visualization">Learn with visualizations ↗</Link></div><div className="catalogue-search"><label className="sr-only" htmlFor="catalogue-query">Search catalogue</label><span aria-hidden="true">⌕</span><input id="catalogue-query" type="search" value={query} placeholder="Search topics, courses, or lessons" onChange={event => update('q', event.target.value)} />{query && <button type="button" aria-label="Clear search" onClick={() => update('q', '')}>×</button>}</div>
+    <header className="catalogue-intro"><div><p className="eyebrow">The learning catalogue</p><h1>Find your next useful idea.</h1><p>One place to understand AI, put it to work, and build something of your own. Choose a learning space and make it yours.</p></div><div className="catalogue-intro-art"><CourseArtwork seed={7} /></div></header>
+    <StudyLaunchpad /><div className="catalogue-search"><label className="sr-only" htmlFor="catalogue-query">Search catalogue</label><span aria-hidden="true">⌕</span><input id="catalogue-query" type="search" value={query} placeholder="Search topics, courses, or lessons" onChange={event => update('q', event.target.value)} />{query && <button type="button" aria-label="Clear search" onClick={() => update('q', '')}>×</button>}</div>
     <div className="catalogue-filters" aria-label="Filter catalogue">
       <label>Format<select value={format} onChange={event => update('format', event.target.value)}><option value="all">All learning</option><option value="course">Courses</option><option value="lab">Labs</option></select></label>
       <label>Level<select value={level} onChange={event => update('level', event.target.value)}><option value="all">All levels</option>{levelOrder.map(item => <option key={item} value={item}>{levelInfo[item].label}</option>)}</select></label>

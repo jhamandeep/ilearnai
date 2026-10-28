@@ -5,7 +5,7 @@ import { NewsTicker } from './NewsTicker'
 import { BrandLogo } from './Brand'
 
 const navigation = [
-  ['Your learning', [['/dashboard', 'My learning', '◫'], ['/for-work', 'AI for your work', '✧'], ['/courses', 'Technical courses', '▤'], ['/path', 'Learning paths', '⌁'], ['/labs', 'Hands-on labs', '◇'], ['/code', 'Python workspace', '</>'], ['/practice', 'Practice', '✓']]],
+  ['Your learning', [['/dashboard', 'My learning', '◫'], ['/for-work', 'AI for your work', '✧'], ['/courses', 'Learning spaces', '▤'], ['/path', 'Learning paths', '⌁'], ['/labs', 'Hands-on labs', '◇'], ['/code', 'Python workspace', '</>'], ['/practice', 'Practice', '✓']]],
   ['Explore', [['/videos', 'Videos', '▷'], ['/resources', 'Tools & resources', '↗'], ['/papers', 'Research papers', '▧'], ['/glossary', 'Glossary', 'Aa'], ['/hub', 'AI hub', '⌘'], ['/knowledge-graph', 'Knowledge map', '◉'], ['/roadmaps', 'Roadmaps', '↝'], ['/blog', 'Field notes', '☰']]],
 ] as const
 

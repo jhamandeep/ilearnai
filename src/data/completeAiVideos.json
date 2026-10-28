@@ -1,0 +1,72 @@
+[
+  {
+    "id": "bNb2fEVKeEo",
+    "url": "https://www.youtube.com/watch?v=bNb2fEVKeEo",
+    "title": "Lecture 5 | Convolutional Neural Networks",
+    "channel": "Stanford University School of Engineering",
+    "track": "complete-ai",
+    "topic": "Convolutional networks",
+    "level": "intermediate",
+    "why": "Follow the shared filters, activation maps, and pooling before comparing CNN architectures.",
+    "kind": "video",
+    "sourceUrl": "https://www.youtube.com/watch?v=bNb2fEVKeEo",
+    "verifiedOn": "2026-10-28",
+    "embeddable": true
+  },
+  {
+    "id": "6niqTuYFZLQ",
+    "url": "https://www.youtube.com/watch?v=6niqTuYFZLQ",
+    "title": "Lecture 10 | Recurrent Neural Networks",
+    "channel": "Stanford University School of Engineering",
+    "track": "complete-ai",
+    "topic": "Sequence models",
+    "level": "intermediate",
+    "why": "Trace recurrent state, then compare ordinary RNNs with gated LSTM and GRU cells.",
+    "kind": "video",
+    "sourceUrl": "https://www.youtube.com/watch?v=6niqTuYFZLQ",
+    "verifiedOn": "2026-10-28",
+    "embeddable": true
+  },
+  {
+    "id": "5WoItGTWV54",
+    "url": "https://www.youtube.com/watch?v=5WoItGTWV54",
+    "title": "Lecture 13 | Generative Models",
+    "channel": "Stanford University School of Engineering",
+    "track": "complete-ai",
+    "topic": "Generative models",
+    "level": "intermediate",
+    "why": "Compare autoregressive generation, autoencoders, VAEs, and adversarial training objectives.",
+    "kind": "video",
+    "sourceUrl": "https://www.youtube.com/watch?v=5WoItGTWV54",
+    "verifiedOn": "2026-10-28",
+    "embeddable": true
+  },
+  {
+    "id": "nDPWywWRIRo",
+    "url": "https://www.youtube.com/watch?v=nDPWywWRIRo",
+    "title": "Lecture 11 | Detection and Segmentation",
+    "channel": "Stanford University School of Engineering",
+    "track": "complete-ai",
+    "topic": "Detection and segmentation",
+    "level": "intermediate",
+    "why": "Move from a whole-image label to boxes and pixel masks; compare the evaluation requirements.",
+    "kind": "video",
+    "sourceUrl": "https://www.youtube.com/watch?v=nDPWywWRIRo",
+    "verifiedOn": "2026-10-28",
+    "embeddable": true
+  },
+  {
+    "id": "wmyVODy_WD8",
+    "url": "https://www.youtube.com/watch?v=wmyVODy_WD8",
+    "title": "MIT 6.S191: AI Bias and Fairness",
+    "channel": "Alexander Amini",
+    "track": "complete-ai",
+    "topic": "Responsible AI",
+    "level": "intermediate",
+    "why": "Identify how bias can enter interpretation, data, features, modelling, and evaluation.",
+    "kind": "video",
+    "sourceUrl": "https://www.youtube.com/watch?v=wmyVODy_WD8",
+    "verifiedOn": "2026-10-28",
+    "embeddable": true
+  }
+]

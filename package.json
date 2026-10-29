@@ -24,6 +24,8 @@
     "test:workspace": "node scripts/workspace-test.mjs",
     "test:study-tools": "node scripts/study-tools-test.mjs",
     "test:study-library": "node scripts/study-library-test.mjs",
+    "test:knowledge-map-browser": "node scripts/knowledge-map-browser-test.mjs",
+    "test:chapter-navigation-browser": "node scripts/chapter-navigation-browser-test.mjs",
     "test:course-workspace": "node scripts/course-workspace-test.mjs",
     "test:lesson-python": "node scripts/check-lesson-python.mjs",
     "test:python-browser": "node scripts/python-browser-test.mjs",

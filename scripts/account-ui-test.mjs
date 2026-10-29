@@ -34,7 +34,8 @@ try {
  assert.match(answerSiteQuestion('How is progress saved?',open).text,/this browser/)
  const user = {id:'test-user',name:'Test Learner',email:'test@example.test'}
  const dashboard = render(createElement(Dashboard),{user},'/dashboard')
- assert.match(dashboard,/Overall learning progress/); assert.match(dashboard.replaceAll('<!-- -->',''),/0 of 220/)
+ const lessonCount = full.reduce((sum, track) => sum + track.modules.reduce((total, module) => total + module.lessons.length, 0), 0)
+ assert.match(dashboard,/Overall learning progress/); assert.ok(dashboard.replaceAll('<!-- -->','').includes(`0 of ${lessonCount} lessons`))
  assert.match(render(createElement(Home),{}),/href="\/labs\/gradient-descent"/)
  let release
  globalThis.fetch = async()=>await new Promise(resolve=>{release=()=>resolve({ok:true})})

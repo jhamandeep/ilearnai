@@ -51,25 +51,27 @@ try {
   }
   await page.goto(base)
   const preview = page.locator('.home-knowledge-map')
-  await preview.waitFor()
+  await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.locator('.topo-svg').waitFor()
   await page.waitForFunction(() => document.querySelector('.brand-symbol')?.dataset.motion === 'on')
   const logo = page.locator('.topbar .brand-orbit')
   const before = await logo.evaluate(element => getComputedStyle(element).transform)
   await page.waitForFunction(value => getComputedStyle(document.querySelector('.topbar .brand-orbit')).transform !== value, before)
   await page.getByRole('button', { name: 'Pause visual motion', exact: true }).click()
-  for (const selector of ['.topbar .brand-orbit', '.topbar .brand-signal', '.home-map-signal']) {
+  for (const selector of ['.topbar .brand-orbit', '.topbar .brand-signal']) {
     assert.equal(await page.locator(selector).evaluate(element => getComputedStyle(element).animationPlayState), 'paused')
   }
   await page.getByRole('button', { name: 'Play visual motion', exact: true }).click()
   for (const [name, label] of [['Attention', 'Attention'], ['Retrieval & RAG', 'Retrieval and RAG'], ['AI agents', 'Agents']]) {
-    await preview.getByRole('button', { name, exact: true }).click()
-    await page.waitForFunction(text => document.querySelector('.home-map-concept strong')?.textContent === text, name)
-    assert.equal(await preview.locator('.home-map-destinations a').count(), 3)
-    await preview.getByRole('link', { name: 'Explore the knowledge map →', exact: true }).click()
+    await preview.locator('.map-starters').getByRole('button', { name: name + ' →', exact: true }).click()
+    await page.waitForFunction(text => document.querySelector('.home-knowledge-map .map-detail h3')?.textContent === text, label)
+    assert.ok(await preview.locator('.map-connections button').count() > 0)
+    await preview.locator('.map-expand').click()
+    await page.waitForURL('**/knowledge-graph?node=*')
+    await page.getByRole('heading', { name: 'Knowledge map', exact: true, level: 1 }).waitFor()
     await page.locator('.topo-panel h3').waitFor()
     assert.equal(await page.locator('.topo-panel h3').innerText(), label)
     await page.goBack()
-    await preview.waitFor()
+    await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.locator('.topo-svg').waitFor()
   }
   await preview.scrollIntoViewIfNeeded()
   await page.screenshot({ path: `${output}/homepage-desktop.png` })
@@ -117,11 +119,13 @@ try {
   await page.locator('.topo-panel h3').waitFor()
   assert.equal(await page.locator('.topo-panel .btn-primary').getAttribute('href'), route)
   await page.setViewportSize({ width: 390, height: 1050 })
-  await page.locator('.topo-panel .list a').first().scrollIntoViewIfNeeded()
+  await page.locator('.topo-panel .list button').first().scrollIntoViewIfNeeded()
   const scroll = await page.evaluate(() => scrollY)
-  await page.locator('.topo-panel .list a').first().click()
+  await page.locator('.topo-panel .list button').first().click()
   await page.waitForFunction(expected => new URLSearchParams(location.search).get('node') !== expected, `lesson:${route.slice('/courses/'.length)}`)
-  assert.ok(Math.abs(await page.evaluate(() => scrollY) - scroll) < 2, 'Selecting a connected idea must not jump to the page header')
+  const position = await page.evaluate(() => ({ scroll: scrollY, maximum: document.documentElement.scrollHeight - innerHeight }))
+  // A shorter details panel can clamp the scroll at the document's new bottom.
+  assert.ok(Math.abs(position.scroll - Math.min(scroll, position.maximum)) < 2, 'Selecting a connected idea must not jump to the page header')
   await page.goto(base + '/knowledge-graph?node=not-a-real-node')
   await page.getByRole('heading', { name: 'How to read it', exact: true }).waitFor()
 
@@ -149,7 +153,7 @@ try {
       await page.keyboard.press('Escape')
     }
     await page.goto(base)
-    await preview.waitFor()
+    await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.locator('.topo-svg').waitFor()
     await noOverflow(`homepage at ${width}`)
     if (width === 390 || width === 320) {
       await preview.scrollIntoViewIfNeeded()
@@ -158,7 +162,7 @@ try {
   }
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.brand-orbit')).animationName === 'none')
-  assert.equal(await page.locator('.home-map-signal').evaluate(element => getComputedStyle(element).animationName), 'none')
+  assert.equal(await page.locator('.map-network').evaluate(element => getComputedStyle(element).animationName), 'none')
   assert.deepEqual(errors, [])
   await writeFile(`${output}/results.json`, JSON.stringify({ lessonCount, sourceCount, navigation, measurements, errors }, null, 2))
   console.log(`PASS: ${lessonCount} lessons, ${sourceCount} categorized references, paper deduplication, chapter videos, exact lesson exercises and map targets; all 8 study tabs, notes, keyboard, map deep links, logo motion/pause/reduced motion, and 8 viewport sizes.`)

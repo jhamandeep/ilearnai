@@ -25,6 +25,7 @@
     "test:study-tools": "node scripts/study-tools-test.mjs",
     "test:study-library": "node scripts/study-library-test.mjs",
     "test:knowledge-map-browser": "node scripts/knowledge-map-browser-test.mjs",
+    "test:experience-browser": "node scripts/experience-browser-test.mjs",
     "test:chapter-navigation-browser": "node scripts/chapter-navigation-browser-test.mjs",
     "test:course-workspace": "node scripts/course-workspace-test.mjs",
     "test:lesson-python": "node scripts/check-lesson-python.mjs",
@@ -59,12 +60,14 @@
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.2",
     "happy-dom": "^21.0.4",
     "oxlint": "^1.88.0",

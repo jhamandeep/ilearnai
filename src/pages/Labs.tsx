@@ -14,6 +14,7 @@ import { SteCheckerLab } from '../labs/SteCheckerLab'
 import { NotFound } from './NotFound'
 import type { ComponentType } from 'react'
 import { LabGuide } from '../components/LabGuide'
+import { LabThumbnail } from '../components/LabThumbnail'
 
 const registry: Record<string, ComponentType> = {
   'kv-cache': KvCacheLab,
@@ -46,6 +47,7 @@ export function Labs() {
       <div className="grid">
         {labs.map((l) => (
           <Link key={l.slug} to={`/labs/${l.slug}`} className="card lab-card">
+            <LabThumbnail slug={l.slug} />
             <span className="meta">{l.category}</span>
             <h3>{l.title}</h3>
             <p>{l.blurb}</p>

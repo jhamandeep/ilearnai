@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { tracks, lessonRoutes } from '../data/tracks'
 import { labs } from '../data/labs'
@@ -9,6 +9,8 @@ import { TrackCard } from './Courses'
 import { CourseArtwork } from '../components/CourseArtwork'
 import { VideoThumbnail } from '../components/VideoThumbnail'
 import { HomeKnowledgeMap } from '../components/HomeKnowledgeMap'
+import { ImmersiveHero } from '../components/ImmersiveHero'
+import { ArtworkMotionContext } from '../lib/artworkMotion'
 import { doneCount, isDone, placement, useProgressVersion } from '../lib/progress'
 
 const sections = [
@@ -30,8 +32,17 @@ const faqs = [
 
 export function Home() {
   const { user, preview } = useAuth()
+  const motion = useContext(ArtworkMotionContext)
+  const page = useRef<HTMLDivElement>(null)
   useProgressVersion()
   const [activeSection, setActiveSection] = useState('knowledge-map')
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.setAttribute('data-arrived', 'true'); observer.unobserve(entry.target) }
+    }), { threshold: .08 })
+    page.current?.querySelectorAll('.section-head, .home-map-heading, .feature-banner, .home-ask-section, .faq-section').forEach(element => observer.observe(element))
+    return () => observer.disconnect()
+  }, [])
   useEffect(() => {
     let frame: number | undefined
     const update = () => {
@@ -55,15 +66,14 @@ export function Home() {
   const basics = ['start-here', 'math-from-zero', 'ai-foundations']
   const advanced = ['ai-engineering', 'inference-engineering', 'ai-research']
   return (
-    <>
-      <section className="skills-cover" aria-labelledby="skills-title">
-        <p className="eyebrow">AI skills</p>
-        <h1 id="skills-title">Make AI useful.<br />In your work. In your world.</h1>
-        <p className="cover-description">Discover where AI can help in your field, what it takes to implement it, and what it means for your role. Explore practical guides, free courses, and hands-on labs at your own pace.</p>
-        <div className="hero-actions work-home-actions"><Link className="btn btn-primary" to="/for-work">Explore AI for your work →</Link><Link className="btn btn-ghost" to="/courses">Learn how to build with AI ↗</Link></div>
+    <div ref={page} className="experience-home" data-motion={motion.playing ? 'on' : 'off'}>
+      <section className="experience-intro" aria-labelledby="skills-title">
+        <div><p className="eyebrow"><span className="experience-dot" /> OPEN MINDS. REAL POSSIBILITIES.</p><h1 id="skills-title">Understand AI.<br /><span>Shape what’s next.</span></h1></div>
+        <div className="experience-intro-aside"><p>Big ideas, made clear. Discover what AI can do for your work—and learn to build what comes next.</p><div className="hero-actions work-home-actions"><Link className="btn btn-primary" to="/courses">Find your starting point <span aria-hidden="true">↗</span></Link><Link className="text-cta" to="/for-work">Explore AI for your work <span aria-hidden="true">↗</span></Link></div></div>
         {done > 0 && next && <Link to={next.route} className="btn btn-primary cover-continue">Continue: {next.title} <span aria-hidden="true">→</span></Link>}
       </section>
-
+      <ImmersiveHero />
+      <div className="experience-scroll"><span aria-hidden="true">+</span><span>MADE TO EXPLORE. FREE TO LEARN.</span><a href="#knowledge-map">SCROLL TO DISCOVER <span aria-hidden="true">↓</span></a><span aria-hidden="true">+</span></div>
       <nav className="section-links" aria-label="Jump to a section">
         {sections.map(([id, label]) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? 'location' : undefined} onClick={() => setActiveSection(id)}>{label}</a>)}
       </nav>
@@ -103,6 +113,7 @@ export function Home() {
 
       <section className="home-ask-section"><div><p className="eyebrow">A little guidance goes a long way</p><h2>Find your way.<br />Ask a question.</h2><p>Find the right course, understand a concept, or get help with your learning progress.</p><Link className="btn btn-primary" to="/ask">Ask ilearnai →</Link></div><CourseArtwork topic="robotics" /></section>
       <section id="faqs" className="skills-section faq-section"><h2>Your questions,<br />answered.</h2><div className="faq-list">{faqs.map(([question, answer], i) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{preview && i === 2 ? 'All lessons, quizzes, practice papers, and browser labs are free and open to explore. Some external services may charge separately.' : preview && !user && i === 3 ? 'Your completed activities, quiz results, and learning progress save in this browser. Use the same browser to continue; clearing site data removes this draft progress.' : answer}</p></details>)}</div></section>
-    </>
+      <section className="experience-outro"><p className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p><Link to="/courses">Stay curious.<br /><span>Go further.</span><b aria-hidden="true">↗</b></Link><div><span>{tracks.length} learning tracks. Your own pace.</span><Link to="/ask">Need a little direction? Ask ilearnai ↗</Link></div></section>
+    </div>
   )
 }

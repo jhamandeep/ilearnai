@@ -27,6 +27,16 @@
 .map-toolbar > div { display:flex; align-items:center; gap:6px; }
 .map-toolbar button,.map-empty button { min-height:42px; min-width:42px; border:1px solid #ded4ec; border-radius:9px; padding:7px 11px; background:#fff; color:#644192; cursor:pointer; font-size:14px; }
 .map-toolbar output { min-width:46px; text-align:center; font-size:13px; }
+.map-toolbar .map-showcase-toggle { display:flex; align-items:center; gap:7px; color:#3546b2; border-color:#cbd1ed; background:#f3f5ff; font-size:12px; }
+.map-showcase-toggle i { width:6px; height:6px; background:#7c83a1; border-radius:50%; }
+.knowledge-map[data-showcase="playing"] .map-showcase-toggle i { background:#3755ff; box-shadow:0 0 0 4px #3755ff16; }
+.map-showcase-toggle:disabled { opacity:.65; cursor:default; }
+.knowledge-map[data-showcase="paused"] .map-signals { visibility:hidden; }
+.map-signal { filter:drop-shadow(0 0 5px #546bff); }
+.map-live-caption { position:absolute; bottom:14px; left:16px; display:flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid #dde3f4; border-radius:99px; background:#ffffffde; color:#425bba; font-size:9px; letter-spacing:.06em; pointer-events:none; backdrop-filter:blur(6px); }
+.map-live-caption i { width:5px; height:5px; background:#5269dc; border-radius:50%; }
+.map-live-caption span { color:#6a748f; letter-spacing:0; margin-left:8px; }
+.knowledge-map[data-showcase="playing"] .map-stage { background:radial-gradient(ellipse at 40% 30%,#f3f4ff,#fafbff 60%,#eef1fc); }
 .map-stage { position:relative; height:540px; background:radial-gradient(ellipse at center,#fff,#f8f7fc); }
 .knowledge-map .topo-svg { display:block; width:100%; height:100%; border:0; border-radius:0; background:transparent; cursor:grab; touch-action:none; }
 .knowledge-map .topo-svg:active { cursor:grabbing; }

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="720" viewBox="0 0 1440 720">
+<defs>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a1b0ff"/><stop offset=".23" stop-color="#2449ff"/><stop offset=".65" stop-color="#0925b6"/><stop offset=".86" stop-color="#5475ff"/><stop offset="1" stop-color="#182163"/></linearGradient>
+ <linearGradient id="silver"><stop stop-color="#3f475e"/><stop offset=".3" stop-color="#f2f3ff"/><stop offset=".6" stop-color="#9baccd"/><stop offset="1" stop-color="#3b4156"/></linearGradient>
+ <radialGradient id="sphere" cx=".3" cy=".2"><stop stop-color="#fff"/><stop offset=".5" stop-color="#9daecf"/><stop offset="1" stop-color="#272d44"/></radialGradient>
+ <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dy="20" stdDeviation="16" flood-opacity=".5"/></filter>
+</defs>
+<g stroke="#8693c3" stroke-opacity=".25" fill="none"><path d="M330 170L1090 440L480 490L1020 140L300 410L1170 300M480 490L720 90L1090 440M330 170L900 550L1170 300"/></g>
+<g filter="url(#shadow)" fill="none" stroke="url(#blue)" stroke-width="65"><ellipse cx="720" cy="300" rx="200" ry="112" transform="rotate(-40 720 300)"/><ellipse cx="720" cy="300" rx="200" ry="112" transform="rotate(55 720 300)"/></g>
+<g filter="url(#shadow)"><g fill="none" stroke="url(#silver)" stroke-width="25"><ellipse cx="330" cy="170" rx="48" ry="32" transform="rotate(-30 330 170)"/><ellipse cx="1090" cy="440" rx="55" ry="38" transform="rotate(45 1090 440)"/></g><g fill="url(#blue)"><rect x="990" y="100" width="80" height="80" rx="22" transform="rotate(22 1030 140)"/><rect x="460" y="450" width="70" height="70" rx="18" transform="rotate(-22 495 485)"/></g><g fill="url(#sphere)"><circle cx="720" cy="90" r="28"/><circle cx="300" cy="410" r="32"/><circle cx="1170" cy="300" r="38"/><circle cx="900" cy="550" r="24"/></g></g>
+</svg>

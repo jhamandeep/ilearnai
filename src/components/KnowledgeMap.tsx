@@ -1,10 +1,11 @@
-import { useEffect, useId, useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useContext, useEffect, useId, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY, type SimulationNodeDatum, type SimulationLinkDatum } from 'd3-force'
 import { select, zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from 'd3'
 import { nodes as allNodes, edges as allEdges } from '../data/graph'
 import { tracks } from '../data/tracks'
 import type { ConceptKind, ConceptNode } from '../data/types'
+import { ArtworkMotionContext } from '../lib/artworkMotion'
 import '../knowledge-map.css'
 
 interface MapNode extends SimulationNodeDatum, ConceptNode { x: number; y: number }
@@ -20,7 +21,7 @@ function layout(track: string, visible: Set<ConceptKind>) {
   const ids = new Set(nodes.map(node => node.id))
   const edges = allEdges.filter(edge => ids.has(edge.source) && ids.has(edge.target))
   const links: MapLink[] = edges.map(edge => ({ ...edge }))
-  // Settle once so the map stays still while reading. Dragging moves nodes directly.
+  // Establish a stable layout; the showcase adds bounded drift, not an endless force simulation.
   forceSimulation(nodes).stop()
     .force('link', forceLink<MapNode, MapLink>(links).id(node => node.id).distance(link => link.relation === 'requires' ? 110 : 60).strength(.5))
     .force('charge', forceManyBody().strength(-150))
@@ -46,6 +47,9 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   const [size, setSize] = useState({ width: 900, height: 540 })
   const [camera, setCamera] = useState(zoomIdentity)
   const [revision, setRevision] = useState(0)
+  const [showcase, setShowcase] = useState(true)
+  const [inView, setInView] = useState(false)
+  const motion = useContext(ArtworkMotionContext)
   const id = useId()
   const svgRef = useRef<SVGSVGElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -58,6 +62,7 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   const neighbours = useMemo(() => new Set(edges.flatMap(edge => edge.source === selected ? [edge.target] : edge.target === selected ? [edge.source] : [])), [edges, selected])
   const connected = nodes.filter(node => neighbours.has(node.id)).sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || a.label.localeCompare(b.label))
   const matches = query.trim() ? nodes.filter(node => node.label.toLowerCase().includes(query.trim().toLowerCase())) : []
+  const showcasing = showcase && motion.playing && inView && !selected && !query && nodes.length > 0
 
   useEffect(() => { selectedRef.current = selected }, [selected])
   useEffect(() => {
@@ -67,6 +72,65 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
     observer.observe(stage)
     return () => observer.disconnect()
   }, [])
+  useEffect(() => {
+    if (!stageRef.current) return
+    const observer = new IntersectionObserver(entries => setInView(entries.some(entry => entry.isIntersecting)), { threshold: .1 })
+    observer.observe(stageRef.current)
+    return () => observer.disconnect()
+  }, [])
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || !showcasing) return
+    // Update SVG coordinates directly at 24 fps, without rerendering 849 React nodes per frame.
+    const dots = [...svg.querySelectorAll<SVGGElement>('[data-node-id]')]
+    const lines = [...svg.querySelectorAll<SVGLineElement>('.map-network > line')]
+    const texts = [...svg.querySelectorAll<SVGTextElement>('.map-labels > text')].map(element => ({ element, index: nodes.findIndex(node => node.id === element.dataset.labelId), x: Number(element.getAttribute('x')), y: Number(element.getAttribute('y')) }))
+    const signals = [...svg.querySelectorAll<SVGCircleElement>('.map-signal')]
+    const beacons = [...svg.querySelectorAll<SVGCircleElement>('.map-beacon')].map(element => ({ element, node: nodes.find(node => node.id === element.dataset.idea) }))
+    const origins = nodes.map(node => ({ x: node.x, y: node.y }))
+    const amplitude = Math.min(36, 5 / camera.k)
+    let frame = 0, start = 0, previous = 0
+    function tick(now: number) {
+      frame = requestAnimationFrame(tick)
+      if (now - previous < 1000 / 24) return
+      previous = now
+      if (!start) start = now
+      const time = (now - start) / 1000
+      nodes.forEach((node, i) => {
+        const phase = i * 1.618
+        node.x = origins[i].x + (Math.sin(time * .32 + phase) - Math.sin(phase)) * amplitude
+        node.y = origins[i].y + (Math.cos(time * .27 + phase) - Math.cos(phase)) * amplitude
+        dots[i]?.setAttribute('transform', `translate(${node.x},${node.y})`)
+      })
+      links.forEach((link, i) => {
+        const source = link.source as MapNode, target = link.target as MapNode, line = lines[i]
+        line?.setAttribute('x1', String(source.x)); line?.setAttribute('y1', String(source.y))
+        line?.setAttribute('x2', String(target.x)); line?.setAttribute('y2', String(target.y))
+      })
+      texts.forEach(({ element, index, x, y }) => {
+        if (index < 0) return
+        element.setAttribute('x', String(x + (nodes[index].x - origins[index].x) * camera.k))
+        element.setAttribute('y', String(y + (nodes[index].y - origins[index].y) * camera.k))
+      })
+      signals.forEach((element, i) => {
+        const link = links[(i * 97) % links.length]
+        if (!link) return
+        const source = link.source as MapNode, target = link.target as MapNode, progress = (time / 5 + i * .17) % 1
+        element.setAttribute('cx', String(source.x + (target.x - source.x) * progress))
+        element.setAttribute('cy', String(source.y + (target.y - source.y) * progress))
+        element.setAttribute('opacity', String(Math.sin(progress * Math.PI) * .9))
+      })
+      beacons.forEach(({ element, node }, i) => {
+        if (!node) return
+        const wave = (time / 6 + i * .3) % 1
+        element.setAttribute('cx', String(node.x)); element.setAttribute('cy', String(node.y))
+        element.setAttribute('r', String((9 + wave * 24) / camera.k))
+        element.setAttribute('opacity', String((1 - wave) * .45))
+      })
+    }
+    frame = requestAnimationFrame(tick)
+    return () => { cancelAnimationFrame(frame) }
+  }, [showcasing, nodes, links, camera])
   useEffect(() => {
     const element = svgRef.current
     if (!element) return
@@ -83,6 +147,7 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
         return !event.target.closest('[data-node-id]') && (event.type === 'wheel' ? event.ctrlKey || event.metaKey : !event.button)
       })
       .on('zoom', event => setCamera(event.transform))
+      .on('start', event => { if (event.sourceEvent) setShowcase(false) })
     zoomRef.current = behavior
     surface.call(behavior).on('dblclick.zoom', null)
     const initial = nodes.find(node => node.id === selectedRef.current)
@@ -95,6 +160,7 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   function fit() { transform(fitted(nodes, size.width, size.height)) }
   function changeZoom(factor: number) { if (svgRef.current && zoomRef.current) select<SVGSVGElement, unknown>(svgRef.current).call(zoomRef.current.scaleBy, factor) }
   function choose(node: MapNode, focus = true) {
+    setShowcase(false)
     onSelect(node.id)
     if (focus) {
       const group = nodes.filter(item => item.id === node.id || edges.some(edge => (edge.source === node.id && edge.target === item.id) || (edge.target === node.id && edge.source === item.id)))
@@ -137,18 +203,19 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
     const [px, py] = camera.apply([node.x, node.y])
     if (px < 0 || px > size.width || py < 12 || py > size.height - 12) continue
     const x = Math.min(size.width - width - 10, Math.max(10, px + 12)), y = py + 4
-    if (labels.some(label => x < label.x + label.width + 7 && x + width + 7 > label.x && Math.abs(y - label.y) < 22)) continue
+    const gap = showcasing ? 27 : 7
+    if (labels.some(label => x < label.x + label.width + gap && x + width + gap > label.x && Math.abs(y - label.y) < (showcasing ? 44 : 22))) continue
     labels.push({ node, x, y, text, width })
   }
 
-  return <div className="knowledge-map" data-node-count={nodes.length} data-edge-count={links.length}>
+  return <div className="knowledge-map" data-node-count={nodes.length} data-edge-count={links.length} data-showcase={showcasing ? 'playing' : 'paused'} onPointerDownCapture={event => { if (!(event.target as Element).closest('[data-map-playback]')) setShowcase(false) }} onFocusCapture={event => { if (!(event.target as Element).closest('[data-map-playback]')) setShowcase(false) }}>
     <div className="map-filters">
       <div className="map-search"><label htmlFor={`${id}-search`}>Find an idea</label><input ref={searchRef} id={`${id}-search`} type="search" value={query} maxLength={200} placeholder="Try attention, Python, or agents" autoComplete="off" onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') setQuery('') }} />{query.trim() && <div className="map-search-results"><p role="status">{matches.length ? `${matches.length} matching ideas` : 'No matching ideas. Try another word or clear the filters.'}</p><ul aria-label="Matching ideas">{matches.map(node => <li key={node.id}><button type="button" onClick={() => { choose(node); setQuery(''); searchRef.current?.focus() }}><span>{node.label}</span><small>{node.kind}</small></button></li>)}</ul></div>}</div>
       <label className="map-course-filter">Course<select aria-label="Filter knowledge map by course" value={track} onChange={event => { setTrack(event.target.value); onSelect(null); setQuery('') }}><option value="all">All courses</option>{tracks.map(item => <option key={item.slug} value={item.slug}>{item.title}</option>)}</select></label>
       <fieldset className="map-kind-filters"><legend>Show on the map</legend>{kinds.map(kind => <label key={kind}><input type="checkbox" checked={visibleKinds.has(kind)} onChange={() => { setVisibleKinds(previous => { const next = new Set(previous); if (next.has(kind)) next.delete(kind); else next.add(kind); return next }); if (current?.kind === kind) onSelect(null) }} /><span style={{ background: colors[kind] }} />{names[kind]}</label>)}</fieldset>
     </div>
     <div className="map-workspace"><div className="map-visual">
-      <div className="map-toolbar"><span className="map-count" role="status">{nodes.length} ideas · {links.length} connections</span><div><button type="button" aria-label="Zoom out" onClick={() => changeZoom(1 / 1.35)}>−</button><output aria-label="Map zoom">{Math.round(camera.k * 100)}%</output><button type="button" aria-label="Zoom in" onClick={() => changeZoom(1.35)}>+</button><button type="button" onClick={fit}>Fit map</button></div></div>
+      <div className="map-toolbar"><span className="map-count" role="status">{nodes.length} ideas · {links.length} connections</span><div><button type="button" className="map-showcase-toggle" data-map-playback aria-pressed={showcase && !selected && !query} disabled={!motion.playing} title={!motion.playing ? 'Enable visual motion in the header to play the showcase' : 'Motion pauses when you explore the map'} onClick={() => { if (showcase && !selected && !query) setShowcase(false); else { onSelect(null); setQuery(''); fit(); setShowcase(true) } }}><i aria-hidden="true" />{!motion.playing ? 'Motion off' : showcase && !selected && !query ? 'Pause showcase' : 'Play showcase'}</button><button type="button" aria-label="Zoom out" onClick={() => changeZoom(1 / 1.35)}>−</button><output aria-label="Map zoom">{Math.round(camera.k * 100)}%</output><button type="button" aria-label="Zoom in" onClick={() => changeZoom(1.35)}>+</button><button type="button" onClick={fit}>Fit map</button></div></div>
       <div className="map-stage" ref={stageRef}><svg ref={svgRef} viewBox={`0 0 ${size.width} ${size.height}`} className="topo-svg" role="group" aria-label="Interactive knowledge map" aria-describedby={`${id}-instructions`} tabIndex={0} data-revision={revision} onPointerMove={moveDrag} onPointerUp={event => endDrag(event)} onPointerCancel={event => endDrag(event, true)} onLostPointerCapture={() => { gesture.current = null }} onKeyDown={event => {
         if (event.target !== event.currentTarget) return
         if (['+', '=', '-', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) {
@@ -160,13 +227,15 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
         }
       }}><g className="map-network" transform={camera.toString()}>
         {links.map((link, index) => { const source = link.source as MapNode, target = link.target as MapNode; const highlighted = source.id === selected || target.id === selected; return <line key={index} x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={highlighted ? '#8e74ba' : '#c4cfdf'} strokeWidth={highlighted ? 2 : 1} vectorEffect="non-scaling-stroke" opacity={current && !highlighted ? .12 : .8} /> })}
+        <g className="map-signals" aria-hidden="true" pointerEvents="none">{links.slice(0, 18).map((_, index) => <circle key={index} className="map-signal" r={3 / camera.k} fill={index % 2 ? '#7488ff' : '#334cf2'} opacity={0} />)}{presets.map(([key]) => <circle key={key} data-idea={key} className="map-beacon" fill="none" stroke="#667ff1" strokeWidth="1.5" vectorEffect="non-scaling-stroke" opacity={0} />)}</g>
         {nodes.map((node, index) => <g key={node.id} data-node-id={node.id} data-node-kind={node.kind} transform={`translate(${node.x},${node.y})`} role="button" aria-label={`${node.label}, ${node.kind}`} aria-pressed={node.id === selected} tabIndex={node.id === selected || (!current && index === 0) ? 0 : -1} opacity={current && node.id !== selected && !neighbours.has(node.id) ? .2 : 1} onPointerDown={event => startDrag(event, node)} onClick={event => { if (event.detail === 0) choose(node) }} onKeyDown={event => {
           if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); choose(node) }
           if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); event.stopPropagation(); const next = nodes[(index + (event.key === 'ArrowRight' ? 1 : -1) + nodes.length) % nodes.length]; choose(next); svgRef.current?.querySelector<SVGGElement>(`[data-node-id="${CSS.escape(next.id)}"]`)?.focus({ preventScroll: true }) }
         }}><title>{node.label} · {node.kind}</title><circle r={Math.max(12 / camera.k, radii[node.kind] / Math.sqrt(camera.k))} fill="transparent" /><circle className="map-node-dot" r={radii[node.kind] / Math.sqrt(camera.k)} fill={colors[node.kind]} stroke="#fff" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />{node.id === selected && <circle r={(radii[node.kind] + 6) / Math.sqrt(camera.k)} fill="none" stroke={colors[node.kind]} strokeWidth={2} vectorEffect="non-scaling-stroke" />}</g>)}
-      </g><g className="map-labels" aria-hidden="true">{labels.map(label => <text key={label.node.id} x={label.x} y={label.y} className={label.node.id === selected ? 'is-selected' : ''}>{label.text}</text>)}</g></svg>
+      </g><g className="map-labels" aria-hidden="true">{labels.map(label => <text key={label.node.id} data-label-id={label.node.id} x={label.x} y={label.y} className={label.node.id === selected ? 'is-selected' : ''}>{label.text}</text>)}</g></svg>
+      {showcasing && <div className="map-live-caption" aria-hidden="true"><i /> IDEAS IN MOTION <span>Select a dot to explore</span></div>}
       {!nodes.length && <div className="map-empty"><strong>No ideas are visible.</strong><p>Choose another course or restore the content types.</p><button type="button" onClick={() => { setTrack('all'); setVisibleKinds(new Set(kinds)); setQuery(''); onSelect(null) }}>Reset filters</button></div>}</div>
-      <p id={`${id}-instructions`} className="map-instructions">Select a dot to explore. Drag dots or the background to move them. Use + / − to zoom, or pinch on a touch screen. With the map focused, arrow keys move the view and Home fits the map.</p>
+      <p id={`${id}-instructions`} className="map-instructions">A living map of connected ideas. Showcase motion pauses when you explore. Select a dot, drag to move, or use + / − to zoom. Pinch on a touch screen. With the map focused, arrow keys move the view and Home fits the map.</p>
     </div><aside className="topo-panel map-detail" aria-label="Selected idea and connections">
       {current ? <><div className="map-detail-top"><span className="map-type" style={{ color: colors[current.kind] }}>{current.kind}</span><button type="button" onClick={() => onSelect(null)} aria-label="Clear selected idea">×</button></div><h3>{current.label}</h3><p className="map-track-name">{tracks.find(item => item.slug === current.track)?.title}</p>{current.to && <Link to={current.to} className="btn btn-primary">Open {current.kind} →</Link>}<h4>Connected ideas <span>{connected.length}</span></h4>{connected.length ? <ul className="list map-connections">{connected.map(node => <li key={node.id}><button type="button" onClick={() => choose(node)}><span style={{ background: colors[node.kind] }} /><strong>{node.label}</strong><small>{node.kind}</small></button></li>)}</ul> : <p>No connections match these filters. Turn on more content types or choose All courses.</p>}</> : <><p className="map-overline">Follow your curiosity</p><h3>How to read it</h3><p>Every dot is an idea or a learning resource. Select one to highlight its connections and open a lesson, paper, lab, or definition.</p><h4>Start with an idea</h4><div className="map-starters">{presets.map(([key, label]) => { const node = nodes.find(item => item.id === key); return node ? <button type="button" key={key} onClick={() => choose(node)}>{label} →</button> : null })}</div><ul className="map-legend">{kinds.map(kind => <li key={kind}><span style={{ background: colors[kind] }} />{names[kind]}<strong>{nodes.filter(node => node.kind === kind).length}</strong></li>)}</ul></>}
       {expandedHref && <Link className="map-expand" to={expandedHref}>Open the full map page ↗</Link>}

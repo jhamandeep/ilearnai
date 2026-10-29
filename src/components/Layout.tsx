@@ -78,7 +78,7 @@ function MarketingLayout() {
     </details>
   )
   return (
-    <div className="shell">
+    <div className={`shell${pathname === '/' ? ' experience-shell' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className={`topbar${mobileOpen ? ' mobile-menu-open' : ''}`} ref={header}>
         <div className="topbar-inner">

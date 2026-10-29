@@ -33,11 +33,14 @@
 .course-focus .course-lesson-card { border-color:#dce4f4; border-top:3px solid #d1def6; box-shadow:0 4px 18px #3b51a005; }
 .course-focus .course-lesson-card:hover { border-color:#a9bfe7; background:#fcfdff; }
 .course-focus .course-lesson-number { background:#e7efff; color:#365ba3; font-weight:650; }
-.course-focus .course-lesson-actions a { padding:6px 10px; border-radius:8px; background:#edf3ff; color:#345695; text-decoration:none; }
-.course-focus .course-lesson-actions a[href*="animation-"] { background:#f2ecff; color:#654099; }
-.course-focus .course-lesson-actions a[href*="quiz-"] { background:#fff6dc; color:#805b12; }
-.course-focus .course-lesson-actions a[href^="/code"] { background:#fff0e5; color:#915120; }
-.course-focus .course-lesson-actions a:hover { box-shadow:inset 0 0 0 1px currentColor; }
+/* Actions use labelled, high-contrast colours; their meaning never relies on colour alone. */
+.course-focus .course-lesson-actions { gap:12px; margin-top:18px; }
+.course-focus .course-lesson-actions a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 16px; border:1px solid #ddd5ed; border-radius:10px; background:#f3edff; color:#6240a3; line-height:1.5; font-weight:600; text-decoration:none; text-align:center; }
+.course-focus .course-lesson-actions a[data-course-action="read"] { background:#5146a5; border-color:#5146a5; color:#fff; }
+.course-focus .course-lesson-actions a[data-course-action="quiz"] { background:#ac3963; border-color:#ac3963; color:#fff; }
+.course-focus .course-lesson-actions a[data-course-action="python"] { background:#17658e; border-color:#17658e; color:#fff; }
+.course-focus .course-lesson-actions a:hover { box-shadow:0 3px 10px #32255220; text-decoration:underline; text-underline-offset:3px; }
+.course-focus .course-lesson-actions a:focus-visible { outline:3px solid #6240a3; outline-offset:4px; }
 .course-focus .course-practice-list > article,.course-focus .course-python-picks { border-color:#efd9bd; background:linear-gradient(120deg,#fffaf3,#fff); }
 
 .course-focus .study-outline-drawer { background:#edf3ff; border-color:#cfdbf2; }

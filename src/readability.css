@@ -5,9 +5,11 @@
 .learning-shell .study-tool-panel :is(p,li),.learning-shell .study-example .prose p,.learning-shell .study-application .prose p { font-size:15px; line-height:1.8; }
 .learning-shell .study-tool-panel :is(input,textarea,button),.learning-shell .study-tool-tabs button { font-size:14px; }
 .learning-shell .course-lesson-card p,.learning-shell .course-chapter-section > header p,.learning-shell .skills-course-about > p,.learning-shell .course-workspace-heading p { font-size:16px; }
-.learning-shell .course-chapter-nav button > span,.learning-shell .course-format-nav button,.learning-shell .course-lesson-actions a,.learning-shell .study-activity-tabs > a { font-size:14px; }
-.learning-shell .course-chapter-nav :is(small,b),.learning-shell .course-lesson-meta { font-size:12px; }
-.learning-shell .activity-outline { font-size:14px; }
+.learning-shell .course-format-nav button,.learning-shell .course-lesson-actions a,.learning-shell .study-activity-tabs > a { font-size:14px; }
+.learning-shell .course-chapter-nav button > span { font-size:16px; line-height:1.65; }
+.learning-shell .course-chapter-nav small { font-size:13px; line-height:1.6; }
+.learning-shell .course-chapter-nav b,.learning-shell .course-lesson-meta { font-size:12px; }
+.learning-shell .activity-outline { font-size:15px; }
 .learning-shell .activity-outline nav a small { font-size:11px; }
 .learning-shell .rich > figcaption { font-size:17px; line-height:1.6; flex-wrap:wrap; }
 .learning-shell .rich-kind { font-size:11px; }

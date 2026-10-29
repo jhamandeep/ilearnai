@@ -8,9 +8,11 @@ import { useAuth } from '../lib/auth'
 import { TrackCard } from './Courses'
 import { CourseArtwork } from '../components/CourseArtwork'
 import { VideoThumbnail } from '../components/VideoThumbnail'
+import { KnowledgeMapPreview } from '../components/KnowledgeMapPreview'
 import { doneCount, isDone, placement, useProgressVersion } from '../lib/progress'
 
 const sections = [
+  ['knowledge-map', 'Knowledge map'],
   ['ai-for-your-work', 'AI for your work'],
   ['learn-the-basics', 'Learn the basics'],
   ['advance-your-skills', 'Advance your skills'],
@@ -56,6 +58,8 @@ export function Home() {
       <nav className="section-links" aria-label="Jump to a section">
         {sections.map(([id, label]) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? 'location' : undefined} onClick={() => setActiveSection(id)}>{label}</a>)}
       </nav>
+
+      <KnowledgeMapPreview />
 
       <section id="ai-for-your-work" className="skills-section home-work-section"><div className="section-head section-head-split"><h2>Your field.<br />Your role.<br />Your next step.</h2><div><p>You do not need to become an AI engineer to understand its value. Explore practical uses in banking, healthcare, retail, education, manufacturing, and more.</p><p>Guidance for leaders, managers, team members, architects, delivery, risk, and operations.</p><Link to="/for-work" className="text-cta">Explore 12 industries and 36 use cases ↗</Link></div></div><div className="home-work-grid">{[['banking', 'Banking', 'Better service and case preparation', '▥'], ['healthcare', 'Healthcare', 'More time for people, less administration', '+'], ['retail', 'Retail & commerce', 'Clearer product information and stock plans', '▱'], ['manufacturing', 'Manufacturing', 'Inspection and maintenance support', '▦'], ['education', 'Education & training', 'Useful materials and educator support', '▤'], ['technology', 'Technology & IT', 'Better preparation, testing, and support', '⌘']].map(([slug, title, detail, icon]) => <Link key={slug} to={`/for-work/${slug}`}><span aria-hidden="true">{icon}</span><div><h3>{title}</h3><p>{detail}</p></div><span aria-hidden="true">↗</span></Link>)}</div></section>
 

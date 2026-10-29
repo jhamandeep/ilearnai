@@ -72,7 +72,6 @@
 .course-focus .study-tools-heading { background:linear-gradient(100deg,#f2edff,#eef4ff); border-bottom:1px solid #e3dcf1; }
 .course-focus .study-spark { color:#7052a5; background:#fff; border-color:#dccff0; }
 .course-focus .study-tool-tabs { margin-top:12px; background:#f0ecf8; }
-.course-focus .study-tool-tabs button[aria-selected="true"] { color:#684799; }
 .course-focus .study-example { background:#f5effd; border-color:#e2d5f2; }
 .course-focus .study-example > span { color:#76519c; }
 

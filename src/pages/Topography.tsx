@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, type SimulationNodeDatum, type SimulationLinkDatum } from 'd3-force'
 import { nodes as allNodes, edges as allEdges } from '../data/graph'
 import { tracks } from '../data/tracks'
@@ -20,7 +20,14 @@ const kindRadius: Record<ConceptKind, number> = { concept: 9, lesson: 5, paper: 
 export function Topography() {
   const [track, setTrack] = useState<string>('all')
   const [kinds, setKinds] = useState<Set<ConceptKind>>(new Set(['concept', 'lesson', 'paper', 'lab', 'term']))
-  const [selected, setSelected] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('node')
+  const selected = allNodes.some(node => node.id === requested) ? requested : null
+  const setSelected = (id: string | null) => setParams(previous => {
+    const next = new URLSearchParams(previous)
+    if (id) next.set('node', id); else next.delete('node')
+    return next
+  }, { replace: true, preventScrollReset: true })
   const [tick, setTick] = useState(0)
   const navigate = useNavigate()
   const W = 900
@@ -65,11 +72,11 @@ export function Topography() {
   return (
     <>
       <header className="page-head">
-        <h1>Knowledge Topography</h1>
-        <p className="lede">Every concept across the tracks, linked to the lessons that explain it, the papers that introduced it, and the labs that use it. Drag to explore, click to open.</p>
+        <h1>Knowledge map</h1>
+        <p className="lede">Connect concepts with the lessons that explain them, papers to read, and labs to try. Select an idea to see its connections, then choose Open to visit it.</p>
       </header>
       <div className="topo-controls">
-        <select value={track} onChange={(e) => { setTrack(e.target.value); setSelected(null) }}>
+        <select aria-label="Filter knowledge map by course" value={track} onChange={(e) => { setTrack(e.target.value); setSelected(null) }}>
           <option value="all">All tracks</option>
           {tracks.map((t) => <option key={t.slug} value={t.slug}>{t.title}</option>)}
         </select>

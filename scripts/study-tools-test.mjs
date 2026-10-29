@@ -28,10 +28,14 @@ try {
   await render()
   assert.ok(container.textContent.includes(lessons[0].summary))
   assert.equal(tab('Summary').tabIndex, 0)
-  await act(() => tab('Summary').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
-  assert.equal(tab('Flashcards').getAttribute('aria-selected'), 'true')
-  assert.equal(document.activeElement, tab('Flashcards'))
+  await act(async () => {
+    tab('Summary').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+    await vite.ssrLoadModule('/src/components/StudyLibrary.tsx')
+  })
+  assert.equal(tab('Resources').getAttribute('aria-selected'), 'true')
+  assert.equal(document.activeElement, tab('Resources'))
   assert.equal(tab('Summary').tabIndex, -1)
+  await click(tab('Flashcards'))
   assert.equal(button('I remembered this').disabled, true)
   const beforeCards = storage()
   const firstCard = container.querySelector('.study-flashcard').textContent

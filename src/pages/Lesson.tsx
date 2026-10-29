@@ -40,6 +40,7 @@ export function LessonPage() {
   const quizSubmitted = active?.kind !== 'quiz' || !!quizScore(route, active.quizIndex ?? 0)
   return <div className="activity-workspace">
     <nav className="activity-breadcrumb crumbs"><Link to="/courses">Catalogue</Link><span>/</span><Link to={`/courses/${track.slug}`}>{track.title}</Link><span>/</span><Link to={route}>{lesson.title}</Link></nav>
+    <a className="study-space-jump" href="#lesson-study-tools">Open your study space <span>Resources, papers, videos & notes ↓</span></a>
     <details className="study-outline-drawer"><summary>Chapter contents · {module.title}</summary><nav aria-label="Chapter lessons">{module.lessons.map(item => <Link key={item.slug} to={`/courses/${track.slug}/${module.slug}/${item.slug}`} aria-current={item.slug === lesson.slug ? 'page' : undefined}>{item.title}</Link>)}</nav></details>
     <div className="study-lesson-progress"><span>{completed}/{activities.length} activities complete</span><progress value={completed} max={activities.length} aria-label="Lesson activity progress" /></div>
     <div className="activity-workspace-grid study-workspace-grid">

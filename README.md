@@ -2,11 +2,21 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
+## Study library, homepage knowledge map and AI identity
+
+Every lesson now has eight study tabs: Summary, Resources, Papers, Videos, Tools, Flashcards, Notes and Ask. The panel is 380–400px wide on larger screens and becomes a full-width section with a jump link on smaller screens. Lesson references are kept separate from optional course reading; indexed papers include original-source links and reading notes. Videos use the curated chapter sequences, with previews and no automatic playback. Tools include the lesson’s runnable Python exercises, linked labs, repositories and course tools. Notes keep their existing browser-local storage and isolation.
+
+The homepage features a knowledge-map preview for Attention, Retrieval & RAG and AI agents, built from real graph connections. Its main button opens the chosen concept; each study space can open its own lesson on the map. Map links accept `?node=<node-id>`. The AI processor logo has travelling circuit signals and orbiting lights, with global pause and reduced-motion support. Home and every main sidebar entry now use 18px bold text with more room around them.
+
+Validation: `npm run test:study-library` checks reference classification across all 245 lessons, paper URL matching, chapter video coverage, exercise and map targets, the eight tabs, note retention, keyboard use, selected-tab contrast, motion controls and eight viewport widths from 320 to 1920px in Chrome. `npm run test:study-tools` verifies storage and static help; `npm run test:course-focus-browser` verifies course navigation and narration playback. Build passes; lint retains its 16 existing warnings. These checks cover the portal’s links and controls, not the availability or playback of every external source. Run browser tests against port 5178 or set `APP_URL`. Local screenshots and results are under `output/reviews/study-library/`.
+
+Rollback before this update: `rollback/before-study-space-map-20261029` at `d6f61c3`.
+
 ## Teaching voices, Ask me and practical pathways
 
 All 295 explainers and the RAG sample now use two conversational synthetic voices: Microsoft Ava (female) and Andrew (male). They take two-scene turns so an idea and its example stay together. The build-time pronunciation layer reads exact decimals, negative values, scientific notation, software versions, units, acronyms and selected tool names. For example, `0.0003` keeps every decimal digit while `Python 3.12` is read as “Python three point twelve.” Captions retain the authored text. Measured audio cues drive the existing diagrams; recordings have new content-hashed URLs so old cached voices are not reused.
 
-The original neural-network logo animates its connections and central spark. Pause motion and reduced-motion preferences stop it. Violet replaces the primary selection and highlight accent. The homepage now links to the full labs without embedding gradient descent.
+The original AI logo animates its circuit connections and orbiting lights. Pause motion and reduced-motion preferences stop it. Violet replaces the primary selection and highlight accent. The homepage links to the full labs without embedding gradient descent.
 
 `/certifications` compares eight official pathways by role, preparation, experience and exam status, with provider links and a practical project for each. `/ai-infrastructure` explains five workloads, suggested starting computers, managed versus self-hosted systems, a request walkthrough and a weight-memory calculator. Hardware estimates are starting points, and the calculator explicitly excludes runtime, cache and training overhead. Certification availability and fees were checked on 29 October 2026 and should be confirmed with the provider before booking.
 

@@ -5,7 +5,7 @@
   font-family: var(--font-heading); font-size: 27px; font-weight: 750;
   letter-spacing: -.055em; line-height: 1; color: var(--text); text-decoration: none;
 }
-.brand-symbol { display: block; flex-shrink: 0; width: 38px; height: 38px; }
+.brand-symbol { display: block; flex-shrink: 0; width: 44px; height: 44px; }
 .brand .brand-wordmark, .brand .brand-wordmark > span { margin: 0; }
 .brand-wordmark > span { color: var(--brand-wordmark-accent); font-weight: 500; }
 .footer-inner .brand { font-size: 26px; }
@@ -21,7 +21,7 @@
 .skills-module > summary strong { font-family: var(--font-heading); font-weight: 650; letter-spacing: -.035em; }
 .learning-toolbar, .learning-navigation { background: #ffffff; border-color: #e3e5e8; }
 .learning-toolbar .brand { font-size: 26px; }
-.learning-toolbar .brand-symbol { width: 36px; height: 36px; }
+.learning-toolbar .brand-symbol { width: 42px; height: 42px; }
 .learning-shell :is(a, button, input, select, summary):focus-visible { outline-color: #1a73e8; }
 .toolbar-search { background: #f5f6f8; border: 1px solid #e3e5e8; border-radius: 14px; }
 .toolbar-search button, .toolbar-ask { color: #1967d2; }
@@ -73,7 +73,7 @@
 @media (max-width: 600px) {
   .learning-toolbar { gap: 8px; padding: 0 12px; }
   .learning-toolbar .brand { gap: 7px; font-size: 22px; }
-  .learning-toolbar .brand-symbol { width: 29px; height: 29px; }
+  .learning-toolbar .brand-symbol { width: 34px; height: 34px; }
   .toolbar-ask .toolbar-ask-label { display: none; }
   .toolbar-ask > span:last-child { display: grid; width: 28px; height: 28px; }
   .learning-toolbar .account-signin { font-size: 11px; }
@@ -82,12 +82,14 @@
   .learning-footer > span { flex-basis: 100%; }
 }
 
-.brand-signal { stroke-dasharray:5 36; animation:brand-signal-travel 3.8s linear infinite; }
-.brand-spark { transform-box:fill-box; transform-origin:center; animation:brand-spark-breathe 3.8s ease-in-out infinite; }
+.brand-signal { stroke-dasharray:4 18; animation:brand-signal-travel 2.4s linear infinite; }
+.brand-chip { transform-box:fill-box; transform-origin:center; animation:brand-chip-breathe 4s ease-in-out infinite; }
+.brand-orbit { transform-origin:32px 32px; animation:brand-orbit-turn 9s linear infinite; }
 .brand-node { animation:brand-node-glow 3.8s ease-in-out infinite; }
 .brand-node:nth-child(2n) { animation-delay:1.9s; }
-.brand-symbol[data-motion="off"] :is(.brand-signal,.brand-spark,.brand-node) { animation-play-state:paused; }
-@keyframes brand-signal-travel { to { stroke-dashoffset:-41; } }
-@keyframes brand-spark-breathe { 0%,100% { transform:scale(.96); } 50% { transform:scale(1.05); } }
+.brand-symbol[data-motion="off"] :is(.brand-signal,.brand-chip,.brand-node,.brand-orbit) { animation-play-state:paused; }
+@keyframes brand-signal-travel { to { stroke-dashoffset:-22; } }
+@keyframes brand-chip-breathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.035); } }
+@keyframes brand-orbit-turn { to { transform:rotate(360deg); } }
 @keyframes brand-node-glow { 0%,100% { opacity:.55; } 50% { opacity:1; } }
-@media(prefers-reduced-motion:reduce) { .brand-symbol :is(.brand-signal,.brand-spark,.brand-node) { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .brand-symbol :is(.brand-signal,.brand-chip,.brand-node,.brand-orbit) { animation:none; } }

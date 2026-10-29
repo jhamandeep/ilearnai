@@ -2,11 +2,32 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
-## Narrated explainer sample (review draft)
+## Narration across courses, work guides, and labs
+
+All 245 lesson animations, 36 industry walkthroughs, 11 lab introductions, and three style-guide examples use the approved Kokoro `af_heart` neural voice. Each of the 295 explainers has its own recording and measured scene cues. The existing lesson-specific diagrams, calculations, and labels remain the visual content; the audio clock now drives their builds, arrows, counters, and transitions. Narration includes authored step explanations, including those in the Microsoft curriculum track. Work guides narrate their concrete fictional examples and retain the decision questions and implementation guidance. Lab recordings explain fixed teaching examples alongside the live calculators.
+
+The shared player provides play/pause, replay, a scrubber, previous/next scene, five-second rewind, speed, mute, captions, full screen, diagram enlargement, and a full transcript with scene jumps. On small screens the camera frames the active part of the diagram. Reduced motion shows completed scene states while still allowing explicit audio playback. There is no autoplay; leaving the page, hiding the tab, scrolling the player out of view, or starting another explainer pauses the recording. Failed downloads offer a retry and retain the transcript. No speech service or LLM runs during playback.
+
+Recordings use content-addressed URLs. Editing an animation invalidates its recording rather than replaying stale speech. `npm run build` checks that every published explainer has a matching recording. New authoring drafts retain a readable, manually selectable diagram until their recordings are generated. Learning progress identifiers and quiz behaviour are unchanged.
+
+To update recordings, use the isolated Python environment and model downloads below, then run:
+
+```sh
+npm run narration:export
+output/neural-voice/venv/bin/python scripts/build-course-narration.py
+npm run test:narration
+npm run test:narration-browser
+```
+
+Generation is resumable: identical spoken segments are cached under ignored `output/narration/segments/`. The generator expands technical units and notation for pronunciation; captions retain the authored text. Four local workers render audio; only finished AAC assets and the cue manifest are published. Browser checks use the app at `http://127.0.0.1:5178` (override `APP_URL`) and installed Chrome. Rollback before this rollout: `rollback/before-sitewide-narration-20261028` at `e6529ad`, which includes the approved sample.
+
+Validation: Chrome 156 passed all 295 explainer routes and 2,036 scene checks, shared controls, audio exclusivity, navigation cleanup, 1440/390/320px layouts, reduced motion, and blocked-download retry. All 295 AAC files fully decoded with no silent spoken scenes or clipped samples. The product check passed all 1,419 activity pages, and work checks covered 252 role views. Production course/work/lab playback and seeking passed. Build passes; lint retains 16 existing warnings. The recordings total 160.5 minutes and approximately 80 MB; they load per player. These checks establish playback and synchronization, not a listening review of every spoken sentence. Local reports are under `output/reviews/sitewide-narration/` and `output/narration/`.
+
+## Approved narrated explainer sample
 
 Open `/preview/narrated-explainer` for a 35-second concept sample from the RAG chapter. It uses a recorded synthetic voice, timed SVG scene builds, synchronized captions, a scrubber, pause/resume, replay, mute, playback speed, scene jumps, and full screen. The audio clock drives every visual frame. Smaller players follow the active part of the diagram; reduced motion disables the camera transition and gradual reveals. Audio starts only after Play and stops on navigation or when the document is hidden.
 
-This is one isolated review route. Existing chapters and their animation controls are unchanged. The sample uses the `af_heart` neural voice from [Kokoro-82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M), rendered locally with [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx). Conversational wording and varied pauses replace the earlier system-voice recording. It does not call a speech service or LLM while playing; only the approximately 287 KB AAC asset ships, with a content hash in its URL to avoid stale cached audio. Model weights and intermediate WAVs stay under ignored `output/`. The sample diagram includes an illustrative refund policy, not real business data. Its conceptual source is [Microsoft's RAG overview](https://learn.microsoft.com/en-ca/azure/ai-foundry/concepts/retrieval-augmented-generation?view=foundry-classic).
+This route preserves the approved RAG concept sample. The course rollout above uses the same voice. The sample uses the `af_heart` neural voice from [Kokoro-82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M), rendered locally with [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx). Conversational wording and varied pauses replace the earlier system-voice recording. It does not call a speech service or LLM while playing; only the approximately 287 KB AAC asset ships, with a content hash in its URL to avoid stale cached audio. Model weights and intermediate WAVs stay under ignored `output/`. The sample diagram includes an illustrative refund policy, not real business data. Its conceptual source is [Microsoft's RAG overview](https://learn.microsoft.com/en-ca/azure/ai-foundry/concepts/retrieval-augmented-generation?view=foundry-classic).
 
 To regenerate on macOS (Python 3.13 tested), install the isolated voice dependencies and download the pinned model files. The generator verifies their SHA-256 hashes, records eight scenes, measures each cue from the waveform, and encodes AAC using macOS `afconvert`:
 

@@ -1,4 +1,7 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { NarratedPlayer, type NarratedFrame } from '../NarratedPlayer'
+import recordings from '../../data/narration.json'
+import { narrationKey, animationTime, type NarrationRecording } from '../../lib/narration'
 import { gsap } from 'gsap'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { parseAnim, colorOf, defaultDur, holdFor, STAGE_W, STAGE_H, type Obj, type Scene } from './anim-parse'
@@ -134,25 +137,33 @@ const esc = (id: string) => id.replace(/["\\]/g, '\\$&')
 
 // ---------- component ----------
 export function Anim({ src }: { src: string }) {
-  const idPrefix = 'animation-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const scene = useMemo(() => parseAnim(src), [src])
-  const fig = useRef<HTMLElement>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
-  const scrub = useRef<HTMLInputElement>(null)
-  const clock = useRef<HTMLSpanElement>(null)
-  const tlRef = useRef<gsap.core.Timeline | null>(null)
-  const starts = useRef<number[]>([])
-  const ends = useRef<number[]>([])
-  const userPaused = useRef(true)
-  const reduced = useRef(false)
-  const [step, setStep] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [done, setDone] = useState(false)
-  const [speed, setSpeed] = useState(1)
-  const [duration, setDuration] = useState(1)
-  const [fullscreenError, setFullscreenError] = useState('')
-  const [enlarged, setEnlarged] = useState(false)
+  const key = narrationKey(src)
+  const recording = (recordings as Record<string, NarrationRecording>)[key]
+  if (scene.errors.length) return <figure className="rich rich-anim rich-error"><figcaption>{scene.title ?? 'Scene'}</figcaption><ul className="rich-errors">{scene.errors.map((error, i) => <li key={i}>{error}</li>)}</ul></figure>
+  return <figure className="rich rich-anim narrated-animation" data-narration-key={key}>
+    <figcaption><span className="rich-kind">Narrated explainer</span>{scene.title ?? 'See the idea'}</figcaption>
+    {scene.context && <div className="an-learning-context"><p>{scene.context}</p>{scene.focus && <p><strong>Watch for:</strong> {scene.focus}</p>}</div>}
+    {recording ? <NarratedPlayer key={key} recording={recording} title={scene.title ?? 'Animated explainer'} canEnlarge>
+      {frame => <AnimationStage scene={scene} recording={recording} frame={frame} />}
+    </NarratedPlayer> : <UnrecordedScene key={key} scene={scene} />}
+    {scene.takeaway && <p className="an-takeaway"><strong>Take this with you:</strong> {scene.takeaway}</p>}
+  </figure>
+}
 
+// New or edited authoring drafts remain readable until their audio is rebuilt.
+// Never substitute an older recording or a robotic browser voice.
+function UnrecordedScene({ scene }: { scene: Scene }) {
+  const [index, setIndex] = useState(0)
+  const recording = useMemo(() => ({ audio: '', duration: scene.steps.length, cues: scene.steps.map((step, i) => ({ text: step.text, start: i, speechEnd: i + 1, end: i + 1 })) }), [scene])
+  return <div className="narration-missing"><p>Narration is being updated. Explore the diagram and read each step below.</p><AnimationStage scene={scene} recording={recording} frame={{time:index,scene:index,reduced:true,compact:false,poster:false}} /><ol>{scene.steps.map((step, i) => <li key={i}><button type="button" onClick={() => setIndex(i)} aria-current={index === i ? 'step' : undefined}>{step.text}</button>{step.explanation && <p>{step.explanation}</p>}</li>)}</ol></div>
+}
+
+function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: NarrationRecording; frame: NarratedFrame }) {
+  const idPrefix = 'animation-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const svgRef = useRef<SVGSVGElement>(null)
+  const frameRef = useRef(frame)
+  const synchronize = useRef<(() => void) | null>(null)
   // count how many label changes each object gets, so the extra text nodes exist for scrubbing
   const labelVariants = useMemo(() => {
     const m = new Map<string, string[]>()
@@ -163,7 +174,6 @@ export function Anim({ src }: { src: string }) {
   useEffect(() => {
     const svg = svgRef.current
     if (!svg || scene.errors.length) return
-    reduced.current = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
     const q = (id: string) => svg.querySelector(`[data-id="${esc(id)}"]`) as SVGGraphicsElement | null
     const qs = (ids: string[]) => ids.map(q).filter((e): e is SVGGraphicsElement => !!e)
     const objs = new Map(scene.objects.map((o) => [o.id, o]))
@@ -195,7 +205,6 @@ export function Anim({ src }: { src: string }) {
     for (const el of svg.querySelectorAll('[data-packet], [data-head], [data-variant]')) gsap.set(el, { opacity: 0 })
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.inOut' } })
-    tlRef.current = tl
     const S: number[] = []
     const E: number[] = []
     scene.steps.forEach((st, i) => {
@@ -379,8 +388,6 @@ export function Anim({ src }: { src: string }) {
       E.push(tl.duration())
       tl.to({}, { duration: st.hold ?? holdFor(st.text) })
     })
-    starts.current = S
-    ends.current = E
 
     function drawArrow(o: Obj, dur: number, at: string, packetOnly: boolean) {
       const el = q(o.id)
@@ -414,109 +421,54 @@ export function Anim({ src }: { src: string }) {
       }
     }
 
-    const ui = () => {
-      const t = tl.time()
-      if (scrub.current) { scrub.current.max = String(tl.duration()); scrub.current.value = String(t) }
-      if (clock.current) clock.current.textContent = `${t.toFixed(1)}s / ${tl.duration().toFixed(0)}s`
-      let i = 0
-      for (let k = 0; k < S.length; k++) if (S[k] <= t + 0.001) i = k
-      setStep((s) => (s === i ? s : i))
+    // Frame the active diagram part on a small player, as in the approved sample.
+    // Measure finished steps once; playback still follows the recorded audio clock.
+    const cameras = scene.steps.map((step, index) => {
+      tl.time(E[index], false)
+      const focus = step.actions.filter(action => ['highlight', 'pulse', 'count', 'walk', 'tangent', 'move'].includes(action.op)).at(-1)
+        ?? step.actions.filter(action => action.op === 'show').at(-1)
+      let ids = (focus?.ids ?? []).filter(id => !['heading', 'legend', 'scene', 'cursor', 'detail', 'detailText'].includes(id))
+      if (!ids.length) ids = scene.objects.filter(object => object.kind === 'axes').map(object => object.id)
+      const boxes = ids.map(id => {
+        let object = objs.get(id)
+        if (!object) return null
+        if (object.on) object = objs.get(object.on) ?? object
+        if (object.kind === 'tangent') { const curve = objs.get(object.curve!); object = objs.get(curve?.on ?? '') ?? object }
+        const element = q(object.id)
+        const matrix = element?.getCTM(), base = svg.getCTM()
+        if (!element || !matrix || !base) return null
+        const transform = base.inverse().multiply(matrix)
+        const bounds = element.getBBox()
+        const a = new DOMPoint(bounds.x, bounds.y).matrixTransform(transform)
+        const b = new DOMPoint(bounds.x + bounds.width, bounds.y + bounds.height).matrixTransform(transform)
+        return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(b.x - a.x), h: Math.abs(b.y - a.y) }
+      }).filter((box): box is {x:number;y:number;w:number;h:number} => !!box)
+      if (!boxes.length) return [0, 0, STAGE_W, STAGE_H]
+      const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y))
+      const right = Math.max(...boxes.map(box => box.x + box.w)), bottom = Math.max(...boxes.map(box => box.y + box.h))
+      const width = Math.min(STAGE_W, Math.max(460, right - left + 100, (bottom - top + 70) / .75))
+      const height = width * .75
+      return [Math.max(0, Math.min(STAGE_W - width, (left + right - width) / 2)), Math.max(0, Math.min(STAGE_H - height, (top + bottom - height) / 2)), width, height]
+    })
+    const sync = () => {
+      const current = frameRef.current
+      const index = Math.min(current.scene, scene.steps.length - 1)
+      const target = current.poster ? E[0] : animationTime(current.time, recording.cues[index], S[index], E[index], current.reduced)
+      tl.pause().time(target, false)
+      const next = cameras[index], previous = cameras[Math.max(0, index - 1)]
+      const progress = current.reduced || current.poster ? 1 : Math.max(0, Math.min(1, (current.time - recording.cues[index].start) / .65))
+      const camera = next.map((value, i) => previous[i] + (value - previous[i]) * progress)
+      const enlarged = svg.closest('.is-enlarged')
+      svg.setAttribute('viewBox', current.compact && !enlarged ? camera.join(' ') : `0 0 ${STAGE_W} ${STAGE_H}`)
     }
-    tl.eventCallback('onUpdate', ui)
-    tl.eventCallback('onComplete', () => { setPlaying(false); setDone(true) })
-    tl.eventCallback('onStart', () => setDone(false))
-    ui()
+    synchronize.current = sync
+    sync()
+    return () => { synchronize.current = null; tl.kill(); meas.remove() }
+  }, [scene, recording])
 
-    // Show a useful opening frame. Playback starts only when requested.
-    tl.seek(E[0] ?? 0)
-    setDuration(tl.duration())
-    ui()
-    let inView = false
-    const syncPlayback = () => {
-      if (inView && !document.hidden && !reduced.current && !userPaused.current && tl.progress() < 1) {
-        tl.play(); setPlaying(true)
-      } else if (tl.isActive()) { tl.pause(); setPlaying(false) }
-    }
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        inView = e.isIntersecting && e.intersectionRatio >= 0.35
-        syncPlayback()
-      }
-    }, { threshold: [0, 0.35, 0.6] })
-    document.addEventListener('visibilitychange', syncPlayback)
-    const motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
-    const onMotionChange = () => {
-      reduced.current = motionQuery.matches
-      if (reduced.current) { userPaused.current = true; tl.pause(); setPlaying(false); const current = Math.max(0, S.findLastIndex((start) => start <= tl.time())); tl.seek(E[current] ?? 0); ui() }
-    }
-    motionQuery.addEventListener('change', onMotionChange)
-    const figEl = fig.current
-    if (figEl) io.observe(figEl)
-
-    const onSeek = (e: Event) => { const t = (e as CustomEvent<number>).detail; tl.pause(); userPaused.current = true; setPlaying(false); tl.time(Math.max(0, Math.min(tl.duration(), t))); ui() }
-    figEl?.addEventListener('animseek', onSeek)
-    return () => {
-      io.disconnect()
-      document.removeEventListener('visibilitychange', syncPlayback)
-      motionQuery.removeEventListener('change', onMotionChange)
-      figEl?.removeEventListener('animseek', onSeek)
-      tl.kill()
-      meas.remove()
-    }
-  }, [scene])
-
-  useEffect(() => { tlRef.current?.timeScale(speed) }, [speed])
-
-  const play = () => {
-    const tl = tlRef.current
-    if (!tl) return
-    if (tl.progress() >= 1) tl.restart()
-    else tl.play()
-    userPaused.current = false
-    setPlaying(true); setDone(false)
-  }
-  const pause = () => { tlRef.current?.pause(); userPaused.current = true; setPlaying(false) }
-  const goto = (i: number, andPlay: boolean) => {
-    const tl = tlRef.current
-    if (!tl) return
-    const k = Math.max(0, Math.min(scene.steps.length - 1, i))
-    if (reduced.current || !andPlay) { tl.pause(); tl.time(ends.current[k] ?? 0); setPlaying(false); userPaused.current = true }
-    else { tl.time(starts.current[k] ?? 0); tl.play(); setPlaying(true); userPaused.current = false }
-    setDone(false)
-  }
-  const onKey = (e: KeyboardEvent) => {
-    // Let sliders, select menus, and buttons keep their own keyboard behavior.
-    if (e.target !== e.currentTarget) return
-    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); if (playing) pause(); else play() }
-    if (e.key === 'ArrowRight') { e.preventDefault(); goto(step + 1, !reduced.current) }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); goto(step - 1, !reduced.current) }
-  }
-  const toggleFullscreen = async () => {
-    const element = fig.current
-    if (!element) return
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen()
-      else if (element.requestFullscreen) await element.requestFullscreen()
-      else setFullscreenError('Full screen is unavailable in this browser. You can still zoom and scroll the stage.')
-    } catch { setFullscreenError('Full screen is unavailable here. The animation controls still work below.') }
-  }
-
-  if (scene.errors.length) {
-    return (
-      <figure className="rich rich-anim rich-error">
-        <figcaption><span className="rich-kind">Animation</span>{scene.title ?? 'Scene'}</figcaption>
-        <ul className="rich-errors">{scene.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
-      </figure>
-    )
-  }
-
-  const cur = scene.steps[step]
+  useEffect(() => { frameRef.current = frame; synchronize.current?.() }, [frame])
   return (
-    <figure className="rich rich-anim" ref={fig} tabIndex={0} onKeyDown={onKey} aria-label={scene.title ?? 'Animation'}>
-      {scene.title && <figcaption><span className="rich-kind">Interactive explainer</span>{scene.title}<span className="rich-unit">{step + 1} / {scene.steps.length}</span></figcaption>}
-      <div className="an-learning-context">{scene.context && <p>{scene.context}</p>}<p><strong>Watch for:</strong> {scene.focus ?? 'Follow one scene at a time. Read the labels and the explanation below, then predict what changes next.'}</p><details><summary>How to read this animation</summary><ul>{scene.objects.some(item => item.kind === 'box' || item.kind === 'rect') && <li>Labelled boxes name the parts or values in this example.</li>}{scene.steps.some(item => item.actions.some(action => action.op === 'arrow' || action.op === 'send')) && <li>Read the label on each arrow. It tells you what passes between the connected parts.</li>}{scene.objects.some(item => item.kind === 'axes') && <li>Read both axis labels before comparing points. A curve shows how the plotted quantity changes.</li>}<li>The numbered caption explains the current scene. Use Previous and Next to move at your own pace.</li><li>Open the transcript below for the full sequence. Motion is optional.</li></ul></details></div>
-      <div className={`an-stage${enlarged ? ' is-enlarged' : ''}`} role="region" tabIndex={0} aria-label={enlarged ? 'Enlarged animation stage. Scroll horizontally to explore.' : 'Animation stage. The full scene fits the available width.'}>
-        <svg ref={svgRef} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} role="img" aria-label={scene.title ?? 'Animation'} className="an-svg">
+        <svg ref={svgRef} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} role="img" aria-label={scene.title ?? 'Animation'} className="an-svg" data-visual-scene={frame.scene}>
           <defs>
             <filter id={`${idPrefix}-glow`} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
             <radialGradient id={`${idPrefix}-vignette`} cx="50%" cy="45%" r="75%"><stop offset="0" stopColor="var(--anim-center, #ffffff)" /><stop offset="1" stopColor={BG} /></radialGradient>
@@ -535,29 +487,6 @@ export function Anim({ src }: { src: string }) {
             ))}
           </g>
         </svg>
-      </div>
-      <p className="an-mobile-hint">{enlarged ? 'Scroll across the enlarged stage, or choose Fit scene to see every block.' : 'The whole scene fits above. Choose Enlarge for bigger labels, or explore each step below.'}</p>
-      <div className="an-caption" aria-live={playing ? 'off' : 'polite'}>
-        <span className="an-step-no">{step + 1}</span>
-        <div><p>{cur?.text}</p>{cur?.explanation && <p className="an-explanation"><strong>Why this matters:</strong> {cur.explanation}</p>}</div>
-      </div>
-      <div className="rich-bar an-bar">
-        <button className="btn btn-ghost btn-sm" onClick={() => goto(step - 1, !reduced.current)} aria-label="Previous scene" disabled={step === 0}>←</button>
-        <button className="btn btn-primary btn-sm an-play" onClick={() => (playing ? pause() : play())}>{playing ? 'Pause' : done ? 'Replay' : 'Play'}</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => goto(step + 1, !reduced.current)} aria-label="Next scene" disabled={step >= scene.steps.length - 1}>→</button>
-        <input ref={scrub} type="range" className="rich-scrub" min={0} max={duration} step={0.02} defaultValue={0} aria-label="Animation timeline"
-          onPointerDown={() => { tlRef.current?.pause(); userPaused.current = true; setPlaying(false) }}
-          onInput={(e) => { const tl = tlRef.current; if (!tl) return; tl.pause(); userPaused.current = true; setPlaying(false); tl.time(parseFloat((e.target as HTMLInputElement).value)) }} />
-        <span className="an-clock" ref={clock} />
-        <select className="an-speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Playback speed">{[0.5, 1, 1.5, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEnlarged((value) => !value)} aria-pressed={enlarged}>{enlarged ? 'Fit scene' : 'Enlarge'}</button>
-        <button className="btn btn-ghost btn-sm" onClick={toggleFullscreen} aria-label="Full screen" title="Full screen">⛶</button>
-        <span className="rich-dots" aria-label="Choose a scene">{scene.steps.map((_, i) => <button key={i} className={i === step ? 'on' : i < step ? 'done' : ''} onClick={() => goto(i, false)} aria-label={`Scene ${i + 1}: ${scene.steps[i].text}`} aria-current={i === step ? 'step' : undefined} />)}</span>
-      </div>
-      {fullscreenError && <p className="an-status" role="status">{fullscreenError}</p>}
-      {scene.takeaway && <p className="an-takeaway"><strong>Take this with you:</strong> {scene.takeaway}</p>}
-      <details className="an-transcript"><summary>Explore the steps <span>{scene.steps.length} scenes</span></summary><ol>{scene.steps.map((item, i) => <li key={i}><button type="button" onClick={() => goto(i, false)} aria-current={i === step ? 'step' : undefined}><span className="an-transcript-number">{String(i + 1).padStart(2, '0')}</span><span>{item.text}{item.explanation && <small className="an-transcript-explanation">{item.explanation}</small>}</span><span aria-hidden="true">↗</span></button></li>)}</ol></details>
-    </figure>
   )
 }
 

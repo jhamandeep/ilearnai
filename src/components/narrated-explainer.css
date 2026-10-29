@@ -58,7 +58,33 @@
 .explainer-preview-note { color:#7e8799; font-size:12px; line-height:1.8; max-width:780px; margin:24px 0 12px; }
 .explainer-preview-links { display:flex; gap:24px; flex-wrap:wrap; font-size:13px; margin:20px 0 40px; }
 .explainer-mobile-title { display:none; }
+.narrated-explainer { min-width:0; }
+.course-explainer .explainer-stage { overflow:auto; }
+.course-explainer .an-svg { display:block; width:100%; min-width:0; height:auto; }
+.course-explainer.is-enlarged .an-svg { width:960px; min-width:960px; max-width:none; }
+.course-explainer .explainer-control-row { flex-wrap:wrap; }
+.course-explainer .explainer-transport,.course-explainer .explainer-settings { gap:4px; }
+.course-explainer .explainer-transport { flex-wrap:wrap; }
+.course-explainer button:disabled { opacity:.3; cursor:default; }
+.course-explainer .explainer-clock { margin-left:5px; }
+.course-explainer .explainer-enlarge { font-size:16px; }
+.course-explainer .explainer-overlay-play.is-paused { top:12px; right:12px; bottom:auto; }
+.course-explainer:fullscreen { overflow:auto; }
+.course-explainer:fullscreen .an-svg { max-height:calc(100vh - 230px); min-width:0; width:100%; }
+.narrated-explainer .explainer-transcript { margin:16px 0; background:var(--surface,#fff); }
+.narrated-explainer .explainer-transcript ol { padding:8px 0 0; margin:0; }
+.narrated-explainer .explainer-transcript li { margin:14px 0 0; }
+.narrated-explainer .explainer-transcript p { margin:0; }
+.narrated-explainer .explainer-transcript strong { display:block; margin-bottom:5px; }
+.narrated-explainer .explainer-fit-hint { font-size:12px; color:var(--text-dim); margin:10px 4px; }
+.rich-anim.narrated-animation { background:transparent; border:0; overflow:visible; }
+.narrated-animation > figcaption { padding:14px 0; }
+.narrated-animation > .an-learning-context { padding:0 0 16px; }
+.narrated-animation .explainer-captions { color:#f0f2fa; }
+.narration-missing { padding:18px; border:1px solid var(--border); border-radius:14px; }
 @container (max-width:560px) {
+ .course-explainer:not(.is-enlarged) [data-id="detail"],.course-explainer:not(.is-enlarged) [data-id="detailText"] { display:none; }
+ .course-explainer:not(.is-enlarged) [data-id="heading"],.course-explainer:not(.is-enlarged) [data-id="legend"] { display:none; }
  .explainer-control-row { flex-wrap:wrap; gap:2px; }
  .explainer-transport,.explainer-settings { gap:4px; }
  .explainer-controls { padding:0 12px 12px; }

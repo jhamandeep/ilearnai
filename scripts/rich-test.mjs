@@ -72,9 +72,8 @@ const ids = [...two.matchAll(/<(?:filter|radialGradient|clipPath)[^>]*id="([^"]+
 assert.equal(ids.length, 8)
 assert.equal(new Set(ids).size, ids.length, 'Animation SVG definitions collide')
 for (const [, ref] of two.matchAll(/url\(#([^)]*)\)/g)) assert.ok(ids.includes(ref), `Missing local SVG definition: ${ref}`)
-assert.ok(two.includes('aria-label="Animation timeline"'))
-assert.ok(two.includes('aria-label="Playback speed"'))
-assert.equal((two.match(/class="an-transcript"/g) ?? []).length, 2)
+assert.ok(two.includes('Narration is being updated'), 'An unrecorded authoring draft must not play unrelated audio')
+assert.ok(two.includes('Start at x equals negative two'), 'Unrecorded drafts retain their readable steps')
 assert.ok(!/aria-hidden="true"[^>]*><button/.test(two), 'Interactive buttons are hidden from assistive technology')
 console.log('ok   independent animation SVGs, accessible controls, and transcripts')
 // Markdown integration: ::: containers become figures via the preprocess step

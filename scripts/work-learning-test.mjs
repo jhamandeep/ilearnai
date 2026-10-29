@@ -73,7 +73,7 @@ try {
   assert.equal(progress.isWorkReviewed('healthcare','service-information'),false)
   assert.match(render(WorkCasePage,'/for-work/banking/service-assistant','/for-work/:industry/:useCase'),/Mark as not reviewed/)
   assert.match(text(render(Dashboard,'/dashboard')),/1 of 36 guides reviewed/)
-  assert.match(text(render(Dashboard,'/dashboard')),/0 of 220 lessons completed/)
+  assert.match(text(render(Dashboard,'/dashboard')),/0 of 245 lessons completed/)
   progress.setWorkReviewed('banking','service-assistant',false)
   assert.equal(progress.isWorkReviewed('banking','service-assistant'),false)
 

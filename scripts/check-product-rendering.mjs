@@ -63,7 +63,7 @@ try {
       const html = rendered.join('\n')
       for (const kind of kinds) {
         const expected = [...lesson.body.matchAll(new RegExp(`^[ \\t]*:::${kind}[ \\t]*$`, 'gm'))].length
-        const actual = [...html.matchAll(new RegExp(`<figure class="rich rich-${kind}(?:[ "])(?![a-z])`, 'g'))].length
+        const actual = [...html.matchAll(new RegExp(`<figure class="rich rich-${kind}(?=[ "])`, 'g'))].length
         assert.ok(actual >= expected, `${url}: ${kind} rendered ${actual}/${expected}`)
         blocks += expected
       }

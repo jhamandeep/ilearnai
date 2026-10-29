@@ -1,37 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { Industry, WorkCase, WorkRole } from '../data/work/types'
 import { buildWorkBrief, estimateCapacity, type CapacityInputs } from '../lib/workLearning'
-import { useLabMotion } from '../lib/useLabMotion'
+import { Anim } from './rich/Anim'
+import { workExplainerScene } from '../lib/explainerScenes'
 import { WorkQuestions } from './WorkQuestions'
 import { workExamples } from '../data/work/examples'
 
 export function WorkFlow({ item, industrySlug }: { item: WorkCase; industrySlug: string }) {
-  const [step, setStep] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const host = useRef<HTMLDivElement>(null)
-  const moving = useLabMotion(host, playing) && step < 3
-  useEffect(() => {
-    if (!moving) return
-    const timer = setTimeout(() => setStep(value => Math.min(3, value + 1)), 9000)
-    return () => clearTimeout(timer)
-  }, [moving, step])
   const example = workExamples[`${industrySlug}/${item.slug}`]
-  const steps = [
-    { title: 'Start with approved information', short: 'Information', text: item.inputs.join(' · '), symbol: '▤', label: 'What comes in', sample: example?.input },
-    { title: 'Let AI prepare the work', short: 'AI assistance', text: item.ai, symbol: '✧', label: 'A possible AI output', sample: example?.draft },
-    { title: 'A person checks and decides', short: 'Human review', text: item.human, symbol: '✓', label: 'What the reviewer does', sample: example?.review },
-    { title: 'Use the existing work process', short: 'Next action', text: `Record the checked result in ${item.systems[item.systems.length - 1].toLowerCase()}. Keep a way to return to today’s process.`, symbol: '↗', label: 'What happens next', sample: example?.outcome },
-  ]
-  return <div className={`work-flow ${moving ? 'is-running' : ''}`} ref={host} id="walkthrough" data-work-flow="true">
-    <div className="work-section-heading"><div><p className="eyebrow">Follow a concrete example</p><h2>Where AI fits. Where you fit.</h2><p>Read the input, inspect the proposed output, then follow the human decision.</p></div><button className="btn btn-ghost btn-sm" type="button" onClick={() => { if (step === 3) { setStep(0); setPlaying(true) } else setPlaying(value => !value) }}>{playing && step < 3 ? 'Pause walkthrough' : step === 3 ? 'Replay walkthrough' : 'Play walkthrough'}</button></div>
-    <div className="work-flow-steps" aria-label="Workflow steps">{steps.map((entry, i) => <button key={entry.short} type="button" className={i === step ? 'selected' : ''} aria-pressed={i === step} onClick={() => { setStep(i); setPlaying(false) }}><span aria-hidden="true">{entry.symbol}</span><small>0{i + 1}</small><strong>{entry.short}</strong></button>)}</div>
-    <div className="work-flow-diagram" aria-label="Information moves through four stages; a person reviews the draft before action">{steps.map((entry, i) => <div className={`work-flow-node ${i === step ? 'active' : ''} ${i < step ? 'visited' : ''}`} key={entry.short}><span className="work-node-symbol" aria-hidden="true">{entry.symbol}</span><strong>{entry.short}</strong><small>{['Approved source', 'Proposed output', 'Check and correct', 'Recorded outcome'][i]}</small>{i < 3 && <span className="work-flow-connector" aria-hidden="true"><i />→</span>}</div>)}</div>
-    <p className="work-diagram-caption">Follow the highlighted stage below. The review step can send an unsupported draft back for correction.</p>
-    <div className="work-flow-detail" aria-live={moving ? 'off' : 'polite'}><span className="work-flow-number" aria-hidden="true">0{step + 1}</span><div><h3>{steps[step].title}</h3><p>{steps[step].text}</p>{steps[step].sample && <div className="work-example-output"><strong>{steps[step].label}</strong><p>{steps[step].sample}</p></div>}</div></div>
-    <div className="work-example-controls"><button className="btn btn-ghost btn-sm" type="button" disabled={step === 0} onClick={() => { setStep(value => value - 1); setPlaying(false) }}>← Previous step</button><span>Step {step + 1} of 4</span><button className="btn btn-ghost btn-sm" type="button" disabled={step === 3} onClick={() => { setStep(value => value + 1); setPlaying(false) }}>Next step →</button></div>
-    {example && <div className="work-example-explanation"><p><strong>The lesson:</strong> {example.lesson}</p><details><summary>Read the whole example without animation</summary><dl>{steps.map(entry => <div key={entry.label}><dt>{entry.label}</dt><dd>{entry.sample}</dd></div>)}</dl></details><p><strong>Try it in your own field:</strong> Describe one input, the output you need, the person who checks it, and one reason to reject it.</p></div>}
+  return <div className="work-flow" id="walkthrough" data-work-flow="true">
+    <div className="work-section-heading"><div><p className="eyebrow">Follow a concrete example</p><h2>Where AI fits. Where you fit.</h2><p>Press play to follow the information, the proposed output, and the human decision.</p></div></div>
+    <Anim src={workExplainerScene(industrySlug, item)} />
+    {example && <div className="work-example-explanation"><p><strong>The lesson:</strong> {example.lesson}</p><details><summary>Read the whole example without animation</summary><dl>{[['What comes in', example.input], ['A possible AI output', example.draft], ['What the reviewer does', example.review], ['What happens next', example.outcome]].map(([label, text]) => <div key={label}><dt>{label}</dt><dd>{text}</dd></div>)}</dl></details><p><strong>Try it in your own field:</strong> Describe one input, the output you need, the person who checks it, and one reason to reject it.</p></div>}
     <WorkQuestions key={`${industrySlug}/${item.slug}`} caseKey={`${industrySlug}/${item.slug}`} item={item} />
-    <p className="work-caption">Fictional teaching example. No live AI or real customer records. Select any step; playback stops at the end.</p>
+    <p className="work-caption">Fictional teaching example. No live AI or real customer records. Select any scene; playback stops at the end.</p>
   </div>
 }
 

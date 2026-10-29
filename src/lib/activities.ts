@@ -2,7 +2,7 @@ import type { ActivityKind, ActivityOutline, Lesson, Track } from '../data/types
 import { labs } from '../data/labs'
 
 export interface LessonActivity extends ActivityOutline { body: string; quizIndex?: number; labSlug?: string }
-export const activityLabels: Record<ActivityKind, string> = { reading: 'Reading', animation: 'Animation', video: 'Video', quiz: 'Quiz', exercise: 'Practice', lab: 'Lab', resources: 'Resources' }
+export const activityLabels: Record<ActivityKind, string> = { reading: 'Reading', animation: 'Narrated explainer', video: 'Video', quiz: 'Quiz', exercise: 'Practice', lab: 'Lab', resources: 'Resources' }
 export const activitySymbols: Record<ActivityKind, string> = { reading: '☰', animation: '◉', video: '▷', quiz: '✓', exercise: '⌘', lab: '◇', resources: '↗' }
 const cache = new WeakMap<Lesson, Map<string, LessonActivity[]>>()
 

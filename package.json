@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-curriculum.mjs && tsc -b && vite build",
+    "build": "node scripts/narration-test.mjs && node scripts/build-curriculum.mjs && tsc -b && vite build",
     "curriculum:build": "node scripts/build-curriculum.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -27,7 +27,10 @@
     "test:lesson-python": "node scripts/check-lesson-python.mjs",
     "test:python-browser": "node scripts/python-browser-test.mjs",
     "test:visual-browser": "node scripts/visual-browser-test.mjs",
-    "test:explainer-browser": "node scripts/explainer-browser-test.mjs"
+    "test:explainer-browser": "node scripts/explainer-browser-test.mjs",
+    "narration:export": "node scripts/export-narration.mjs",
+    "test:narration": "node scripts/narration-test.mjs",
+    "test:narration-browser": "node scripts/export-narration.mjs && node scripts/narration-browser-test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

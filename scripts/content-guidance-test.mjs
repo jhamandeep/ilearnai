@@ -77,7 +77,7 @@ try {
     for (const field of ['input', 'draft', 'review', 'outcome', 'lesson', 'question', 'answer']) assert.ok(example[field].length > 25, `${key}: incomplete ${field}`)
     const html = render(WorkFlow, { industrySlug: industry.slug, item })
     for (const text of Object.values(example)) assert.ok(html.includes(text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll("'", '&#x27;')), `${key}: example unavailable in static walkthrough`)
-    assert.ok(html.includes('Play walkthrough'), `${key}: start with reader-controlled playback`)
+    assert.ok(html.includes('Play with narration'), `${key}: start with reader-controlled playback`)
     cases++
   }
   assert.equal(cases, Object.keys(workExamples).length)

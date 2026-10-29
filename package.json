@@ -30,7 +30,8 @@
     "test:explainer-browser": "node scripts/explainer-browser-test.mjs",
     "narration:export": "node scripts/export-narration.mjs",
     "test:narration": "node scripts/narration-test.mjs",
-    "test:narration-browser": "node scripts/export-narration.mjs && node scripts/narration-browser-test.mjs"
+    "test:narration-browser": "node scripts/export-narration.mjs && node scripts/narration-browser-test.mjs",
+    "test:course-focus-browser": "node scripts/course-focus-browser-test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

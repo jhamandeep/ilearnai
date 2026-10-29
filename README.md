@@ -2,6 +2,14 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
+## Course navigation and reading highlights
+
+Opening a course or lesson automatically hides the main Home navigation. The menu button reopens it as an overlay, so it does not take width from course contents or the lesson. Selecting a menu link, changing routes, resizing across the mobile breakpoint, Escape, and the backdrop close the temporary drawer. Desktop browsing outside courses retains its separate menu preference.
+
+Course headers, selected chapters, activity tabs, and action links now use blue, violet, and warm amber accents. Key ideas, worked examples, practice, and cautions have labelled highlights; the existing lesson text, diagrams, narration, progress, and practice logic are preserved. These styles apply inside courses, with no homepage redesign.
+
+`npm run test:course-focus-browser` verifies all 11 course entry points, menu/back/route-change behaviour, content width, 1920/1100/900/390/320px layouts, reading highlights, and narration playback in Chrome 156. Product rendering also passed all 1,419 activity pages, and the course workspace checks passed all 245 lessons and 63 chapters. Screenshots are under `output/reviews/course-focus/`. Rollback before this change: `rollback/before-course-focus-20261029` at `18c28fe`.
+
 ## Narration across courses, work guides, and labs
 
 All 245 lesson animations, 36 industry walkthroughs, 11 lab introductions, and three style-guide examples use the approved Kokoro `af_heart` neural voice. Each of the 295 explainers has its own recording and measured scene cues. The existing lesson-specific diagrams, calculations, and labels remain the visual content; the audio clock now drives their builds, arrows, counters, and transitions. Narration includes authored step explanations, including those in the Microsoft curriculum track. Work guides narrate their concrete fictional examples and retain the decision questions and implementation guidance. Lab recordings explain fixed teaching examples alongside the live calculators.

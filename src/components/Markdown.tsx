@@ -22,10 +22,19 @@ function Pre(props: ComponentProps<'pre'>) {
   return <pre {...props} />
 }
 
+function SectionHeading({ children, className, id }: ComponentProps<'h2'>) {
+  const text = String(children).toLowerCase()
+  const tone = /common mistakes|limitations|what to avoid/.test(text) ? 'caution'
+    : /try it|check your understanding|practice/.test(text) ? 'practice'
+    : /example/.test(text) ? 'example'
+    : /why it matters|what this lesson covers|how it works/.test(text) ? 'idea' : undefined
+  return <h2 className={className} id={id} data-learning-tone={tone}>{children}</h2>
+}
+
 export function Markdown({ children }: { children: string }) {
   return (
     <div className="prose">
-      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{ code: Code, pre: Pre }}>
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{ code: Code, pre: Pre, h2: SectionHeading }}>
         {preprocessRich(children)}
       </ReactMarkdown>
     </div>

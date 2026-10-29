@@ -11,6 +11,7 @@ import './study-style.css'
 import './course-workspace.css'
 import './course-artwork.css'
 import './gradient-lab.css'
+import './course-focus.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

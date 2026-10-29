@@ -2,6 +2,12 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
+## Chapter navigation without refreshes
+
+A development catalogue update could replace the loaded curriculum with public outlines whose lesson bodies are empty. The catalogue module now preserves loaded content through hot updates and revalidates changed outlines without resetting notes or progress. Unchanged curriculum builds do not rewrite files or trigger needless updates. Chapter and format changes bring their content into view; lesson activities remount when their lesson changes.
+
+`node scripts/chapter-navigation-browser-test.mjs` reproduces the catalogue update, holds the content response, and verifies that reading, notes and progress remain available. It then opens all 63 chapters and 245 readings through client navigation with exactly one document load. Use `SKIP_HMR_CHECK=1` against a production server. This is a development hot-update check as well as a course navigation regression check.
+
 ## Study library, homepage knowledge map and AI identity
 
 Every lesson now has eight study tabs: Summary, Resources, Papers, Videos, Tools, Flashcards, Notes and Ask. The panel is 380–400px wide on larger screens and becomes a full-width section with a jump link on smaller screens. Lesson references are kept separate from optional course reading; indexed papers include original-source links and reading notes. Videos use the curated chapter sequences, with previews and no automatic playback. Tools include the lesson’s runnable Python exercises, linked labs, repositories and course tools. Notes keep their existing browser-local storage and isolation.

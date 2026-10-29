@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { Track, LessonLink } from '../data/types'
 import { lessonActivities } from '../lib/activities'
@@ -14,6 +15,13 @@ export function CourseWorkspace({ track }: { track: Track }) {
   const [params, setParams] = useSearchParams()
   const view = views.some(([key]) => key === params.get('view')) ? params.get('view')! : 'lessons'
   const chapter = track.modules.some(module => module.slug === params.get('chapter')) ? params.get('chapter')! : 'all'
+  const content = useRef<HTMLDivElement>(null)
+  const previousSelection = useRef(`${track.slug}/${chapter}/${view}`)
+  useEffect(() => {
+    const next = `${track.slug}/${chapter}/${view}`
+    if (previousSelection.current !== next) content.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
+    previousSelection.current = next
+  }, [track.slug, chapter, view])
   const modules = chapter === 'all' ? track.modules : track.modules.filter(module => module.slug === chapter)
   const entries = modules.flatMap(module => module.lessons.map(lesson => {
     const route = `/courses/${track.slug}/${module.slug}/${lesson.slug}`
@@ -32,7 +40,7 @@ export function CourseWorkspace({ track }: { track: Track }) {
         const done = items.filter(activity => isActivityDone(activity.route, activity.id)).length
         return <button type="button" key={module.slug} aria-pressed={chapter === module.slug} onClick={() => select('chapter', module.slug)}><span><b>{String(index + 1).padStart(2, '0')}</b>{module.title}</span><small>{module.lessons.length} lessons · {Math.round(100 * done / items.length)}%</small><progress value={done} max={items.length} aria-label={`${module.title} activity progress`} /></button>
       })}</nav>
-      <div className="course-workspace-content"><nav className="course-format-nav" aria-label="Course formats">{views.map(([key, label]) => <button type="button" key={key} data-kind={key} aria-pressed={view === key} onClick={() => select('view', key)}>{label}</button>)}</nav>
+      <div className="course-workspace-content" ref={content}><nav className="course-format-nav" aria-label="Course formats">{views.map(([key, label]) => <button type="button" key={key} data-kind={key} aria-pressed={view === key} onClick={() => select('view', key)}>{label}</button>)}</nav>
         <p className="course-workspace-status" role="status">{chapter === 'all' ? 'Showing every chapter' : modules[0].title} · {entries.length} lessons</p>
         {view === 'lessons' && modules.map(module => <section className="course-chapter-section" key={module.slug} id={module.slug} data-course-chapter={module.slug}><header><span className="eyebrow">Chapter {track.modules.indexOf(module) + 1}</span><h3>{module.title}</h3><p>{module.description}</p></header><div className="course-lesson-list">{entries.filter(entry => entry.module === module).map(({ lesson, route, activities, python }, index) => {
           const done = activities.filter(activity => isActivityDone(route, activity.id)).length

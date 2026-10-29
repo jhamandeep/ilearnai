@@ -1,11 +1,22 @@
 import type { Track } from './types'
 import catalog from './tracks-catalog.json'
 
-// Public outlines only. Full lesson bodies arrive through the authenticated API.
-export const tracks: Track[] = structuredClone(catalog) as Track[]
+// Preserve loaded bodies across development updates. The public catalogue contains
+// empty bodies and must never replace an active learner's in-memory curriculum.
+let publicCatalog = catalog as Track[]
+export const tracks: Track[] = import.meta.hot?.data.tracks ?? structuredClone(publicCatalog)
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(data => { data.tracks = tracks })
+  import.meta.hot.accept('./tracks-catalog.json', next => {
+    if (!next) return
+    publicCatalog = next.default as Track[]
+    window.dispatchEvent(new Event('ilearnai:curriculum-changed'))
+  })
+}
 
 export function replaceTracks(next: Track[]) { tracks.splice(0, tracks.length, ...next) }
-export function resetTracks() { replaceTracks(structuredClone(catalog) as Track[]) }
+export function resetTracks() { replaceTracks(structuredClone(publicCatalog)) }
 
 export function findTrack(slug: string) {
   return tracks.find((t) => t.slug === slug)

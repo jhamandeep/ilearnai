@@ -85,3 +85,4 @@
 @media(max-width:600px) { .course-chapter-nav { grid-template-columns:1fr; padding:18px 12px; } }
 @media(max-width:420px) { .course-lesson-card { grid-template-columns:1fr; } .course-lesson-number { display:none; } .course-format-nav button { flex-basis:40%; } }
 @media(prefers-reduced-motion:reduce) { .course-lesson-card { transition:none; } .course-lesson-card:hover { transform:none; } }
+.course-workspace-content { scroll-margin-top:96px; }

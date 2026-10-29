@@ -13,11 +13,12 @@ export interface AuthState {
   loading: boolean
   syncStatus: SyncStatus
   serviceError: string
+  curriculumVersion: number
   signIn: (values: { name?: string; email: string; password: string }, register: boolean) => Promise<void>
   signOut: () => Promise<void>
   retrySync: () => Promise<void>
 }
-export const AuthContext = createContext<AuthState>({ preview: false, user: null, loading: false, syncStatus: 'saved', serviceError: '', signIn: async () => { throw new Error('Account service is unavailable.') }, signOut: async () => {}, retrySync: async () => {} })
+export const AuthContext = createContext<AuthState>({ preview: false, user: null, loading: false, syncStatus: 'saved', serviceError: '', curriculumVersion: 0, signIn: async () => { throw new Error('Account service is unavailable.') }, signOut: async () => {}, retrySync: async () => {} })
 export const useAuth = () => useContext(AuthContext)
 
 async function api(path: string, options: RequestInit = {}) {
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('saved')
   const [serviceError, setServiceError] = useState('')
+  const [curriculumVersion, setCurriculumVersion] = useState(0)
   const session = useRef<Session | null>(null)
   const progress = useRef<ReturnType<typeof createAccountProgress> | null>(null)
   const activate = async (data: Session, signal?: AbortSignal) => {
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const curriculum = await api('/api/curriculum', { signal }) as { tracks: Track[] }
       if (signal?.aborted) return
       replaceTracks(curriculum.tracks)
+      setCurriculumVersion(value => value + 1)
       progress.current?.dispose()
       setSyncStatus('saved')
       const next = data.user && data.csrfToken ? createAccountProgress(data.user.id, data.progress, data.csrfToken, setSyncStatus) : createPreviewProgress(setSyncStatus)
@@ -63,6 +66,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => { controller.abort(); progress.current?.dispose() }
   }, [])
+  useEffect(() => {
+    let pending: AbortController | null = null
+    const refresh = () => {
+      if (!session.current?.preview && !session.current?.user) return
+      const activeSession = session.current
+      pending?.abort()
+      const controller = new AbortController()
+      pending = controller
+      void api('/api/curriculum', { signal: controller.signal }).then((curriculum: { tracks: Track[] }) => {
+        if (controller.signal.aborted || session.current !== activeSession) return
+        replaceTracks(curriculum.tracks)
+        setCurriculumVersion(value => value + 1)
+      }).catch(() => { /* Keep the last loaded content if a development refresh fails. */ })
+    }
+    window.addEventListener('ilearnai:curriculum-changed', refresh)
+    return () => { pending?.abort(); window.removeEventListener('ilearnai:curriculum-changed', refresh) }
+  }, [])
   const signIn: AuthState['signIn'] = async (values, register) => {
     const data = await api(register ? '/api/auth/register' : '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }) as Session
     await activate(data)
@@ -73,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api('/api/auth/logout', { method: 'POST', headers: { 'X-CSRF-Token': session.current?.csrfToken ?? '' } })
     await activate({ user: null, csrfToken: null, progress: {}, preview })
   }
-  return <AuthContext.Provider value={{ preview, user, loading, syncStatus, serviceError, signIn, signOut, retrySync: async () => { await progress.current?.flush() } }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ preview, user, loading, syncStatus, serviceError, curriculumVersion, signIn, signOut, retrySync: async () => { await progress.current?.flush() } }}>{children}</AuthContext.Provider>
 }
 
 export function RequireAuth({ children }: { children: ReactNode }) {

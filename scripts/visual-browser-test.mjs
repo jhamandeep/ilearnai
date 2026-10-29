@@ -24,18 +24,18 @@ try {
     await page.waitForFunction(({el,time}) => el.querySelector('svg').getCurrentTime() > time + .05, {el:await cover.elementHandle(),time:result.time})
   }
   assert.equal(topics.size,11); assert.equal(sources.size,11); assert.equal(motions.size,11)
-  await page.getByRole('button',{name:'Pause course artwork',exact:true}).click()
+  await page.getByRole('button',{name:'Pause visual motion',exact:true}).click()
   assert.ok(await covers.evaluateAll(els=>els.every(el=>el.querySelector('svg').animationsPaused())))
   await page.reload()
-  await page.getByRole('button',{name:'Play course artwork',exact:true}).waitFor()
+  await page.getByRole('button',{name:'Play visual motion',exact:true}).waitFor()
   assert.ok(await covers.evaluateAll(els=>els.every(el=>el.querySelector('svg').animationsPaused())))
-  await page.getByRole('button',{name:'Play course artwork',exact:true}).click()
+  await page.getByRole('button',{name:'Play visual motion',exact:true}).click()
   await covers.first().scrollIntoViewIfNeeded()
   await page.waitForFunction(()=>document.querySelector('[data-catalogue-kind="course"] .course-artwork').dataset.playing==='true')
   await page.screenshot({path:`${output}/catalogue-final-desktop.png`})
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.waitForFunction(()=>[...document.querySelectorAll('.course-live-layer')].every(el=>el.animationsPaused()))
-  assert.ok(await page.getByRole('button',{name:'Course artwork motion is off because of your reduced-motion preference'}).isDisabled())
+  assert.ok(await page.getByRole('button',{name:'Visual motion is off because of your reduced-motion preference'}).isDisabled())
   await page.emulateMedia({reducedMotion:'no-preference'})
   await covers.last().scrollIntoViewIfNeeded()
   await page.waitForFunction(()=>document.querySelector('[data-catalogue-kind="course"] .course-artwork').dataset.playing==='false')
@@ -82,7 +82,14 @@ try {
   for(const width of [1440,900,390,320]) for(const route of ['/labs/gradient-descent','/']) {
     await labPage.setViewportSize({width,height:1000})
     await labPage.goto(`${base}${route}`)
-    if(route==='/') await labPage.locator('#try-a-lab').scrollIntoViewIfNeeded()
+    if(route==='/') {
+      await labPage.locator('#try-a-lab').scrollIntoViewIfNeeded()
+      assert.equal(await lab.count(),0,'Homepage should link to labs without embedding the gradient animation')
+      assert.equal(await labPage.locator('.home-lab-links a').count(),3)
+      assert.equal(await labPage.evaluate(()=>document.documentElement.scrollWidth),width)
+      await labPage.screenshot({path:`${output}/home-final-${width}.png`})
+      continue
+    }
     await lab.waitFor()
     await labPage.evaluate(()=>window.scrollTo(0,document.querySelector('.gd-lab').getBoundingClientRect().top+scrollY-90))
     const layout=await lab.evaluate(el=>{
@@ -114,7 +121,7 @@ try {
   const homeCover=page.locator('.course-artwork[data-playing]').first()
   await homeCover.scrollIntoViewIfNeeded()
   await page.waitForFunction(el=>el.dataset.playing==='true',await homeCover.elementHandle())
-  await page.getByRole('button',{name:'Pause course artwork',exact:true}).click()
+  await page.getByRole('button',{name:'Pause visual motion',exact:true}).click()
   await page.waitForFunction(el=>el.querySelector('svg').animationsPaused(),await homeCover.elementHandle())
   console.log(`PASS Chrome ${browser.version()}: 11 distinct loaded illustrations and live SVG scenes; pause, resume, persistence, reduced motion and offscreen suspension; nine numerical optimiser/surface cases; unstable-step recovery; desktop/mobile homepage and full-lab layout at 1440, 900, 390 and 320px; lab play/pause and visibility cleanup.`)
 } finally { await browser.close() }

@@ -55,7 +55,7 @@ try {
   const { answerSiteQuestion } = await vite.ssrLoadModule('/src/lib/siteHelp.ts')
   const { glossary } = await vite.ssrLoadModule('/src/data/glossary.ts')
   const { labs } = await vite.ssrLoadModule('/src/data/labs.ts')
-  const valid = new Set(['/code', '/for-work', '/for-work#compare', '/for-work#estimate', '/courses', '/path', '/practice', '/practice/placement', '/dashboard', '/signup', '/login', '/videos', '/labs', '/resources', '/papers', '/hub', '/glossary'])
+  const valid = new Set(['/certifications', '/ai-infrastructure', '/ai-infrastructure#choose-system', '/code', '/for-work', '/for-work#compare', '/for-work#estimate', '/courses', '/path', '/practice', '/practice/placement', '/dashboard', '/signup', '/login', '/videos', '/labs', '/resources', '/papers', '/hub', '/glossary'])
   const { industries } = await vite.ssrLoadModule('/src/data/work/industries.ts')
   industries.forEach(industry => { valid.add(`/for-work/${industry.slug}`); industry.cases.forEach(item => valid.add(`/for-work/${industry.slug}/${item.slug}`)) })
   tracks.forEach(t => { valid.add(`/courses/${t.slug}`); t.modules.forEach(m => m.lessons.forEach(l => valid.add(`/courses/${t.slug}/${m.slug}/${l.slug}`))) })
@@ -63,6 +63,9 @@ try {
   globalThis.fetch = () => { throw new Error('Static Ask must not call a service') }
   for (const [question, kind, link] of [
     ['Where should I start?', 'help', '/courses/start-here'],
+    ['Which certification suits a banking manager?', 'help', '/certifications'],
+    ['What computer do I need?', 'help', '/ai-infrastructure#choose-system'],
+    ['Explain AI infrastructure', 'help', '/ai-infrastructure'],
     ['How is my progress saved?', 'help', '/dashboard'],
     ['What is attention?', 'topic', '/glossary/attention'],
     ['Where can I find videos?', 'help', '/videos'],
@@ -79,6 +82,7 @@ try {
     assert.ok(answer.links.some(item => item.to === link), `${question}: missing ${link}`)
     assert.ok(answer.links.every(item => valid.has(item.to.split('?')[0])), `${question}: broken answer link`)
   }
+  assert.notEqual(answerSiteQuestion('What is computer vision?').title, 'Choose a computer for AI')
   assert.ok(answerSiteQuestion('What is RAG?').links.every(link => !link.to.includes('math-from-zero')), 'RAG must not match fragments inside unrelated words')
   for (const question of [...glossary.map(t => `What is ${t.term}?`), ...tracks.map(t => t.title), ...labs.map(l => l.title)]) assert.ok(answerSiteQuestion(question).links.every(link => valid.has(link.to.split('?')[0])), `Broken help link: ${question}`)
   globalThis.fetch = oldFetch

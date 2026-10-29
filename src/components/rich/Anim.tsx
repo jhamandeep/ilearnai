@@ -370,7 +370,7 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
               const o = objs.get(id)
               const el = q(id)
               if (!o || !el) continue
-              const c = a.op === 'highlight' ? colorOf('yellow', '') : a.op === 'restore' ? baseColor(o) : colorOf(a.color, baseColor(o))
+              const c = a.op === 'highlight' ? colorOf('focus', '') : a.op === 'restore' ? baseColor(o) : colorOf(a.color, baseColor(o))
               const p = i === 0 ? at : '<'
               if (o.kind === 'text') tl.to(el.querySelectorAll('text'), { fill: c, duration: dur }, p)
               else if (o.kind === 'num' || o.kind === 'dot') tl.to(el.querySelectorAll('[data-shape]'), { fill: c, duration: dur }, p)

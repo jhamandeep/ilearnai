@@ -2,11 +2,27 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
+## Teaching voices, Ask me and practical pathways
+
+All 295 explainers and the RAG sample now use two conversational synthetic voices: Microsoft Ava (female) and Andrew (male). They take two-scene turns so an idea and its example stay together. The build-time pronunciation layer reads exact decimals, negative values, scientific notation, software versions, units, acronyms and selected tool names. For example, `0.0003` keeps every decimal digit while `Python 3.12` is read as “Python three point twelve.” Captions retain the authored text. Measured audio cues drive the existing diagrams; recordings have new content-hashed URLs so old cached voices are not reused.
+
+The original neural-network logo animates its connections and central spark. Pause motion and reduced-motion preferences stop it. Violet replaces the primary selection and highlight accent. The homepage now links to the full labs without embedding gradient descent.
+
+`/certifications` compares eight official pathways by role, preparation, experience and exam status, with provider links and a practical project for each. `/ai-infrastructure` explains five workloads, suggested starting computers, managed versus self-hosted systems, a request walkthrough and a weight-memory calculator. Hardware estimates are starting points, and the calculator explicitly excludes runtime, cache and training overhead. Certification availability and fees were checked on 29 October 2026 and should be confirmed with the provider before booking.
+
+The floating **Ask me** panel uses built-in help, course summaries and the glossary. It can explain the current lesson or link to the new guides. It has no backend LLM, sends no questions to a service, and keeps at most 12 exchanges in page memory. It supports keyboard focus, Escape, clearing and navigation. Existing open-preview access and learning progress are unchanged.
+
+The audio audit fully decoded 296 AAC files (including the sample), checked all 1,749 spoken cues for usable audio and timing, and found no clipping. The 295 main recordings total 178.5 minutes and 87 MB. The pronunciation test covers exact decimals, versions, addresses, scientific notation, units and acronyms. These checks validate the files and pronunciation rules; they do not represent a human listening review of every sentence.
+
+Build passes. The new recordings passed all 295 explainer routes and 2,036 scene checks with no browser errors. Browser checks also cover 94 guide/chat/brand cases, 228 diagram readability cases, the gradient lab and homepage, and the new sample’s full player controls. The production server also passes the guide/chat suite and shared player controls. Product rendering covers all 245 lessons and 1,419 activities. Lint retains 16 existing warnings; the existing large main-bundle warning remains.
+
+Rollback for this update: `rollback/before-ai-brand-askme-20261029` at `c5ad8e0`. Browser screenshots and functional results: `output/reviews/guides-chat/`. Run `npm run test:guides-chat-browser` with the app on port 5178 (or set `APP_URL`).
+
 ## Readable diagrams and compact mobile navigation
 
 Lesson reading text is now 18px (17px on phones); captions, transcript text, course navigation and diagram labels are larger too. The shared renderer fits the measured content instead of a fixed empty 960×540 frame. Small players focus on the active explanation; wide diagrams use contained horizontal scrolling to preserve a 14px minimum label scale. The player and older flow/architecture diagrams use the page's light surface and matching controls. Play/resume sits below the drawing so it cannot cover a result.
 
-The data-set, attention and PID explainers were recomposed with separate label lanes and meaningful transformations. `morph SOURCE -> TARGET` transfers a visible object into its result, including rectangle shape/colour changes, and supports reverse seeking and reduced motion. PID now plots the joint response with P/I/D explanations; attention shows proportional weights and combines weighted values. The approved voice audio is unchanged. Geometry-only narration changes can be rekeyed safely using `npm run narration:export && node scripts/reuse-narration.mjs`; the helper refuses any changed or ambiguous spoken text.
+The data-set, attention and PID explainers were recomposed with separate label lanes and meaningful transformations. `morph SOURCE -> TARGET` transfers a visible object into its result, including rectangle shape/colour changes, and supports reverse seeking and reduced motion. PID now plots the joint response with P/I/D explanations; attention shows proportional weights and combines weighted values. That layout-only update preserved its existing audio; the later teaching-voice update above replaces those recordings. Geometry-only narration changes can be rekeyed safely using `npm run narration:export && node scripts/reuse-narration.mjs`; the helper refuses any changed or ambiguous spoken text.
 
 The mobile marketing header now starts as a compact logo/menu row. Its expandable navigation supports Escape, outside clicks, route changes, and breakpoint changes. Course navigation keeps the existing overlay behaviour. Rollback: `rollback/before-readable-diagrams-20261029` at `ab82fa4`. Browser review screenshots and reports are under `output/reviews/readable/`.
 
@@ -22,38 +38,38 @@ Course headers, selected chapters, activity tabs, and action links now use blue,
 
 ## Narration across courses, work guides, and labs
 
-All 245 lesson animations, 36 industry walkthroughs, 11 lab introductions, and three style-guide examples use the approved Kokoro `af_heart` neural voice. Each of the 295 explainers has its own recording and measured scene cues. The existing lesson-specific diagrams, calculations, and labels remain the visual content; the audio clock now drives their builds, arrows, counters, and transitions. Narration includes authored step explanations, including those in the Microsoft curriculum track. Work guides narrate their concrete fictional examples and retain the decision questions and implementation guidance. Lab recordings explain fixed teaching examples alongside the live calculators.
+All 245 lesson animations, 36 industry walkthroughs, 11 lab introductions, and three style-guide examples use Ava and Andrew conversational synthetic voices. Each of the 295 explainers has its own recording and measured scene cues. The existing lesson-specific diagrams, calculations, and labels remain the visual content; the audio clock now drives their builds, arrows, counters, and transitions. Narration includes authored step explanations, including those in the Microsoft curriculum track. Work guides narrate their concrete fictional examples and retain the decision questions and implementation guidance. Lab recordings explain fixed teaching examples alongside the live calculators.
 
 The shared player provides play/pause, replay, a scrubber, previous/next scene, five-second rewind, speed, mute, captions, full screen, diagram enlargement, and a full transcript with scene jumps. On small screens the camera frames the active part of the diagram. Reduced motion shows completed scene states while still allowing explicit audio playback. There is no autoplay; leaving the page, hiding the tab, scrolling the player out of view, or starting another explainer pauses the recording. Failed downloads offer a retry and retain the transcript. No speech service or LLM runs during playback.
 
 Recordings use content-addressed URLs. Editing an animation invalidates its recording rather than replaying stale speech. `npm run build` checks that every published explainer has a matching recording. New authoring drafts retain a readable, manually selectable diagram until their recordings are generated. Learning progress identifiers and quiz behaviour are unchanged.
 
-To update recordings, use the isolated Python environment and model downloads below, then run:
+To update recordings, install `scripts/requirements-narration.txt` in an isolated Python environment. Generation uses [edge-tts](https://github.com/rany2/edge-tts) at build time and macOS `afconvert` for AAC encoding. It requires network access to generate speech; playback only downloads local static assets. Then run:
 
 ```sh
 npm run narration:export
+output/neural-voice/venv/bin/python scripts/narration-speech-test.py
 output/neural-voice/venv/bin/python scripts/build-course-narration.py
 npm run test:narration
+output/neural-voice/venv/bin/python scripts/audit-narration-audio.py
 npm run test:narration-browser
 ```
 
-Generation is resumable: identical spoken segments are cached under ignored `output/narration/segments/`. The generator expands technical units and notation for pronunciation; captions retain the authored text. Four local workers render audio; only finished AAC assets and the cue manifest are published. Browser checks use the app at `http://127.0.0.1:5178` (override `APP_URL`) and installed Chrome. Rollback before this rollout: `rollback/before-sitewide-narration-20261028` at `e6529ad`, which includes the approved sample.
+Generation is resumable: identical voice/text/rate/pronunciation combinations are cached under ignored `output/narration/teaching-segments/`. Ten bounded generation tasks retry transient failures. Each scene is decoded and validated, trailing service padding is trimmed, teacher loudness is balanced conservatively, and a longer pause marks a change of speaker. Only a complete set of recordings replaces the manifest; a failed build leaves the previous cue sheet in place. The old Kokoro recordings remain recoverable from the rollback tag. No model weights, temporary WAVs or generation credentials ship to the browser.
 
-Validation: Chrome 156 passed all 295 explainer routes and 2,036 scene checks, shared controls, audio exclusivity, navigation cleanup, 1440/390/320px layouts, reduced motion, and blocked-download retry. All 295 AAC files fully decoded with no silent spoken scenes or clipped samples. The product check passed all 1,419 activity pages, and work checks covered 252 role views. Production course/work/lab playback and seeking passed. Build passes; lint retains 16 existing warnings. The recordings total 160.5 minutes and approximately 80 MB; they load per player. These checks establish playback and synchronization, not a listening review of every spoken sentence. Local reports are under `output/reviews/sitewide-narration/` and `output/narration/`.
+Previous voice rollout validation (before the two-teacher update): Chrome 156 passed all 295 explainer routes and 2,036 scene checks, shared controls, audio exclusivity, navigation cleanup, 1440/390/320px layouts, reduced motion, and blocked-download retry. All 295 AAC files fully decoded with no silent spoken scenes or clipped samples. The product check passed all 1,419 activity pages, and work checks covered 252 role views. Production course/work/lab playback and seeking passed. Build passes; lint retains 16 existing warnings. The recordings total 160.5 minutes and approximately 80 MB; they load per player. These checks establish playback and synchronization, not a listening review of every spoken sentence. Local reports are under `output/reviews/sitewide-narration/` and `output/narration/`.
 
-## Approved narrated explainer sample
+## Narrated explainer sample
 
-Open `/preview/narrated-explainer` for a 35-second concept sample from the RAG chapter. It uses a recorded synthetic voice, timed SVG scene builds, synchronized captions, a scrubber, pause/resume, replay, mute, playback speed, scene jumps, and full screen. The audio clock drives every visual frame. Smaller players follow the active part of the diagram; reduced motion disables the camera transition and gradual reveals. Audio starts only after Play and stops on navigation or when the document is hidden.
+Open `/preview/narrated-explainer` for a short concept sample from the RAG chapter. It uses a recorded synthetic voice, timed SVG scene builds, synchronized captions, a scrubber, pause/resume, replay, mute, playback speed, scene jumps, and full screen. The audio clock drives every visual frame. Smaller players follow the active part of the diagram; reduced motion disables the camera transition and gradual reveals. Audio starts only after Play and stops on navigation or when the document is hidden.
 
-This route preserves the approved RAG concept sample. The course rollout above uses the same voice. The sample uses the `af_heart` neural voice from [Kokoro-82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M), rendered locally with [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx). Conversational wording and varied pauses replace the earlier system-voice recording. It does not call a speech service or LLM while playing; only the approximately 287 KB AAC asset ships, with a content hash in its URL to avoid stale cached audio. Model weights and intermediate WAVs stay under ignored `output/`. The sample diagram includes an illustrative refund policy, not real business data. Its conceptual source is [Microsoft's RAG overview](https://learn.microsoft.com/en-ca/azure/ai-foundry/concepts/retrieval-augmented-generation?view=foundry-classic).
+This route preserves the RAG diagram and script, with the same two teaching voices used throughout the courses. The sample diagram includes an illustrative refund policy, not real business data. Its conceptual source is [Microsoft's RAG overview](https://learn.microsoft.com/en-ca/azure/ai-foundry/concepts/retrieval-augmented-generation?view=foundry-classic).
 
-To regenerate on macOS (Python 3.13 tested), install the isolated voice dependencies and download the pinned model files. The generator verifies their SHA-256 hashes, records eight scenes, measures each cue from the waveform, and encodes AAC using macOS `afconvert`:
+To regenerate on macOS (Python 3.13 tested):
 
 ```sh
 python3 -m venv output/neural-voice/venv
-output/neural-voice/venv/bin/python -m pip install -r scripts/explainer-voice-requirements.txt
-curl --fail --location --output output/neural-voice/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
-curl --fail --location --output output/neural-voice/voices-v1.0.bin https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+output/neural-voice/venv/bin/python -m pip install -r scripts/requirements-narration.txt
 output/neural-voice/venv/bin/python scripts/build-explainer-sample.py
 ```
 

@@ -16,6 +16,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ defau
 const ForWork = lazy(() => import('./pages/ForWork').then(module => ({ default: module.ForWork })))
 const IndustryPage = lazy(() => import('./pages/ForWork').then(module => ({ default: module.IndustryPage })))
 const WorkCasePage = lazy(() => import('./pages/ForWork').then(module => ({ default: module.WorkCasePage })))
+const Certifications = lazy(() => import('./pages/Certifications').then(m => ({ default: m.Certifications })))
+const AIInfrastructure = lazy(() => import('./pages/AIInfrastructure').then(m => ({ default: m.AIInfrastructure })))
 const Ask = lazy(() => import('./pages/Ask').then(module => ({ default: module.Ask })))
 const LessonPage = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.LessonPage })))
 const Papers = lazy(() => import('./pages/Papers').then((m) => ({ default: m.Papers })))
@@ -58,6 +60,8 @@ export default function App() {
               <Route path="/path" element={<Path />} />
               <Route path="/style" element={<StyleGuide />} />
               <Route path="/ask" element={<Ask />} />
+              <Route path="/certifications" element={<Certifications />} />
+              <Route path="/ai-infrastructure" element={<AIInfrastructure />} />
               <Route path="/login" element={<Account />} />
               <Route path="/signup" element={<Account register />} />
               <Route element={<RequireAuth><Outlet /></RequireAuth>}>

@@ -113,8 +113,8 @@ try {
     console.log(`ok   ${url}: ${items.length} entries; all track, level, and type filters preserve membership`)
   }
   const home = await page(Home, '/')
-  assert.ok(home.includes('value="rosenbrock"') && home.includes('Optimiser') && home.includes('class="gd-canvas"') && home.includes('One step'), 'Home must embed the actual gradient descent lab')
-  assert.ok(!home.includes('Gradient descent, in motion'), 'Home still uses the simplified replacement')
+  assert.ok(!home.includes('gd-canvas') && !home.includes('Optimiser'), 'Home must not embed the gradient descent animation')
+  assert.ok(home.includes('href="/labs/gradient-descent"'), 'The full gradient lab must remain discoverable')
   for (const lab of labs) {
     const html = await page(LabPage, `/labs/${lab.slug}`, '/labs/:slug')
     assert.ok(html.includes('data-lab-visual='), `${lab.slug}: missing interactive result visual`)
@@ -127,5 +127,5 @@ try {
   assert.ok(ticker.includes('AI news from RSS feeds'))
   assert.ok(ticker.includes('Pause news scrolling'))
   assert.ok(ticker.includes('aria-hidden="true" inert=""'), 'Repeated ticker copy must be hidden from focus and assistive technology')
-  console.log(`PASS ${preview ? 'signed-out preview: ' : ''}${lessons} lessons, ${activityPages} activity pages, ${blocks} lesson blocks, complete catalogues, ${labs.length} visual labs, homepage lab, and accessible RSS ticker`)
+  console.log(`PASS ${preview ? 'signed-out preview: ' : ''}${lessons} lessons, ${activityPages} activity pages, ${blocks} lesson blocks, complete catalogues, ${labs.length} visual labs, homepage lab links, and accessible RSS ticker`)
 } finally { await vite.close() }

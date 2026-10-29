@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { tracks, lessonRoutes } from '../data/tracks'
 import { labs } from '../data/labs'
@@ -6,7 +6,6 @@ import { featuredVideos } from '../data/featuredVideos'
 import { videos } from '../data/videos'
 import { useAuth } from '../lib/auth'
 import { TrackCard } from './Courses'
-import { ViewportLab } from '../components/ViewportLab'
 import { CourseArtwork } from '../components/CourseArtwork'
 import { VideoThumbnail } from '../components/VideoThumbnail'
 import { doneCount, isDone, placement, useProgressVersion } from '../lib/progress'
@@ -19,7 +18,6 @@ const sections = [
   ['explore-resources', 'Explore resources'],
   ['faqs', 'FAQs'],
 ]
-const GradientDescentLab = lazy(() => import('../labs/GradientDescentLab').then((module) => ({ default: module.GradientDescentLab })))
 const faqs = [
   ['Do I need coding experience?', 'No. AI for your work explains benefits, use cases, and practical implementation for your field and role without coding. If you want to build AI systems, Start Here introduces computers, Python, and the tools you need.'],
   ['How do I find the right course?', 'Follow the learning path from Level 0, or take the placement test to find a suitable starting level. Each track lists its prerequisites, audience, and the projects you can build.'],
@@ -77,8 +75,8 @@ export function Home() {
       </section>
 
       <section id="try-a-lab" className="skills-section">
-        <div className="section-head section-head-split"><h2>See the idea.<br />Try it yourself.</h2><p>Explore the gradient descent lab. Change the surface, optimizer, or learning rate and watch the path move across the loss landscape.</p></div>
-        <div className="lab-showcase lab-showcase-live">{user || preview ? <ViewportLab>{(active) => <Suspense fallback={<p className="lab-loading">Loading the gradient descent lab…</p>}><GradientDescentLab active={active} /></Suspense>}</ViewportLab> : <div className="lab-signin-preview"><img src="/images/skills-optimization.jpg" alt="A blue sphere in a coral loss landscape" width={1672} height={941} /><h3>Make the learning hands-on.</h3><p>Change the learning rate and watch gradient descent find its way.</p><Link className="btn btn-primary" to="/signup?next=/labs/gradient-descent">Create an account to try the lab →</Link></div>}<div className="lab-showcase-list">{['gradient-descent', 'transformer-flow', 'tokenizer'].map((slug, i) => { const lab = labs.find((l) => l.slug === slug)!; return <Link key={slug} to={`/labs/${slug}`}><span className="lab-index">0{i + 1}</span><div><h3>{lab.title}</h3><p>{lab.blurb}</p></div><span aria-hidden="true">↗</span></Link> })}<Link className="text-cta" to="/labs">Explore all labs <span aria-hidden="true">↗</span></Link></div></div>
+        <div className="section-head section-head-split"><h2>Explore an idea.<br />Open a lab.</h2><p>Choose an interactive lab when you’re ready to experiment. Each lab opens in its own workspace with an explanation and controls.</p></div>
+        <div className="home-lab-links">{['gradient-descent', 'transformer-flow', 'tokenizer'].map((slug, i) => { const lab = labs.find(l => l.slug === slug)!; return <Link key={slug} to={`/labs/${slug}`}><span className="lab-index">0{i + 1}</span><h3>{lab.title}</h3><p>{lab.blurb}</p><strong>Open lab ↗</strong></Link> })}</div><Link className="text-cta" to="/labs">Explore all labs ↗</Link>
       </section>
 
       <section className="feature-banner placement-banner" aria-labelledby="placement-title"><div className="feature-copy"><span className="feature-label">Find your starting point</span><h2 id="placement-title">A learning path<br />that meets you where you are.</h2><p>New to AI or ready for your next challenge? Follow four levels from foundations to advanced systems, or take a placement test to find your level.</p><div className="hero-actions"><Link to="/path" className="btn btn-primary">Explore the path <span aria-hidden="true">↗</span></Link><Link to="/practice/placement" className="btn btn-ghost">{rec ? 'Retake placement test' : 'Find your level'} <span aria-hidden="true">→</span></Link></div></div><CourseArtwork topic="ai-systems" /></section>
@@ -87,7 +85,7 @@ export function Home() {
         <div className="section-head section-head-split"><h2>Keep exploring</h2><p>Watch a free lecture, read a research paper, or find the tools and datasets for your next project.</p></div>
         <h3 className="featured-videos-heading">Top picks: talks and deep dives</h3><p className="meta">Our editorial picks on AI’s direction, language models, and how systems are built.</p>
         <div className="grid course-grid">{featuredVideos.map((video) => <a className="card resource-video" href={video.url} key={video.url} target="_blank" rel="noreferrer"><div className="resource-image"><VideoThumbnail id={video.id} title={video.title} external /></div><span className="meta">{video.channel}{video.minutes ? ` · ${video.minutes} min` : ''}</span><h3>{video.title}</h3><p>{video.why}</p><span className="journey-action">Watch video <span aria-hidden="true">↗</span></span></a>)}</div>
-        <div className="resource-destinations"><Link to="/videos">All {videos.length} videos, playlists, and channels <span aria-hidden="true">↗</span></Link><Link to="/resources">Full resource library, organized by level and track <span aria-hidden="true">↗</span></Link><Link to="/papers">Papers with reading notes <span aria-hidden="true">↗</span></Link><Link to="/hub">Models, datasets, and tools <span aria-hidden="true">↗</span></Link><Link to="/glossary">AI glossary <span aria-hidden="true">↗</span></Link><Link to="/knowledge-graph">Explore the knowledge map <span aria-hidden="true">↗</span></Link></div>
+        <div className="resource-destinations"><Link to="/certifications">Certification and preparation guide ↗</Link><Link to="/ai-infrastructure">AI infrastructure and computer requirements ↗</Link><Link to="/videos">All {videos.length} videos, playlists, and channels <span aria-hidden="true">↗</span></Link><Link to="/resources">Full resource library, organized by level and track <span aria-hidden="true">↗</span></Link><Link to="/papers">Papers with reading notes <span aria-hidden="true">↗</span></Link><Link to="/hub">Models, datasets, and tools <span aria-hidden="true">↗</span></Link><Link to="/glossary">AI glossary <span aria-hidden="true">↗</span></Link><Link to="/knowledge-graph">Explore the knowledge map <span aria-hidden="true">↗</span></Link></div>
       </section>
 
       <section className="home-ask-section"><div><p className="eyebrow">A little guidance goes a long way</p><h2>Find your way.<br />Ask a question.</h2><p>Find the right course, understand a concept, or get help with your learning progress.</p><Link className="btn btn-primary" to="/ask">Ask ilearnai →</Link></div><CourseArtwork topic="robotics" /></section>

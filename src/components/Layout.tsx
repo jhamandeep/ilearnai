@@ -5,17 +5,18 @@ import { AccountMenu } from './AccountMenu'
 import { useAuth } from '../lib/auth'
 import { LearningLayout } from './LearningLayout'
 import { BrandLogo } from './Brand'
+import { AskMe } from './AskMe'
 import { ArtworkMotionProvider, ArtworkMotionControl } from './ArtworkMotion'
 
 const groups = [
-  { label: 'Learn', links: [{ to: '/for-work', label: 'AI for your work', detail: 'Industry use cases and role-based guidance' }, { to: '/path', label: 'Your learning path', detail: 'Start from zero or find your level' }, { to: '/courses', label: 'All courses', detail: 'Ten tracks, four levels' }, { to: '/roadmaps', label: 'Roadmaps', detail: 'A plan for each track' }] },
+  { label: 'Learn', links: [{ to: '/for-work', label: 'AI for your work', detail: 'Industry use cases and role-based guidance' }, { to: '/path', label: 'Your learning path', detail: 'Start from zero or find your level' }, { to: '/courses', label: 'All courses', detail: 'Ten tracks, four levels' }, { to: '/certifications', label: 'Certifications', detail: 'Choose a credential for your role' }, { to: '/ai-infrastructure', label: 'AI infrastructure', detail: 'Computers, cloud and production systems' }, { to: '/roadmaps', label: 'Roadmaps', detail: 'A plan for each track' }] },
   { label: 'Library', links: [{ to: '/papers', label: 'Papers', detail: 'Research with reading notes' }, { to: '/videos', label: 'Videos', detail: 'Free lectures and courses' }, { to: '/glossary', label: 'Glossary', detail: 'Understand the terminology' }, { to: '/resources', label: 'Resources', detail: 'Useful links for every track' }] },
   { label: 'Explore', links: [{ to: '/hub', label: 'AI hub', detail: 'Models, datasets, and notebooks' }, { to: '/knowledge-graph', label: 'Knowledge map', detail: 'See how concepts connect' }, { to: '/hierarchy', label: 'Paper hierarchy', detail: 'Find your reading order' }, { to: '/blog', label: 'Field notes', detail: 'Ideas from research and engineering' }] },
 ]
 
 export function Layout() {
   const { pathname } = useLocation()
-  return <ArtworkMotionProvider>{['/', '/login', '/signup'].includes(pathname) ? <MarketingLayout /> : <LearningLayout />}</ArtworkMotionProvider>
+  return <ArtworkMotionProvider>{['/', '/login', '/signup'].includes(pathname) ? <MarketingLayout /> : <LearningLayout />}<AskMe /></ArtworkMotionProvider>
 }
 
 function MarketingLayout() {

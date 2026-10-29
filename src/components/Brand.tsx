@@ -1,14 +1,21 @@
-/** Original ilearnai mark: an open book, an upward page, and the seed of an idea. */
+import { useContext, useId } from 'react'
+import { ArtworkMotionContext } from '../lib/artworkMotion'
+
+/** An original neural-network mark: connected inputs converge into an AI spark. */
 export function BrandMark({ className = '' }: { className?: string }) {
-  return <svg className={`brand-symbol ${className}`} viewBox="0 0 64 64" width="40" height="40" aria-hidden="true" focusable="false">
-    <rect width="64" height="64" rx="18" fill="#163e38" />
-    <path d="M13 24c7-2 13 0 18 5v20c-5-5-11-7-18-6V24Z" fill="#faf6eb" />
-    <path d="M35 27c4-7 10-11 16-12v23c-7 1-12 5-16 11V27Z" fill="#bde5cc" />
-    <circle cx="21" cy="14" r="4.5" fill="#ff997e" />
+  const id = 'brand-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const { playing } = useContext(ArtworkMotionContext)
+  return <svg className={`brand-symbol ${className}`} data-motion={playing ? 'on' : 'off'} viewBox="0 0 64 64" width="40" height="40" aria-hidden="true" focusable="false">
+    <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#45308c" /><stop offset=".6" stopColor="#7250cd" /><stop offset="1" stopColor="#3979e6" /></linearGradient></defs>
+    <rect x="1" y="1" width="62" height="62" rx="19" fill={`url(#${id})`} />
+    <path className="brand-circuit" d="M15 18 28 28M15 46 28 36M36 28 49 18M36 36 49 46" fill="none" stroke="#c8bdff" strokeWidth="2" strokeLinecap="round" />
+    <path className="brand-signal" d="M15 18 28 28M15 46 28 36M36 28 49 18M36 36 49 46" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+    <g fill="#d7e5ff"><circle className="brand-node" cx="15" cy="18" r="3.5" /><circle className="brand-node" cx="49" cy="18" r="3.5" /><circle className="brand-node" cx="15" cy="46" r="3.5" /><circle className="brand-node" cx="49" cy="46" r="3.5" /></g>
+    <path className="brand-spark" d="m32 18 4.5 9.5L46 32l-9.5 4.5L32 46l-4.5-9.5L18 32l9.5-4.5Z" fill="#fff" />
+    <circle cx="32" cy="32" r="3" fill="#6d4ac6" />
   </svg>
 }
 
-/** The enclosing home link supplies the accessible name once. */
 export function BrandLogo() {
   return <><BrandMark /><span className="brand-wordmark">ilearn<span>ai</span></span></>
 }

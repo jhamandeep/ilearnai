@@ -17,6 +17,8 @@ try {
     const recording = manifest[entry.key]
     assert.ok(!manifest[narrationKey(entry.source + '\nstep: A changed explanation.')], 'A changed script must never reuse stale speech')
     assert.equal(recording.cues.length, entry.texts.length)
+    assert.match(recording.voice, /Ava and Andrew.*synthetic/)
+    assert.deepEqual(new Set(recording.cues.map(cue => cue.speaker)), new Set(['female','male']), `${entry.title}: both teaching voices must be present`)
     assert.match(recording.audio, /^\/media\/narration\/[a-f0-9]+-[a-f0-9]+\.m4a$/)
     assert.ok(!urls.has(recording.audio), 'Different explainers must not share an unrelated recording'); urls.add(recording.audio)
     assert.ok((await stat(`public${recording.audio}`)).size > 1000, `${entry.title}: empty recording`)

@@ -7,7 +7,7 @@ import { ArtworkMotionControl } from './ArtworkMotion'
 
 const navigation = [
   ['Your learning', [['/dashboard', 'My learning', '◫'], ['/for-work', 'AI for your work', '✧'], ['/courses', 'Learning spaces', '▤'], ['/path', 'Learning paths', '⌁'], ['/labs', 'Hands-on labs', '◇'], ['/code', 'Python workspace', '</>'], ['/practice', 'Practice', '✓']]],
-  ['Explore', [['/videos', 'Videos', '▷'], ['/resources', 'Tools & resources', '↗'], ['/papers', 'Research papers', '▧'], ['/glossary', 'Glossary', 'Aa'], ['/hub', 'AI hub', '⌘'], ['/knowledge-graph', 'Knowledge map', '◉'], ['/roadmaps', 'Roadmaps', '↝'], ['/blog', 'Field notes', '☰']]],
+  ['Explore', [['/certifications', 'Certifications', '✧'], ['/ai-infrastructure', 'AI infrastructure', '▦'], ['/videos', 'Videos', '▷'], ['/resources', 'Tools & resources', '↗'], ['/papers', 'Research papers', '▧'], ['/glossary', 'Glossary', 'Aa'], ['/hub', 'AI hub', '⌘'], ['/knowledge-graph', 'Knowledge map', '◉'], ['/roadmaps', 'Roadmaps', '↝'], ['/blog', 'Field notes', '☰']]],
 ] as const
 
 export function LearningLayout() {

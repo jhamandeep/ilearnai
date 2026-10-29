@@ -1,5 +1,5 @@
-export interface NarrationCue { text: string; start: number; end: number; speechEnd: number }
-export interface NarrationRecording { audio: string; duration: number; cues: NarrationCue[] }
+export interface NarrationCue { text: string; speaker?: string; start: number; end: number; speechEnd: number }
+export interface NarrationRecording { audio: string; voice?: string; duration: number; cues: NarrationCue[] }
 
 // Same canonical source in the authoring exporter and Markdown renderer. A source
 // edit invalidates the recording rather than playing narration for an older scene.

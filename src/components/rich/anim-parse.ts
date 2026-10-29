@@ -7,7 +7,7 @@ export const STAGE_W = 960
 export const STAGE_H = 540
 
 export const PALETTE: Record<string, string> = {
-  blue: '#4285f4', yellow: '#c58b00', green: '#188038', red: '#d93025', purple: '#9334e6',
+  focus: '#7354c8', blue: '#4285f4', yellow: '#c58b00', green: '#188038', red: '#d93025', purple: '#9334e6',
   orange: '#c26401', teal: '#007b83', pink: '#b9367b', white: 'var(--anim-ink, #202124)', grey: 'var(--anim-axis, #747775)', gray: 'var(--anim-axis, #747775)',
 }
 export function colorOf(c: string | undefined, fallback: string): string {

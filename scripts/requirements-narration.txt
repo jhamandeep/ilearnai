@@ -1,0 +1,5 @@
+# Build-time audio tools only. macOS afconvert encodes the shipped AAC assets.
+edge-tts==7.3.1
+num2words==0.5.14
+numpy==2.5.4
+soundfile==0.14.0

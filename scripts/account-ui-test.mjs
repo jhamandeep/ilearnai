@@ -35,7 +35,7 @@ try {
  const user = {id:'test-user',name:'Test Learner',email:'test@example.test'}
  const dashboard = render(createElement(Dashboard),{user},'/dashboard')
  assert.match(dashboard,/Overall learning progress/); assert.match(dashboard.replaceAll('<!-- -->',''),/0 of 220/)
- assert.match(render(createElement(Home),{}),/Create an account to try the lab/)
+ assert.match(render(createElement(Home),{}),/href="\/labs\/gradient-descent"/)
  let release
  globalThis.fetch = async()=>await new Promise(resolve=>{release=()=>resolve({ok:true})})
  const progress = createAccountProgress(user.id,{},'csrf',()=>{})

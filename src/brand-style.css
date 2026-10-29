@@ -1,5 +1,5 @@
 /* Original ilearnai identity. The homepage retains its existing design. */
-:root { --font-heading: 'Manrope', 'Google Sans Flex', Arial, sans-serif; --brand-wordmark-accent: #28634f; }
+:root { --font-heading: 'Manrope', 'Google Sans Flex', Arial, sans-serif; --brand-wordmark-accent: #6746b5; }
 .brand, .learning-toolbar .brand, .learning-shell .brand {
   display: inline-flex; align-items: center; flex-shrink: 0; gap: 10px;
   font-family: var(--font-heading); font-size: 27px; font-weight: 750;
@@ -14,7 +14,7 @@
 .learning-shell {
   --bg: #ffffff; --surface: #fff; --surface-2: #f5f6f8; --text: #202124;
   --text-dim: #5f6368; --border: #e3e5e8; --primary: #1a73e8; --primary-text: #fff;
-  --link: #1967d2; --feature-bg: #f1f3f5; --brand-wordmark-accent: #28634f;
+  --link: #1967d2; --feature-bg: #f1f3f5; --brand-wordmark-accent: #6746b5;
   background: var(--bg);
 }
 .learning-shell h1, .learning-shell h2, .learning-shell h3,
@@ -58,13 +58,13 @@
 .learning-footer .brand { font-size: 22px; }
 .learning-footer .brand-symbol { width: 30px; height: 30px; }
 .learning-footer > span { font-size: 11px; }
-.account-form-panel .brand { color: #202124; --brand-wordmark-accent: #28634f; }
+.account-form-panel .brand { color: #202124; --brand-wordmark-accent: #6746b5; }
 .account-form-panel input:focus { outline-color: #1a73e8; }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) { --brand-wordmark-accent: #bde5cc; }
+  :root:not([data-theme='light']) { --brand-wordmark-accent: #cbbaff; }
 }
-:root[data-theme='dark'] { --brand-wordmark-accent: #bde5cc; }
+:root[data-theme='dark'] { --brand-wordmark-accent: #cbbaff; }
 @media (max-width: 760px) {
   .brand { font-size: 24px; }
   .learning-footer > .brand { margin-right: auto; }
@@ -81,3 +81,13 @@
 @media (max-width: 420px) {
   .learning-footer > span { flex-basis: 100%; }
 }
+
+.brand-signal { stroke-dasharray:5 36; animation:brand-signal-travel 3.8s linear infinite; }
+.brand-spark { transform-box:fill-box; transform-origin:center; animation:brand-spark-breathe 3.8s ease-in-out infinite; }
+.brand-node { animation:brand-node-glow 3.8s ease-in-out infinite; }
+.brand-node:nth-child(2n) { animation-delay:1.9s; }
+.brand-symbol[data-motion="off"] :is(.brand-signal,.brand-spark,.brand-node) { animation-play-state:paused; }
+@keyframes brand-signal-travel { to { stroke-dashoffset:-41; } }
+@keyframes brand-spark-breathe { 0%,100% { transform:scale(.96); } 50% { transform:scale(1.05); } }
+@keyframes brand-node-glow { 0%,100% { opacity:.55; } 50% { opacity:1; } }
+@media(prefers-reduced-motion:reduce) { .brand-symbol :is(.brand-signal,.brand-spark,.brand-node) { animation:none; } }

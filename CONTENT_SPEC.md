@@ -306,7 +306,7 @@ vector ID -> x,y      move the tip of a vector
 tangent ID -> x1      slide a tangent along its curve
 count ID -> 42        animate a num to a new value
 label ID "new text"   change the words of a box, rect, text or vector
-highlight IDS         thick yellow outline        dim IDS   fade to 30%        restore IDS   undo both
+highlight IDS         thick violet outline        dim IDS   fade to 30%        restore IDS   undo both
 color IDS red         recolour (blue, yellow, green, red, purple, orange, teal, pink, white, grey or #hex)
 pulse IDS             a quick scale pulse
 zoom x,y 1.6          move the camera to a point at a scale; zoom reset returns

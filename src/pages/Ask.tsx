@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { answerSiteQuestion } from '../lib/siteHelp'
 import { useAuth } from '../lib/auth'
 import { CourseArtwork } from '../components/CourseArtwork'
-const suggestions = ['How can AI help in my work?', 'AI use cases for a banking manager', 'AI in healthcare', 'Compare banking and retail', 'How is my progress saved?', 'What is RAG?']
+const suggestions = ['Which certification should I choose?', 'What computer do I need?', 'How can AI help in my work?', 'AI use cases for a banking manager', 'AI in healthcare', 'Compare banking and retail', 'How is my progress saved?', 'What is RAG?']
 interface Exchange { question: string }
 export function Ask() {
   const { preview, user } = useAuth()

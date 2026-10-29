@@ -16,7 +16,7 @@ try {
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(base + urlFor(entries[0]))
   let previousAudio = false, scenes = 0
-  for (const [index, entry] of entries.entries()) {
+  for (const [index, entry] of (process.env.NARRATION_CONTROLS_ONLY ? [] : entries).entries()) {
     if (index) await page.evaluate(path => { history.pushState(null, '', path); dispatchEvent(new PopStateEvent('popstate')) }, urlFor(entry))
     const figure = page.locator(`[data-narration-key="${entry.key}"]`).first()
     await figure.waitFor()
@@ -98,7 +98,7 @@ try {
     await mobile.waitForTimeout(100)
     assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth), width, `${entry.title}: overflow at ${width}`)
     const size = await player.evaluate(el => ({ width: el.getBoundingClientRect().width, scroll: el.scrollWidth }))
-    assert.ok(size.scroll <= size.width + 1)
+    assert.ok(size.scroll <= size.width + 1, `${entry.title}: player overflow at ${width}: ${size.scroll} > ${size.width}`)
     await mobile.screenshot({ path: `${output}/${entry.group}-${width}.png` })
     await mobile.emulateMedia({ reducedMotion: 'reduce' })
     assert.ok(await player.locator('audio').evaluate(a => a.paused))
@@ -118,7 +118,7 @@ try {
   await p.getByRole('button', { name: 'Play narrated explainer', exact: true }).click()
   await p.waitForFunction(() => document.querySelector('[data-narrated] audio').currentTime > .1)
   assert.deepEqual(errors, [])
-  const report = { browser: browser.version(), explainers: entries.length, sceneChecks: scenes, errors, coverage: 'All routes and cue captions, SVG synchronization, AAC end playback, navigation cleanup, shared controls, exclusivity, 1440/390/320 layouts, reduced motion, blocked-audio recovery' }
-  await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2))
+  const report = { browser: browser.version(), explainers: process.env.NARRATION_CONTROLS_ONLY ? 0 : entries.length, sceneChecks: scenes, errors, coverage: process.env.NARRATION_CONTROLS_ONLY ? 'Shared controls, exclusivity, 1440/390/320 layouts, reduced motion, blocked-audio recovery' : 'All routes and cue captions, SVG synchronization, AAC end playback, navigation cleanup, shared controls, exclusivity, 1440/390/320 layouts, reduced motion, blocked-audio recovery' }
+  await writeFile(`${output}/${process.env.NARRATION_CONTROLS_ONLY ? 'controls-report' : 'report'}.json`, JSON.stringify(report, null, 2))
   console.log('PASS', JSON.stringify(report))
 } finally { await browser.close() }

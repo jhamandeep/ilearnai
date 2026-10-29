@@ -16,11 +16,11 @@ import { useTip } from './Tip'
 // :::
 interface Layer { name: string; boxes: string[] }
 
-const BW = 164
-const BH = 54
+const BW = 202
+const BH = 68
 const GX = 22
-const LABEL_W = 104
-const ROW_H = 92
+const LABEL_W = 140
+const ROW_H = 110
 const PAD = 12
 
 export function Arch({ src }: { src: string }) {
@@ -89,8 +89,9 @@ export function Arch({ src }: { src: string }) {
   return (
     <figure className="rich rich-arch">
       {title && <figcaption><span className="rich-kind">Architecture</span>{title}</figcaption>}
-      <div className="rich-stage rich-scroll" ref={tip.host}>
-        <svg viewBox={`-24 -24 ${width + 48} ${height + 48}`} width={width + 48} height={height + 48} style={{ width: '100%', maxWidth: (width + 48) * 1.25 }} role="img" aria-label={title ?? 'Architecture diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
+      <p className="diagram-pan-hint">Follow the highlighted path. Scroll across wider diagrams.</p>
+      <div className="rich-stage rich-scroll" ref={tip.host} tabIndex={0} role="region" aria-label="Diagram. Scroll horizontally to explore.">
+        <svg viewBox={`-24 -24 ${width + 48} ${height + 48}`} width={width + 48} height={height + 48} style={{ width: '100%', minWidth: (width + 48), maxWidth: (width + 48) * 1.25 }} role="img" aria-label={title ?? 'Architecture diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
           <defs>
             <marker id={`${svgId}-arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--primary)" /></marker>
             <marker id={`${svgId}-arrow-dim`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--text-dim)" opacity="0.5" /></marker>

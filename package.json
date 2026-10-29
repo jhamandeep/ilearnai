@@ -31,6 +31,7 @@
     "narration:export": "node scripts/export-narration.mjs",
     "test:narration": "node scripts/narration-test.mjs",
     "test:narration-browser": "node scripts/export-narration.mjs && node scripts/narration-browser-test.mjs",
+    "test:readability-browser": "node scripts/export-narration.mjs && node scripts/readability-browser-test.mjs",
     "test:course-focus-browser": "node scripts/course-focus-browser-test.mjs"
   },
   "dependencies": {

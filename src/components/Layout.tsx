@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { NewsTicker } from './NewsTicker'
 import { AccountMenu } from './AccountMenu'
@@ -20,8 +20,11 @@ export function Layout() {
 
 function MarketingLayout() {
   const { preview, user } = useAuth()
-  const { pathname, hash } = useLocation()
+  const { pathname, hash, key } = useLocation()
   const header = useRef<HTMLElement>(null)
+  const menuToggle = useRef<HTMLButtonElement>(null)
+  const [menuLocation, setMenuLocation] = useState<string | null>(null)
+  const mobileOpen = menuLocation === key
   useEffect(() => {
     header.current?.querySelectorAll('details').forEach((d) => { d.open = false })
     if (hash) {
@@ -45,13 +48,23 @@ function MarketingLayout() {
     const close = (event: PointerEvent | KeyboardEvent) => {
       if (event instanceof KeyboardEvent && event.key !== 'Escape') return
       if (event instanceof PointerEvent && header.current?.contains(event.target as Node)) return
+      setMenuLocation(null)
+      const mobile = header.current?.classList.contains('mobile-menu-open')
       const open = header.current?.querySelector<HTMLDetailsElement>('details[open]')
-      if (event instanceof KeyboardEvent) open?.querySelector('summary')?.focus()
+      if (event instanceof KeyboardEvent) { if (mobile) menuToggle.current?.focus(); else open?.querySelector('summary')?.focus() }
       header.current?.querySelectorAll('details').forEach((d) => { d.open = false })
     }
+    const historyChanged = () => setMenuLocation(null)
+    window.addEventListener('popstate', historyChanged)
     document.addEventListener('pointerdown', close)
     document.addEventListener('keydown', close)
-    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
+    return () => { window.removeEventListener('popstate', historyChanged); document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
+  }, [])
+  useEffect(() => {
+    const breakpoint = window.matchMedia('(max-width: 1000px)')
+    const close = () => setMenuLocation(null)
+    breakpoint.addEventListener('change', close)
+    return () => breakpoint.removeEventListener('change', close)
   }, [])
   const menu = (group: (typeof groups)[number]) => (
     <details className="nav-group" key={group.label} onToggle={(e) => {
@@ -66,10 +79,11 @@ function MarketingLayout() {
   return (
     <div className="shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <header className="topbar" ref={header}>
+      <header className={`topbar${mobileOpen ? ' mobile-menu-open' : ''}`} ref={header}>
         <div className="topbar-inner">
         <Link to="/" className="brand" aria-label="ilearnai home"><BrandLogo /></Link>
-        <nav className="nav" aria-label="Primary">
+        <button ref={menuToggle} type="button" className="marketing-menu-toggle" aria-expanded={mobileOpen} aria-controls="marketing-navigation" aria-label={mobileOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuLocation(mobileOpen ? null : key)}>{mobileOpen ? '✕' : '☰'}</button>
+        <nav id="marketing-navigation" className="nav" aria-label="Primary" onClickCapture={event => { if ((event.target as Element).closest('a[href]')) setMenuLocation(null) }}>
           {menu(groups[0])}
           <NavLink to="/practice">Practice</NavLink>
           <NavLink to="/labs">Labs</NavLink>

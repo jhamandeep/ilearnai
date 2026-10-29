@@ -12,6 +12,7 @@ import './course-workspace.css'
 import './course-artwork.css'
 import './gradient-lab.css'
 import './course-focus.css'
+import './readability.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

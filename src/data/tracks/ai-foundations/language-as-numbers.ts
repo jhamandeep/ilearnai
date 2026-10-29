@@ -863,55 +863,75 @@ Take the 3 tokens "the", "cat" and "sat" with the embeddings from the embeddings
 
 :::anim
 title: The token sat asks who sat: query, keys, weights, new vector
-rect t1 @ 300,110 size: 160x60 "the|(0.1, 0.1)"
-rect t2 @ 530,110 size: 160x60 "cat|(0.9, 0.3)"
-rect t3 @ 760,110 size: 160x60 "sat|(0.2, 0.8)"
-rect k1 @ 300,200 size: 160x50 "key (0.1, 0.1)" color: grey
-rect k2 @ 530,200 size: 160x50 "key (0.3, 0.9)" color: grey
-rect k3 @ 760,200 size: 160x50 "key (0.8, 0.2)" color: grey
-text knote "key matrix swaps|the 2 numbers" @ 130,200 size: 15 color: grey
-rect q @ 130,320 size: 130x64 "query of sat|(0.2, 0.8)" color: yellow
-num s1 = 0 @ 300,300 prefix: "score " digits: 2 size: 24
-num s2 = 0 @ 530,300 prefix: "score " digits: 2 size: 24
-num s3 = 0 @ 760,300 prefix: "score " digits: 2 size: 24
-num w1 = 0 @ 300,380 prefix: "weight " digits: 2 size: 24 color: green
-num w2 = 0 @ 530,380 prefix: "weight " digits: 2 size: 24 color: green
-num w3 = 0 @ 760,380 prefix: "weight " digits: 2 size: 24 color: green
-text wnote "softmax: positive,|add up to 1" @ 130,420 size: 15 color: grey
-rect out @ 530,455 size: 280x50 "new sat = (0.47, 0.40)" color: green
+rect t1 @ 220,100 size: 230x76 "the|(0.1, 0.1)" color: blue
+rect t2 @ 480,100 size: 230x76 "cat|(0.9, 0.3)" color: purple
+rect t3 @ 740,100 size: 230x76 "sat|(0.2, 0.8)" color: teal
+rect k1 @ 220,150 size: 230x64 "the key|(0.1, 0.1)" color: blue
+rect k2 @ 480,150 size: 230x64 "cat key|(0.3, 0.9)" color: purple
+rect k3 @ 740,150 size: 230x64 "sat key|(0.8, 0.2)" color: teal
+text knote "Keys swap the two numbers" @ 480,40 size: 22 color: grey
+rect q @ 480,300 size: 280x68 "query of sat|(0.2, 0.8)" color: orange
+num s1 = 0 @ 220,300 prefix: "score " digits: 2 size: 28 color: blue
+num s2 = 0 @ 480,300 prefix: "score " digits: 2 size: 28 color: purple
+num s3 = 0 @ 740,300 prefix: "score " digits: 2 size: 28 color: teal
+num w1 = 0.26 @ 220,390 prefix: "weight " digits: 2 size: 28 color: blue
+num w2 = 0.43 @ 480,390 prefix: "weight " digits: 2 size: 28 color: purple
+num w3 = 0.31 @ 740,390 prefix: "weight " digits: 2 size: 28 color: teal
+text wnote "Softmax · positive weights that add up to 1" @ 480,475 size: 22 color: grey
+rect v1 @ 220,390 size: 230x76 "0.26 × (0.1, 0.1)|(0.026, 0.026)" color: blue
+rect v2 @ 480,390 size: 230x76 "0.43 × (0.9, 0.3)|(0.387, 0.129)" color: purple
+rect v3 @ 740,390 size: 230x76 "0.31 × (0.2, 0.8)|(0.062, 0.248)" color: teal
+text share1 "26% · the" @ 220,290 size: 26 color: blue
+text share2 "43% · cat" @ 480,290 size: 26 color: purple
+text share3 "31% · sat" @ 740,290 size: 26 color: teal
+rect bar1 @ 220,330 size: 104x24 color: blue
+rect bar2 @ 480,330 size: 172x24 color: purple
+rect bar3 @ 740,330 size: 124x24 color: teal
+rect out @ 480,490 size: 340x64 "new sat ≈ (0.47, 0.40)" color: purple
 
 step: Three tokens: the, cat and sat. Each token starts as its embedding vector.
   show t1, t2, t3
 step: Each token makes a key, the label on its spine. The key matrix swaps the 2 numbers.
-  show k1, k2, k3, knote
+  show knote
+  morph t1 -> k1
+  & morph t2 -> k2
+  & morph t3 -> k3
 step: The token sat asks: who sat? Its query is its own vector, (0.2, 0.8).
   show q
-  pulse t3
+  pulse k3
 step: The dot product of the query with each key gives a score: 0.10, 0.78 and 0.32.
-  arrow q -> k1 : dot
-  & arrow q -> k2 : dot
-  & arrow q -> k3 : dot
+  arrow aq1 = q -> k1
+  & arrow aq2 = q -> k2
+  & arrow aq3 = q -> k3
+  hide q, aq1, aq2, aq3
   show s1, s2, s3
   count s1 -> 0.10
   & count s2 -> 0.78
   & count s3 -> 0.32
 step: Divide by the square root of 2 and apply softmax. The weights 0.26, 0.43 and 0.31 add up to 1.
-  show w1, w2, w3, wnote
-  count w1 -> 0.26
-  & count w2 -> 0.43
-  & count w3 -> 0.31
-  highlight w2
+  show wnote
+  morph s1 -> w1
+  & morph s2 -> w2
+  & morph s3 -> w3
+  pulse w2
 step: Multiply each value by its weight and add them. The new vector for sat is about (0.47, 0.40).
+  hide wnote
+  morph w1 -> v1
+  & morph w2 -> v2
+  & morph w3 -> v3
+  move v1 -> 400,490
+  & move v2 -> 480,490
+  & move v3 -> 560,490
+  hide v1, v2, v3
+  show share1, share2, share3, bar1, bar2, bar3
   show out
-  arrow w1 -> out : x (0.1, 0.1)
-  & arrow w2 -> out : x (0.9, 0.3)
-  & arrow w3 -> out : x (0.2, 0.8)
   pulse out
 step: sat now carries 43 percent of cat, so it knows who sat. Every token updates in one step.
-  restore w2
   highlight out
-  pulse t2
+  pulse k2
 :::
+
+The weights displayed in the animation are rounded. The final vector uses the full-precision weights, giving approximately (0.47, 0.40).
 
 | Vector | Matrix | What it does | Result for the | Result for cat | Result for sat |
 | --- | --- | --- | --- | --- | --- |

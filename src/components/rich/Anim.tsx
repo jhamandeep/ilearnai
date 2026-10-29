@@ -200,6 +200,7 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
       const p = pos.get(o.id)!
       if (['box', 'rect', 'text', 'num', 'dot', 'axes'].includes(o.kind)) gsap.set(el, { x: p[0], y: p[1], scale: 1, opacity: 0 })
       else gsap.set(el, { opacity: 0 })
+      if (o.kind === 'box' || o.kind === 'rect') gsap.set(el.querySelector('[data-shape]'), { attr: { x: -o.w / 2, y: -o.h / 2, width: o.w, height: o.h }, fill: fillFor(baseColor(o)), stroke: baseColor(o) })
       if (o.kind === 'curve') gsap.set(el, { strokeDashoffset: 1 })
     }
     for (const el of svg.querySelectorAll('[data-packet], [data-head], [data-variant]')) gsap.set(el, { opacity: 0 })
@@ -270,6 +271,22 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
             const p = toStage(scene, o, a.to!)
             tl.to(el, { x: p[0], y: p[1], duration: dur }, at)
             pos.set(o.id, p)
+            break
+          }
+          case 'morph': {
+            const source = q(a.ids[0]), target = q(a.ids[1])
+            const from = objs.get(a.ids[0]), to = objs.get(a.ids[1])
+            if (!source || !target || !from || !to) break
+            const destination = pos.get(to.id)!
+            // The original object travels to the result and changes shape. Both
+            // halves live on the seekable timeline, including a backwards seek.
+            tl.to(source, { x: destination[0], y: destination[1], duration: dur, ease: 'power2.inOut' }, at)
+            const start = (tl.recent() as gsap.core.Tween).startTime()
+            const shape = source.querySelector('rect[data-shape]')
+            if (shape && ['box', 'rect'].includes(to.kind)) tl.to(shape, { attr: { x: -to.w / 2, y: -to.h / 2, width: to.w, height: to.h }, fill: fillFor(baseColor(to)), stroke: baseColor(to), duration: dur }, start)
+            tl.to(source, { opacity: 0, duration: dur * .28 }, start + dur * .72)
+            tl.fromTo(target, { opacity: 0, scale: .92, transformOrigin: 'center' }, { opacity: 1, scale: 1, duration: dur * .28, immediateRender: false }, start + dur * .72)
+            pos.set(from.id, destination)
             break
           }
           case 'walk': {
@@ -400,6 +417,13 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
       const path = el.querySelector('path')!
       const head = el.querySelector('[data-head]')!
       const lab = el.querySelector('text')
+      // A wide label cannot live in a narrow connector gap. Give it a clear
+      // lane above both nodes instead of painting it over their own labels.
+      const ac = centerOf(scene, A, pos.get(A.id)!), bc = centerOf(scene, B, pos.get(B.id)!)
+      const [aw, ah] = halfSize(A), [bw, bh] = halfSize(B)
+      if (lab && Math.abs(bc[0] - ac[0]) >= Math.abs(bc[1] - ac[1]) && lab.getComputedTextLength() + 16 > Math.abs(bc[0] - ac[0]) - aw - bw) {
+        g.ly = Math.min(g.ly, ac[1] - ah - 18, bc[1] - bh - 18)
+      }
       const packet = svg!.querySelector(`[data-packet="${esc(o.id)}"]`)
       const len = lengthOf(g.d)
       if (!packetOnly || !drawn.has(o.id)) {
@@ -421,35 +445,67 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
       }
     }
 
-    // Frame the active diagram part on a small player, as in the approved sample.
-    // Measure finished steps once; playback still follows the recorded audio clock.
+    // Measure real, visible geometry, including changed labels. Desktop keeps a
+    // stable composition across steps; phones focus on the active explanation.
+    // Never shrink text below 14 screen pixels: wide scenes can be panned.
+    type Bounds = { x: number; y: number; w: number; h: number }
+    const boundsFor = (ids: string[]) => ids.flatMap(id => {
+      const object = objs.get(id)
+      // getBBox includes the parts of a curve outside its clip path. The axes
+      // already supply the visible plot bounds; counting that hidden geometry
+      // would reintroduce a large empty border around mathematical scenes.
+      if (object?.on && ['curve', 'vector', 'line', 'tangent'].includes(object.kind)) return []
+      const element = q(id), matrix = element?.getScreenCTM(), base = svg.getScreenCTM()
+      if (!element || !matrix || !base || Number(gsap.getProperty(element, 'opacity')) < .05) return []
+      const transform = base.inverse().multiply(matrix)
+      // Hidden label variants must not inflate the composition.
+      const children = [...element.querySelectorAll<SVGGraphicsElement>('rect, circle, text, line, path, polygon')].filter(child => {
+        let node: Element | null = child
+        while (node && node !== element) {
+          if (getComputedStyle(node).display === 'none' || Number(getComputedStyle(node).opacity) < .05) return false
+          node = node.parentElement
+        }
+        return true
+      })
+      if (!children.length) children.push(element)
+      return children.flatMap(child => {
+        const local = child.getScreenCTM()
+        if (!local) return []
+        const m = child === element ? transform : base.inverse().multiply(local)
+        const b = child.getBBox()
+        const points = [[b.x,b.y],[b.x+b.width,b.y],[b.x,b.y+b.height],[b.x+b.width,b.y+b.height]].map(([x,y]) => new DOMPoint(x,y).matrixTransform(m))
+        const x = Math.min(...points.map(p => p.x)), y = Math.min(...points.map(p => p.y))
+        return [{ x, y, w: Math.max(...points.map(p => p.x)) - x, h: Math.max(...points.map(p => p.y)) - y }]
+      })
+    })
+    const fit = (boxes: Bounds[], minimum: number) => {
+      if (!boxes.length) return [0, 0, STAGE_W, STAGE_H]
+      const left = Math.min(...boxes.map(b => b.x)), top = Math.min(...boxes.map(b => b.y))
+      const right = Math.max(...boxes.map(b => b.x + b.w)), bottom = Math.max(...boxes.map(b => b.y + b.h))
+      const width = Math.max(minimum, right - left + 64)
+      const height = Math.max(width / 2.3, bottom - top + 64)
+      return [(left + right - width) / 2, (top + bottom - height) / 2, width, height]
+    }
+    // Initialize lazy SVG transforms before measuring a seek in either direction.
+    tl.time(tl.duration(), false).time(0, false)
+    const allBounds: Bounds[] = []
     const cameras = scene.steps.map((step, index) => {
       tl.time(E[index], false)
-      const focus = step.actions.filter(action => ['highlight', 'pulse', 'count', 'walk', 'tangent', 'move'].includes(action.op)).at(-1)
+      allBounds.push(...boundsFor(scene.objects.map(o => o.id)))
+      const focus = step.actions.filter(action => ['morph', 'highlight', 'pulse', 'count', 'walk', 'tangent', 'move'].includes(action.op)).at(-1)
         ?? step.actions.filter(action => action.op === 'show').at(-1)
       let ids = (focus?.ids ?? []).filter(id => !['heading', 'legend', 'scene', 'cursor', 'detail', 'detailText'].includes(id))
-      if (!ids.length) ids = scene.objects.filter(object => object.kind === 'axes').map(object => object.id)
-      const boxes = ids.map(id => {
-        let object = objs.get(id)
-        if (!object) return null
-        if (object.on) object = objs.get(object.on) ?? object
-        if (object.kind === 'tangent') { const curve = objs.get(object.curve!); object = objs.get(curve?.on ?? '') ?? object }
-        const element = q(object.id)
-        const matrix = element?.getCTM(), base = svg.getCTM()
-        if (!element || !matrix || !base) return null
-        const transform = base.inverse().multiply(matrix)
-        const bounds = element.getBBox()
-        const a = new DOMPoint(bounds.x, bounds.y).matrixTransform(transform)
-        const b = new DOMPoint(bounds.x + bounds.width, bounds.y + bounds.height).matrixTransform(transform)
-        return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(b.x - a.x), h: Math.abs(b.y - a.y) }
-      }).filter((box): box is {x:number;y:number;w:number;h:number} => !!box)
-      if (!boxes.length) return [0, 0, STAGE_W, STAGE_H]
-      const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y))
-      const right = Math.max(...boxes.map(box => box.x + box.w)), bottom = Math.max(...boxes.map(box => box.y + box.h))
-      const width = Math.min(STAGE_W, Math.max(460, right - left + 100, (bottom - top + 70) / .75))
-      const height = width * .75
-      return [Math.max(0, Math.min(STAGE_W - width, (left + right - width) / 2)), Math.max(0, Math.min(STAGE_H - height, (top + bottom - height) / 2)), width, height]
+      ids = ids.map(id => {
+        const object = objs.get(id)
+        if (object?.on) return object.on
+        if (object?.kind === 'tangent') return objs.get(object.curve!)?.on ?? id
+        return id
+      })
+      if (!ids.length) ids = scene.objects.filter(o => o.kind === 'axes').map(o => o.id)
+      return fit(boundsFor(ids), 400)
     })
+    const overview = fit(allBounds, 560)
+    const minimumFont = Math.min(22, ...[...svg.querySelectorAll('text')].map(text => parseFloat(getComputedStyle(text).fontSize) || 22))
     const sync = () => {
       const current = frameRef.current
       const index = Math.min(current.scene, scene.steps.length - 1)
@@ -459,7 +515,16 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
       const progress = current.reduced || current.poster ? 1 : Math.max(0, Math.min(1, (current.time - recording.cues[index].start) / .65))
       const camera = next.map((value, i) => previous[i] + (value - previous[i]) * progress)
       const enlarged = svg.closest('.is-enlarged')
-      svg.setAttribute('viewBox', current.compact && !enlarged ? camera.join(' ') : `0 0 ${STAGE_W} ${STAGE_H}`)
+      const view = current.compact && !enlarged ? camera : overview
+      svg.setAttribute('viewBox', view.join(' '))
+      svg.style.minWidth = `${enlarged ? Math.max(960, view[2]) : Math.ceil(view[2] * 14 / minimumFont)}px`
+      // In normal playback focus follows the narration; users can still pan a
+      // paused wide scene with touch or the keyboard-accessible scroll region.
+      if (svg.dataset.focusScene !== String(index)) {
+        const stage = svg.parentElement
+        if (stage) stage.scrollLeft = Math.max(0, (svg.getBoundingClientRect().width - stage.clientWidth) / 2)
+        svg.dataset.focusScene = String(index)
+      }
     }
     synchronize.current = sync
     sync()
@@ -479,7 +544,7 @@ function AnimationStage({ scene, recording, frame }: { scene: Scene; recording: 
               <clipPath key={'s' + ax.id} id={`${idPrefix}-clip-stage-${ax.id}`}><rect x={ax.x - 6} y={ax.y - 6} width={ax.w + 12} height={ax.h + 12} /></clipPath>
             ))}
           </defs>
-          <rect width={STAGE_W} height={STAGE_H} fill={`url(#${idPrefix}-vignette)`} />
+          <rect x={-5000} y={-5000} width={10000} height={10000} fill={`url(#${idPrefix}-vignette)`} />
           <g data-camera="1">
             {scene.objects.map((o) => <SceneObject key={o.id} o={o} scene={scene} variants={labelVariants.get(o.id) ?? []} idPrefix={idPrefix} />)}
             {scene.objects.filter((o) => o.kind === 'arrow').map((o) => (
@@ -497,8 +562,31 @@ function baseColor(o: Obj): string {
 }
 function fillFor(stroke: string) { return `color-mix(in srgb, ${stroke} 10%, transparent)` }
 
-function Lines({ text, size, anchor, x = 0, y = 0, cls, fill }: { text: string; size: number; anchor: 'start' | 'middle' | 'end'; x?: number; y?: number; cls?: string; fill?: string }) {
-  const parts = text.split('|').map((s) => s.trim())
+function wrapLabel(text: string, size: number, width?: number): string[] {
+  if (!width) return text.split('|').map(s => s.trim())
+  const limit = Math.max(5, Math.floor(width / (size * .53)))
+  return text.split('|').flatMap(line => {
+    const lines: string[] = []
+    let current = ''
+    for (const word of line.trim().split(/\s+/)) {
+      if (current && current.length + word.length + 1 > limit) { lines.push(current); current = '' }
+      current += (current ? ' ' : '') + word
+    }
+    if (current) lines.push(current)
+    return lines
+  })
+}
+
+function Lines({ text, size, anchor, x = 0, y = 0, cls, fill, width, height }: { text: string; size: number; width?: number; height?: number; anchor: 'start' | 'middle' | 'end'; x?: number; y?: number; cls?: string; fill?: string }) {
+  let parts = wrapLabel(text, size, width)
+  // Old compact nodes keep their geometry. Fit their copy first, then the
+  // camera's minimum screen scale preserves readable type instead of clipping.
+  if (width && height) {
+    while (size > 11 && ((parts.length - 1) * size * 1.25 + size > height || parts.some(line => line.length * size * .53 > width))) {
+      size -= .5
+      parts = wrapLabel(text, size, width)
+    }
+  }
   const lh = size * 1.25
   const y0 = y - ((parts.length - 1) * lh) / 2
   return (
@@ -515,16 +603,17 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
   const hidden = { opacity: 0 } as const
   switch (o.kind) {
     case 'box': {
-      const hasIcon = o.icon !== 'none'
-      const textW = o.label.length * (o.size ?? 17) * 0.56
-      const total = (hasIcon ? 34 : 0) + textW
-      const start = -total / 2
+      const hasIcon = o.icon !== 'none' && [o.label, ...variants].every(label => !label.includes('|') && label.length * Math.max(22, o.size ?? 22) * .53 <= o.w - 72)
+      const size = Math.max(22, o.size ?? 22)
+      const start = -o.w / 2 + 16
+      const textX = hasIcon ? 16 : 0
+      const textWidth = o.w - (hasIcon ? 64 : 24)
       return (
         <g data-id={o.id} transform={tf} style={hidden} className="an-obj">
           <rect data-shape="1" x={-o.w / 2} y={-o.h / 2} width={o.w} height={o.h} rx={12} fill={fillFor(color)} stroke={color} strokeWidth={2} />
           {hasIcon && <svg x={start} y={-13} width={26} height={26} viewBox="0 0 24 24" className="an-glyph" style={{ stroke: color }}><path d={glyphFor(o.icon ?? o.label)} /></svg>}
-          <g data-id={o.id + '#label'}><Lines text={o.label} size={o.size ?? 17} anchor="start" x={start + (hasIcon ? 34 : 0)} cls="an-label" fill={TEXT} /></g>
-          {variants.map((v, k) => <g key={k} data-id={`${o.id}#label#${k}`} data-variant="1"><Lines text={v} size={o.size ?? 17} anchor="start" x={start + (hasIcon ? 34 : 0)} cls="an-label" fill={TEXT} /></g>)}
+          <g data-id={o.id + '#label'}><Lines text={o.label} size={size} width={textWidth} height={o.h - 16} anchor="middle" x={textX} cls="an-label" fill={TEXT} /></g>
+          {variants.map((v, k) => <g key={k} data-id={`${o.id}#label#${k}`} data-variant="1"><Lines text={v} size={size} width={textWidth} height={o.h - 16} anchor="middle" x={textX} cls="an-label" fill={TEXT} /></g>)}
         </g>
       )
     }
@@ -532,15 +621,15 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
       return (
         <g data-id={o.id} transform={tf} style={hidden} className="an-obj">
           <rect data-shape="1" x={-o.w / 2} y={-o.h / 2} width={o.w} height={o.h} rx={10} fill={fillFor(color)} stroke={color} strokeWidth={2} />
-          <g data-id={o.id + '#label'}>{o.label && <Lines text={o.label} size={o.size ?? 17} anchor="middle" cls="an-label" fill={TEXT} />}</g>
-          {variants.map((v, k) => <g key={k} data-id={`${o.id}#label#${k}`} data-variant="1"><Lines text={v} size={o.size ?? 17} anchor="middle" cls="an-label" fill={TEXT} /></g>)}
+          <g data-id={o.id + '#label'}>{o.label && <Lines text={o.label} size={Math.max(22, o.size ?? 22)} width={o.w - 24} height={o.h - 12} anchor="middle" cls="an-label" fill={TEXT} />}</g>
+          {variants.map((v, k) => <g key={k} data-id={`${o.id}#label#${k}`} data-variant="1"><Lines text={v} size={Math.max(22, o.size ?? 22)} width={o.w - 24} height={o.h - 12} anchor="middle" cls="an-label" fill={TEXT} /></g>)}
         </g>
       )
     case 'text':
       return (
         <g data-id={o.id} transform={tf} style={hidden} className="an-obj">
-          <g data-id={o.id + '#label'}><Lines text={o.label} size={o.size ?? 20} anchor={o.anchor ?? 'middle'} cls="an-text" fill={color} /></g>
-          {variants.map((v, k) => <g key={k} data-id={`${o.id}#label#${k}`} data-variant="1"><Lines text={v} size={o.size ?? 20} anchor={o.anchor ?? 'middle'} cls="an-text" fill={color} /></g>)}
+          <g data-id={o.id + '#label'}><Lines text={o.label} size={Math.max(20, o.size ?? 20)} anchor={o.anchor ?? 'middle'} cls="an-text" fill={color} /></g>
+          {variants.map((v, k) => <g key={k} data-id={`${o.id}#label#${k}`} data-variant="1"><Lines text={v} size={Math.max(20, o.size ?? 20)} anchor={o.anchor ?? 'middle'} cls="an-text" fill={color} /></g>)}
         </g>
       )
     case 'num': {
@@ -556,7 +645,7 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
       return (
         <g data-id={o.id} transform={tf} style={hidden} className="an-obj">
           <circle data-shape="1" r={o.w / 2} fill={color} stroke={BG} strokeWidth={2} />
-          {o.label && <text x={o.w / 2 + 7} y={-o.w / 2 - 4} fontSize={15} fill={color} className="an-dot-label">{o.label}</text>}
+          {o.label && <text x={o.w / 2 + 7} y={-o.w / 2 - 4} fontSize={20} fill={color} className="an-dot-label">{o.label}</text>}
         </g>
       )
     case 'axes': {
@@ -572,10 +661,10 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
           {yt.map((t) => <line key={'y' + t} x1={0} x2={o.w} y1={sy(t)} y2={sy(t)} stroke={GRID} strokeWidth={1} />)}
           <line x1={0} x2={o.w} y1={y0} y2={y0} stroke={AXIS} strokeWidth={1.5} />
           <line x1={x0} x2={x0} y1={0} y2={o.h} stroke={AXIS} strokeWidth={1.5} />
-          {xt.map((t) => <text key={'xl' + t} x={sx(t)} y={Math.min(o.h, y0) + 18} textAnchor="middle" fontSize={13} fill={AXIS}>{fmt(t)}</text>)}
-          {yt.map((t) => <text key={'yl' + t} x={Math.max(0, x0) - 8} y={sy(t)} textAnchor="end" dominantBaseline="middle" fontSize={13} fill={AXIS}>{fmt(t)}</text>)}
-          {o.xlabel && <text x={o.w / 2} y={o.h + 38} textAnchor="middle" fontSize={15} fill={TEXT}>{o.xlabel}</text>}
-          {o.ylabel && <text x={-44} y={o.h / 2} textAnchor="middle" fontSize={15} fill={TEXT} transform={`rotate(-90 -44 ${o.h / 2})`}>{o.ylabel}</text>}
+          {xt.map((t) => <text key={'xl' + t} x={sx(t)} y={Math.min(o.h, y0) + 23} textAnchor="middle" fontSize={18} fill={AXIS}>{fmt(t)}</text>)}
+          {yt.map((t) => <text key={'yl' + t} x={Math.max(0, x0) - 8} y={sy(t)} textAnchor="end" dominantBaseline="middle" fontSize={18} fill={AXIS}>{fmt(t)}</text>)}
+          {o.xlabel && <text x={o.w / 2} y={o.h + 50} textAnchor="middle" fontSize={20} fill={TEXT}>{o.xlabel}</text>}
+          {o.ylabel && <text x={-58} y={o.h / 2} textAnchor="middle" fontSize={20} fill={TEXT} transform={`rotate(-90 -58 ${o.h / 2})`}>{o.ylabel}</text>}
         </g>
       )
     }
@@ -594,7 +683,7 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
               <path data-id={o.id} d={pathFrom(pts)} fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" pathLength={1} strokeDasharray={o.dashed ? '0.03 0.02' : 1} strokeDashoffset={1} style={hidden} />
             </g>
           </g>
-          {o.label && last && <text data-id={o.id + '#label'} x={lx} y={last[1] - 12} fontSize={15} fill={color} textAnchor={anchor} style={hidden} className="an-curve-label">{o.label}</text>}
+          {o.label && last && <text data-id={o.id + '#label'} x={lx} y={last[1] - 12} fontSize={20} fill={color} textAnchor={anchor} style={hidden} className="an-curve-label">{o.label}</text>}
         </>
       )
     }
@@ -606,8 +695,8 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
         <g data-id={o.id} style={hidden} className="an-obj" clipPath={o.on ? `url(#${idPrefix}-clip-stage-${o.on})` : undefined}>
           <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={color} strokeWidth={o.kind === 'vector' ? 3.5 : 2.5} strokeLinecap="round" strokeDasharray={o.dashed ? '8 6' : undefined} />
           {o.kind === 'vector' && <polygon data-head="1" points="2,0 -12,-6 -12,6" fill={color} transform={`translate(${b[0]},${b[1]}) rotate(${ang})`} />}
-          {o.label && <text data-id={o.id + '#label'} x={b[0] + 10} y={b[1] - 10} fontSize={16} fill={color} fontStyle="italic" className="an-curve-label">{o.label}</text>}
-          {variants.map((v, k) => <text key={k} data-id={`${o.id}#label#${k}`} data-variant="1" x={b[0] + 10} y={b[1] - 10} fontSize={16} fill={color} fontStyle="italic" className="an-curve-label">{v}</text>)}
+          {o.label && <text data-id={o.id + '#label'} x={b[0] + 10} y={b[1] - 10} fontSize={20} fill={color} fontStyle="italic" className="an-curve-label">{o.label}</text>}
+          {variants.map((v, k) => <text key={k} data-id={`${o.id}#label#${k}`} data-variant="1" x={b[0] + 10} y={b[1] - 10} fontSize={20} fill={color} fontStyle="italic" className="an-curve-label">{v}</text>)}
         </g>
       )
     }
@@ -619,7 +708,7 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
             <line x1={g.a[0]} y1={g.a[1]} x2={g.b[0]} y2={g.b[1]} stroke={color} strokeWidth={2.5} strokeDasharray="8 6" strokeLinecap="round" />
           </g>
           <circle cx={g.p[0]} cy={g.p[1]} r={6} fill={color} stroke={BG} strokeWidth={2} />
-          {o.label && <text x={g.p[0] + 12} y={g.p[1] - 12} fontSize={15} fill={color} className="an-curve-label">{o.label === 'slope' ? `slope = ${fmt(g.m, 2)}` : o.label}</text>}
+          {o.label && <text x={g.p[0] + 12} y={g.p[1] - 12} fontSize={20} fill={color} className="an-curve-label">{o.label === 'slope' ? `slope = ${fmt(g.m, 2)}` : o.label}</text>}
         </g>
       )
     }
@@ -628,7 +717,7 @@ function SceneObject({ o, scene, variants, idPrefix }: { o: Obj; scene: Scene; v
         <g data-id={o.id} style={hidden} className="an-arrow">
           <path d="M0 0" fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeDasharray={o.dashed ? '8 6' : undefined} />
           <polygon data-head="1" points="2,0 -12,-6 -12,6" fill={color} style={hidden} />
-          {o.label && <text fontSize={14} fill={TEXT} className="an-arrow-label" style={hidden}>{o.label}</text>}
+          {o.label && <text fontSize={20} fill={TEXT} className="an-arrow-label" style={hidden}>{o.label}</text>}
         </g>
       )
   }

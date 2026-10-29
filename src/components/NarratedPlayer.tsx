@@ -96,14 +96,15 @@ export function NarratedPlayer({ recording, title, labels, children, canEnlarge 
   return <div className="narrated-explainer">
     <div className={`explainer-player course-explainer${enlarged ? ' is-enlarged' : ''}`} ref={player} tabIndex={0} onKeyDown={keyboard} aria-label={`${title}. Space plays or pauses. Left and right arrows seek five seconds.`} data-playing={playing} data-scene={scene} data-narrated="true">
       <audio ref={audio} src={recording.audio} preload="metadata" onPlay={() => { window.dispatchEvent(new CustomEvent('ilearnai:narration-play', { detail: audio.current })); setPlaying(true) }} onPause={() => setPlaying(false)} onTimeUpdate={event => setTime(clamp(event.currentTarget.currentTime, recording.duration))} onEnded={() => { setPlaying(false); setTime(recording.duration) }} onWaiting={() => setWaiting(true)} onPlaying={() => setWaiting(false)} onCanPlay={() => setWaiting(false)} onError={() => { setPlaying(false); setWaiting(false); setError('The recording could not load. Retry audio, or read the transcript below.') }} />
-      <div className="explainer-stage">
+      <div className="explainer-stage" tabIndex={canEnlarge ? 0 : undefined} role={canEnlarge ? "region" : undefined} aria-label={canEnlarge ? "Diagram. Scroll horizontally for wide scenes." : undefined}>
         {children({ time, scene, reduced, compact, poster: time === 0 && !playing })}
-        {!playing && <button className={`explainer-overlay-play${time > 0 && !ended ? ' is-paused' : ''}`} type="button" onClick={() => void toggle()} aria-label={ended ? 'Replay explainer' : time > 0 ? 'Resume explainer' : 'Play narrated explainer'}><span aria-hidden="true">{ended ? '↻' : '▶'}</span><strong>{ended ? 'Watch again' : time > 0 ? 'Resume' : 'Play with narration'}</strong></button>}
+
         {waiting && <span className="explainer-buffer" role="status">Loading audio…</span>}
       </div>
+      <div className="explainer-start-row"><span>Scene {scene + 1} of {recording.cues.length}</span>{!playing && <button className={`explainer-overlay-play${time > 0 && !ended ? ' is-paused' : ''}`} type="button" onClick={() => void toggle()} aria-label={ended ? 'Replay explainer' : time > 0 ? 'Resume explainer' : 'Play narrated explainer'}><span aria-hidden="true">{ended ? '↻' : '▶'}</span><strong>{ended ? 'Watch again' : time > 0 ? 'Resume' : 'Play with narration'}</strong></button>}{playing && <span className="explainer-playing-label">Playing narration</span>}</div>
       <div className={`explainer-captions${captions ? '' : ' captions-off'}`} aria-hidden={!captions}><span>{captions ? cue.text : 'Captions off'}</span></div>
       <div className="explainer-controls">
-        <div className="explainer-timeline"><label className="sr-only" htmlFor={`${id}-seek`}>Explainer timeline</label><input id={`${id}-seek`} aria-label="Explainer timeline" type="range" min={0} max={recording.duration} step={.01} value={time} onChange={event => seek(Number(event.target.value))} style={{ background: `linear-gradient(to right, #a9b8f5 ${100 * time / recording.duration}%, #ffffff23 ${100 * time / recording.duration}%)` }} /><div className="explainer-cue-ticks" aria-hidden="true">{recording.cues.slice(1).map(cue => <i key={cue.start} style={{ left: `${100 * cue.start / recording.duration}%` }} />)}</div></div>
+        <div className="explainer-timeline"><label className="sr-only" htmlFor={`${id}-seek`}>Explainer timeline</label><input id={`${id}-seek`} aria-label="Explainer timeline" type="range" min={0} max={recording.duration} step={.01} value={time} onChange={event => seek(Number(event.target.value))} style={{ background: `linear-gradient(to right, var(--player-accent, #a9b8f5) ${100 * time / recording.duration}%, var(--player-line, #ffffff23) ${100 * time / recording.duration}%)` }} /><div className="explainer-cue-ticks" aria-hidden="true">{recording.cues.slice(1).map(cue => <i key={cue.start} style={{ left: `${100 * cue.start / recording.duration}%` }} />)}</div></div>
         <div className="explainer-control-row">
           <div className="explainer-transport">
             <button type="button" onClick={() => seek(recording.cues[Math.max(0, scene - 1)].start)} aria-label="Previous scene" disabled={scene === 0}>‹</button>
@@ -125,7 +126,7 @@ export function NarratedPlayer({ recording, title, labels, children, canEnlarge 
       {error && <div className="explainer-error" role="alert"><span>{error}</span><button type="button" onClick={() => { audio.current?.load(); setTime(0); setError('') }}>Retry audio</button></div>}
       {notice && <div className="explainer-error" role="status">{notice}</div>}
     </div>
-    {canEnlarge && <p className="explainer-fit-hint">Use + for larger labels. You can pause, replay, or jump to any scene below.</p>}
+    {canEnlarge && <p className="explainer-fit-hint">Labels stay readable. Swipe or scroll wide diagrams, use + for the full view, or jump to a scene in the transcript.</p>}
     <details className="explainer-transcript"><summary>Read the full transcript <span>{recording.cues.length} scenes · Voice and captions</span></summary><ol>{recording.cues.map((cue, index) => <li key={cue.start}><button type="button" onClick={() => seek(cue.start)} aria-label={`Jump to scene ${index + 1}`} aria-current={scene === index ? 'step' : undefined}>{clock(cue.start)}</button><div>{labels && <strong>{labels[index]}</strong>}<p>{cue.text}</p></div></li>)}</ol></details>
   </div>
 }

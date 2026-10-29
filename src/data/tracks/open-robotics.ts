@@ -1678,33 +1678,42 @@ A joint must move to 90 degrees. It starts at 0 degrees. The setpoint is the des
 
 :::anim
 title: Three PID steps toward a setpoint of 90 degrees
-line arc from 110,300 to 650,300 color: grey
-text a0 "0" @ 110,340 size: 16 color: grey
-text a30 "30" @ 245,340 size: 16 color: grey
-text a50 "50" @ 335,340 size: 16 color: grey
-text a90 "90 = setpoint" @ 515,340 size: 16 color: green
-dot target @ 515,300 r: 8 color: green
-dot joint @ 110,300 r: 11 color: yellow label: "joint"
-dot ghost @ 245,300 r: 8 color: grey label: "without D"
-text tm "time 0.0 s" @ 380,220 size: 18 color: grey
-num nerr = 0 @ 790,100 prefix: "error = " size: 24
-num nP = 0 @ 790,165 prefix: "P = 0.5 x e = " suffix: " V" digits: 1 size: 20
-num nI = 0 @ 790,210 prefix: "I = 0.1 x sum = " suffix: " V" digits: 1 size: 20
-num nD = 0 @ 790,255 prefix: "D = 0.2 x rate = " suffix: " V" digits: 1 size: 20
-num ncmd = 0 @ 790,330 prefix: "command = " suffix: " V" digits: 1 size: 26 color: yellow
+text tm "time 0.0 s" @ 480,40 size: 24 color: grey
+axes plot @ 100,115 size: 420x250 x: 0,0.3 y: 0,120 xlabel: "Time (seconds)" ylabel: "Joint angle (°)"
+line arc on plot from 0,90 to 0.3,90 color: purple dashed: true
+text a90 "Target: 90°" @ 430,95 size: 22 color: purple
+dot target on plot @ 0.3,90 r: 7 color: purple
+dot joint on plot @ 0,0 r: 10 color: blue
+line path1 on plot from 0,0 to 0.1,30 color: blue
+line path2 on plot from 0.1,30 to 0.2,50 color: blue
+line overshoot on plot from 0.1,30 to 0.25,105 color: orange
+dot ghost on plot @ 0.1,30 r: 8 color: orange
+text ghostNote "Without D: overshoot" @ 300,440 size: 22 color: orange
+num nerr = 0 @ 740,100 prefix: "error = " suffix: "°" size: 30 color: blue
+text pLabel "P · pull toward target" @ 740,165 size: 22 color: blue
+num nP = 0 @ 740,202 prefix: "0.5 × e = " suffix: " V" digits: 1 size: 28 color: blue
+text iLabel "I · add past errors" @ 740,262 size: 22 color: purple
+num nI = 0 @ 740,299 prefix: "0.1 × sum = " suffix: " V" digits: 1 size: 28 color: purple
+text dLabel "D · brake fast changes" @ 740,359 size: 22 color: orange
+num nD = 0 @ 740,396 prefix: "0.2 × rate = " suffix: " V" digits: 1 size: 28 color: orange
+rect command @ 740,480 size: 340x76 color: blue
+num ncmd = 45.9 @ 740,480 prefix: "motor: " suffix: " V" digits: 1 size: 30 color: blue
+text sum "45 + 0.9 + 0" @ 340,480 size: 28 color: blue
 
 step: The joint starts at 0 degrees. The setpoint is 90. The error is 90 - 0 = 90.
+  show plot, a90, target, joint, tm, nerr
   draw arc
-  show a0, a30, a50, a90, target, joint, tm, nerr
   count nerr -> 90
 step: Step 1: the P term is 45, the I term 0.9, the D term 0. Command 45.9 V.
-  show nP, nI, nD, ncmd
+  show pLabel, iLabel, dLabel, nP, nI, nD
   count nP -> 45
   & count nI -> 0.9
-  count ncmd -> 45.9
+  show sum, command
+  morph sum -> ncmd
 step: The joint moves to 30 degrees. The error falls to 60.
   label tm "time 0.1 s"
-  move joint -> 245,300 (1.5s)
+  move joint -> 0.1,30 (1.5s)
+  & draw path1 (1.5s)
   & count nerr -> 60 (1.5s)
 step: Step 2: P = 30, I = 1.5. The error fell fast, so D = 0.2 x (-300) = -60.
   count nP -> 30
@@ -1716,16 +1725,18 @@ step: The command is 30 + 1.5 - 60 = -28.5 V. The derivative term brakes the joi
   pulse nD
 step: The joint moves to 50 degrees. Error 40, P 20, I 1.9, D -40. Command -18.1 V.
   label tm "time 0.2 s"
-  move joint -> 335,300 (1.5s)
+  move joint -> 0.2,50 (1.5s)
+  & draw path2 (1.5s)
   & count nerr -> 40 (1.5s)
   & count nP -> 20 (1.5s)
   & count nI -> 1.9 (1.5s)
   & count nD -> -40 (1.5s)
   & count ncmd -> -18.1 (1.5s)
 step: Without the D term, the step-2 command is 31.5 V and the joint passes 90 and comes back.
-  show ghost
-  move ghost -> 582,300 (2s)
-  move ghost -> 515,300
+  show ghost, ghostNote
+  move ghost -> 0.25,105 (2s)
+  & draw overshoot (2s)
+  move ghost -> 0.3,90
 :::
 
 We use gains $K_p = 0.5$, $K_i = 0.1$, and $K_d = 0.2$. The time step is 0.1 s. The command is in volts.

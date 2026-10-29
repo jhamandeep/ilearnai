@@ -1,0 +1,79 @@
+/* Shared lesson typography and diagram surfaces. Loaded after the course styles. */
+.learning-shell .prose { font-size:18px; line-height:1.85; }
+.learning-shell .study-workspace-grid .prose { font-size:18px; }
+.learning-shell .lesson-context-preview .prose { font-size:17px; }
+.learning-shell .study-tool-panel :is(p,li),.learning-shell .study-example .prose p,.learning-shell .study-application .prose p { font-size:15px; line-height:1.8; }
+.learning-shell .study-tool-panel :is(input,textarea,button),.learning-shell .study-tool-tabs button { font-size:14px; }
+.learning-shell .course-lesson-card p,.learning-shell .course-chapter-section > header p,.learning-shell .skills-course-about > p,.learning-shell .course-workspace-heading p { font-size:16px; }
+.learning-shell .course-chapter-nav button > span,.learning-shell .course-format-nav button,.learning-shell .course-lesson-actions a,.learning-shell .study-activity-tabs > a { font-size:14px; }
+.learning-shell .course-chapter-nav :is(small,b),.learning-shell .course-lesson-meta { font-size:12px; }
+.learning-shell .activity-outline { font-size:14px; }
+.learning-shell .activity-outline nav a small { font-size:11px; }
+.learning-shell .rich > figcaption { font-size:17px; line-height:1.6; flex-wrap:wrap; }
+.learning-shell .rich-kind { font-size:11px; }
+.learning-shell .an-learning-context p,.learning-shell .an-takeaway,.learning-shell .animation-watch-focus p { font-size:17px; line-height:1.8; }
+
+/* Use the same surface and ink as static flows and architecture diagrams. */
+.narrated-explainer { --player-surface:var(--surface,#fff); --player-panel:var(--surface-2,#f8f9fc); --player-ink:var(--text,#202124); --player-line:var(--border,#e1e5ea); --player-accent:var(--link,#365ab1); }
+.narrated-explainer .course-explainer { background:var(--player-surface); border-color:var(--player-line); box-shadow:0 8px 28px #30477a0a; }
+.narrated-explainer .explainer-stage { background:var(--anim-bg); overscroll-behavior-x:contain; scrollbar-width:thin; }
+.narrated-explainer .explainer-captions { background:var(--player-panel); color:var(--player-ink); border-top:1px solid var(--player-line); font-size:18px; line-height:1.65; padding:18px 24px; }
+.narrated-explainer .explainer-controls { background:var(--player-panel); padding-top:4px; }
+.narrated-explainer .explainer-controls button,.narrated-explainer .explainer-clock { color:var(--player-ink); }
+.narrated-explainer .explainer-controls button { min-width:42px; height:44px; }
+.narrated-explainer .explainer-controls button:hover { background:color-mix(in srgb,var(--player-accent) 10%,transparent); }
+.narrated-explainer .explainer-settings select { background:var(--player-panel); color:var(--player-ink); font-size:15px; min-height:44px; }
+.narrated-explainer .explainer-clock { font-size:14px; }
+.narrated-explainer .explainer-cc[aria-pressed=true]::after { background:var(--player-accent); }
+.narrated-explainer .explainer-cue-ticks i { background:var(--player-panel); }
+.narrated-explainer .explainer-timeline input::-webkit-slider-thumb { background:var(--player-accent); width:16px; height:16px; }
+.narrated-explainer .explainer-timeline input::-moz-range-thumb { background:var(--player-accent); width:16px; height:16px; }
+.narrated-explainer .explainer-transcript { font-size:16px; line-height:1.7; color:var(--player-ink); }
+.narrated-explainer .explainer-transcript summary span,.narrated-explainer .explainer-transcript button,.narrated-explainer .explainer-fit-hint { font-size:14px; }
+.narrated-explainer .explainer-transcript summary { flex-wrap:wrap; }
+.narrated-explainer .explainer-transcript button { min-height:40px; }
+.narrated-explainer .explainer-overlay-play { position:absolute; left:auto; top:auto; right:12px; bottom:12px; transform:none; padding:12px 16px; border-radius:14px; }
+.narrated-explainer .course-explainer .explainer-overlay-play.is-paused { top:auto; bottom:12px; }
+.narrated-explainer .explainer-overlay-play strong,.narrated-explainer .explainer-overlay-play.is-paused strong { font-size:14px; }
+.an-arrow-label,.an-dot-label,.an-curve-label { paint-order:stroke fill; stroke:var(--anim-bg); stroke-width:7px; stroke-linejoin:round; }
+.learning-shell :is(.rich-flow,.rich-arch) { border-radius:20px; box-shadow:0 8px 28px #30477a0a; }
+:is(.rich-flow,.rich-arch) .rich-stage { background:var(--anim-bg); }
+:is(.rich-flow,.rich-arch) .ra-box-bg { fill:var(--surface); stroke:#aebfdf; }
+:is(.rich-flow,.rich-arch) .ra-label { font-size:16px; letter-spacing:0; }
+:is(.rich-flow,.rich-arch) .ra-layer { font-size:14px; letter-spacing:.025em; }
+.rich-flow .rf-elabel { font-size:15px; paint-order:stroke fill; stroke:var(--anim-bg); stroke-width:6px; }
+:is(.rich-flow,.rich-arch) .rich-scroll > svg { max-width:none; }
+.diagram-pan-hint { margin:0; padding:8px 16px; color:var(--text-dim); font-size:14px; background:var(--surface-2); }
+
+.marketing-menu-toggle { display:none; }
+@media(max-width:1000px) {
+ .topbar { padding:0 16px; }
+ .topbar .topbar-inner { position:relative; flex-wrap:nowrap; min-height:72px; padding:0; gap:10px; }
+ .topbar .topbar-inner > .brand { order:0; flex-shrink:0; }
+ .topbar .topbar-inner > .account { order:1; margin-left:auto; gap:4px; }
+ .marketing-menu-toggle { display:grid; place-items:center; order:2; flex-shrink:0; width:44px; height:44px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); color:var(--text); font:inherit; font-size:22px; cursor:pointer; }
+ .topbar .nav { display:none; }
+ .topbar.mobile-menu-open .nav { display:flex; position:absolute; left:-16px; right:-16px; top:72px; width:auto; max-height:calc(100dvh - 136px); overflow:auto; flex-direction:column; align-items:stretch; gap:4px; padding:12px 16px 20px; margin:0; background:var(--surface); border-bottom:1px solid var(--border); box-shadow:0 12px 25px #16294d14; }
+ .topbar .nav > a,.topbar .nav-group summary { min-height:44px; padding:12px 16px; font-size:16px; border-radius:10px; justify-content:space-between; }
+ .topbar .nav-menu,.topbar .nav-group:last-child .nav-menu { position:static; width:auto; margin:4px 0 12px; box-shadow:none; border:0; border-left:2px solid var(--border); border-radius:0; padding:4px 8px; }
+ .topbar .nav-menu a { padding:12px; }
+}
+@media(max-width:700px) {
+ .learning-shell .study-workspace-grid .prose { font-size:17px; }
+ .learning-shell .study-workspace-grid .activity-main { padding:20px 12px; }
+ .learning-shell .an-learning-context p,.learning-shell .an-takeaway { font-size:16px; }
+ .learning-shell .rich > figcaption { font-size:16px; }
+}
+@container(max-width:560px) {
+ .narrated-explainer .explainer-captions { font-size:16px; padding:16px; }
+ .narrated-explainer .explainer-controls { padding-left:10px; padding-right:10px; }
+ .narrated-explainer .explainer-transport,.narrated-explainer .explainer-settings { gap:2px; }
+ .narrated-explainer .explainer-transcript { padding:16px; }
+}
+@media(prefers-reduced-motion:reduce) { .ra-box { transition:none; } }
+.narrated-explainer .course-explainer .explainer-captions { color:var(--player-ink); }
+.narrated-explainer .course-explainer .explainer-captions.captions-off { color:transparent; }
+.explainer-start-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:62px; padding:8px 16px; background:var(--player-surface); border-top:1px solid var(--player-line); color:var(--player-ink); font-size:14px; }
+.narrated-explainer .course-explainer .explainer-overlay-play { position:static; transform:none; padding:10px 14px; white-space:normal; gap:10px; box-shadow:none; }
+.explainer-playing-label { color:var(--text-dim); }
+.narrated-explainer .course-explainer .explainer-settings { flex-wrap:wrap; }

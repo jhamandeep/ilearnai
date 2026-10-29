@@ -53,7 +53,7 @@ export interface Obj {
 }
 
 export interface Action {
-  op: 'show' | 'hide' | 'draw' | 'arrow' | 'send' | 'move' | 'walk' | 'vector' | 'tangent' | 'count' | 'label' | 'color' | 'highlight' | 'dim' | 'restore' | 'pulse' | 'wait' | 'zoom'
+  op: 'show' | 'hide' | 'draw' | 'arrow' | 'send' | 'move' | 'morph' | 'walk' | 'vector' | 'tangent' | 'count' | 'label' | 'color' | 'highlight' | 'dim' | 'restore' | 'pulse' | 'wait' | 'zoom'
   ids: string[]
   to?: [number, number]
   from?: number
@@ -114,7 +114,7 @@ function normalise(line: string): string {
 }
 
 const DEFAULT_DUR: Record<Action['op'], number> = {
-  show: 0.6, hide: 0.4, draw: 1.2, arrow: 1.4, send: 1.0, move: 1.0, walk: 1.6, vector: 1.0, tangent: 1.0,
+  show: 0.6, hide: 0.4, draw: 1.2, arrow: 1.4, send: 1.0, move: 1.0, morph: 1.4, walk: 1.6, vector: 1.0, tangent: 1.0,
   count: 1.2, label: 0.5, color: 0.4, highlight: 0.4, dim: 0.4, restore: 0.4, pulse: 0.7, wait: 1, zoom: 1.0,
 }
 
@@ -329,6 +329,16 @@ export function parseAnim(src: string): Scene {
         if (!byId.has(aid)) add({ kind: 'arrow', id: aid, x: 0, y: 0, w: 0, h: 0, label, a, b })
         else if (label && !byId.get(aid)!.label) byId.get(aid)!.label = label
         push({ op, ids: [aid], text: label })
+        break
+      }
+      case 'morph': {
+        const m = /^(\S+)\s*->\s*(\S+)$/.exec(args.join(' '))
+        if (!m || m[1] === m[2]) { errors.push(`${where}: morph needs two different objects: "SOURCE -> TARGET"`); break }
+        for (const id of [m[1], m[2]]) {
+          const object = need(id, where)
+          if (object && !['box', 'rect', 'text', 'num', 'dot'].includes(object.kind)) errors.push(`${where}: morph supports boxes, text, numbers and dots`)
+        }
+        push({ op, ids: [m[1], m[2]] })
         break
       }
       case 'move': case 'vector': {

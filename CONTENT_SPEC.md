@@ -236,7 +236,7 @@ vline: 3 = minimum
 
 ### anim: a narrated, continuous animation (the main explainer of a lesson)
 
-An `anim` block is a short animated explainer with subtitles: one theme-aware stage of 960 x 540 units, objects that appear, move, connect and change, and one narration line per scene. The opening frame is visible before playback. The reader starts playback, then can pause, scrub, select a scene, change speed, open full screen, or explore the steps in the transcript. Playback pauses offscreen and in a hidden tab. Reduced-motion users can select completed scene frames without transitions. The complete scene fits the lesson width by default. Enlarge switches to a scrollable stage for larger labels; Fit scene restores the full view. Use it for the one idea the lesson exists to teach. Every lesson must have one; put it under "How it works" (or "The idea with an example" for Level 0). It counts as the lesson's diagram. `npm run visuals` enforces animation coverage across all tracks.
+An `anim` block is a short animated explainer with subtitles: one theme-aware stage of 960 x 540 units, objects that appear, move, connect and change, and one narration line per scene. The opening frame is visible before playback. The reader starts playback, then can pause, scrub, select a scene, change speed, open full screen, or explore the steps in the transcript. Playback pauses offscreen and in a hidden tab. Reduced-motion users can select completed scene frames without transitions. The renderer measures visible objects across the scenes and fits their actual bounds on desktop. Phones focus on the active explanation. Labels use a larger type scale, and the canvas scrolls horizontally instead of shrinking text below 14 screen pixels. Enlarge opens the full composition; Fit scene returns to automatic framing. Use it for the one idea the lesson exists to teach. Every lesson must have one; put it under "How it works" (or "The idea with an example" for Level 0). It counts as the lesson's diagram. `npm run visuals` enforces animation coverage across all tracks.
 
 ```
 :::anim
@@ -289,6 +289,8 @@ tangent ID on CURVE at x0 [len: 1.5] [label: slope]           tangent of a curve
 arrow ID from A to B ["label"] [color: c] [dashed]             a connector you can show later (arrows are usually made by the arrow action instead)
 ```
 
+A morph consumes its source and reveals its target. Both must be declared boxes, rectangles, text, numbers, or dots. Give targets their own positions and labels. It is seekable in either direction and snaps to its completed result with reduced motion. Keep arrows in separate lanes from labels; use transformations to show a change in meaning, not as decoration. Geometry-only edits can reuse the approved recordings with `npm run narration:export && node scripts/reuse-narration.mjs`; this refuses changed or ambiguous spoken text.
+
 **Actions** (one per line under a step; a line that starts with `&` runs together with the previous action; add `(2s)` at the end to set the duration):
 
 ```
@@ -298,6 +300,7 @@ draw IDS              trace a curve, vector or line
 arrow A -> B : label  draw a connector from the edge of A to the edge of B, then send a glowing packet along it
 send A -> B : label   send another packet along an existing connector
 move ID -> x,y        slide an object (axes coordinates if the object is on axes)
+morph SOURCE -> TARGET  move a visible object into a hidden result, reshape its rectangle if applicable, then reveal the result
 walk ID along CURVE from x0 to x1     slide a dot along a curve
 vector ID -> x,y      move the tip of a vector
 tangent ID -> x1      slide a tangent along its curve

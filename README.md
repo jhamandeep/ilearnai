@@ -2,6 +2,16 @@
 
 A free AI learning site for people who want to apply AI in their work and people who want to build AI systems. The practical path starts with an industry, a role, and a work problem; the technical path goes from no coding background to building complete systems. Eleven tracks span four levels (Level 0 foundations to Level 3 advanced), with 245 lessons, animated diagrams, chapter video sequences, exercises and quizzes, practice papers, a placement test, papers with reading notes, a glossary, roadmaps, a concept map, a hub of model, dataset and paper portals, and browser-local labs. Open draft access with browser-saved progress; optional accounts and no paywall.
 
+## Readable diagrams and compact mobile navigation
+
+Lesson reading text is now 18px (17px on phones); captions, transcript text, course navigation and diagram labels are larger too. The shared renderer fits the measured content instead of a fixed empty 960×540 frame. Small players focus on the active explanation; wide diagrams use contained horizontal scrolling to preserve a 14px minimum label scale. The player and older flow/architecture diagrams use the page's light surface and matching controls. Play/resume sits below the drawing so it cannot cover a result.
+
+The data-set, attention and PID explainers were recomposed with separate label lanes and meaningful transformations. `morph SOURCE -> TARGET` transfers a visible object into its result, including rectangle shape/colour changes, and supports reverse seeking and reduced motion. PID now plots the joint response with P/I/D explanations; attention shows proportional weights and combines weighted values. The approved voice audio is unchanged. Geometry-only narration changes can be rekeyed safely using `npm run narration:export && node scripts/reuse-narration.mjs`; the helper refuses any changed or ambiguous spoken text.
+
+The mobile marketing header now starts as a compact logo/menu row. Its expandable navigation supports Escape, outside clicks, route changes, and breakpoint changes. Course navigation keeps the existing overlay behaviour. Rollback: `rollback/before-readable-diagrams-20261029` at `ab82fa4`. Browser review screenshots and reports are under `output/reviews/readable/`.
+
+Validation: the 295-explainer playback regression passed 2,036 scene checks. The focused browser suite passed 228 scene/viewport checks for readable type, fitted node text, label collisions, transformations, backward seeking, reduced motion, and compact menus at 1440/720/390/320px; plot-framing follow-ups covered all 12 curve explainers. Product rendering passed 1,419 activity pages and 11 labs; all 11 course navigation checks pass. Build and visual validation pass; lint retains 16 existing warnings. Run `npm run test:readability-browser` for the focused regression.
+
 ## Course navigation and reading highlights
 
 Opening a course or lesson automatically hides the main Home navigation. The menu button reopens it as an overlay, so it does not take width from course contents or the lesson. Selecting a menu link, changing routes, resizing across the mobile breakpoint, Escape, and the backdrop close the temporary drawer. Desktop browsing outside courses retains its separate menu preference.

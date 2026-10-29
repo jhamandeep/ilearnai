@@ -86,34 +86,40 @@ A data set has a shape. The shape is 2 numbers: the number of rows and the numbe
 
 :::anim
 title: One row becomes features and a label, and 6 rows become a data set
-text hdr "Row 3 of the house table, one example" @ 440,70 size: 18 color: grey
-rect c_size @ 160,140 size: 110x56 "size_m2|90"
-rect c_bed @ 300,140 size: 110x56 "bedrooms|3"
-rect c_city @ 440,140 size: 110x56 "city|York"
-rect c_gar @ 580,140 size: 110x56 "garden|yes"
-rect c_price @ 720,140 size: 110x56 "price|260000"
-box xbox "X: 4 features" @ 250,290 size: 260x64 icon: none
-box ybox "y: the label" @ 530,290 size: 180x64 icon: none
-box model "Model" @ 800,290 size: 180x64 icon: model
-num ex = 0 @ 200,430 prefix: "examples = " size: 26
-num feat = 0 @ 480,430 prefix: "features = " size: 26
-num meanp = 0 @ 760,430 prefix: "mean price = " size: 26 color: yellow
+text hdr "One house · five recorded values" @ 480,50 size: 24 color: grey
+rect c_size @ 120,120 size: 156x76 "size_m2|90" color: blue
+rect c_bed @ 300,120 size: 156x76 "bedrooms|3" color: blue
+rect c_city @ 480,120 size: 156x76 "city|York" color: blue
+rect c_gar @ 660,120 size: 156x76 "garden|yes" color: blue
+rect c_price @ 840,120 size: 156x76 "price|260000" color: purple
+text featureTitle "Features · what we know" @ 335,195 size: 22 color: blue
+rect f_size @ 110,245 size: 128x60 "90 m²" color: blue
+rect f_bed @ 260,245 size: 128x60 "3 beds" color: blue
+rect f_city @ 410,245 size: 128x60 "York" color: blue
+rect f_gar @ 560,245 size: 128x60 "Garden" color: blue
+rect price @ 800,245 size: 184x60 "£260,000" color: purple
+text labelTitle "Label · what to predict" @ 800,195 size: 22 color: purple
+box xbox "X: 4 features" @ 180,355 size: 230x76 icon: none color: blue
+box model "Model" @ 480,355 size: 180x76 icon: model color: teal
+box ybox "y: the label" @ 800,355 size: 210x76 icon: none color: purple
+num ex = 0 @ 160,470 prefix: "examples = " size: 26 color: blue
+num feat = 0 @ 460,470 prefix: "features = " size: 26 color: blue
+num meanp = 0 @ 780,470 prefix: "mean £" size: 26 color: purple
 
 step: Row 3 is one example: one house that sold, written across the table in 5 cells.
   show hdr, c_size, c_bed, c_city, c_gar, c_price
   pulse c_size, c_bed, c_city, c_gar, c_price
 step: The 4 cells that describe the house are features. Together they form X.
+  show featureTitle
+  morph c_size -> f_size
+  & morph c_bed -> f_bed
+  & morph c_city -> f_city
+  & morph c_gar -> f_gar
   show xbox
-  color c_size, c_bed, c_city, c_gar blue
-  arrow c_size -> xbox
-  & arrow c_bed -> xbox
-  & arrow c_city -> xbox
-  & arrow c_gar -> xbox
 step: The price is the column we want to predict. It is the label, y.
+  show labelTitle
+  morph c_price -> price
   show ybox
-  color c_price yellow
-  arrow c_price -> ybox : label
-  highlight ybox
 step: A model reads the features, learns a rule, and compares its guess with the label.
   show model
   arrow xbox -> model : features

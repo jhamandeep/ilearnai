@@ -87,8 +87,8 @@ function checkLesson(path, l, strict) {
       for (const e of sc.errors) problem(path, `anim: ${e}`)
       if (sc.steps.length < 3) problem(path, 'anim has fewer than 3 steps')
       if (sc.steps.some((st) => st.actions.length === 0)) problem(path, 'anim step has no actions')
-      if (!sc.steps.some((st) => st.actions.some((a) => ['arrow', 'send', 'move', 'walk', 'vector', 'tangent', 'count', 'draw', 'zoom'].includes(a.op)))) problem(path, 'anim has no motion (arrow, move, walk, count, draw…)')
-      const shown = new Set(sc.steps.flatMap((st) => st.actions.filter((a) => ['show', 'draw', 'arrow', 'send'].includes(a.op)).flatMap((a) => a.ids)))
+      if (!sc.steps.some((st) => st.actions.some((a) => ['arrow', 'send', 'morph', 'move', 'walk', 'vector', 'tangent', 'count', 'draw', 'zoom'].includes(a.op)))) problem(path, 'anim has no motion (arrow, move, walk, count, draw…)')
+      const shown = new Set(sc.steps.flatMap((st) => st.actions.filter((a) => ['show', 'draw', 'arrow', 'send', 'morph'].includes(a.op)).flatMap((a) => a.ids)))
       for (const o of sc.objects) if (o.kind !== 'arrow' && !shown.has(o.id)) problem(path, `anim object "${o.id}" is never shown (add it to a show line)`)
       // stage bounds for objects in stage units
       for (const o of sc.objects) {
@@ -97,11 +97,21 @@ function checkLesson(path, l, strict) {
         const right = o.kind === 'axes' ? o.x + o.w : o.x + hw, bottom = o.kind === 'axes' ? o.y + o.h : o.y + hh
         if (o.x - hw < 0 || o.y - hh < 0 || right > 960 || bottom > 540) problem(path, `anim object "${o.id}" is off the 960x540 stage`)
       }
-      // boxes and rects must not overlap each other
+      // Declared boxes may share a place when one replaces the other. A morph
+      // intentionally overlaps during its crossfade; compare coexisting objects.
+      const live = new Set(), coexist = new Set()
+      const pairKey = (a, b) => [a, b].sort().join('::')
+      for (const step of sc.steps) for (const action of step.actions) {
+        if (['show', 'draw'].includes(action.op)) for (const id of action.ids) live.add(id)
+        if (action.op === 'hide') for (const id of action.ids) live.delete(id)
+        if (action.op === 'morph') { live.delete(action.ids[0]); live.add(action.ids[1]) }
+        const ids = [...live]
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) coexist.add(pairKey(ids[i], ids[j]))
+      }
       const solid = sc.objects.filter((o) => o.kind === 'box' || o.kind === 'rect')
       for (let i = 0; i < solid.length; i++) for (let j = i + 1; j < solid.length; j++) {
         const a = solid[i], b = solid[j]
-        if (Math.abs(a.x - b.x) < (a.w + b.w) / 2 && Math.abs(a.y - b.y) < (a.h + b.h) / 2) problem(path, `anim boxes "${a.id}" and "${b.id}" overlap`)
+        if (coexist.has(pairKey(a.id, b.id)) && Math.abs(a.x - b.x) < (a.w + b.w) / 2 && Math.abs(a.y - b.y) < (a.h + b.h) / 2) problem(path, `anim boxes "${a.id}" and "${b.id}" overlap`)
       }
       // arrows need both ends visible; count total length
       const visible = new Set()
@@ -110,6 +120,10 @@ function checkLesson(path, l, strict) {
         for (const a of st.actions) {
           if (['show', 'draw'].includes(a.op)) for (const id of a.ids) visible.add(id)
           if (a.op === 'hide') for (const id of a.ids) visible.delete(id)
+          if (a.op === 'morph') {
+            if (!visible.has(a.ids[0])) problem(path, `anim morph source ${a.ids[0]} is not visible`)
+            visible.delete(a.ids[0]); visible.add(a.ids[1])
+          }
           if (a.op === 'arrow' || a.op === 'send') {
             const ar = sc.objects.find((o) => o.id === a.ids[0])
             if (ar) for (const end of [ar.a, ar.b]) if (end && !visible.has(end)) problem(path, `anim arrow ${ar.a} -> ${ar.b}: "${end}" is not shown yet (show it first)`)

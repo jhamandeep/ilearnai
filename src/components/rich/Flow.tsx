@@ -7,8 +7,8 @@ interface Node { id: string; col: number; row: number }
 interface Edge { from: string; to: string; label: string }
 interface Pos { x: number; y: number; band: number; col: number }
 
-const W = 164
-const H = 54
+const W = 202
+const H = 68
 const GX = 84
 const GY = 30
 const PAD = 14
@@ -129,8 +129,9 @@ export function Flow({ src }: { src: string }) {
   return (
     <figure className="rich rich-flow">
       {title && <figcaption><span className="rich-kind">Flow</span>{title}</figcaption>}
-      <div className="rich-stage rich-scroll" ref={tip.host}>
-        <svg viewBox={`-96 -24 ${width + 192} ${fullHeight + 64}`} width={width + 192} height={fullHeight + 64} style={{ width: '100%', maxWidth: (width + 192) * 1.25 }} role="img" aria-label={title ?? 'Flow diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
+      <p className="diagram-pan-hint">Follow the highlighted path. Scroll across wider diagrams.</p>
+      <div className="rich-stage rich-scroll" ref={tip.host} tabIndex={0} role="region" aria-label="Diagram. Scroll horizontally to explore.">
+        <svg viewBox={`-96 -24 ${width + 192} ${fullHeight + 64}`} width={width + 192} height={fullHeight + 64} style={{ width: '100%', minWidth: (width + 192) * .94, maxWidth: (width + 192) * 1.25 }} role="img" aria-label={title ?? 'Flow diagram'} onPointerLeave={() => { setHover(null); tip.hide() }}>
           <defs>
             <marker id={`${svgId}-arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--text-dim)" opacity="0.6" /></marker>
             <marker id={`${svgId}-arrow-on`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="var(--primary)" /></marker>
@@ -147,9 +148,17 @@ export function Flow({ src }: { src: string }) {
             if (!e.label) return null
             const m = mid(e)
             const on = i === step
-            const short = e.label.length > 26 ? e.label.slice(0, 25) + '…' : e.label
+            const words = e.label.split(/\s+/)
+            const lines: string[] = ['']
+            for (const word of words) {
+              const last = lines.length - 1
+              if (lines[last] && lines[last].length + word.length > 9) lines.push(word)
+              else lines[last] += (lines[last] ? ' ' : '') + word
+            }
+            const above = pos(e.to).col >= pos(e.from).col
+            const shown = lines.slice(0, 3).map((line, i) => line.length > 11 || (i === 2 && lines.length > 3) ? line.slice(0, 10) + '…' : line)
             return (
-              <text key={'l' + i} x={m.x} y={m.y} textAnchor={m.anchor} dominantBaseline="middle" className={on ? 'rf-elabel rf-elabel-on' : 'rf-elabel'}>{short}</text>
+              <text key={'l' + i} x={m.x} y={m.y} textAnchor={m.anchor} dominantBaseline="middle" className={on ? 'rf-elabel rf-elabel-on' : 'rf-elabel'}><title>{e.label}</title>{shown.map((line, n) => <tspan key={n} x={m.x} dy={n === 0 ? (above ? -(shown.length - 1) * 18 : 0) : 18}>{line}</tspan>)}</text>
             )
           })}
           {nodes.map((n) => {

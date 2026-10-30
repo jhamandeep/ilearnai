@@ -51,7 +51,7 @@ try {
   }
   await page.goto(base)
   const preview = page.locator('.home-knowledge-map')
-  await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.locator('.topo-svg').waitFor()
+  await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.getByRole('button', { name: '2D view', exact: true }).click(); await preview.locator('.topo-svg').waitFor()
   await page.waitForFunction(() => document.querySelector('.brand-symbol')?.dataset.motion === 'on')
   const logo = page.locator('.topbar .brand-orbit')
   const before = await logo.evaluate(element => getComputedStyle(element).transform)
@@ -71,7 +71,7 @@ try {
     await page.locator('.topo-panel h3').waitFor()
     assert.equal(await page.locator('.topo-panel h3').innerText(), label)
     await page.goBack()
-    await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.locator('.topo-svg').waitFor()
+    await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.getByRole('button', { name: '2D view', exact: true }).click(); await preview.locator('.topo-svg').waitFor()
   }
   await preview.scrollIntoViewIfNeeded()
   await page.screenshot({ path: `${output}/homepage-desktop.png` })
@@ -153,7 +153,7 @@ try {
       await page.keyboard.press('Escape')
     }
     await page.goto(base)
-    await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.locator('.topo-svg').waitFor()
+    await preview.waitFor(); await preview.scrollIntoViewIfNeeded(); await preview.getByRole('button', { name: '2D view', exact: true }).click(); await preview.locator('.topo-svg').waitFor()
     await noOverflow(`homepage at ${width}`)
     if (width === 390 || width === 320) {
       await preview.scrollIntoViewIfNeeded()

@@ -6,6 +6,9 @@ import { nodes as allNodes, edges as allEdges } from '../data/graph'
 import { tracks } from '../data/tracks'
 import type { ConceptKind, ConceptNode } from '../data/types'
 import { ArtworkMotionContext } from '../lib/artworkMotion'
+import { SpatialGraphView } from './SpatialGraphView'
+import type { SpatialGraphHandle } from '../lib/spatialGraphScene'
+import { spatialGraphPalette } from '../lib/spatialGraphPalette'
 import '../knowledge-map.css'
 
 interface MapNode extends SimulationNodeDatum, ConceptNode { x: number; y: number }
@@ -42,6 +45,11 @@ function fitted(nodes: MapNode[], width: number, height: number): ZoomTransform 
 
 export default function KnowledgeMap({ selected, onSelect, expandedHref }: { selected: string | null; onSelect: (id: string | null) => void; expandedHref?: string }) {
   const [track, setTrack] = useState('all')
+  const [view, setView] = useState<'3d' | '2d'>('3d')
+  const swatches = view === '3d' ? spatialGraphPalette : colors
+  const [unavailable, setUnavailable] = useState(false)
+  const [spatialZoom, setSpatialZoom] = useState(100)
+  const spatial = useRef<SpatialGraphHandle>(null)
   const [visibleKinds, setVisibleKinds] = useState(new Set(kinds))
   const [query, setQuery] = useState('')
   const [size, setSize] = useState({ width: 900, height: 540 })
@@ -80,7 +88,7 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   }, [])
   useEffect(() => {
     const svg = svgRef.current
-    if (!svg || !showcasing) return
+    if (!svg || !showcasing || view !== '2d') return
     // Update SVG coordinates directly at 24 fps, without rerendering 849 React nodes per frame.
     const dots = [...svg.querySelectorAll<SVGGElement>('[data-node-id]')]
     const lines = [...svg.querySelectorAll<SVGLineElement>('.map-network > line')]
@@ -130,7 +138,7 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
     }
     frame = requestAnimationFrame(tick)
     return () => { cancelAnimationFrame(frame) }
-  }, [showcasing, nodes, links, camera])
+  }, [showcasing, nodes, links, camera, view])
   useEffect(() => {
     const element = svgRef.current
     if (!element) return
@@ -154,15 +162,15 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
     const group = initial ? nodes.filter(node => node.id === initial.id || edges.some(edge => (edge.source === initial.id && edge.target === node.id) || (edge.target === initial.id && edge.source === node.id))) : nodes
     surface.call(behavior.transform, fitted(group, size.width, size.height))
     return () => { surface.on('.zoom', null); zoomRef.current = null; gesture.current = null }
-  }, [nodes, edges, size])
+  }, [nodes, edges, size, view])
 
   function transform(next: ZoomTransform) { if (svgRef.current && zoomRef.current) select<SVGSVGElement, unknown>(svgRef.current).call(zoomRef.current.transform, next) }
-  function fit() { transform(fitted(nodes, size.width, size.height)) }
-  function changeZoom(factor: number) { if (svgRef.current && zoomRef.current) select<SVGSVGElement, unknown>(svgRef.current).call(zoomRef.current.scaleBy, factor) }
+  function fit() { if (view === '3d') spatial.current?.fit(); else transform(fitted(nodes, size.width, size.height)) }
+  function changeZoom(factor: number) { if (view === '3d') { spatial.current?.zoom(factor); return } if (svgRef.current && zoomRef.current) select<SVGSVGElement, unknown>(svgRef.current).call(zoomRef.current.scaleBy, factor) }
   function choose(node: MapNode, focus = true) {
     setShowcase(false)
     onSelect(node.id)
-    if (focus) {
+    if (focus && view === '2d') {
       const group = nodes.filter(item => item.id === node.id || edges.some(edge => (edge.source === node.id && edge.target === item.id) || (edge.target === node.id && edge.source === item.id)))
       transform(fitted(group, size.width, size.height))
     }
@@ -208,15 +216,16 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
     labels.push({ node, x, y, text, width })
   }
 
-  return <div className="knowledge-map" data-node-count={nodes.length} data-edge-count={links.length} data-showcase={showcasing ? 'playing' : 'paused'} onPointerDownCapture={event => { if (!(event.target as Element).closest('[data-map-playback]')) setShowcase(false) }} onFocusCapture={event => { if (!(event.target as Element).closest('[data-map-playback]')) setShowcase(false) }}>
+  return <div className="knowledge-map" data-view={view} data-node-count={nodes.length} data-edge-count={links.length} data-showcase={showcasing ? 'playing' : 'paused'} onPointerDownCapture={event => { if (!(event.target as Element).closest('[data-map-playback]')) setShowcase(false) }} onFocusCapture={event => { if (!(event.target as Element).closest('[data-map-playback]')) setShowcase(false) }}>
     <div className="map-filters">
       <div className="map-search"><label htmlFor={`${id}-search`}>Find an idea</label><input ref={searchRef} id={`${id}-search`} type="search" value={query} maxLength={200} placeholder="Try attention, Python, or agents" autoComplete="off" onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') setQuery('') }} />{query.trim() && <div className="map-search-results"><p role="status">{matches.length ? `${matches.length} matching ideas` : 'No matching ideas. Try another word or clear the filters.'}</p><ul aria-label="Matching ideas">{matches.map(node => <li key={node.id}><button type="button" onClick={() => { choose(node); setQuery(''); searchRef.current?.focus() }}><span>{node.label}</span><small>{node.kind}</small></button></li>)}</ul></div>}</div>
       <label className="map-course-filter">Course<select aria-label="Filter knowledge map by course" value={track} onChange={event => { setTrack(event.target.value); onSelect(null); setQuery('') }}><option value="all">All courses</option>{tracks.map(item => <option key={item.slug} value={item.slug}>{item.title}</option>)}</select></label>
-      <fieldset className="map-kind-filters"><legend>Show on the map</legend>{kinds.map(kind => <label key={kind}><input type="checkbox" checked={visibleKinds.has(kind)} onChange={() => { setVisibleKinds(previous => { const next = new Set(previous); if (next.has(kind)) next.delete(kind); else next.add(kind); return next }); if (current?.kind === kind) onSelect(null) }} /><span style={{ background: colors[kind] }} />{names[kind]}</label>)}</fieldset>
+      <fieldset className="map-kind-filters"><legend>Show on the map</legend>{kinds.map(kind => <label key={kind}><input type="checkbox" checked={visibleKinds.has(kind)} onChange={() => { setVisibleKinds(previous => { const next = new Set(previous); if (next.has(kind)) next.delete(kind); else next.add(kind); return next }); if (current?.kind === kind) onSelect(null) }} /><span style={{ background: swatches[kind] }} />{names[kind]}</label>)}</fieldset>
     </div>
     <div className="map-workspace"><div className="map-visual">
-      <div className="map-toolbar"><span className="map-count" role="status">{nodes.length} ideas · {links.length} connections</span><div><button type="button" className="map-showcase-toggle" data-map-playback aria-pressed={showcase && !selected && !query} disabled={!motion.playing} title={!motion.playing ? 'Enable visual motion in the header to play the showcase' : 'Motion pauses when you explore the map'} onClick={() => { if (showcase && !selected && !query) setShowcase(false); else { onSelect(null); setQuery(''); fit(); setShowcase(true) } }}><i aria-hidden="true" />{!motion.playing ? 'Motion off' : showcase && !selected && !query ? 'Pause showcase' : 'Play showcase'}</button><button type="button" aria-label="Zoom out" onClick={() => changeZoom(1 / 1.35)}>−</button><output aria-label="Map zoom">{Math.round(camera.k * 100)}%</output><button type="button" aria-label="Zoom in" onClick={() => changeZoom(1.35)}>+</button><button type="button" onClick={fit}>Fit map</button></div></div>
-      <div className="map-stage" ref={stageRef}><svg ref={svgRef} viewBox={`0 0 ${size.width} ${size.height}`} className="topo-svg" role="group" aria-label="Interactive knowledge map" aria-describedby={`${id}-instructions`} tabIndex={0} data-revision={revision} onPointerMove={moveDrag} onPointerUp={event => endDrag(event)} onPointerCancel={event => endDrag(event, true)} onLostPointerCapture={() => { gesture.current = null }} onKeyDown={event => {
+      <div className="map-view-picker" role="group" aria-label="Map view"><div><span className="map-view-eyebrow">YOUR CONNECTED WORLD</span><strong>{view === '3d' ? 'Step inside the ideas.' : 'See the whole picture.'}</strong></div><div><button type="button" aria-pressed={view === '3d'} disabled={unavailable} onClick={() => { setView('3d'); setShowcase(true) }}>3D view</button><button type="button" aria-pressed={view === '2d'} onClick={() => setView('2d')}>2D view</button></div></div>{unavailable && <p className="map-fallback-note" role="status">Showing the 2D map on this device. Search and all learning links are available.</p>}
+      <div className="map-toolbar"><span className="map-count" role="status">{nodes.length} ideas · {links.length} connections</span><div><button type="button" className="map-showcase-toggle" data-map-playback aria-pressed={showcase && !selected && !query} disabled={!motion.playing} title={!motion.playing ? 'Enable visual motion in the header to play the showcase' : 'Motion pauses when you explore the map'} onClick={() => { if (showcase && !selected && !query) setShowcase(false); else { onSelect(null); setQuery(''); fit(); setShowcase(true) } }}><i aria-hidden="true" />{!motion.playing ? 'Motion off' : showcase && !selected && !query ? 'Pause showcase' : 'Play showcase'}</button><button type="button" aria-label="Zoom out" onClick={() => changeZoom(1 / 1.35)}>−</button><output aria-label="Map zoom">{view === '3d' ? spatialZoom : Math.round(camera.k * 100)}%</output><button type="button" aria-label="Zoom in" onClick={() => changeZoom(1.35)}>+</button><button type="button" onClick={fit}>Fit map</button></div></div>
+      <div className="map-stage" ref={stageRef}>{view === '3d' ? <SpatialGraphView ref={spatial} nodes={nodes} edges={edges} selected={selected} playing={showcasing} motion={motion.playing} onSelect={id => { const node = nodes.find(node => node.id === id); if (node) choose(node) }} onInteract={() => setShowcase(false)} onZoom={setSpatialZoom} onUnavailable={() => { setUnavailable(true); setView('2d') }} /> : <svg ref={svgRef} viewBox={`0 0 ${size.width} ${size.height}`} className="topo-svg" role="group" aria-label="Interactive knowledge map" aria-describedby={`${id}-instructions`} tabIndex={0} data-revision={revision} onPointerMove={moveDrag} onPointerUp={event => endDrag(event)} onPointerCancel={event => endDrag(event, true)} onLostPointerCapture={() => { gesture.current = null }} onKeyDown={event => {
         if (event.target !== event.currentTarget) return
         if (['+', '=', '-', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) {
           event.preventDefault()
@@ -232,12 +241,12 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
           if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); choose(node) }
           if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); event.stopPropagation(); const next = nodes[(index + (event.key === 'ArrowRight' ? 1 : -1) + nodes.length) % nodes.length]; choose(next); svgRef.current?.querySelector<SVGGElement>(`[data-node-id="${CSS.escape(next.id)}"]`)?.focus({ preventScroll: true }) }
         }}><title>{node.label} · {node.kind}</title><circle r={Math.max(12 / camera.k, radii[node.kind] / Math.sqrt(camera.k))} fill="transparent" /><circle className="map-node-dot" r={radii[node.kind] / Math.sqrt(camera.k)} fill={colors[node.kind]} stroke="#fff" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />{node.id === selected && <circle r={(radii[node.kind] + 6) / Math.sqrt(camera.k)} fill="none" stroke={colors[node.kind]} strokeWidth={2} vectorEffect="non-scaling-stroke" />}</g>)}
-      </g><g className="map-labels" aria-hidden="true">{labels.map(label => <text key={label.node.id} data-label-id={label.node.id} x={label.x} y={label.y} className={label.node.id === selected ? 'is-selected' : ''}>{label.text}</text>)}</g></svg>
+      </g><g className="map-labels" aria-hidden="true">{labels.map(label => <text key={label.node.id} data-label-id={label.node.id} x={label.x} y={label.y} className={label.node.id === selected ? 'is-selected' : ''}>{label.text}</text>)}</g></svg>}
       {showcasing && <div className="map-live-caption" aria-hidden="true"><i /> IDEAS IN MOTION <span>Select a dot to explore</span></div>}
       {!nodes.length && <div className="map-empty"><strong>No ideas are visible.</strong><p>Choose another course or restore the content types.</p><button type="button" onClick={() => { setTrack('all'); setVisibleKinds(new Set(kinds)); setQuery(''); onSelect(null) }}>Reset filters</button></div>}</div>
-      <p id={`${id}-instructions`} className="map-instructions">A living map of connected ideas. Showcase motion pauses when you explore. Select a dot, drag to move, or use + / − to zoom. Pinch on a touch screen. With the map focused, arrow keys move the view and Home fits the map.</p>
+      <p id={`${id}-instructions`} className="map-instructions">{view === '3d' ? 'Drag to orbit in 3D. Select a sphere or label to explore its real connections. Use + / − or pinch to zoom; Ctrl/Command + wheel also zooms. Arrow keys rotate and Home fits the map.' : 'Select a dot, drag to move, or use + / − to zoom. Pinch on a touch screen. Arrow keys move the view and Home fits the map.'} Showcase motion pauses while you explore.</p>
     </div><aside className="topo-panel map-detail" aria-label="Selected idea and connections">
-      {current ? <><div className="map-detail-top"><span className="map-type" style={{ color: colors[current.kind] }}>{current.kind}</span><button type="button" onClick={() => onSelect(null)} aria-label="Clear selected idea">×</button></div><h3>{current.label}</h3><p className="map-track-name">{tracks.find(item => item.slug === current.track)?.title}</p>{current.to && <Link to={current.to} className="btn btn-primary">Open {current.kind} →</Link>}<h4>Connected ideas <span>{connected.length}</span></h4>{connected.length ? <ul className="list map-connections">{connected.map(node => <li key={node.id}><button type="button" onClick={() => choose(node)}><span style={{ background: colors[node.kind] }} /><strong>{node.label}</strong><small>{node.kind}</small></button></li>)}</ul> : <p>No connections match these filters. Turn on more content types or choose All courses.</p>}</> : <><p className="map-overline">Follow your curiosity</p><h3>How to read it</h3><p>Every dot is an idea or a learning resource. Select one to highlight its connections and open a lesson, paper, lab, or definition.</p><h4>Start with an idea</h4><div className="map-starters">{presets.map(([key, label]) => { const node = nodes.find(item => item.id === key); return node ? <button type="button" key={key} onClick={() => choose(node)}>{label} →</button> : null })}</div><ul className="map-legend">{kinds.map(kind => <li key={kind}><span style={{ background: colors[kind] }} />{names[kind]}<strong>{nodes.filter(node => node.kind === kind).length}</strong></li>)}</ul></>}
+      {current ? <><div className="map-detail-top"><span className="map-type" style={{ color: colors[current.kind] }}>{current.kind}</span><button type="button" onClick={() => onSelect(null)} aria-label="Clear selected idea">×</button></div><h3>{current.label}</h3><p className="map-track-name">{tracks.find(item => item.slug === current.track)?.title}</p>{current.to && <Link to={current.to} className="btn btn-primary">Open {current.kind} →</Link>}<h4>Connected ideas <span>{connected.length}</span></h4>{connected.length ? <ul className="list map-connections">{connected.map(node => <li key={node.id}><button type="button" onClick={() => choose(node)}><span style={{ background: swatches[node.kind] }} /><strong>{node.label}</strong><small>{node.kind}</small></button></li>)}</ul> : <p>No connections match these filters. Turn on more content types or choose All courses.</p>}</> : <><p className="map-overline">Follow your curiosity</p><h3>How to read it</h3><p>Every dot is an idea or a learning resource. Select one to highlight its connections and open a lesson, paper, lab, or definition.</p><h4>Start with an idea</h4><div className="map-starters">{presets.map(([key, label]) => { const node = nodes.find(item => item.id === key); return node ? <button type="button" key={key} onClick={() => choose(node)}>{label} →</button> : null })}</div><ul className="map-legend">{kinds.map(kind => <li key={kind}><span style={{ background: swatches[kind] }} />{names[kind]}<strong>{nodes.filter(node => node.kind === kind).length}</strong></li>)}</ul></>}
       {expandedHref && <Link className="map-expand" to={expandedHref}>Open the full map page ↗</Link>}
     </aside></div>
   </div>

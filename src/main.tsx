@@ -16,6 +16,7 @@ import './readability.css'
 import './ai-guide-style.css'
 import './study-library.css'
 import './experience-style.css'
+import './spatial-learning.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

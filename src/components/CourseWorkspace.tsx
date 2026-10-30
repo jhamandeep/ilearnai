@@ -8,6 +8,8 @@ import { lessonPythonExercises, lessonPythonUrl } from '../lib/lessonPython'
 import { pythonForChapter } from '../data/pythonExercises'
 import { ChapterVideos, ChapterVideoGroup } from './ChapterVideos'
 import { LearningResources } from './LearningResources'
+import { ChapterJourney } from './ChapterJourney'
+import { LearningMotionGlyph } from './LearningMotionGlyph'
 
 const views = [['lessons', 'Lessons'], ['videos', 'Video series'], ['practice', 'Practice'], ['resources', 'Resources']] as const
 
@@ -40,8 +42,9 @@ export function CourseWorkspace({ track }: { track: Track }) {
         const done = items.filter(activity => isActivityDone(activity.route, activity.id)).length
         return <button type="button" key={module.slug} aria-pressed={chapter === module.slug} onClick={() => select('chapter', module.slug)}><span><b>{String(index + 1).padStart(2, '0')}</b>{module.title}</span><small>{module.lessons.length} lessons · {Math.round(100 * done / items.length)}%</small><progress value={done} max={items.length} aria-label={`${module.title} activity progress`} /></button>
       })}</nav>
-      <div className="course-workspace-content" ref={content}><nav className="course-format-nav" aria-label="Course formats">{views.map(([key, label]) => <button type="button" key={key} data-kind={key} aria-pressed={view === key} onClick={() => select('view', key)}>{label}</button>)}</nav>
+      <div className="course-workspace-content" ref={content}><nav className="course-format-nav" aria-label="Course formats">{views.map(([key, label]) => <button type="button" key={key} data-kind={key} aria-pressed={view === key} onClick={() => select('view', key)}><LearningMotionGlyph variant={key} className="course-tab-glyph" />{label}</button>)}</nav>
         <p className="course-workspace-status" role="status">{chapter === 'all' ? 'Showing every chapter' : modules[0].title} · {entries.length} lessons</p>
+        <ChapterJourney key={`${track.slug}/${chapter}/${view}`} track={track} module={chapter === 'all' ? undefined : modules[0]} mode={view} />
         {view === 'lessons' && modules.map(module => <section className="course-chapter-section" key={module.slug} id={module.slug} data-course-chapter={module.slug}><header><span className="eyebrow">Chapter {track.modules.indexOf(module) + 1}</span><h3>{module.title}</h3><p>{module.description}</p></header><div className="course-lesson-list">{entries.filter(entry => entry.module === module).map(({ lesson, route, activities, python }, index) => {
           const done = activities.filter(activity => isActivityDone(route, activity.id)).length
           const next = activities.find(activity => !isActivityDone(route, activity.id)) ?? activities[0]

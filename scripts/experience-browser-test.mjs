@@ -47,6 +47,8 @@ try {
   await page.screenshot({ path: `${output}/home-desktop.png` })
   await page.locator('.map-stage').scrollIntoViewIfNeeded()
   const map = page.locator('.knowledge-map')
+  await map.getByRole('button', { name: '2D view', exact: true }).click()
+  await map.getByRole('button', { name: 'Play showcase', exact: true }).click()
   await page.waitForFunction(() => document.querySelector('.knowledge-map')?.dataset.showcase === 'playing')
   const dot = map.locator('[data-node-id]').first()
   const position = await dot.getAttribute('transform')

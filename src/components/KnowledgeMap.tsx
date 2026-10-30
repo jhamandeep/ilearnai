@@ -7,6 +7,7 @@ import { tracks } from '../data/tracks'
 import type { ConceptKind, ConceptNode } from '../data/types'
 import { ArtworkMotionContext } from '../lib/artworkMotion'
 import { KnowledgeAtlas } from './KnowledgeAtlas'
+import { conceptDescriptions, kindNames } from '../lib/knowledgeAtlasModel'
 import type { SpatialGraphHandle } from '../lib/spatialGraphScene'
 import { spatialGraphLightPalette } from '../lib/spatialGraphPalette'
 import '../knowledge-map.css'
@@ -62,6 +63,8 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   const id = useId()
   const svgRef = useRef<SVGSVGElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
+  const detailRef = useRef<HTMLElement>(null)
+  const revealSelection = useRef(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const selectedRef = useRef(selected)
@@ -70,10 +73,16 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   const current = nodes.find(node => node.id === selected)
   const neighbours = useMemo(() => new Set(edges.flatMap(edge => edge.source === selected ? [edge.target] : edge.target === selected ? [edge.source] : [])), [edges, selected])
   const connected = nodes.filter(node => neighbours.has(node.id)).sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || a.label.localeCompare(b.label))
+  const featured = ['lesson', 'lab', 'paper'].flatMap(kind => { const node = connected.find(node => node.kind === kind && node.to); return node ? [node] : [] })
   const matches = query.trim() ? nodes.filter(node => node.label.toLowerCase().includes(query.trim().toLowerCase())) : []
   const showcasing = showcase && motion.playing && inView && !selected && !query && nodes.length > 0
 
   useEffect(() => { selectedRef.current = selected }, [selected])
+  useEffect(() => {
+    if (!revealSelection.current || !current || view !== '3d') return
+    revealSelection.current = false
+    detailRef.current?.scrollIntoView({ behavior: motion.playing ? 'smooth' : 'instant', block: 'nearest' })
+  }, [current, view, motion.playing])
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
@@ -170,6 +179,10 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
   function changeZoom(factor: number) { if (view === '3d') { spatial.current?.zoom(factor); return } if (svgRef.current && zoomRef.current) select<SVGSVGElement, unknown>(svgRef.current).call(zoomRef.current.scaleBy, factor) }
   function choose(node: MapNode, focus = true) {
     setShowcase(false)
+    if (view === '3d') {
+      revealSelection.current = node.id !== selected
+      if (node.id === selected) detailRef.current?.scrollIntoView({ behavior: motion.playing ? 'smooth' : 'instant', block: 'nearest' })
+    }
     onSelect(node.id)
     if (focus && view === '2d') {
       const group = nodes.filter(item => item.id === node.id || edges.some(edge => (edge.source === node.id && edge.target === item.id) || (edge.target === node.id && edge.source === item.id)))
@@ -225,7 +238,7 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
       <fieldset className="map-kind-filters"><legend>Show on the map</legend>{kinds.map(kind => <label key={kind}><input type="checkbox" checked={visibleKinds.has(kind)} onChange={() => { setVisibleKinds(previous => { const next = new Set(previous); if (next.has(kind)) next.delete(kind); else next.add(kind); return next }); if (current?.kind === kind) onSelect(null) }} />{view === '2d' && <span style={{ background: swatches[kind] }} />}{names[kind]}</label>)}</fieldset></div>
     </div>
     <div className="map-workspace"><div className="map-visual">
-      <div className="map-view-picker"><strong>{view === '3d' ? 'Knowledge, connected.' : 'AI knowledge map'}</strong><div className="map-dimension-toggle" role="group" aria-label="Map view"><button type="button" aria-pressed={view === '3d'} disabled={unavailable} onClick={() => { setView('3d'); setShowcase(true) }}>3D view</button><button type="button" aria-pressed={view === '2d'} onClick={() => setView('2d')}>2D view</button></div></div>{unavailable && <p className="map-fallback-note" role="status">Showing the 2D map on this device. Search and all learning links are available.</p>}
+      <div className="map-view-picker"><strong>{view === '3d' ? 'Everything connects.' : 'AI knowledge map'}</strong><div className="map-dimension-toggle" role="group" aria-label="Map view"><button type="button" aria-pressed={view === '3d'} disabled={unavailable} onClick={() => { setView('3d'); setShowcase(true) }}>3D view</button><button type="button" aria-pressed={view === '2d'} onClick={() => setView('2d')}>2D view</button></div></div>{unavailable && <p className="map-fallback-note" role="status">Showing the 2D map on this device. Search and all learning links are available.</p>}
       <div className="map-toolbar"><span className="map-count" role="status">{nodes.length} ideas · {links.length} connections</span><div><button type="button" className="map-showcase-toggle" data-map-playback aria-pressed={showcase && !selected && !query} disabled={!motion.playing} title={!motion.playing ? 'Enable visual motion in the header to play the showcase' : 'Motion pauses when you explore the map'} onClick={() => { if (showcase && !selected && !query) setShowcase(false); else { onSelect(null); setQuery(''); fit(); setShowcase(true) } }}><i aria-hidden="true" />{!motion.playing ? 'Motion off' : showcase && !selected && !query ? 'Pause showcase' : 'Play showcase'}</button><button type="button" aria-label="Zoom out" onClick={() => changeZoom(1 / 1.35)}>−</button><output aria-label="Map zoom">{view === '3d' ? spatialZoom : Math.round(camera.k * 100)}%</output><button type="button" aria-label="Zoom in" onClick={() => changeZoom(1.35)}>+</button><button type="button" onClick={fit}>Fit map</button></div></div>
       <div className="map-stage" ref={stageRef}>{view === '3d' ? <KnowledgeAtlas ref={spatial} nodes={nodes} edges={edges} selected={selected} playing={showcasing} motion={motion.playing} onSelect={id => { if (id === null) { onSelect(null); return } const node = nodes.find(node => node.id === id); if (node) choose(node) }} onInteract={() => setShowcase(false)} onZoom={setSpatialZoom} onUnavailable={() => { setUnavailable(true); setView('2d') }} /> : <svg ref={svgRef} viewBox={`0 0 ${size.width} ${size.height}`} className="topo-svg" role="group" aria-label="Interactive knowledge map" aria-describedby={`${id}-instructions`} tabIndex={0} data-revision={revision} onPointerMove={moveDrag} onPointerUp={event => endDrag(event)} onPointerCancel={event => endDrag(event, true)} onLostPointerCapture={() => { gesture.current = null }} onKeyDown={event => {
         if (event.target !== event.currentTarget) return
@@ -247,8 +260,8 @@ export default function KnowledgeMap({ selected, onSelect, expandedHref }: { sel
 
       {!nodes.length && <div className="map-empty"><strong>No ideas are visible.</strong><p>Choose another course or restore the content types.</p><button type="button" onClick={() => { setTrack('all'); setVisibleKinds(new Set(kinds)); setQuery(''); onSelect(null) }}>Reset filters</button></div>}</div>
       <p id={`${id}-instructions`} className="sr-only">{view === '3d' ? 'Drag to orbit in 3D. Select a learning area, then an idea to explore its resources and real connections. Use + / − or pinch to zoom; Ctrl/Command + wheel also zooms. Arrow keys rotate and Home fits the map.' : 'Select a dot, drag to move, or use + / − to zoom. Pinch on a touch screen. Arrow keys move the view and Home fits the map.'} Showcase motion pauses while you explore.</p>
-    </div>{current && <aside className="topo-panel map-detail" aria-label="Selected idea and connections">
-      <div className="map-detail-top"><span className="map-type" style={{ color: colors[current.kind] }}>{current.kind}</span><button type="button" onClick={() => onSelect(null)} aria-label="Clear selected idea">×</button></div><h3>{current.label}</h3><p className="map-track-name">{tracks.find(item => item.slug === current.track)?.title}</p>{current.to && <Link to={current.to} className="btn btn-primary">Open {current.kind} →</Link>}<h4>Connected ideas <span>{connected.length}</span></h4>{connected.length ? <ul className="list map-connections">{connected.map(node => <li key={node.id}><button type="button" onClick={() => choose(node)}><span style={{ background: swatches[node.kind] }} /><strong>{node.label}</strong><small>{node.kind}</small></button></li>)}</ul> : <p>No connections match these filters.</p>}
+    </div>{current && <aside ref={detailRef} className="topo-panel map-detail" aria-label="Selected idea and connections">
+      <div className="map-detail-summary"><div className="map-detail-top"><span className="map-type" style={{ color: colors[current.kind] }}>{current.kind}</span><button type="button" onClick={() => onSelect(null)} aria-label="Clear selected idea">×</button></div><h3>{current.label}</h3><p className="map-track-name">{tracks.find(item => item.slug === current.track)?.title}</p>{view === '3d' && current.kind === 'concept' && <p className="map-detail-blurb">{conceptDescriptions[current.id] ?? 'Explore this idea through its connected lessons, research, and practical resources.'}</p>}{current.to && <Link to={current.to} className="btn btn-primary">Open {current.kind} →</Link>}</div>{view === '3d' && featured.length > 0 && <div className="map-featured-resources" aria-label="Learn and try this idea">{featured.map(node => <Link key={node.id} to={node.to!}><span><small>{kindNames[node.kind]}</small>{node.label}</span><span aria-hidden="true">↗</span></Link>)}</div>}<div className="map-detail-connections"><h4>Connected ideas <span>{connected.length}</span></h4>{connected.length ? <ul className="list map-connections">{connected.map(node => <li key={node.id}><button type="button" onClick={() => choose(node)}><span style={{ background: swatches[node.kind] }} /><strong>{node.label}</strong><small>{node.kind}</small></button></li>)}</ul> : <p>No connections match these filters.</p>}</div>
     </aside>}</div>
     <div className="map-footer"><div className="map-starters" aria-label="AI topics">{presets.map(([key, label]) => { const node = nodes.find(item => item.id === key); return node ? <button type="button" key={key} onClick={() => choose(node)}>{label} →</button> : null })}</div>{expandedHref && <Link className="map-expand" to={expandedHref}>Open the full map ↗</Link>}</div>
   </div>

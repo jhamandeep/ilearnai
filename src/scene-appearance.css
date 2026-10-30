@@ -33,6 +33,21 @@
 .map-footer .map-starters button { min-height:42px; padding:9px 14px; border-radius:99px; }
 .map-footer .map-expand { margin:0; padding:8px 0; }
 .map-dimension-toggle button:focus-visible { outline:3px solid #718dff; outline-offset:3px; }
+.spatial-graph[data-presentation="knowledge"] { background:radial-gradient(ellipse at 50% 38%,#fff 5%,#f6f7fc 62%,#edf0f9); }
+.spatial-graph[data-presentation="knowledge"] .spatial-node-label { font-size:14px; padding:7px 11px; border-radius:99px; border-color:#d3dbec; box-shadow:0 3px 12px #34457408; }
+.spatial-region { position:absolute; top:0; left:0; width:220px; text-align:center; color:#293958; pointer-events:none; }
+.spatial-region[hidden] { display:none; }
+.spatial-region strong { display:block; font:550 20px/1.3 var(--font-heading); letter-spacing:-.035em; }
+.spatial-region span { display:block; margin-top:5px; font:450 11px/1.4 var(--font); letter-spacing:.045em; color:#79849c; }
+@media(max-width:800px) {
+  .knowledge-map[data-view="3d"][data-has-selection="false"] .map-stage { height:700px; }
+}
+@media(max-width:500px) {
+  .spatial-region { width:145px; }
+  .spatial-region strong { font-size:16px; }
+  .spatial-region span { font-size:10px; }
+  .spatial-graph[data-presentation="knowledge"] .spatial-node-label { font-size:13px; padding:6px 9px; }
+}
 @media(max-width:600px) {
   .intelligence-canvas { inset:94px -10px 220px; }
   .intelligence-topline { left:18px; right:18px; top:22px; gap:10px; }

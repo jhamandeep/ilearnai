@@ -87,11 +87,6 @@ export function Home() {
         <div className="grid course-grid">{basics.map((slug) => { const t = tracks.find((t) => t.slug === slug)!; return <TrackCard key={slug} t={t} /> })}</div>
       </section>
 
-      <section className="feature-banner" aria-labelledby="build-title">
-        <div className="feature-copy"><span className="feature-label">Learn through projects</span><h2 id="build-title">Turn what you learn<br />into something real.</h2><p>Build a chatbot, search your own documents, give an agent tools, and deploy an AI service. Follow a guided project track from the first step.</p><Link to="/courses/build-ai-ecosystem" className="btn btn-primary">Start building <span aria-hidden="true">↗</span></Link></div>
-        <CourseArtwork topic="ai-agents" />
-      </section>
-
       <section id="advance-your-skills" className="skills-section">
         <div className="section-head section-head-split"><h2>Advance your skills</h2><div><p>Take the next step. Learn to evaluate, scale, and deploy AI systems, then explore the research behind them.</p><Link to="/courses" className="text-cta">Explore all courses <span aria-hidden="true">↗</span></Link></div></div>
         <div className="grid course-grid">{advanced.map((slug) => { const t = tracks.find((t) => t.slug === slug)!; return <TrackCard key={slug} t={t} /> })}</div>

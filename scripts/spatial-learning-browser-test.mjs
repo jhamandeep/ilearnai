@@ -27,11 +27,15 @@ try {
   if (!process.env.SKIP_SPATIAL_MAP) {
   await page.goto(base + '/#knowledge-map')
   await waitReady(map)
+  assert.equal(await page.locator('#build-title').count(), 0, 'The oversized homepage project banner is removed')
   assert.equal(await renderer.getAttribute('data-rendered-nodes'), '849')
   assert.equal(await renderer.getAttribute('data-rendered-edges'), '1366')
+  assert.equal(await renderer.getAttribute('data-regions'), '6')
   const camera = await renderer.getAttribute('data-camera')
   await page.waitForFunction(before => document.querySelector('.knowledge-map .spatial-renderer')?.dataset.camera !== before, camera)
   await page.waitForTimeout(1400)
+  assert.deepEqual(await map.locator('.spatial-region:visible strong').allTextContents(), ['Start with AI', 'Mathematics', 'Generative AI', 'Build with AI', 'AI infrastructure', 'Robotics'])
+  assert.equal(await map.locator('.spatial-region span').evaluateAll(items => items.reduce((sum, item) => sum + Number.parseInt(item.textContent), 0)), 849)
   await map.locator('.map-stage').screenshot({ path: `${output}/map-3d-desktop.png` })
   await map.getByRole('button', { name: 'Pause showcase', exact: true }).click()
   await settled(renderer)
@@ -62,10 +66,12 @@ try {
   await page.screenshot({ path: `${output}/map-3d-selected.png` })
   await map.locator('.map-expand').click()
   await page.waitForURL('**/knowledge-graph?node=*')
+  await page.getByRole('heading', { name: 'Knowledge map', exact: true, level: 1 }).waitFor()
   await waitReady(map)
   assert.equal(await map.locator('.map-detail h3').textContent(), 'Why attention replaced recurrence')
   await map.getByRole('combobox', { name: 'Filter knowledge map by course' }).selectOption('ai-research')
   await page.waitForFunction(() => Number(document.querySelector('.knowledge-map .spatial-renderer')?.dataset.renderedNodes) < 849)
+  assert.equal(await renderer.getAttribute('data-regions'), '1')
   for (const name of ['Concepts', 'Lessons', 'Papers', 'Labs', 'Terms']) await map.getByRole('checkbox', { name, exact: true }).uncheck()
   await map.getByText('No ideas are visible.', { exact: true }).waitFor()
   assert.equal(await renderer.getAttribute('data-rendered-nodes'), '0')
@@ -84,13 +90,24 @@ try {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await settled(renderer)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
-  checks.push('849 nodes/1366 actual connections; auto orbit, keyboard, drag, zoom, fit, focused selection, search, deep links, filters, global pause, reduced motion and offscreen pause')
+  checks.push('849 nodes/1366 actual connections in six learning areas; bounded camera motion, keyboard, drag, zoom, fit, focused selection, search, deep links, filters, global pause, reduced motion and offscreen pause')
 
   for (const width of [1440, 1100, 800, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 })
     await page.goto(base + '/#knowledge-map')
     await waitReady(map); await noOverflow(`3D map ${width}`)
-    if (width === 390) { await page.waitForTimeout(1600); await map.locator('.map-stage').screenshot({ path: `${output}/map-3d-mobile.png` }) }
+    if (width <= 390) {
+      await page.waitForTimeout(1600)
+      assert.equal(await renderer.getAttribute('data-arrangement'), 'portrait')
+      assert.equal(await map.locator('.spatial-region:visible').count(), 6)
+      assert.ok(await map.locator('.spatial-node-label:visible').count() >= 6, 'Each learning area needs a tappable landmark on mobile')
+      const labels = await map.locator('.spatial-node-label:visible').evaluateAll(items => items.map(item => { const b = item.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height } }))
+      for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) {
+        const a = labels[i], b = labels[j]
+        assert.ok(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y, `${width}: overlapping topic labels`)
+      }
+      await map.locator('.map-stage').screenshot({ path: `${output}/map-3d-${width}.png` })
+    }
     await page.goto(base + '/courses/ai-research?chapter=transformers')
     const journey = page.locator('.chapter-journey')
     await waitReady(journey); await noOverflow(`Chapter journey ${width}`)
@@ -150,7 +167,7 @@ try {
 
   // Every chapter, all four course formats and all eight study tabs. Actual
   // chapter data and destinations must change; animation alone is not enough.
-  for (const track of tracks) {
+  for (const track of process.env.SPATIAL_MAP_ONLY ? [] : tracks) {
     await page.goto(`${base}/courses/${track.slug}`)
     for (let index = 0; index < track.modules.length; index++) {
       const module = track.modules[index]
@@ -199,6 +216,6 @@ try {
   await settled(journey.locator('.spatial-renderer'))
   assert.ok((await page.getByRole('navigation', { name: 'Course chapters' }).innerText()).includes('0%'))
   assert.deepEqual(errors, [])
-  await writeFile(`${output}/${process.env.SKIP_SPATIAL_MAP ? 'chapter-results' : 'results'}.json`, JSON.stringify({ chapters, courseTabs, studyTabs, checks, errors }, null, 2))
-  console.log(`PASS: ${chapters} actual chapter journeys, ${courseTabs} course format views, ${studyTabs} study tabs, tour/pause${process.env.SKIP_SPATIAL_MAP ? '' : ', real 3D map and fallbacks'}; no browser exceptions.`)
+  await writeFile(`${output}/${process.env.SKIP_SPATIAL_MAP ? 'chapter-results' : process.env.SPATIAL_MAP_ONLY ? 'map-results' : 'results'}.json`, JSON.stringify({ chapters, courseTabs, studyTabs, checks, errors }, null, 2))
+  console.log(process.env.SPATIAL_MAP_ONLY ? 'PASS: 3D map composition, navigation, motion, responsive chapter scenes, tour/pause and GPU fallbacks; no browser exceptions.' : `PASS: ${chapters} actual chapter journeys, ${courseTabs} course format views, ${studyTabs} study tabs, tour/pause${process.env.SKIP_SPATIAL_MAP ? '' : ', real 3D map and fallbacks'}; no browser exceptions.`)
 } finally { await browser.close() }

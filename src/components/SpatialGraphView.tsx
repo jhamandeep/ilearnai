@@ -5,6 +5,7 @@ import type { SceneAppearance } from '../lib/spatialGraphPalette'
 type Props = {
   nodes: SpatialNode[]; edges: SpatialEdge[]; selected: string | null; playing: boolean; motion: boolean
   appearance?: SceneAppearance
+  presentation?: 'knowledge' | 'sequence'
   onSelect: (id: string) => void; onInteract: () => void; onZoom?: (value: number) => void; onUnavailable?: () => void
 }
 
@@ -12,7 +13,7 @@ export const SpatialGraphView = forwardRef<SpatialGraphHandle, Props>(function S
   const host = useRef<HTMLDivElement>(null), labels = useRef<HTMLDivElement>(null), scene = useRef<SpatialGraphScene | null>(null)
   const latest = useRef(props)
   const [status, setStatus] = useState('loading'), [visible, setVisible] = useState(false), [started, setStarted] = useState(false)
-  const state: SpatialState = { selected: props.selected, playing: props.playing, motion: props.motion, visible, appearance: props.appearance ?? 'dark' }
+  const state: SpatialState = { selected: props.selected, playing: props.playing, motion: props.motion, visible, appearance: props.appearance ?? 'dark', presentation: props.presentation ?? 'sequence' }
   const latestState = useRef(state)
   useEffect(() => { latest.current = props; latestState.current = state; scene.current?.update(state) })
   useEffect(() => { scene.current?.data(props.nodes, props.edges) }, [props.nodes, props.edges])
@@ -36,7 +37,7 @@ export const SpatialGraphView = forwardRef<SpatialGraphHandle, Props>(function S
     }).catch(unavailable)
     return () => { cancelled = true; scene.current = null; engine?.dispose() }
   }, [started])
-  return <div className="spatial-graph" data-appearance={props.appearance ?? 'dark'} data-spatial-status={status} data-playing={props.playing && visible}>
+  return <div className="spatial-graph" data-appearance={props.appearance ?? 'dark'} data-presentation={props.presentation ?? 'sequence'} data-spatial-status={status} data-playing={props.playing && visible}>
     <div className="spatial-renderer" ref={host} />
     <div className="spatial-label-layer" ref={labels} />
     {status === 'loading' && <div className="spatial-loading" role="status"><span aria-hidden="true">✧</span>Opening your connected world…</div>}

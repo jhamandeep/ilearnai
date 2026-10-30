@@ -42,7 +42,7 @@ try {
   await hero.screenshot({ path: `${output}/original-playground-light.png` })
   await readyMap(); await clean()
   assert.equal(await map.locator('.spatial-renderer').getAttribute('data-rendered-appearance'), 'light')
-  assert.equal(await map.locator('.spatial-renderer').getAttribute('data-rendered-nodes'), '849')
+  assert.equal(await map.locator('.spatial-renderer').getAttribute('data-total-nodes'), '849')
   assert.equal(await map.locator('.map-detail').count(), 0)
   const fullWidth = await map.locator('.map-stage').evaluate(el => el.clientWidth)
   assert.ok(fullWidth > 1200, 'The map should use the empty sidebar space')

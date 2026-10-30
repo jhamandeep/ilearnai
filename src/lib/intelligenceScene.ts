@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
+import type { SceneAppearance } from './sceneAppearance'
 
-type State = { playing: boolean; formation: number }
+type State = { playing: boolean; formation: number; appearance: SceneAppearance }
 export type IntelligenceScene = { update: (state: State) => void; dispose: () => void }
 
 /** Original procedural sculpture: no remote textures, models, or tracking. */
@@ -68,6 +69,18 @@ export function createIntelligenceScene(host: HTMLElement, initial: State, onRea
   let state = initial, visible = true, lost = false, disposed = false, frame = 0, last = 0, elapsed = 0
   let width = 1, height = 1
 
+  function applyAppearance() {
+    const light = state.appearance === 'light'
+    scene.environmentIntensity = light ? .6 : .8
+    blue.roughness = light ? .34 : .24; blue.clearcoat = light ? .65 : 1
+    silver.color.set(light ? '#8e9fc8' : '#dfe5f4'); silver.metalness = light ? .4 : .85
+    silver.roughness = light ? .4 : .23
+    violet.color.set(light ? '#585fd5' : '#777bf6')
+    connectionMaterial.color.set(light ? '#4d60aa' : '#7f92e8')
+    connectionMaterial.opacity = light ? .3 : .2
+    host.dataset.renderedAppearance = state.appearance
+  }
+
   function render(now = 0) {
     frame = 0
     if (disposed || lost) return
@@ -128,9 +141,10 @@ export function createIntelligenceScene(host: HTMLElement, initial: State, onRea
   const observer = new IntersectionObserver(entries => { visible = entries.some(entry => entry.isIntersecting); if (visible) wake(); else stop() })
   observer.observe(host)
   host.appendChild(canvas)
+  applyAppearance()
   resize(); onReady(true)
   return {
-    update(next) { const changed = state.formation !== next.formation; state = next; if (!state.playing) stop(); if (visible || changed) wake() },
+    update(next) { const changed = state.formation !== next.formation, appearanceChanged = state.appearance !== next.appearance; state = next; if (appearanceChanged) applyAppearance(); if (!state.playing) stop(); if (visible || changed) wake() },
     dispose() {
       disposed = true; stop(); observer.disconnect(); resizeObserver.disconnect()
       surface.removeEventListener('pointermove', move); surface.removeEventListener('pointerleave', leave)

@@ -38,7 +38,8 @@
     "test:readability-browser": "node scripts/export-narration.mjs && node scripts/readability-browser-test.mjs",
     "test:course-focus-browser": "node scripts/course-focus-browser-test.mjs",
     "test:guides-chat-browser": "node scripts/guides-chat-browser-test.mjs",
-    "test:spatial-learning-browser": "node scripts/spatial-learning-browser-test.mjs"
+    "test:spatial-learning-browser": "node scripts/spatial-learning-browser-test.mjs",
+    "test:scene-backgrounds": "node scripts/scene-background-browser-test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",

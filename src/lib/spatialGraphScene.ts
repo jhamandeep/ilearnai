@@ -2,11 +2,12 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import type { ConceptKind } from '../data/types'
-import { spatialGraphPalette as palette } from './spatialGraphPalette'
+import { spatialGraphPalette, spatialGraphLightPalette } from './spatialGraphPalette'
+import type { SceneAppearance } from './sceneAppearance'
 
 export type SpatialNode = { id: string; label: string; kind: ConceptKind; track?: string; x?: number; y?: number }
 export type SpatialEdge = { source: string; target: string }
-export type SpatialState = { selected: string | null; playing: boolean; motion: boolean; visible: boolean }
+export type SpatialState = { selected: string | null; playing: boolean; motion: boolean; visible: boolean; appearance: SceneAppearance }
 export type SpatialGraphHandle = { fit: () => void; zoom: (factor: number) => void; rotate: (x: number, y: number) => void }
 export type SpatialGraphScene = SpatialGraphHandle & { data: (nodes: SpatialNode[], edges: SpatialEdge[]) => void; update: (state: SpatialState) => void; dispose: () => void }
 type Callbacks = { select: (id: string) => void; interact: () => void; zoom: (value: number) => void; unavailable: () => void }
@@ -72,18 +73,30 @@ export function createSpatialGraph(host: HTMLElement, labelLayer: HTMLElement, i
     })
   }
   function highlight() {
+    const light = state.appearance === 'light'
+    const palette = light ? spatialGraphLightPalette : spatialGraphPalette
     neighbours = new Set(edges.flatMap(edge => edge.source === state.selected ? [edge.target] : edge.target === state.selected ? [edge.source] : []))
     nodes.forEach((node, i) => {
-      color.set(palette[node.kind]); if (state.selected && node.id !== state.selected && !neighbours.has(node.id)) color.multiplyScalar(.11)
+      color.set(palette[node.kind]); if (state.selected && node.id !== state.selected && !neighbours.has(node.id)) { if (light) color.lerp(new THREE.Color('#cdd3e7'), .83); else color.multiplyScalar(.11) }
       mesh?.setColorAt(i, color)
     })
     if (mesh?.instanceColor) mesh.instanceColor.needsUpdate = true
     edgeIndices.forEach(([a, b], i) => {
-      color.set(state.selected ? nodes[a].id === state.selected || nodes[b].id === state.selected ? '#9cb8ff' : '#111b39' : '#4c629c')
+      color.set(state.selected ? nodes[a].id === state.selected || nodes[b].id === state.selected ? light ? '#344bb4' : '#9cb8ff' : light ? '#cbd1e3' : '#111b39' : light ? '#667aa6' : '#4c629c')
       edgeColors.set([color.r, color.g, color.b, color.r, color.g, color.b], i * 6)
     })
     if (edgeGeometry) edgeGeometry.attributes.color.needsUpdate = true
     makeLabels()
+  }
+  function applyAppearance() {
+    const light = state.appearance === 'light'
+    material.metalness = light ? .08 : .52; material.roughness = light ? .63 : .25; material.clearcoat = light ? .12 : .8
+    scene.environmentIntensity = light ? .35 : .6
+    edgeMaterial.opacity = light ? .62 : .47
+    signalMaterial.color.set(light ? '#344ecc' : '#b9d9ff')
+    focusMaterial.color.set(light ? '#304cc8' : '#cdd8ff')
+    host.dataset.renderedAppearance = state.appearance
+    highlight()
   }
   function focus(ids?: Set<string>) {
     if (!points.length) return
@@ -209,6 +222,7 @@ export function createSpatialGraph(host: HTMLElement, labelLayer: HTMLElement, i
   canvas.addEventListener('keydown', key); canvas.addEventListener('webglcontextlost', contextLost)
   const observer = new ResizeObserver(resize); observer.observe(host)
   host.append(canvas); resize()
+  applyAppearance()
   return {
     data(nextNodes, nextEdges) {
       if (mesh) { scene.remove(mesh); mesh.dispose() }
@@ -237,8 +251,9 @@ export function createSpatialGraph(host: HTMLElement, labelLayer: HTMLElement, i
       highlight(); focus(state.selected ? new Set([state.selected, ...neighbours]) : undefined); wake()
     },
     update(next) {
-      const changed = next.selected !== state.selected; state = next
-      if (changed) { highlight(); focus(state.selected ? new Set([state.selected, ...neighbours]) : undefined) }
+      const changed = next.selected !== state.selected, appearanceChanged = next.appearance !== state.appearance; state = next
+      if (appearanceChanged) applyAppearance()
+      if (changed) { if (!appearanceChanged) highlight(); focus(state.selected ? new Set([state.selected, ...neighbours]) : undefined) }
       if (!state.visible) stop(); else wake()
     },
     fit() { focus() }, zoom, rotate,

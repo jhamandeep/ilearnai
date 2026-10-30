@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import type { ConceptKind } from '../data/types'
 import { spatialGraphPalette, spatialGraphLightPalette } from './spatialGraphPalette'
-import type { SceneAppearance } from './sceneAppearance'
+import type { SceneAppearance } from './spatialGraphPalette'
 
 export type SpatialNode = { id: string; label: string; kind: ConceptKind; track?: string; x?: number; y?: number }
 export type SpatialEdge = { source: string; target: string }

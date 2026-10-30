@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
-import type { SceneAppearance } from './sceneAppearance'
+import type { SceneAppearance } from './spatialGraphPalette'
 
 type State = { playing: boolean; formation: number; appearance: SceneAppearance }
 export type IntelligenceScene = { update: (state: State) => void; dispose: () => void }

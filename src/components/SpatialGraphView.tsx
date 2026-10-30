@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { SpatialNode, SpatialEdge, SpatialState, SpatialGraphScene, SpatialGraphHandle } from '../lib/spatialGraphScene'
-import type { SceneAppearance } from '../lib/sceneAppearance'
+import type { SceneAppearance } from '../lib/spatialGraphPalette'
 
 type Props = {
   nodes: SpatialNode[]; edges: SpatialEdge[]; selected: string | null; playing: boolean; motion: boolean

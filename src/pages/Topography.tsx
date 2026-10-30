@@ -10,5 +10,5 @@ export function Topography() {
       return next
     }, { replace: true, preventScrollReset: true })
   }
-  return <><header className="page-head"><h1>Knowledge map</h1><p className="lede">Connect concepts with lessons, original research, and labs. Search for an idea, select its dot, then follow the connections.</p></header><KnowledgeMap selected={params.get('node')} onSelect={select} /></>
+  return <><header className="page-head"><h1>Knowledge map</h1><p className="lede">AI concepts, practical lessons, research, and labs—connected.</p></header><KnowledgeMap selected={params.get('node')} onSelect={select} /></>
 }

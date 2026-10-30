@@ -9,6 +9,7 @@ import { TrackCard } from './Courses'
 import { CourseArtwork } from '../components/CourseArtwork'
 import { VideoThumbnail } from '../components/VideoThumbnail'
 import { HomeKnowledgeMap } from '../components/HomeKnowledgeMap'
+import { HomeConstellationBackground } from '../components/HomeConstellationBackground'
 import { ImmersiveHero } from '../components/ImmersiveHero'
 import { ArtworkMotionContext } from '../lib/artworkMotion'
 import { doneCount, isDone, placement, useProgressVersion } from '../lib/progress'
@@ -67,6 +68,7 @@ export function Home() {
   const advanced = ['ai-engineering', 'inference-engineering', 'ai-research']
   return (
     <div ref={page} className="experience-home" data-motion={motion.playing ? 'on' : 'off'}>
+      <HomeConstellationBackground />
       <section className="experience-intro" aria-labelledby="skills-title">
         <div><p className="eyebrow"><span className="experience-dot" /> OPEN MINDS. REAL POSSIBILITIES.</p><h1 id="skills-title">Understand AI.<br /><span>Shape what’s next.</span></h1></div>
         <div className="experience-intro-aside"><p>Big ideas, made clear. Discover what AI can do for your work—and learn to build what comes next.</p><div className="hero-actions work-home-actions"><Link className="btn btn-primary" to="/courses">Find your starting point <span aria-hidden="true">↗</span></Link><Link className="text-cta" to="/for-work">Explore AI for your work <span aria-hidden="true">↗</span></Link></div></div>

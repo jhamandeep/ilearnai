@@ -25,7 +25,7 @@ try {
     assert.equal(await locator.getAttribute('data-frame'), frame, 'Paused/offscreen renderer must stop drawing')
   }
   if (!process.env.SKIP_SPATIAL_MAP) {
-  await page.goto(base + '/#knowledge-map')
+  await page.goto(base + '/knowledge-graph')
   await waitReady(map)
   assert.equal(await page.locator('#build-title').count(), 0, 'The oversized homepage project banner is removed')
   assert.equal(await renderer.getAttribute('data-total-nodes'), '849')
@@ -85,7 +85,7 @@ try {
   await map.locator('.map-stage').scrollIntoViewIfNeeded()
   await page.waitForTimeout(1600)
   await page.screenshot({ path: `${output}/map-3d-selected.png` })
-  await map.locator('.map-expand').click()
+  await page.reload()
   await page.waitForURL('**/knowledge-graph?node=*')
   await page.getByRole('heading', { name: 'Knowledge map', exact: true, level: 1 }).waitFor()
   await waitReady(map)
@@ -118,7 +118,7 @@ try {
 
   for (const width of [1440, 1100, 800, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 })
-    await page.goto(base + '/#knowledge-map')
+    await page.goto(base + '/knowledge-graph')
     await waitReady(map); await noOverflow(`3D map ${width}`)
     if (width <= 390) {
       await page.waitForTimeout(1600)
@@ -150,7 +150,7 @@ try {
 
   const mobile = await browser.newContext({ viewport: { width: 390, height: 900 }, isMobile: true, hasTouch: true })
   const touchPage = await mobile.newPage()
-  await touchPage.goto(base + '/#knowledge-map')
+  await touchPage.goto(base + '/knowledge-graph')
   await touchPage.locator('.map-stage').scrollIntoViewIfNeeded()
   await touchPage.locator('.spatial-graph[data-spatial-status="ready"] canvas').waitFor()
   await touchPage.getByRole('button', { name: 'Pause showcase', exact: true }).click()

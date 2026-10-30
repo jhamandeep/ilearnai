@@ -1,0 +1,16 @@
+.experience-home { position:relative; isolation:isolate; }
+.home-constellation-background { position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; user-select:none; opacity:.24; mask-image:radial-gradient(ellipse at 50% 42%,#0006,#000b 55%,#000); }
+.home-constellation-background img { display:block; width:100%; height:100%; max-width:none; object-fit:cover; pointer-events:none; animation:home-constellation-drift 34s ease-in-out infinite alternate; }
+.home-constellation-background[data-motion="off"] img { animation-play-state:paused; }
+.experience-home .home-map-entry { display:flex; justify-content:space-between; align-items:center; gap:40px; border-top:1px solid #cdd0df; border-bottom:1px solid #cdd0df; padding:36px 0; }
+.experience-home .home-map-entry .eyebrow { margin:0 0 12px; }
+.experience-home .home-map-entry h2 { margin:0 0 12px; font-size:clamp(28px,3vw,44px); line-height:1.15; }
+.experience-home .home-map-entry p:last-child { margin:0; max-width:600px; color:#5c5e70; font-size:16px; line-height:1.65; }
+.experience-home .home-map-open { flex:none; display:inline-flex; align-items:center; gap:26px; margin:0; min-height:48px; color:#31394e; font-size:15px; border-bottom:1px solid #85899e; }
+@keyframes home-constellation-drift { from { transform:translate3d(-.6%,.4%,0) scale(1.04) rotate(-.5deg); } to { transform:translate3d(.6%,-.4%,0) scale(1.075) rotate(.5deg); } }
+@media(max-width:700px) {
+ .home-constellation-background { opacity:.18; }
+ .experience-home .home-map-entry { flex-direction:column; align-items:flex-start; gap:20px; padding:28px 0; }
+ .experience-home .home-map-open { font-size:14px; }
+}
+@media(prefers-reduced-motion:reduce) { .home-constellation-background img { animation:none; transform:none; } }
